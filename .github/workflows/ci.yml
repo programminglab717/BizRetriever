@@ -1,0 +1,97 @@
+name: CI
+
+# Zero-cost rule (ADR-026): runs stay small, superseded runs are cancelled, and nothing here ever
+# calls a paid API. AI evals are never run in CI (ADR-027).
+# Runs on every push (feature branches included), so pull requests from this repo get checks
+# without a second, duplicate pull_request run.
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  LOG_LEVEL: silent
+  REQUIRE_DB_TESTS: '1'
+  DATABASE_URL_SUPERUSER: postgres://postgres:postgres@localhost:5432/bizretriever
+  DATABASE_URL_MIGRATE: postgres://bizr_owner:ci_owner_pw@localhost:5432/bizretriever
+  DATABASE_URL_APP: postgres://bizr_app:ci_app_pw@localhost:5432/bizretriever
+  DATABASE_URL_ADMIN: postgres://bizr_admin:ci_admin_pw@localhost:5432/bizretriever
+  DATABASE_URL_TENANT: postgres://bizr_tenant:ci_tenant_pw@localhost:5432/bizretriever
+
+jobs:
+  checks:
+    name: Lint, typecheck, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bizretriever
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm packs:validate
+      - run: pnpm db:setup && pnpm db:migrate
+      - run: pnpm test
+
+  e2e:
+    name: End-to-end smoke
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bizretriever
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm --filter @bizr/web exec playwright install --with-deps chromium
+      - run: pnpm db:setup && pnpm db:migrate
+      - run: pnpm build
+      - run: pnpm test:e2e
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
