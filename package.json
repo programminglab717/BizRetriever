@@ -1,0 +1,42 @@
+{
+  "name": "bizretriever",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @bizr/web run dev",
+    "dev:worker": "pnpm --filter @bizr/worker run dev",
+    "build": "pnpm --filter @bizr/web run build",
+    "start": "pnpm --filter @bizr/web run start",
+    "start:worker": "pnpm --filter @bizr/worker run start",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -p tsconfig.json && pnpm -r --parallel typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "pnpm --filter @bizr/web run test:e2e",
+    "db:setup": "pnpm --filter @bizr/db run setup",
+    "db:generate": "pnpm --filter @bizr/db run generate",
+    "db:migrate": "pnpm --filter @bizr/db run migrate",
+    "db:setup:test": "NODE_ENV=test pnpm --filter @bizr/db run setup",
+    "db:migrate:test": "NODE_ENV=test pnpm --filter @bizr/db run migrate",
+    "packs:validate": "pnpm --filter @bizr/packs run validate"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "16.4.0",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.0.4",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.0.4"
+  }
+}
