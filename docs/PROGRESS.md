@@ -2,8 +2,8 @@
 
 ## Current Status
 
-- **Milestone:** M0 — Foundation. All M0 tasks are built and verified locally. **Waiting on:** the first
-  GitHub Actions run going green, then owner confirmation to start M1.
+- **Milestone:** M0 — Foundation is **complete**: all tasks done, and CI is green on GitHub (run #1).
+  **Waiting on:** owner confirmation to start M1.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:**
   - a landing page
@@ -66,7 +66,7 @@
 
 **Next steps:**
 
-1. Confirm the first CI run is green; fix anything environment-specific.
+1. ~~Confirm the first CI run is green~~: done (run #1 passed both jobs in ~2.5 minutes).
 2. Owner confirms M0, then M1:
    - Better Auth (email/password + Google)
    - workspace tables

@@ -105,7 +105,7 @@ Re-upload/merge (M6) is *not* cuttable for the product, but is optional for the 
 - [x] `pnpm` scripts as listed in CLAUDE.md (the ones that exist so far)
 - [x] README with quick start
 - [x] Logging: pino with correlation ids via AsyncLocalStorage (`withLogContext`)
-- [ ] CI green on GitHub (first run pending)
+- [x] CI green on GitHub (run #1, 2026-10-13: both jobs passed in ~2.5 min)
 
 **Acceptance:**
 
