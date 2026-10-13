@@ -1,0 +1,12 @@
+# Retail & Ecommerce pack manifest. Full spec: docs/VERTICAL_PACKS.md.
+# Entities, synonyms, patterns, metrics, dashboard, insights and questions are added in M1–M7.
+id: retail
+version: 1.0.0
+name: Retail & Ecommerce
+description: For shops and online stores that sell physical products.
+industries_label: Shop, online store or both
+locale_defaults:
+  currency: USD
+  date_order: MDY
+requires_core: '>=0.1.0'
+primary_time_entity: sale
