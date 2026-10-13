@@ -1,0 +1,22 @@
+{
+  "name": "@bizr/platform",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/database.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@next/env": "16.4.0",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.6"
+  }
+}

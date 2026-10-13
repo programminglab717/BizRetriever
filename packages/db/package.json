@@ -1,0 +1,27 @@
+{
+  "name": "@bizr/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "setup": "tsx src/cli/setup.ts",
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx src/cli/migrate.ts"
+  },
+  "dependencies": {
+    "@bizr/platform": "workspace:*",
+    "drizzle-orm": "^0.45.4",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@next/env": "16.4.0",
+    "@types/pg": "^8.15.6",
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.15"
+  }
+}
