@@ -1,0 +1,20 @@
+{
+  "name": "@bizr/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "BIZR_SERVICE=worker tsx watch src/main.ts",
+    "start": "BIZR_SERVICE=worker tsx src/main.ts",
+    "enqueue:noop": "tsx src/cli/enqueue-noop.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@bizr/core": "workspace:*",
+    "@bizr/db": "workspace:*",
+    "@bizr/platform": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

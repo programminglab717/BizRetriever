@@ -1,0 +1,40 @@
+/**
+ * Background worker (ADR-011, `JOB_RUNNER=worker`). Subscribes to every job queue and runs
+ * pg-boss maintenance. In the free hosted preview there is no worker; the drain route is used.
+ */
+import { createDefaultRegistry, JobQueue } from '@bizr/core/jobs';
+import { closePools } from '@bizr/db';
+import { getEnv, getLogger } from '@bizr/platform';
+
+// In worker mode a run may use much longer than a serverless step budget before yielding.
+const WORKER_BUDGET_MS = 5 * 60_000;
+
+async function main() {
+  const env = getEnv();
+  const log = getLogger('worker');
+  if (env.JOB_RUNNER !== 'worker') {
+    log.warn({ jobRunner: env.JOB_RUNNER }, 'JOB_RUNNER is not "worker"; starting anyway');
+  }
+
+  const registry = createDefaultRegistry();
+  const queue = await JobQueue.start({ registry, supervise: true });
+  await queue.work({ budgetMs: WORKER_BUDGET_MS });
+  log.info({ queues: registry.names() }, 'worker started');
+
+  let stopping = false;
+  const shutdown = async (signal: string) => {
+    if (stopping) return;
+    stopping = true;
+    log.info({ signal }, 'worker stopping');
+    await queue.stop();
+    await closePools();
+    process.exit(0);
+  };
+  process.on('SIGINT', () => void shutdown('SIGINT'));
+  process.on('SIGTERM', () => void shutdown('SIGTERM'));
+}
+
+main().catch((err: unknown) => {
+  getLogger('worker').fatal({ err }, 'worker failed to start');
+  process.exit(1);
+});
