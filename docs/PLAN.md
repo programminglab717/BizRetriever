@@ -67,40 +67,49 @@ Re-upload/merge (M6) is *not* cuttable for the product, but is optional for the 
 
 **Repo and tooling:**
 
-- [ ] pnpm workspace with these packages:
+- [x] pnpm workspace with these packages:
   - `apps/web`
   - `apps/worker`
-  - `packages/{db,core,ingest,ai,packs}`
+  - `packages/{platform,db,core,ingest,ai,packs}` (`platform` added for env and logging)
   - `evals/`
   - `scripts/`
-- [ ] TypeScript strict base config, shared tsconfig
-- [ ] ESLint (typescript-eslint, import ordering, no-restricted-imports enforcing package boundaries)
-- [ ] Prettier
-- [ ] Node 24 LTS pinned (`.nvmrc`, `engines`); pnpm pinned via `packageManager`
-- [ ] Next.js app scaffold (App Router), Tailwind, shadcn/ui init, base layout, health route
-- [ ] Worker scaffold with pg-boss connection and a no-op job
-- [ ] Job framework (`packages/core/jobs`): resumable, checkpointed steps; `JOB_RUNNER=worker|inline`;
-  `POST /api/jobs/drain` route (authenticated by a shared secret) with a step time budget; a test that
-  runs the no-op multi-step job in both modes (ADR-011)
-- [ ] `docker-compose.yml`: Postgres 17 (with init script creating the roles `bizr_app`, `bizr_admin`,
-  `bizr_tenant`)
-- [ ] Env config module with Zod validation; `.env.example` listing every variable
-- [ ] Drizzle setup in `packages/db`: migration tooling, an empty initial migration for the `app` schema
-- [ ] Vitest configured across packages; Playwright installed with one smoke test
-- [ ] GitHub Actions CI (free minutes: cancel superseded runs, cache pnpm, never call the AI API):
+- [x] TypeScript strict base config, shared tsconfig (TypeScript 6.0; see ADR-028)
+- [x] ESLint 10 (type-aware typescript-eslint, Next plugin, `no-restricted-imports` enforcing package
+  boundaries). Import-order linting is deferred: not worth a plugin yet.
+- [x] Prettier
+- [x] Node 24 LTS pinned (`.nvmrc`; `engines` ≥ 22.12); pnpm pinned via `packageManager`
+- [x] Next.js 16 app scaffold (App Router), Tailwind 4, shadcn/ui (components.json, tokens, Button), base
+  layout, `/api/health`
+- [x] Worker scaffold with pg-boss and graceful shutdown; `system.noop` job; `enqueue:noop` helper
+- [x] Job framework (`@bizr/core/jobs`):
+  - resumable, checkpointed steps (`app.job_run`, ADR-029)
+  - `JOB_RUNNER=worker|inline`
+  - `GET|POST /api/jobs/drain` (bearer secret, step time budget, `?maintenance=1`)
+  - integration tests run the multi-step noop job in both modes, including yielding, resuming and
+    failure
+- [x] `docker-compose.yml`: Postgres 17 plus a test database. Roles are created by an idempotent
+  `pnpm db:setup` (same command in CI) instead of an init script, so passwords come from `.env`.
+- [x] Env config module with Zod validation (`getEnv()`); `.env.example` lists every variable
+- [x] Drizzle setup in `packages/db`: migration tooling; initial migration creates `app` and `app.job_run`;
+  migrate script grants control-plane privileges
+- [x] Vitest across packages (unit + `*.int.test.ts` integration); Playwright smoke tests (desktop +
+  mobile)
+- [x] GitHub Actions CI (cancels superseded runs, caches pnpm, never calls the AI API):
   - install
+  - format check
   - lint
   - typecheck
-  - unit tests
-  - integration tests against a Postgres service container
   - pack validation
-- [ ] `pnpm` scripts as listed in CLAUDE.md (the ones that exist so far)
-- [ ] README with quick start
-- [ ] Logging: pino with a correlation-id helper
+  - unit + integration tests against a Postgres 17 service container
+  - e2e smoke job
+- [x] `pnpm` scripts as listed in CLAUDE.md (the ones that exist so far)
+- [x] README with quick start
+- [x] Logging: pino with correlation ids via AsyncLocalStorage (`withLogContext`)
+- [ ] CI green on GitHub (first run pending)
 
 **Acceptance:**
 
-- `docker compose up -d && pnpm install && pnpm db:migrate && pnpm dev` serves a page.
+- `docker compose up -d && pnpm install && pnpm db:setup && pnpm db:migrate && pnpm dev` serves a page.
 - `pnpm dev:worker` connects to the queue.
 - CI is green on a PR to `main`.
 - A fresh clone can follow the README with no undocumented steps.

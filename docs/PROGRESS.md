@@ -2,17 +2,81 @@
 
 ## Current Status
 
-- **Milestone:** M0 — Foundation. The plan is **approved** (2026-10-13). Repo/tooling work is next.
+- **Milestone:** M0 — Foundation. All M0 tasks are built and verified locally. **Waiting on:** the first
+  GitHub Actions run going green, then owner confirmation to start M1.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **Application code:** none yet.
-- **Operating rule:** zero cost until production and revenue (ADR-026). AI API spend is the one capped
-  exception (ADR-027); the budget amount is pending (Q18), with a default of $2/day and $15/month.
-- **Blocked on:** nothing. Q18 must be confirmed before M2 (the first milestone that calls the AI).
-- **Next step:** start the M0 repo/tooling tasks in `docs/PLAN.md`.
+- **What runs today:**
+  - a landing page
+  - `/api/health`
+  - the job system (worker mode and serverless drain mode)
+  - database roles with baseline privilege tests
+  - the pack validator
+- **Spend to date:** $0 infrastructure, $0 AI.
+- **Next step:** M1 (accounts, workspaces, tenant provisioning) after the owner confirms M0.
 
 ---
 
 ## Session log
+
+### 2026-10-13 — Session 3: M0 Foundation built
+
+**Completed:**
+
+- Owner confirmed the AI budget caps (Q18) and asked to start building. M0 implemented:
+  - **pnpm monorepo:**
+    - `apps/web`, `apps/worker`
+    - `packages/platform` (new: env + logging), `packages/db`, `packages/core`, `packages/ingest`,
+      `packages/ai`, `packages/packs`
+    - `evals/`, `scripts/`
+  - **Tooling:**
+    - TypeScript 6.0 strict (ADR-028: TS 7 isn't supported by typescript-eslint yet)
+    - ESLint 10, type-aware, with package-boundary rules
+    - Prettier
+    - Vitest 5
+    - Playwright
+  - **Database:**
+    - `pnpm db:setup` creates the four login roles idempotently, with least privilege
+    - Drizzle control-plane migrations: `app` schema + `app.job_run`
+    - Docker Compose Postgres 17 with a test database
+  - **Job framework (ADR-011/029):**
+    - checkpointed steps; worker mode and inline drain mode
+    - transactional enqueue (pg-boss Drizzle adapter)
+    - `system.noop` job
+    - authenticated `/api/jobs/drain` route
+  - **Web:** Next.js 16 + Tailwind 4 + shadcn tokens/Button, landing page, `/api/health`.
+  - **Worker:** graceful shutdown, plus an `enqueue:noop` dev helper.
+  - **CI workflow:** format, lint, typecheck, packs, unit + integration tests on Postgres 17, then the
+    e2e smoke job. Runs on every push.
+- **Verified locally** (this container used Postgres 16, since the Docker daemon isn't available here;
+  `docker compose config` validated):
+  - `pnpm lint`, `pnpm typecheck` and `pnpm format:check` are clean
+  - `pnpm test`: 19 tests pass, including both job modes and role privilege checks
+  - `pnpm build` succeeds
+  - `pnpm test:e2e`: 6 tests pass (desktop + mobile)
+  - Manual checks:
+    - the worker processed a queued job and shut down on SIGTERM
+    - the HTTP drain processed a job; an unauthenticated drain returns 401
+
+**Notes / deviations:**
+
+- Roles are created by `pnpm db:setup` rather than a Docker init script, so CI and local dev share
+  one path and passwords come from `.env`.
+- Import-order linting was deferred.
+- CI triggers on every push (not on `pull_request`) to avoid duplicate runs.
+
+**Next steps:**
+
+1. Confirm the first CI run is green; fix anything environment-specific.
+2. Owner confirms M0, then M1:
+   - Better Auth (email/password + Google)
+   - workspace tables
+   - onboarding screen
+   - tenant provisioning with per-tenant roles
+   - safe executor skeleton
+   - isolation test suite
+   - app shell
+   - pack loader for entities
+
 
 ### 2026-10-13 — Planning session 2
 

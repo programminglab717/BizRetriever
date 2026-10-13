@@ -16,7 +16,6 @@ overridden. When an item is decided, move it to "Resolved" with the date, and up
 
 | # | Pri | Question | Default (in use until decided) | ADR |
 |---|---|---|---|---|
-| Q18 | P1 (M2) | **AI API budget.** The Claude API has no free tier and the product can't work without it. What monthly cap is acceptable during the build? | Hard caps of $2/day and $15/month. Tests and CI never call the API (replay). Evals only on demand. We'll report actual spend in PROGRESS. | ADR-026, ADR-027 |
 | Q19 | P2 (M8) | **Free hosted preview platform.** Vercel Hobby's terms restrict it to non-commercial use. Is a pre-revenue investor preview OK there, or should we use a free tier that allows commercial use (e.g. Cloudflare Workers via the OpenNext adapter, Netlify)? Only matters if we want a shareable link before revenue. | Demo from a laptop (Stage 0). Decide this only if a hosted link is needed; re-check current terms then. | ADR-016 |
 | Q12 | P1 (M8) | **Branding.** Logo, colours, design references? | Neutral shadcn theme + placeholder wordmark until provided. | — |
 | Q16 | P2 | **Terminology check with real users.** Do owners say "orders" or "sales", "stock" or "inventory"? (Varies US/UK.) | "Sales" and "stock"; validate in 3–5 user interviews. | — |
@@ -50,6 +49,7 @@ overridden. When an item is decided, move it to "Resolved" with the date, and up
 
 | # | Date | Question | Decision |
 |---|---|---|---|
+| Q18 | 2026-10-13 | AI API budget during the build | Hard caps of $2/day and $15/month (ADR-027). The owner will provide the API key when M2 needs it. |
 | — | 2026-10-13 | **Zero-cost rule** | Free options only until production and revenue; AI API is the one capped exception (ADR-026, ADR-027). |
 | Q1 | 2026-10-13 | Demo date and team | Default accepted: plan for ~8–10 weeks, solo engineer + owner; protect the ★ path. |
 | Q2 | 2026-10-13 | Git workflow | Default accepted: work on feature branches; PR into `main` only when the owner asks. |

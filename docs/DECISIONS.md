@@ -476,3 +476,52 @@ Template for new entries:
   - Expected build-phase AI spend is a few dollars a month, which the evals will measure.
   - Live-API behaviour is exercised only by evals and manual testing, so evals must run before each
     milestone sign-off.
+
+## ADR-028 — Toolchain versions for M0
+
+- **Status:** Accepted (2026-10-13, engineering decision within approved scope)
+- **Context:** M0 pins the toolchain. Some of the newest major versions don't work together yet.
+- **Decision:**
+  - **TypeScript 6.0.x, not 7.x.** TypeScript 7 (the native compiler) is the latest release, but
+    typescript-eslint supports only `<6.1`. Revisit when typescript-eslint adds TS 7 support.
+  - **Toolchain:**
+    - ESLint 10 (flat config) with type-aware typescript-eslint rules
+    - Prettier 3
+    - Vitest 5
+    - Playwright (latest)
+    - Next.js 16.4 (Turbopack)
+    - React 19
+    - Tailwind CSS 4
+    - Drizzle ORM 0.45 / drizzle-kit 0.31
+    - pg-boss 12
+    - Zod 4
+    - pino 10
+  - **Node.js:** 24 LTS in CI (`.nvmrc`). `engines` allows 22.12+ so existing machines work.
+  - **Workspace packages export TypeScript source directly.** There is no build step. Next.js
+    compiles them via `transpilePackages`; the worker and CLIs run with `tsx`.
+  - **One set of `.env*` files at the repo root,** loaded with `@next/env` everywhere (web, worker,
+    CLIs, tests), so precedence rules are identical across processes.
+- **Consequences:**
+  - Simple builds and fast iteration.
+  - The worker runs TypeScript through tsx in production too. That's acceptable at our scale; it can
+    be swapped for a bundled build later.
+
+## ADR-029 — Generic `app.job_run` table and pg-boss usage
+
+- **Status:** Accepted (2026-10-13)
+- **Context:** ADR-011 needs checkpointed, resumable job steps that work in worker and drain modes.
+- **Decision:**
+  - **`app.job_run` stores each run's checkpoint:** input, `state`, `step_index`, progress, and a
+    user-safe error. The feature-specific run tables in ARCHITECTURE §4 (`ingestion_run` etc.)
+    reference a `job_run` row instead of re-implementing progress and status.
+  - **A pg-boss job only means "advance run X".** When a run yields because its budget ran out, a
+    continuation job is queued.
+  - **Enqueueing is transactional.** The `job_run` insert and the pg-boss send happen in one
+    transaction, via pg-boss's Drizzle adapter.
+  - **pg-boss lives in a `pgboss` schema owned by the control-plane role.** The schema is
+    pre-created by `pnpm db:setup`; pg-boss runs its own migrations on start.
+  - **Maintenance:** the worker supervises (expiry, retention). In inline mode, the daily cron calls
+    the drain route with `?maintenance=1`.
+- **Consequences:**
+  - A step failure marks the run failed. The user (or code) re-queues explicitly.
+  - pg-boss retries (2, with backoff) only cover infrastructure errors around a step.

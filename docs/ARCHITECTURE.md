@@ -264,7 +264,8 @@ erDiagram
 | `upload_blob` | upload_id, bytes (`bytea`). Only used by the Postgres storage driver in the free hosted preview (ADR-013) |
 | `sheet_profile` | upload_id, sheet name, detected regions (JSON), column profiles (JSON), masked samples |
 | `data_source` | logical recurring source ("Online orders file"), fingerprint (header signature, sheet names), target entity mappings, last upload |
-| `ingestion_run` | type (`initial` \| `reupload`), status, progress {stage, pct}, error (user-safe + internal), timings |
+| `job_run` | Generic background-job run (ADR-029): job name, input, checkpoint (`state`, `step_index`), status, progress {stage, pct}, error (user-safe + internal), timings. **Exists since M0.** |
+| `ingestion_run` | type (`initial` \| `reupload`), `job_run_id`, data-source links, timings |
 | `model_proposal` | run_id, proposal JSON (validated), dry-run stats JSON, status (`draft` \| `approved` \| `rejected` \| `superseded`), revisions[] |
 | `change_plan` | origin (`ingestion` \| `chat` \| `system`), plan JSON, impact JSON, status, confirmed_by/at |
 | `migration` | per-workspace sequence `version`, change_plan_id, forward SQL (generated), inverse plan JSON, `lossy_rollback` flag, snapshot_id, applied_at, rolled_back_at |

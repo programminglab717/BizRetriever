@@ -28,7 +28,8 @@ physical shops, multi-channel, light wholesale). Industry knowledge lives in swa
 
 ## Tech stack
 
-- TypeScript everywhere, Node 24 LTS, pnpm workspaces monorepo.
+- TypeScript 6.0 (not 7: typescript-eslint doesn't support it yet, ADR-028), Node 24 LTS (22.12+
+  works), pnpm 10 workspaces monorepo. Workspace packages export TS source (no build step).
 - `apps/web`: Next.js (App Router), Tailwind CSS, shadcn/ui, Recharts (via shadcn charts).
 - `apps/worker`: pg-boss worker for ingestion, loading, insights. Jobs are checkpointed steps that can also
   run serverless via a drain route (`JOB_RUNNER=worker|inline`).
@@ -46,7 +47,8 @@ physical shops, multi-channel, light wholesale). Industry knowledge lives in swa
 ```
 apps/web          Next.js app (UI, route handlers, server actions)
 apps/worker       background job worker
-packages/db       control-plane Drizzle schema + migrations, db clients, tenant provisioning
+packages/platform env config (Zod), logging (pino + correlation ids); no other @bizr deps
+packages/db       control-plane Drizzle schema + migrations, db roles/pools, tenant provisioning
 packages/core     semantic layer, change-plan schema + compiler, query-spec compiler,
                   SQL validator, safe query executor, merge/diff engine
 packages/ingest   parsing, region detection, profiling, cleaning rules, loaders
@@ -57,7 +59,7 @@ scripts/          demo data generator, seed scripts
 docs/             all planning documentation
 ```
 
-## Commands (available once M0 is done)
+## Commands
 
 | Task | Command |
 |---|---|
@@ -69,9 +71,12 @@ docs/             all planning documentation
 | Typecheck | `pnpm typecheck` |
 | Unit + integration tests | `pnpm test` |
 | E2E tests | `pnpm test:e2e` |
-| Control-plane migrations | `pnpm db:migrate` (generate: `pnpm db:generate`) |
-| Seed dev data | `pnpm db:seed` |
-| Generate demo dataset | `pnpm demo:generate` |
+| Create DB roles (idempotent) | `pnpm db:setup` (test DB: `pnpm db:setup:test`) |
+| Control-plane migrations | `pnpm db:migrate` (test DB: `pnpm db:migrate:test`; generate: `pnpm db:generate --name <x>`) |
+| Validate vertical packs | `pnpm packs:validate` |
+| Queue a test job | `pnpm --filter @bizr/worker enqueue:noop` |
+| Seed dev data (M1) | `pnpm db:seed` |
+| Generate demo dataset (M2) | `pnpm demo:generate` |
 | AI eval suite (costs money; asks before > $1) | `pnpm eval --limit N` |
 | Local demo machine (M8) | `pnpm demo:up` |
 
@@ -82,6 +87,14 @@ docs/             all planning documentation
   Infer types from them.
 - Safety-critical code (`packages/core`: compiler, validator, executor, merge) is written test-first, and it
   is pure and deterministic where possible.
+- Environment variables are read only through `getEnv()` from `@bizr/platform` (Zod-validated). All
+  `.env*` files live at the repo root. Tests use `.env.test.local` and the `bizretriever_test` DB.
+- Integration tests are named `*.int.test.ts` and must use `databaseAvailable()` from
+  `@bizr/platform/testing`. CI sets `REQUIRE_DB_TESTS=1` so they can't silently skip.
+- Background work is a `defineJob` with idempotent, checkpointed steps (`@bizr/core/jobs`). Never
+  write a job that assumes it runs in one go: it must work in both worker and drain modes.
+- Run pnpm scripts in filtered packages with `pnpm --filter <pkg> run <script>` (`setup` is a
+  built-in pnpm command, so the `run` matters).
 - Never build SQL by string concatenation with user/AI values. Use parameters, and quote identifiers through
   the single helper in `packages/core/sql/ident.ts`.
 - Money is `numeric(18,4)` in Postgres and handled as decimal strings/`Decimal` in TS. Never JS floats for
