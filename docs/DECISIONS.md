@@ -43,7 +43,7 @@ Template for new entries:
 
 ## ADR-002 — TypeScript pnpm monorepo
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-10-13)
 - **Context:** The safety-critical logic (compiler, validator, cleaning rules) must be testable outside
   Next.js and shared between web and worker.
 - **Options considered:**
@@ -182,7 +182,7 @@ Template for new entries:
 
 ## ADR-010 — Anthropic Claude via the official SDK, behind a provider interface, three model tiers
 
-- **Status:** Accepted (model defaults Proposed)
+- **Status:** Accepted (owner, 2026-10-13)
 - **Decision:**
   - `@anthropic-ai/sdk`, wrapped by `LLMProvider` in `packages/ai`.
   - Tiers configured by env:
@@ -203,24 +203,35 @@ Template for new entries:
     forced tool calls.
   - Prices are kept in a config table used for cost logging. They need updating when pricing changes.
 
-## ADR-011 — Background jobs with pg-boss in a separate worker process
+## ADR-011 — Background jobs with pg-boss; worker mode or serverless "drain" mode
 
-- **Status:** Proposed
-- **Context:** Ingestion, loading and insight runs take seconds to minutes. Vercel functions are
-  time-limited and can't host a long-running consumer.
+- **Status:** Accepted (owner, 2026-10-13; amended same day for the zero-cost rule, ADR-026)
+- **Context:**
+  - Ingestion, loading and insight runs take seconds to minutes.
+  - Serverless functions are time-limited and can't host a long-running consumer.
+  - A dedicated worker host costs money, and we must spend $0 until revenue (ADR-026).
 - **Options considered:**
-  1. **pg-boss + a worker on Railway/Fly/Render.** Postgres-only, boring, no new vendor for the queue
-     itself.
-  2. **Inngest / Trigger.dev.** Hosted, no worker server, but adds a vendor and changes the execution model.
+  1. **pg-boss + an always-on worker** (Railway/Fly/Render). Simple, but no reliable free host exists.
+  2. **Inngest / Trigger.dev.** Hosted, with free tiers, but adds a vendor and changes the execution model.
   3. **BullMQ + Redis.** Adds Redis.
-- **Decision:** Option 1.
+  4. **pg-boss with two runner modes.** A long-running worker where we have one (local dev, paid
+     production), and an inline "drain" route in the free hosted preview. The drain route processes job
+     steps within a time budget and is triggered by UI polling, `after()`, and a daily cron.
+- **Decision:** Option 4.
+  - Jobs are written as resumable, idempotent, checkpointed **steps**, each fitting within
+    `JOB_STEP_BUDGET_MS`.
+  - `JOB_RUNNER=worker|inline` selects the mode.
+  - The same handler code runs in both modes.
 - **Consequences:**
-  - One more deployable (the worker), using the same codebase.
-  - Local dev runs two processes.
+  - Slightly more design work per job (step boundaries, checkpoints). This also improves robustness and
+    progress reporting.
+  - In the free preview, background work only advances while a user is active or when the daily cron
+    fires. That's acceptable for a preview.
+  - Moving to paid production means starting the worker and setting `JOB_RUNNER=worker`. No code changes.
 
 ## ADR-012 — Auth with Better Auth
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-10-13)
 - **Options considered:**
   1. **Better Auth.** Self-hosted in our Postgres, email/password + Google, an organization plugin for
      workspaces/invites.
@@ -229,22 +240,31 @@ Template for new entries:
   4. **Supabase Auth.** Implies the Supabase platform.
 - **Decision:** Better Auth. Workspace membership is modelled in our own `workspace_member` table so we
   aren't locked to a plugin's model.
-- **Consequences:** We own email sending for verification and reset (Resend proposed; console logging in
-  dev).
+- **Consequences:** We own email sending for verification and reset.
+  - Console logging locally.
+  - Resend's free tier when hosted.
+  - Email verification is not required to start using the product, so email delivery problems never block
+    onboarding.
 
-## ADR-013 — Object storage abstraction
+## ADR-013 — File storage abstraction
 
-- **Status:** Proposed
-- **Decision:**
-  - A `Storage` interface with a local filesystem driver (dev/test) and an S3-compatible driver (prod:
-    Cloudflare R2).
-  - Original uploads are immutable and content-addressed (sha256).
-- **Consequences:** Re-ingestion and audits are always possible. Storage retention policy is to be decided
-  (OPEN_QUESTIONS).
+- **Status:** Accepted (owner, 2026-10-13; amended for ADR-026)
+- **Decision:** A `Storage` interface with three drivers:
+  - `local`: filesystem, for dev/test
+  - `postgres`: `bytea` in `app.upload_blob`, for the free hosted preview. Bounded by the upload limits and
+    the free database's storage quota, so it's fine for demo-sized files.
+  - `s3`: S3-compatible (Cloudflare R2), for paid production
+
+  Original uploads are immutable and content-addressed (sha256).
+- **Consequences:**
+  - Re-ingestion and audits are always possible.
+  - The `postgres` driver is not for production volumes. Switching to `s3` is a config change plus a
+    one-off copy script.
+  - Retention: originals are kept for the life of the workspace.
 
 ## ADR-014 — File parsing: SheetJS + Papa Parse + encoding detection
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-10-13)
 - **Decision:**
   - **SheetJS** (installed from the official SheetJS CDN tarball, since the npm registry copy is outdated)
     for xlsx/xls/ods. It handles merged cells, Excel date serials, and number formats.
@@ -256,7 +276,7 @@ Template for new entries:
 
 ## ADR-015 — Charts: Recharts with a fixed chart set and deterministic chart choice
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-10-13)
 - **Decision:**
   - Recharts via shadcn/ui chart components.
   - The chart set is fixed: `kpi`, `line`, `bar`, `bar_horizontal`, `stacked_bar`, `table`.
@@ -266,20 +286,33 @@ Template for new entries:
   - Predictable, accessible charts.
   - No pie charts, except perhaps a later `donut` for ≤5-part shares.
 
-## ADR-016 — Hosting: Vercel + Neon + Railway worker + Cloudflare R2
+## ADR-016 — Hosting in stages: local → free hosted preview → paid production
 
-- **Status:** Proposed
-- **Context:** Simple, managed, cheap at low scale, and good developer experience.
-- **Decision:**
-  - Web on Vercel.
-  - Postgres on Neon (pooled URL for web, direct URL for worker/admin).
-  - Worker on Railway.
-  - Files on R2.
-  - Local dev via Docker Compose.
+- **Status:** Accepted (owner, 2026-10-13; replaces the earlier "Vercel + Neon + Railway + R2 from day one"
+  proposal)
+- **Context:** The owner requires zero infrastructure spend until the product is in production and
+  generating revenue (ADR-026).
+- **Decision:** Three stages, switchable by configuration only (table in ARCHITECTURE §13).
+  - **Stage 0 — Local ($0, default).** Docker Compose Postgres, local file storage, worker process. All
+    development and the investor demo run here.
+  - **Stage 1 — Free hosted preview ($0, optional).**
+    - Web: Vercel Hobby, or Cloudflare/Netlify free if commercial-use terms are a concern (Q19).
+    - Database: Neon Free.
+    - Jobs: inline drain mode with a daily cron.
+    - Files: Postgres storage driver.
+    - Only built if a shareable link is needed before revenue.
+  - **Stage 2 — Paid production (after revenue).**
+    - Vercel Pro (or equivalent)
+    - Neon paid
+    - dedicated worker (Railway/Fly/Render)
+    - R2
+    - Sentry
 - **Consequences:**
-  - Three vendors.
+  - No vendor accounts are needed to build the product.
+  - Free-tier limits and terms must be re-verified when Stage 1 is set up. They change often, and some
+    hobby plans restrict commercial use.
   - Neon's pooler is in transaction mode, which is compatible with our `SET LOCAL` pattern. Never use
-    session-level `SET`.
+    session-level `SET`. Creating NOLOGIN roles and grants via SQL on Neon must be verified in M1.
 
 ## ADR-017 — Row identity and merge strategy for re-uploads
 
@@ -327,7 +360,7 @@ Template for new entries:
 
 ## ADR-020 — Mask PII in AI samples by default
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-10-13)
 - **Decision:**
   - Values detected as emails, phone numbers, or card-like numbers are masked in samples sent to the AI,
     preserving shape (`j***@g***.com`, `+1 ***-***-4821`).
@@ -338,7 +371,7 @@ Template for new entries:
 
 ## ADR-021 — Demo replay mode for AI calls
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-10-13)
 - **Decision:**
   - `AI_REPLAY_MODE=record|replay|off`.
   - In `replay`, workspaces flagged `is_demo` return recorded AI outputs keyed by
@@ -372,7 +405,7 @@ Template for new entries:
 
 ## ADR-024 — Upload and volume limits for the MVP
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-10-13)
 - **Decision:**
   - 25 MB per file.
   - 200k rows per sheet.
@@ -383,7 +416,7 @@ Template for new entries:
 
 ## ADR-025 — Locale handling: workspace currency, timezone and date order
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-10-13)
 - **Decision:**
   - Onboarding captures currency (default USD), timezone (browser-detected), and date order (`DMY`/`MDY`,
     guessed from the browser locale).
@@ -391,3 +424,55 @@ Template for new entries:
     contradicts the setting (e.g. `25/03/2026` under MDY), the profiler resolves it per column and records
     an assumption.
 - **Consequences:** Fewer silent date errors, which are the most common real-world data bug.
+
+## ADR-026 — Zero-cost operating rule until revenue
+
+- **Status:** Accepted (owner, 2026-10-13)
+- **Context:** The owner doesn't want to spend money on servers or services before the product is in
+  production and generating revenue.
+- **Decision:**
+  - Only free options are used for infrastructure and tooling:
+    - local development
+    - free tiers (Neon Free, Vercel Hobby or equivalent, Resend free, GitHub Actions free minutes, Sentry
+      free tier if used)
+    - open-source libraries only
+  - No paid add-ons or custom domains.
+  - Any proposal that would cost money must be raised with the owner first, and logged here.
+- **Exception: the AI API.** The Claude API has no free tier, and the product cannot work without it.
+  Spend is kept to a minimum and hard-capped (ADR-027). The budget is an owner decision (OPEN_QUESTIONS
+  Q18).
+- **Consequences:**
+  - The architecture gains runner modes (ADR-011), a Postgres storage driver (ADR-013), and staged hosting
+    (ADR-016).
+  - The investor demo runs locally.
+  - Moving to paid production is a documented configuration change, tracked in PLAN's roadmap ("Production
+    upgrade").
+
+## ADR-027 — AI spend controls
+
+- **Status:** Accepted (owner, 2026-10-13); budget amounts pending (Q18)
+- **Context:** AI calls are the only unavoidable cost. We need to build, test and demo with minimal and
+  predictable spend.
+- **Decision:**
+  1. **Hard spend guard.** `AI_BUDGET_DAILY_USD` and `AI_BUDGET_MONTHLY_USD` are checked against
+     `app.ai_call` totals before every call. Over budget, the call is refused with a friendly message and
+     deterministic fallbacks are used where they exist (narration templates, insight templates).
+     Development defaults: $2 a day, $15 a month.
+  2. **Record/replay everywhere it's safe.**
+     - Unit and integration tests and CI **never** call the live API. They use recorded fixtures
+       (`AI_REPLAY_MODE=replay`, with a miss treated as a test failure).
+     - Local development records on first use and replays afterwards, by default.
+  3. **Evals are run deliberately.** Only on demand (`pnpm eval --limit N`), with a cost estimate printed
+     before the run and a confirmation prompt above $1.
+  4. **Cheaper tiers where quality allows.**
+     - Haiku for narration and phrasing.
+     - Sonnet for interpretation.
+     - Opus only for data-model proposals and change plans.
+     - We test whether Sonnet at high effort is good enough for data modeling during M2. If it is, the
+       default changes.
+  5. **Prompt caching** on every stable prefix, and known-format fast paths that skip the AI entirely for
+     recognised exports.
+- **Consequences:**
+  - Expected build-phase AI spend is a few dollars a month, which the evals will measure.
+  - Live-API behaviour is exercised only by evals and manual testing, so evals must run before each
+    milestone sign-off.

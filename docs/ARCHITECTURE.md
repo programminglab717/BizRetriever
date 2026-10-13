@@ -28,7 +28,11 @@ BizRetriever has five logical subsystems:
    - `t_<id>_snap`: snapshots for rollback
    - `pgboss`: the job queue
 
-Plus object storage for uploaded files (local filesystem in dev, S3-compatible in prod).
+Plus file storage for uploads, behind a `Storage` interface:
+
+- local filesystem in dev
+- Postgres in the free hosted preview
+- S3-compatible storage in paid production (ADR-013)
 
 ```mermaid
 flowchart LR
@@ -257,6 +261,7 @@ erDiagram
 | `workspace_member` | workspace_id, user_id, role (`owner` \| `member`; more roles later), invited_by, status |
 | `workspace_settings` | currency (ISO 4217), timezone (IANA), date_order (`DMY` \| `MDY` \| `YMD`), fiscal_year_start_month, week_start, pii_masking (bool) |
 | `upload` | file name, size, mime, storage key, sha256, data_source_id, uploaded_by, status |
+| `upload_blob` | upload_id, bytes (`bytea`). Only used by the Postgres storage driver in the free hosted preview (ADR-013) |
 | `sheet_profile` | upload_id, sheet name, detected regions (JSON), column profiles (JSON), masked samples |
 | `data_source` | logical recurring source ("Online orders file"), fingerprint (header signature, sheet names), target entity mappings, last upload |
 | `ingestion_run` | type (`initial` \| `reupload`), status, progress {stage, pct}, error (user-safe + internal), timings |
@@ -474,6 +479,9 @@ Full detail is in `docs/AI_DESIGN.md`.
   - `AI_MODEL_STANDARD` (default `claude-sonnet-5-5`)
   - `AI_MODEL_FAST` (default `claude-haiku-5-5`)
 - **Every call** writes an `app.ai_call` row, with cost computed from a price table in config.
+- **Before every call,** a spend guard checks the configured budgets (`AI_BUDGET_DAILY_USD`,
+  `AI_BUDGET_MONTHLY_USD`) against `app.ai_call` totals. Over budget → the call is refused with a friendly
+  message, and deterministic fallbacks are used where they exist (ADR-027).
 - **Demo replay mode.** With `AI_REPLAY_MODE=record|replay|off`, demo workspaces can serve recorded
   responses keyed by (task, prompt version, input hash). A flaky network can't break the investor demo
   (ADR-021).
@@ -483,6 +491,28 @@ Full detail is in `docs/AI_DESIGN.md`.
 ## 11. Background jobs
 
 pg-boss runs in the same Postgres instance (schema `pgboss`). It needs no extra infrastructure.
+
+**Two runner modes, chosen by config (ADR-011, ADR-026):**
+
+| Mode | `JOB_RUNNER` | Used in | How jobs run |
+|---|---|---|---|
+| Worker | `worker` | Local dev; paid production | `apps/worker` is a long-running process that subscribes to the queues |
+| Inline (serverless drain) | `inline` | Free hosted preview (no worker server) | An authenticated route handler, `POST /api/jobs/drain`, fetches due jobs and runs **steps** within a time budget (`JOB_STEP_BUDGET_MS`, default 45s), then returns |
+
+**What triggers a drain in inline mode:**
+
+- the progress-polling UI, while a user is waiting on an import/merge/change
+- `after()` at the end of the request that enqueued the job
+- a daily platform cron, for `insights.run` (catch-up), `digest.weekly` and `snapshot.gc`
+
+**Consequence: every job is a sequence of resumable, checkpointed steps.** Examples: parse sheet *n*;
+profile; AI proposal; dry run; load entity *k* in batches of 5,000 rows. Each step:
+
+- is idempotent
+- records its checkpoint on the run row
+- fits within the step budget
+
+The worker simply runs steps back to back. The same handler code is used in both modes.
 
 | Queue | Trigger | Notes |
 |---|---|---|
@@ -528,18 +558,30 @@ pg-boss runs in the same Postgres instance (schema `pgboss`). It needs no extra 
 
 ---
 
-## 13. Deployment (proposed, ADR-016)
+## 13. Deployment stages (ADR-016, ADR-026)
 
-| Component | Dev | Prod (proposed) |
-|---|---|---|
-| Web | `pnpm dev` | Vercel |
-| Worker | `pnpm dev:worker` | Railway (or Fly/Render), one small instance |
-| Postgres | Docker Compose (Postgres 17) | Neon (pooled connection for web, direct connection for worker/admin) |
-| Object storage | local `./.data/uploads` | Cloudflare R2 (S3 API) |
-| Secrets | `.env.local` | platform env vars |
+**Zero-cost rule:** we spend nothing on infrastructure until the product is in production and earning
+revenue. The code is built so that moving between stages is configuration only.
 
-CI (GitHub Actions) runs lint, typecheck, unit tests, and integration tests against a Postgres service
-container. The AI eval suite runs manually or nightly (it costs money).
+| Component | Stage 0 — Local (default, $0) | Stage 1 — Free hosted preview (optional, $0) | Stage 2 — Paid production (after revenue) |
+|---|---|---|---|
+| Web | `pnpm dev` / `pnpm start` | Vercel Hobby (or Cloudflare/Netlify free; see OPEN_QUESTIONS Q19) | Vercel Pro (or equivalent) |
+| Jobs | `apps/worker` (`JOB_RUNNER=worker`) | Inline drain (`JOB_RUNNER=inline`) + daily free cron | Dedicated worker (Railway/Fly/Render) |
+| Postgres | Docker Compose (Postgres 17) | Neon Free (pooled URL for web; direct URL for admin steps) | Neon paid (or similar) |
+| File storage | local `./.data/uploads` | Postgres driver (`app.upload_blob`, small files only) | Cloudflare R2 / S3 |
+| Email | console (links printed in logs) | Resend free tier, or console + manual | Resend paid as volume needs |
+| Error tracking | pino logs | pino logs (Sentry free tier optional) | Sentry |
+| Domain | `localhost` | free platform subdomain | custom domain |
+| Secrets | `.env.local` | platform env vars | platform env vars |
+
+**The investor demo runs from Stage 0 (a laptop)** by default, with AI replay as a safety net (ADR-021).
+Stage 1 is only for sharing a link, and its free-tier limits (storage, compute hours, function duration,
+cron frequency, terms of use) must be re-checked when it's set up. Free tiers change often.
+
+**CI:** GitHub Actions runs lint, typecheck, unit tests, and integration tests against a Postgres service
+container. Free minutes apply: unlimited for public repos, a monthly allowance for private ones. CI
+cancels superseded runs and caches pnpm to stay within that allowance. The AI eval suite never runs in CI
+(ADR-027).
 
 ---
 
@@ -548,4 +590,6 @@ container. The AI eval suite runs manually or nightly (it costs money).
 - **Structured logs:** pino with a correlation id per request/job.
 - **`app.ai_call` and `app.query_runs`** are queryable for per-workspace cost and latency. An internal
   admin page (M8) shows AI cost per workspace, p50/p95 latencies, and validation-failure rates.
-- **Error tracking:** Sentry (proposed, see OPEN_QUESTIONS).
+- **Error tracking:** structured logs only during the zero-cost phase. Sentry when in paid production
+  (its free tier is optional earlier).
+- **AI spend guard:** a hard daily/monthly budget check before every AI call (ADR-027).

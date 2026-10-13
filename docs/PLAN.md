@@ -8,6 +8,8 @@
 
 **Rules:**
 
+- **Zero-cost rule (ADR-026):** free options only until production and revenue. The one exception is
+  capped AI API spend (ADR-027). Anything that would cost money is raised with the owner first.
 - Work milestone by milestone.
 - A milestone is done only when its acceptance criteria pass **and** the owner confirms.
 - Update the checkboxes at the end of every session.
@@ -61,7 +63,7 @@ Re-upload/merge (M6) is *not* cuttable for the product, but is optional for the 
   - VERTICAL_PACKS
   - DEMO_SCRIPT
   - OPEN_QUESTIONS
-- [ ] Owner approval of the plan, plus answers to the open questions marked "needed before M0/M1"
+- [x] Owner approval of the plan; all proposed defaults accepted, plus the zero-cost rule (2026-10-13)
 
 **Repo and tooling:**
 
@@ -77,12 +79,15 @@ Re-upload/merge (M6) is *not* cuttable for the product, but is optional for the 
 - [ ] Node 24 LTS pinned (`.nvmrc`, `engines`); pnpm pinned via `packageManager`
 - [ ] Next.js app scaffold (App Router), Tailwind, shadcn/ui init, base layout, health route
 - [ ] Worker scaffold with pg-boss connection and a no-op job
+- [ ] Job framework (`packages/core/jobs`): resumable, checkpointed steps; `JOB_RUNNER=worker|inline`;
+  `POST /api/jobs/drain` route (authenticated by a shared secret) with a step time budget; a test that
+  runs the no-op multi-step job in both modes (ADR-011)
 - [ ] `docker-compose.yml`: Postgres 17 (with init script creating the roles `bizr_app`, `bizr_admin`,
   `bizr_tenant`)
 - [ ] Env config module with Zod validation; `.env.example` listing every variable
 - [ ] Drizzle setup in `packages/db`: migration tooling, an empty initial migration for the `app` schema
 - [ ] Vitest configured across packages; Playwright installed with one smoke test
-- [ ] GitHub Actions CI:
+- [ ] GitHub Actions CI (free minutes: cancel superseded runs, cache pnpm, never call the AI API):
   - install
   - lint
   - typecheck
@@ -109,8 +114,8 @@ tenant schema.
 
 **Depends on:** M0.
 
-- [ ] Better Auth: email/password + Google OAuth; sessions; password reset (email via console in dev,
-  Resend in prod)
+- [ ] Better Auth: email/password + Google OAuth; sessions; password reset. Email goes to the console
+  locally; an `EmailSender` interface gets a Resend (free tier) driver for hosted stages.
 - [ ] Control-plane tables:
   - `workspace`
   - `workspace_member`
@@ -164,7 +169,8 @@ report.
 
 **Parsing and profiling:**
 
-- [ ] Storage interface: local filesystem + S3 drivers; upload route with size/type checks; sha256
+- [ ] Storage interface with `local`, `postgres` (`app.upload_blob`) and `s3` drivers (the s3 driver is
+  tested against MinIO in Docker; no cloud account needed); upload route with size/type checks; sha256
 - [ ] Parsing: SheetJS (xlsx/xls), Papa Parse (csv), encoding detection; merged-cell expansion; Excel
   serial dates
 - [ ] Region detector: header rows, multi-row headers, title rows, section rows, totals, blank and note rows,
@@ -184,7 +190,10 @@ report.
   - Anthropic implementation (structured outputs, caching, refusal handling)
   - `ai_call` logging with cost
   - prompt versioning
-  - replay mode (record/replay)
+  - replay mode (record/replay); tests and CI replay only, with a miss treated as a failure
+  - spend guard (`AI_BUDGET_DAILY_USD` / `AI_BUDGET_MONTHLY_USD`) with deterministic fallbacks (ADR-027)
+  - Sonnet-vs-Opus comparison for data modeling on the ingest eval, to pick the cheapest tier that meets
+    the bar
 - [ ] Task A `proposeDataModel`, Task B `reviseDataModel`, Task C `summarizeProposal`
 - [ ] Proposal validator + dry-run executor (stats per entity, issues per row)
 
@@ -202,7 +211,8 @@ report.
 
 **Jobs and UI:**
 
-- [ ] Jobs: `ingest.parse`, `ingest.revise`, `ingest.apply`, with progress reporting and idempotency
+- [ ] Jobs: `ingest.parse`, `ingest.revise`, `ingest.apply`, written as checkpointed steps (each within
+  `JOB_STEP_BUDGET_MS`), with progress reporting and idempotency; verified in both runner modes
 - [ ] UI:
   - upload screen
   - processing screen (stages + teaser)
@@ -434,8 +444,12 @@ records by chat, structural changes by chat with versioning and rollback.
 
 - [ ] Internal admin page: AI cost per workspace, latency percentiles, validation-failure rates, eval
   baselines
-- [ ] Sentry (or the chosen tool) wired up for web + worker
-- [ ] Production deployment (Vercel + Neon + Railway + R2) with a seeded demo account
+- [ ] Local "demo machine" setup: one command (`pnpm demo:up`) starts Postgres, web and worker, resets the
+  demo workspace, and switches AI to replay mode
+- [ ] *(Optional, $0)* Stage 1 free hosted preview: Vercel Hobby (or equivalent) + Neon Free + inline
+  jobs + Postgres storage + daily cron. Re-verify free-tier limits and terms first (OPEN_QUESTIONS Q19).
+- [ ] Production upgrade runbook written (`docs/RUNBOOK_PRODUCTION.md`): the Stage 2 switch (paid web
+  plan, dedicated worker, R2, Sentry, custom domain). **Not executed until revenue.**
 - [ ] DEMO_SCRIPT rehearsal checklist completed twice end to end, with timings recorded
 - [ ] Full eval run; results recorded in PROGRESS
 
@@ -443,6 +457,7 @@ records by chat, structural changes by chat with versioning and rollback.
 
 - Two consecutive full rehearsals finish within 7 minutes with zero errors.
 - The demo works with the network to the AI provider blocked (replay).
+- Infrastructure spend to date: $0. AI spend within the agreed budget (reported from `app.ai_call`).
 - All milestone acceptance criteria still hold.
 
 ---
@@ -458,4 +473,5 @@ records by chat, structural changes by chat with versioning and rollback.
 | Platform | Public API and MCP server exposing the semantic layer to other apps and agents; webhooks |
 | Packs | Wholesale/distribution, restaurants/food service, services/agencies, health & beauty salons |
 | Business | Billing and plans (usage-based AI cost informs pricing); onboarding concierge |
+| Production upgrade (after revenue) | Execute the Stage 2 runbook: paid web plan, dedicated worker (`JOB_RUNNER=worker`), S3/R2 storage + migration of blobs, Sentry, custom domain, backups/PITR |
 | Hardening | Per-tenant login roles (ADR-005 option 3); tenant sharding across databases; SOC 2 readiness; data residency (EU) |

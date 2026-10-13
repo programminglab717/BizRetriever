@@ -12,8 +12,10 @@
 
 ## 1. Setup (before the meeting)
 
-- [ ] Production (or staging) URL loaded and signed in as `demo@…`. Browser zoom at 110%. Notifications
-  off.
+- [ ] Demo runs **locally on the presenter's laptop** (zero-cost rule, ADR-026): `pnpm demo:up` started
+  ≥ 10 minutes before. Signed in as `demo@…`. Browser zoom at 110%. Notifications off. Laptop on mains
+  power.
+- [ ] *(Only if a Stage 1 free hosted preview exists)* hosted link open in a third tab as a further backup.
 - [ ] Two tabs open:
   - **(A)** the upload screen of a fresh, empty workspace "Fernwood Home & Gift"
   - **(B)** a pre-imported backup workspace with the same data, in case live import has trouble

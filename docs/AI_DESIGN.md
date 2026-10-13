@@ -105,6 +105,12 @@ interface LLMProvider {
 - **Streaming** for any call with `max_tokens` > 16k (data-model proposals).
 - **Cost:** computed from `usage` (input, output, cache read, cache write) times a price table in
   `packages/ai/pricing.ts`, then written to `app.ai_call`.
+- **Spend guard (ADR-027):** before each call, today's and this month's totals are checked against
+  `AI_BUDGET_DAILY_USD` / `AI_BUDGET_MONTHLY_USD`. Over budget → `AiBudgetExceeded`. Callers use
+  deterministic fallbacks where they exist, or show "Our AI helper is resting for today. Your data and
+  dashboard still work."
+- **Replay (ADR-021, ADR-027):** `AI_REPLAY_MODE=record|replay|off`. Tests/CI always replay (a miss is a
+  failure). Local dev defaults to record-then-replay.
 
 **Model tiers (env; defaults as of 2026-10):**
 
@@ -635,6 +641,9 @@ LLMs never decide *whether* something is an insight. They only (optionally) phra
 
 Targets will be revisited after the M2/M4 evals. If quality holds, the standard tier at lower effort is
 preferred over the strong tier.
+
+**Build-phase budget:** hard caps of $2/day and $15/month by default (Q18). Every eval run prints an
+estimated cost first and asks for confirmation above $1.
 
 **Monthly cost per active workspace target:** ≤ $5 at about 100 questions a month, plus weekly uploads.
 Tracked in the admin view (M8).

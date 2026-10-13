@@ -30,7 +30,8 @@ physical shops, multi-channel, light wholesale). Industry knowledge lives in swa
 
 - TypeScript everywhere, Node 24 LTS, pnpm workspaces monorepo.
 - `apps/web`: Next.js (App Router), Tailwind CSS, shadcn/ui, Recharts (via shadcn charts).
-- `apps/worker`: pg-boss worker for ingestion, loading, insights.
+- `apps/worker`: pg-boss worker for ingestion, loading, insights. Jobs are checkpointed steps that can also
+  run serverless via a drain route (`JOB_RUNNER=worker|inline`).
 - PostgreSQL 17: `app` schema (control plane, Drizzle ORM), one `t_<id>` schema per workspace (tenant data,
   managed by our change-plan compiler), and `pgboss` schema (job queue).
 - Auth: Better Auth (email/password + Google), workspaces and memberships from day one.
@@ -71,7 +72,8 @@ docs/             all planning documentation
 | Control-plane migrations | `pnpm db:migrate` (generate: `pnpm db:generate`) |
 | Seed dev data | `pnpm db:seed` |
 | Generate demo dataset | `pnpm demo:generate` |
-| AI eval suite (costs money) | `pnpm eval` |
+| AI eval suite (costs money; asks before > $1) | `pnpm eval --limit N` |
+| Local demo machine (M8) | `pnpm demo:up` |
 
 ## Coding conventions
 
@@ -91,6 +93,14 @@ docs/             all planning documentation
   "customers".
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`). Small, focused commits.
   Feature branches. `main` must always be runnable.
+
+## Zero-cost rule (owner decision, ADR-026)
+
+Use free options only until the product is in production and generating revenue: local dev, free tiers,
+open-source libraries. Never add a paid service, plan or add-on without asking the owner first. The only
+exception is the AI API, which is hard-capped by `AI_BUDGET_DAILY_USD` / `AI_BUDGET_MONTHLY_USD` (ADR-027).
+**Tests and CI must never call the live AI API.** They use replay recordings. Run evals only on demand,
+with `--limit`.
 
 ## Safety rules (non-negotiable)
 

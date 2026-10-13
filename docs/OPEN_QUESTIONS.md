@@ -16,23 +16,11 @@ overridden. When an item is decided, move it to "Resolved" with the date, and up
 
 | # | Pri | Question | Default (in use until decided) | ADR |
 |---|---|---|---|---|
-| Q1 | P0 | **Demo date and team.** When is the first investor demo? Is anyone else contributing? | Assume ~8–10 weeks of focused work; solo engineer + owner. The demo-critical path (★ in PLAN) is protected; cuttable items move after the demo if needed. | — |
-| Q2 | P0 | **Git workflow.** `main` has no commits. Bootstrap `main` with these docs, or PR from the feature branch? | Docs committed on `claude/elegant-hopper-dtc9gi`; PR into `main` only when the owner asks. Each milestone afterwards gets its own feature branch + PR. | — |
-| Q3 | P0 | **Hosting vendors.** OK with Vercel + Neon + Railway (worker) + Cloudflare R2? Existing accounts? | Yes, as proposed. Local dev needs none of them. | ADR-016 |
-| Q4 | P0 | **Background jobs.** pg-boss + a separate worker (needs Railway or similar), or a hosted queue (Inngest/Trigger.dev) to avoid running a worker? | pg-boss + Railway worker. | ADR-011 |
-| Q5 | P0 | **Auth library.** Better Auth (self-hosted), or Clerk (hosted, paid, fastest)? | Better Auth. | ADR-012 |
-| Q6 | P1 (M1) | **Transactional email provider** for verification/reset (and later digests). | Resend; console logging in dev. | ADR-012 |
-| Q7 | P1 (M1) | **Default currency and locale.** Is the first market the US, UK, or elsewhere? Affects demo currency, date order and copy (e.g. "sales tax" vs "VAT"). | USD, MDY dates, US English; all configurable per workspace. | ADR-025 |
-| Q8 | P1 (M2) | **Privacy.** OK to send masked column samples (names visible; emails/phones masked) to Anthropic? Any data-residency (EU) or zero-data-retention requirement? | Yes, with masking on by default; no residency constraint for the MVP. | ADR-020 |
-| Q9 | P1 (M2) | **Upload limits.** 25 MB / 200k rows per sheet / ~2M rows per workspace OK? | Yes. | ADR-024 |
-| Q10 | P1 (M2) | **AI cost budget.** Target AI cost per active workspace per month? | ≤ $5/month at ~100 questions + weekly uploads; strong model only for data modeling and change plans. | ADR-010 |
-| Q11 | P1 (M2) | **File retention.** How long do we keep original uploaded files? | Keep for the life of the workspace (enables re-processing and lineage); delete with the workspace. | ADR-013 |
-| Q12 | P1 (M8) | **Branding.** Is "BizRetriever" final? Logo, colours, design references? | Neutral shadcn theme + placeholder wordmark until provided. | — |
-| Q13 | P1 (M8) | **Demo mode honesty.** Is AI replay for the demo workspace acceptable to you? It is a resilience mechanism; live calls are used on cache misses and for real users. | Yes, with live import shown first and replay only as a safety net. | ADR-021 |
-| Q14 | P1 (M8) | **Public demo.** Presenter-only, or a public "Try the demo shop" link investors can use themselves? | Presenter-driven, plus one-click demo for any signed-up user. A public no-signup demo is a later option (abuse/cost controls needed). | — |
-| Q15 | P2 | **Error tracking / product analytics.** Sentry? PostHog? | Sentry in M8; PostHog later. | — |
-| Q16 | P2 | **Terminology check with real users.** Do owners say "orders" or "sales", "stock" or "inventory"? (Varies US/UK.) | UI uses "sales" and "stock" with locale-aware variants later; validate in 3–5 user interviews. | — |
-| Q17 | P2 | **Pricing model** (informs cost tracking and limits). Per workspace, per seat, usage tiers? | Track AI cost per workspace from day one; decide later. | — |
+| Q18 | P1 (M2) | **AI API budget.** The Claude API has no free tier and the product can't work without it. What monthly cap is acceptable during the build? | Hard caps of $2/day and $15/month. Tests and CI never call the API (replay). Evals only on demand. We'll report actual spend in PROGRESS. | ADR-026, ADR-027 |
+| Q19 | P2 (M8) | **Free hosted preview platform.** Vercel Hobby's terms restrict it to non-commercial use. Is a pre-revenue investor preview OK there, or should we use a free tier that allows commercial use (e.g. Cloudflare Workers via the OpenNext adapter, Netlify)? Only matters if we want a shareable link before revenue. | Demo from a laptop (Stage 0). Decide this only if a hosted link is needed; re-check current terms then. | ADR-016 |
+| Q12 | P1 (M8) | **Branding.** Logo, colours, design references? | Neutral shadcn theme + placeholder wordmark until provided. | — |
+| Q16 | P2 | **Terminology check with real users.** Do owners say "orders" or "sales", "stock" or "inventory"? (Varies US/UK.) | "Sales" and "stock"; validate in 3–5 user interviews. | — |
+| Q17 | P2 | **Pricing model.** Per workspace, per seat, usage tiers? | Track AI cost per workspace from day one; decide later. | — |
 
 ---
 
@@ -52,6 +40,8 @@ overridden. When an item is decided, move it to "Resolved" with the date, and up
 | R10 | **Scope creep** across M0–M8 delays the demo | High | High | Demo-critical path; cuttable items marked; milestone gates with owner confirmation |
 | R11 | **Narration feels stilted** because of the placeholder constraint | Low | Low | Facts include labels and comparisons; phrasing eval; deterministic templates as fallback |
 | R12 | **Vendor model changes** (model IDs, API behaviour) | Medium | Low | Model IDs in env; provider abstraction; eval suite run before changing models |
+| R14 | **Free-tier limits or terms change** (storage, compute hours, function duration, commercial-use clauses) | Medium | Low–Medium | Stage 0 local is the default; free preview is optional; staged design means switching vendors is config; re-verify before Stage 1 |
+| R15 | **AI spend creeps up** during development | Medium | Low | Hard budget guard, replay-only tests/CI, on-demand evals with cost estimates, cheapest tier that passes evals |
 | R13 | **Messy data the profiler can't structure** (pivot tables, images, multiple tables side by side) | Medium | Medium | Region detector handles multiple blocks; graceful "we couldn't read this part" with a skip option; collect such files for future work |
 
 ---
@@ -60,4 +50,19 @@ overridden. When an item is decided, move it to "Resolved" with the date, and up
 
 | # | Date | Question | Decision |
 |---|---|---|---|
+| — | 2026-10-13 | **Zero-cost rule** | Free options only until production and revenue; AI API is the one capped exception (ADR-026, ADR-027). |
+| Q1 | 2026-10-13 | Demo date and team | Default accepted: plan for ~8–10 weeks, solo engineer + owner; protect the ★ path. |
+| Q2 | 2026-10-13 | Git workflow | Default accepted: work on feature branches; PR into `main` only when the owner asks. |
+| Q3 | 2026-10-13 | Hosting vendors | Amended by the zero-cost rule: staged hosting (local → free preview → paid production after revenue) (ADR-016). |
+| Q4 | 2026-10-13 | Background jobs | pg-boss with worker mode + free serverless drain mode (ADR-011). |
+| Q5 | 2026-10-13 | Auth library | Better Auth (ADR-012). |
+| Q6 | 2026-10-13 | Email provider | Console locally; Resend free tier when hosted. |
+| Q7 | 2026-10-13 | Currency/locale | USD, MDY dates, US English defaults; configurable per workspace (ADR-025). |
+| Q8 | 2026-10-13 | Privacy | Masked samples to Anthropic OK; no residency constraint for the MVP (ADR-020). |
+| Q9 | 2026-10-13 | Upload limits | 25 MB / 200k rows per sheet / ~2M rows per workspace (ADR-024). |
+| Q10 | 2026-10-13 | AI cost per workspace target | ≤ $5/month per active workspace in production; build-phase cap tracked under Q18. |
+| Q11 | 2026-10-13 | File retention | Keep originals for the life of the workspace (ADR-013). |
+| Q13 | 2026-10-13 | Demo replay | Accepted as a safety net; live import shown first (ADR-021). |
+| Q14 | 2026-10-13 | Public demo | Presenter-driven + one-click demo for signed-up users. |
+| Q15 | 2026-10-13 | Error tracking / analytics | Logs only during the zero-cost phase; Sentry in paid production (free tier optional earlier). |
 | — | 2026-10-13 | Target vertical: Shopify merchants vs retail generally | **Retail & Ecommerce sellers with messy data** (online, marketplace, physical shop, multi-channel, light wholesale). Shopify/Etsy/POS exports are recognised formats inside the pack. (ADR-001) |

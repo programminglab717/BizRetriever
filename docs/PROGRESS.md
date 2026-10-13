@@ -2,18 +2,55 @@
 
 ## Current Status
 
-- **Milestone:** M0 — Foundation (planning docs complete; awaiting owner approval).
+- **Milestone:** M0 — Foundation. The plan is **approved** (2026-10-13). Repo/tooling work is next.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **Application code:** none yet. This is intentional: no code until the plan is approved.
-- **Blocked on:**
-  - Owner approval of the plan.
-  - Answers to the P0 items in `docs/OPEN_QUESTIONS.md` (Q1–Q5). Defaults are in place if the owner
-    accepts them.
-- **Next step once approved:** start the M0 repo/tooling tasks in `docs/PLAN.md`.
+- **Application code:** none yet.
+- **Operating rule:** zero cost until production and revenue (ADR-026). AI API spend is the one capped
+  exception (ADR-027); the budget amount is pending (Q18), with a default of $2/day and $15/month.
+- **Blocked on:** nothing. Q18 must be confirmed before M2 (the first milestone that calls the AI).
+- **Next step:** start the M0 repo/tooling tasks in `docs/PLAN.md`.
 
 ---
 
 ## Session log
+
+### 2026-10-13 — Planning session 2
+
+**Completed:**
+
+- The owner approved the plan and accepted all proposed defaults (Q1–Q17 resolved).
+- New owner rule: **zero infrastructure spend until production and revenue.** Docs updated:
+  - **ADR-026 (new):** zero-cost operating rule.
+  - **ADR-027 (new):** AI spend controls.
+    - hard daily/monthly budget guard
+    - replay-only tests and CI
+    - on-demand evals with cost estimates
+    - cheapest model tier that passes evals
+  - **ADR-016 rewritten:** staged hosting. Local ($0) → optional free hosted preview ($0) → paid
+    production after revenue.
+  - **ADR-011 amended:** jobs are checkpointed steps that run either in a worker or via a serverless drain
+    route (`JOB_RUNNER=worker|inline`), so no paid worker host is needed.
+  - **ADR-013 amended:** added a Postgres storage driver for the free preview.
+  - **ARCHITECTURE:** §11 (runner modes) and §13 (deployment stages) updated.
+  - **PLAN:** M0/M1/M2/M8 tasks updated, and a "Production upgrade" item added to the roadmap.
+  - **CLAUDE.md:** zero-cost rule added.
+  - **DEMO_SCRIPT:** the demo runs locally.
+  - **OPEN_QUESTIONS:** new Q18 (AI budget) and Q19 (free hosted preview platform/terms).
+
+**Exact next steps:**
+
+1. M0:
+   - scaffold the pnpm monorepo, TypeScript, ESLint, Prettier
+   - Next.js + Tailwind + shadcn, and the worker
+   - job framework with both runner modes
+   - Docker Compose Postgres with role init
+   - Drizzle
+   - Vitest/Playwright
+   - GitHub Actions CI
+   - `.env.example`
+   - README
+2. Before M2: confirm the AI budget (Q18).
+
 
 ### 2026-10-13 — Planning session 1
 
