@@ -11,7 +11,9 @@
     "./sql": "./src/sql/ident.ts",
     "./workspaces": "./src/workspaces/index.ts",
     "./ai": "./src/ai/index.ts",
-    "./change-plan": "./src/change-plan/index.ts"
+    "./change-plan": "./src/change-plan/index.ts",
+    "./narration": "./src/narration/index.ts",
+    "./ingestion": "./src/ingestion/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

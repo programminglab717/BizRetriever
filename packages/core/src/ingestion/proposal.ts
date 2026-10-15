@@ -216,6 +216,16 @@ export const questionEffectSchema = z.discriminatedUnion('kind', [
       field: fieldKey,
     })
     .strict(),
+  /** "This column is really …": map one column to a field (replacing any existing mapping). */
+  z
+    .object({
+      kind: z.literal('map_column'),
+      sourceId: text(40),
+      entity: fieldKey,
+      field: fieldKey,
+      column: columnRefSchema,
+    })
+    .strict(),
 ]);
 export type QuestionEffect = z.infer<typeof questionEffectSchema>;
 

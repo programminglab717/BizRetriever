@@ -10,6 +10,8 @@ import { planFromPack } from '../change-plan/from-pack';
 import { analyzeFiles, type Analysis } from './analyze';
 import { proposeHeuristically, type HeuristicResult } from './heuristic';
 import { materialize, type EntitySpec, type MaterializeResult } from './materialize';
+import { validateProposal } from './validate';
+import { findJargon } from '../narration';
 
 /**
  * The deterministic pipeline on the Fernwood demo files, checked against the generator's answer key.
@@ -51,6 +53,17 @@ describe('deterministic pipeline on the demo files', () => {
     const ignored = heuristic.proposal.sources.filter((s) => s.decision === 'ignore');
     expect(ignored, JSON.stringify(ignored)).toEqual([]);
     expect(heuristic.spotted.join('\n')).toMatch(/Shopify orders/);
+  });
+
+  it('produces a valid proposal in plain language', () => {
+    const v = validateProposal(heuristic.proposal, { sources: analysis.profiled, pack });
+    expect(v.errors).toEqual([]);
+    expect(v.warnings).toEqual([]);
+    const texts = [
+      ...heuristic.proposal.assumptions.map((a) => a.text),
+      ...heuristic.proposal.questions.flatMap((q) => [q.text, ...q.options.map((o) => o.label)]),
+    ];
+    for (const t of texts) expect(findJargon(t), t).toEqual([]);
   });
 
   it('finds every product, supplier, order and line', () => {

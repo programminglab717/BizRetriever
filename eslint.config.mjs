@@ -74,12 +74,15 @@ export default defineConfig([
   restrict(['packages/platform/**'], ['@bizr/*']),
   restrict(
     ['packages/db/**'],
-    ['@bizr/core', '@bizr/core/*', '@bizr/ingest', '@bizr/ai', '@bizr/packs'],
+    ['@bizr/core', '@bizr/core/*', '@bizr/ingest', '@bizr/ai', '@bizr/ai/*', '@bizr/packs'],
   ),
-  restrict(['packages/ai/**'], ['@bizr/db', '@bizr/db/*', 'pg', 'drizzle-orm', 'drizzle-orm/*']),
+  restrict(
+    ['packages/ai/**'],
+    ['@bizr/db', '@bizr/db/*', '@bizr/core', '@bizr/core/*', 'pg', 'drizzle-orm', 'drizzle-orm/*'],
+  ),
   restrict(
     ['packages/packs/**'],
-    ['@bizr/db', '@bizr/db/*', '@bizr/core', '@bizr/core/*', '@bizr/ai'],
+    ['@bizr/db', '@bizr/db/*', '@bizr/core', '@bizr/core/*', '@bizr/ai', '@bizr/ai/*'],
   ),
   prettier,
 ]);

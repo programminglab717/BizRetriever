@@ -284,7 +284,7 @@ export function proposeHeuristically(
       out.assumptions.push({
         id: `${source.sourceId}-months`,
         about: label(source),
-        text: `“${label(source)}” has a column per month. We’ll record each amount on the first day of its month in ${year}.`,
+        text: `“${label(source)}” has a separate amount for each month. We’ll record each amount on the first day of its month in ${year}.`,
         confidence: 0.8,
       });
     }
@@ -575,7 +575,7 @@ export function proposeHeuristically(
         out.assumptions.push({
           id: `${source.sourceId}-refunds`,
           about: label(source),
-          text: `Rows with a negative quantity in “${label(source)}” look like refunds. We’ll record them as returns, not sales.`,
+          text: `Lines with a negative quantity in “${label(source)}” look like refunds. We’ll record them as returns, not sales.`,
           confidence: 0.75,
         });
       }

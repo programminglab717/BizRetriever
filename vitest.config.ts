@@ -3,7 +3,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['packages/*/src/**/*.test.ts', 'apps/*/src/**/*.test.ts'],
+    include: [
+      'packages/*/src/**/*.test.ts',
+      'packages/ai/prompts/**/*.test.ts',
+      'apps/*/src/**/*.test.ts',
+    ],
     // Integration tests (`*.int.test.ts`) share one test database; keep them from interleaving.
     fileParallelism: false,
     testTimeout: 20_000,
