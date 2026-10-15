@@ -1,0 +1,10 @@
+description: Etsy export with day-first dates in a month-first business; should ask about the dates.
+dateOrder: MDY
+counts: { sale: 4, sale_line: 4, customer: 3 }
+mappings:
+  - { file: EtsySoldOrderItems.csv, header: Sale Date, field: sale.sale_date }
+  - { file: EtsySoldOrderItems.csv, header: Quantity, field: sale_line.quantity }
+  - { file: EtsySoldOrderItems.csv, header: Price, field: sale_line.unit_price }
+  - { file: EtsySoldOrderItems.csv, header: Order ID, field: sale.order_number }
+  - { file: EtsySoldOrderItems.csv, header: Order ID, field: sale_line.sale }
+questionsAbout: [day-first]

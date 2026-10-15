@@ -1,0 +1,8 @@
+description: Shop till export; negative quantities are refunds.
+dateOrder: MDY
+counts: { sale: 3, sale_line: 4, return: 1 }
+mappings:
+  - { file: till_export.csv, header: Date, field: sale.sale_date }
+  - { file: till_export.csv, header: Qty, field: sale_line.quantity }
+  - { file: till_export.csv, header: Date, field: return.return_date }
+  - { file: till_export.csv, header: Qty, field: return.quantity }

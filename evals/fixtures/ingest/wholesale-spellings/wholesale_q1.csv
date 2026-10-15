@@ -1,0 +1,5 @@
+Invoice,Date,Customer,Product,Qty,Unit Price,Paid?
+INV-101,01/08/2026,Bloom & Co,Sage Stoneware Mug,12,9.00,Y
+INV-102,01/22/2026,Bloom and Co.,Fig Candle,6,12.00,Y
+INV-103,02/05/2026,BLOOM & CO LTD,Sage Stoneware Mug,12,9.00,N
+INV-104,02/19/2026,Juniper House,Bud Vase,10,7.50,Y

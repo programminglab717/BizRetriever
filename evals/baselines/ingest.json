@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "cases": 11,
+    "passRate": 1,
+    "mappingF1": 1,
+    "countAccuracy": 1,
+    "canaryFailures": 0
+  }
+}

@@ -1,0 +1,7 @@
+Name,Email,Financial Status,Created at,Lineitem quantity,Lineitem name,Lineitem price,Lineitem sku,Billing Name,Billing City,Total
+#1001,ann.lee@example.com,paid,2026-03-01 10:15:00 -0500,1,Sage Stoneware Mug,18.00,FW-MUG-001,Ann Lee,Portland,54.00
+#1001,,,,2,Oat Stoneware Mug,18.00,FW-MUG-002,,,
+#1002,bob.day@example.com,paid,2026-03-02 14:02:00 -0500,1,Fig Candle,24.00,FW-CAN-001,Bob Day,Austin,24.00
+#1003,cara.ng@example.com,refunded,2026-03-03 09:40:00 -0500,3,Linen Napkin Set,32.00,FW-LIN-001,Cara Ng,Denver,96.00
+#1004,ann.lee@example.com,paid,2026-03-05 18:22:00 -0500,1,Bud Vase,15.00,FW-VAS-001,Ann Lee,Portland,33.00
+#1004,,,,1,Sage Stoneware Mug,18.00,FW-MUG-001,,,

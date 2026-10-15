@@ -6,6 +6,7 @@ export default defineConfig({
     include: [
       'packages/*/src/**/*.test.ts',
       'packages/ai/prompts/**/*.test.ts',
+      'evals/runner/**/*.test.ts',
       'apps/*/src/**/*.test.ts',
     ],
     // Integration tests (`*.int.test.ts`) share one test database; keep them from interleaving.

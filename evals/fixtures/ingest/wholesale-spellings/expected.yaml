@@ -1,0 +1,10 @@
+description: Wholesale invoices where one stockist is spelled three ways.
+dateOrder: MDY
+counts: { sale: 4, sale_line: 4, customer: 2 }
+mappings:
+  - { file: wholesale_q1.csv, header: Invoice, field: sale.order_number }
+  - { file: wholesale_q1.csv, header: Date, field: sale.sale_date }
+  - { file: wholesale_q1.csv, header: Qty, field: sale_line.quantity }
+  - { file: wholesale_q1.csv, header: Unit Price, field: sale_line.unit_price }
+  - { file: wholesale_q1.csv, header: Invoice, field: sale_line.sale }
+questionsAbout: [Bloom]

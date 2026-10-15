@@ -28,7 +28,7 @@ describe('parseDate', () => {
     ['Mar 4 2026', { date: '2026-03-04', format: 'MON D Y', ambiguous: false }],
     ['March 4, 2026', { date: '2026-03-04', format: 'MON D Y', ambiguous: false }],
     ['3/4/26 2:30 pm', { date: '2026-03-04', time: '14:30:00', format: 'M/D/Y', ambiguous: true }],
-    ['05/05/2026', { date: '2026-05-05', format: 'D/M/Y', ambiguous: false }],
+    ['05/05/2026', { date: '2026-05-05', format: 'M/D/Y', ambiguous: true }],
   ])('parses %j', (input, expected) => {
     expect(parseDate(input)).toEqual(expected);
   });
@@ -40,6 +40,14 @@ describe('parseDate', () => {
     });
     expect(parseDate('03/04/2026', { dateOrder: 'DMY' })).toMatchObject({
       date: '2026-04-03',
+      ambiguous: true,
+    });
+  });
+
+  it('treats a date with equal day and month as no evidence of the order', () => {
+    expect(parseDate('03/03/2026', { dateOrder: 'MDY' })).toMatchObject({
+      date: '2026-03-03',
+      format: 'M/D/Y',
       ambiguous: true,
     });
   });

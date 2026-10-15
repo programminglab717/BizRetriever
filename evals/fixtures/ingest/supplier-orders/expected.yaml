@@ -1,0 +1,8 @@
+description: Supplier purchase orders, one line per product ordered.
+dateOrder: MDY
+counts: { purchase: 3, purchase_line: 4, supplier: 2 }
+mappings:
+  - { file: purchase_orders.csv, header: PO Number, field: purchase.po_number }
+  - { file: purchase_orders.csv, header: Order Date, field: purchase.order_date }
+  - { file: purchase_orders.csv, header: Qty, field: purchase_line.quantity }
+  - { file: purchase_orders.csv, header: PO Number, field: purchase_line.purchase }

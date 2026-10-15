@@ -134,6 +134,37 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
+  evals:
+    dependencies:
+      '@bizr/ai':
+        specifier: workspace:*
+        version: link:../packages/ai
+      '@bizr/core':
+        specifier: workspace:*
+        version: link:../packages/core
+      '@bizr/demo-data':
+        specifier: workspace:*
+        version: link:../packages/demo-data
+      '@bizr/ingest':
+        specifier: workspace:*
+        version: link:../packages/ingest
+      '@bizr/packs':
+        specifier: workspace:*
+        version: link:../packages/packs
+      '@bizr/platform':
+        specifier: workspace:*
+        version: link:../packages/platform
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+
   packages/ai:
     dependencies:
       '@anthropic-ai/sdk':

@@ -1,0 +1,9 @@
+description: Shopify order export; order details only on the first line of each order.
+dateOrder: MDY
+counts: { sale: 4, sale_line: 6, customer: 3 }
+mappings:
+  - { file: orders_export.csv, header: Name, field: sale.order_number }
+  - { file: orders_export.csv, header: Created at, field: sale.sale_date }
+  - { file: orders_export.csv, header: Lineitem quantity, field: sale_line.quantity }
+  - { file: orders_export.csv, header: Lineitem price, field: sale_line.unit_price }
+  - { file: orders_export.csv, header: Name, field: sale_line.sale }

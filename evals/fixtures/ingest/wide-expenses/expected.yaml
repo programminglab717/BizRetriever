@@ -1,0 +1,6 @@
+description: Expenses with a column per month and a totals line.
+dateOrder: MDY
+counts: { expense: 17 }
+mappings:
+  - { file: expenses.csv, header: Category, field: expense.category }
+skipped: { totals: 1 }

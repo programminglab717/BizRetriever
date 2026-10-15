@@ -1,0 +1,6 @@
+description: A simple returns log.
+dateOrder: MDY
+counts: { return: 3 }
+mappings:
+  - { file: returns.csv, header: Date, field: return.return_date }
+  - { file: returns.csv, header: Qty, field: return.quantity }

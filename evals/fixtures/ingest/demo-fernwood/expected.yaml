@@ -1,0 +1,5 @@
+description: The generated Fernwood demo dataset (6 messy files); counts come from its answer key.
+generator: demo
+today: '2026-10-13'
+dateOrder: MDY
+questionsAbout: [Bloom, day-first]

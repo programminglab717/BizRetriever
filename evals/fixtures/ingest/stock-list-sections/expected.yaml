@@ -1,0 +1,12 @@
+description: Hand-kept stock list with a title, category headings, units, a totals line and a note.
+dateOrder: MDY
+counts: { product: 5, stock_count: 5 }
+mappings:
+  - { file: stock.csv, header: SKU, field: product.sku }
+  - { file: stock.csv, header: Product, field: product.name }
+  - { file: stock.csv, header: Cost (ex tax), field: product.unit_cost }
+  - { file: stock.csv, header: Price, field: product.unit_price }
+  - { file: stock.csv, header: In stock, field: stock_count.quantity_on_hand }
+  - { file: stock.csv, header: SKU, field: stock_count.product }
+  - { file: stock.csv, header: Product, field: stock_count.product }
+skipped: { totals: 1, note: 1 }

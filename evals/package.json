@@ -1,0 +1,23 @@
+{
+  "name": "@bizr/evals",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "eval": "tsx runner/cli.ts"
+  },
+  "dependencies": {
+    "@bizr/ai": "workspace:*",
+    "@bizr/core": "workspace:*",
+    "@bizr/demo-data": "workspace:*",
+    "@bizr/ingest": "workspace:*",
+    "@bizr/packs": "workspace:*",
+    "@bizr/platform": "workspace:*",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

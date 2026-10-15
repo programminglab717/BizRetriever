@@ -157,8 +157,15 @@ export function parseDate(input: unknown, options: DateOptions = {}): ParsedDate
     if (dmy && !mdy) return { date: dmy, ...t, format: `D${sep}M${sep}Y`, ambiguous: false };
     if (mdy && !dmy) return { date: mdy, ...t, format: `M${sep}D${sep}Y`, ambiguous: false };
     if (!dmy || !mdy) return undefined;
-    if (a === b) return { date: dmy, ...t, format: `D${sep}M${sep}Y`, ambiguous: false };
     const dayFirst = (options.dateOrder ?? 'MDY') === 'DMY';
+    // 03/03/2026 is the same date either way, so it says nothing about the order.
+    if (a === b)
+      return {
+        date: dmy,
+        ...t,
+        format: dayFirst ? `D${sep}M${sep}Y` : `M${sep}D${sep}Y`,
+        ambiguous: true,
+      };
     return dayFirst
       ? { date: dmy, ...t, format: `D${sep}M${sep}Y`, ambiguous: true }
       : { date: mdy, ...t, format: `M${sep}D${sep}Y`, ambiguous: true };
