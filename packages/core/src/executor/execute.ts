@@ -126,7 +126,7 @@ export async function executeTenantQuery(request: ExecuteRequest): Promise<Execu
   return { ...result!, durationMs };
 }
 
-async function recordRun(
+export async function recordRun(
   request: ExecuteRequest,
   mode: 'read' | 'write',
   durationMs: number,
@@ -160,7 +160,7 @@ function sqlState(err: unknown): string | undefined {
     : undefined;
 }
 
-function isConnectionError(err: unknown): boolean {
+export function isConnectionError(err: unknown): boolean {
   const code = sqlState(err);
   return code === undefined || code.startsWith('08');
 }

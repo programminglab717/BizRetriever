@@ -7,3 +7,4 @@ export {
   type ExecuteResult,
   type TenantRef,
 } from './execute';
+export { withTenantWriter, type TenantWriter } from './write';

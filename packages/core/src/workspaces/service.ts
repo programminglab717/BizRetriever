@@ -1,11 +1,12 @@
 import {
   auditEvent,
   getAppDb,
+  getStorage,
+  type MemberRole,
+  type Workspace,
   workspace,
   workspaceMember,
   workspaceSettings,
-  type MemberRole,
-  type Workspace,
   type WorkspaceSettings,
 } from '@bizr/db';
 import { getPack } from '@bizr/packs';
@@ -180,6 +181,7 @@ export async function deleteWorkspace(member: MemberWorkspace, userId: string): 
     .set({ status: 'deleting', updatedAt: new Date() })
     .where(eq(workspace.id, member.workspace.id));
   await deprovisionTenant(member.workspace.tenantSchema);
+  await getStorage().deleteWorkspace(member.workspace.id);
   await db.delete(workspace).where(eq(workspace.id, member.workspace.id));
   log().info({ workspaceId: member.workspace.id, userId }, 'workspace deleted');
 }

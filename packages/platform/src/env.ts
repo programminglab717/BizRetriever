@@ -51,6 +51,10 @@ export const envSchema = z
     AI_RECORDINGS_DIR: z.string().optional(),
     AI_BUDGET_DAILY_USD: z.coerce.number().min(0).default(2),
     AI_BUDGET_MONTHLY_USD: z.coerce.number().min(0).default(15),
+    // File storage (ADR-013): `local` (dev/test, under STORAGE_LOCAL_DIR, default .data/uploads),
+    // `postgres` (free hosted preview), `s3` (paid production; not built until then, ADR-026).
+    STORAGE_DRIVER: z.enum(['local', 'postgres', 's3']).default('local'),
+    STORAGE_LOCAL_DIR: z.string().optional(),
     // Sign-in/sign-up rate limiting. Only the end-to-end test server turns it off.
     AUTH_RATE_LIMIT: z.enum(['on', 'off']).default('on'),
   })

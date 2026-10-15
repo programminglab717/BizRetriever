@@ -37,3 +37,20 @@ export {
   type ProposalProblem,
   type ValidationResult,
 } from './validate';
+export { ingestAnalyzeJob, ingestApplyJob, ingestionJobs, ingestReviseJob } from './jobs';
+export { loadOrder, loadRecords, toParam, type LoadStats } from './load';
+export { entitySpecs, todayIn, type StoredProposal } from './pipeline';
+export { buildReview, type ProposalReview } from './review';
+export {
+  approveRun,
+  cancelRun,
+  getRunView,
+  IngestionRequestError,
+  listRuns,
+  reviseRun,
+  startIngestion,
+  UPLOAD_LIMITS,
+  type IncomingFile,
+  type ReviewAction,
+  type RunView,
+} from './service';
