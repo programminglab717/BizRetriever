@@ -5,12 +5,22 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { listPackDirs, loadPack, PackValidationError } from './loader';
+import { getPack } from './registry';
 
-function tempPack(folder: string, yaml: string): string {
+const ENTITIES = [
+  'entities:',
+  '  - id: sale',
+  '    label: { singular: Sale, plural: Sales }',
+  '    description: A sale.',
+  '    fields: [{ id: sale_date, label: Date, type: date }]',
+].join('\n');
+
+function tempPack(folder: string, yaml: string, entities = ENTITIES): string {
   const root = mkdtempSync(path.join(tmpdir(), 'packs-'));
   const dir = path.join(root, folder);
   mkdirSync(dir);
   writeFileSync(path.join(dir, 'pack.yaml'), yaml);
+  writeFileSync(path.join(dir, 'entities.yaml'), entities);
   return dir;
 }
 
@@ -19,6 +29,34 @@ describe('pack loader', () => {
     const dirs = listPackDirs();
     expect(dirs.map((d) => path.basename(d))).toContain('retail');
     for (const dir of dirs) expect(() => loadPack(dir)).not.toThrow();
+  });
+
+  it('loads the full retail entity catalog', () => {
+    const retail = loadPack(listPackDirs().find((d) => d.endsWith('retail'))!);
+    expect(retail.entities.map((e) => e.id)).toEqual([
+      'product',
+      'customer',
+      'supplier',
+      'location',
+      'sale',
+      'sale_line',
+      'return',
+      'purchase',
+      'purchase_line',
+      'stock_count',
+      'stock_movement',
+      'expense',
+      'payment',
+    ]);
+  });
+
+  it('reports problems in entities.yaml', () => {
+    const dir = tempPack(
+      'retail',
+      VALID_MANIFEST,
+      'entities:\n  - id: sale\n    label: { singular: Sale, plural: Sales }\n    description: x\n    fields: [{ id: customer, label: C, type: reference, references: customer }]\n',
+    );
+    expect(() => loadPack(dir)).toThrow(/unknown entity "customer"/);
   });
 
   it('reports every problem in an invalid manifest', () => {
@@ -36,19 +74,29 @@ describe('pack loader', () => {
   });
 
   it('requires the id to match the folder name', () => {
-    const dir = tempPack(
-      'other',
-      [
-        'id: retail',
-        'version: 1.0.0',
-        'name: X',
-        'description: X',
-        'industries_label: X',
-        'locale_defaults: { currency: USD, date_order: MDY }',
-        "requires_core: '>=0.1.0'",
-        'primary_time_entity: sale',
-      ].join('\n'),
-    );
+    const dir = tempPack('other', VALID_MANIFEST);
     expect(() => loadPack(dir)).toThrow(/must match its folder name/);
+  });
+});
+
+const VALID_MANIFEST = [
+  'id: retail',
+  'version: 1.0.0',
+  'name: X',
+  'description: X',
+  'industries_label: X',
+  'locale_defaults: { currency: USD, date_order: MDY }',
+  "requires_core: '>=0.1.0'",
+  'primary_time_entity: sale',
+].join('\n');
+
+describe('bundled packs', () => {
+  it('match the YAML on disk', () => {
+    const retail = loadPack(listPackDirs().find((d) => d.endsWith('retail'))!);
+    expect(getPack('retail')).toEqual({ manifest: retail.manifest, entities: retail.entities });
+  });
+
+  it('throw for unknown packs', () => {
+    expect(() => getPack('nope')).toThrow(/Unknown pack/);
   });
 });

@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./fs": "./src/fs.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "validate": "tsx src/cli/validate.ts"
+    "validate": "tsx src/cli/validate.ts",
+    "build": "tsx src/cli/build.ts"
   },
   "dependencies": {
     "yaml": "^2.9.1",

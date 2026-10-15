@@ -1,2 +1,16 @@
-export { listPackDirs, loadPack, PACKS_DIR, PackValidationError, type LoadedPack } from './loader';
-export { packManifestSchema, type PackManifest } from './schema';
+// Runtime API (safe to bundle): validated packs from the generated module.
+export { getPack, listPacks } from './registry';
+export type { PackData } from './types';
+export {
+  checkEntityReferences,
+  fieldSemantics,
+  fieldTypes,
+  packEntitiesFileSchema,
+  packEntitySchema,
+  packFieldSchema,
+  packManifestSchema,
+  type FieldType,
+  type PackEntity,
+  type PackField,
+  type PackManifest,
+} from './schema';

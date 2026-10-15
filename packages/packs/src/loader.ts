@@ -4,13 +4,20 @@ import { fileURLToPath } from 'node:url';
 
 import { parse } from 'yaml';
 
-import { packManifestSchema, type PackManifest } from './schema';
+import {
+  checkEntityReferences,
+  packEntitiesFileSchema,
+  packManifestSchema,
+  type PackEntity,
+  type PackManifest,
+} from './schema';
 
 export const PACKS_DIR = fileURLToPath(new URL('../packs', import.meta.url));
 
 export interface LoadedPack {
   dir: string;
   manifest: PackManifest;
+  entities: PackEntity[];
 }
 
 export class PackValidationError extends Error {
@@ -24,18 +31,44 @@ export class PackValidationError extends Error {
 
 /** Loads and validates one pack directory. Throws PackValidationError listing every problem. */
 export function loadPack(dir: string): LoadedPack {
-  const raw: unknown = parse(readFileSync(path.join(dir, 'pack.yaml'), 'utf8'));
-  const result = packManifestSchema.safeParse(raw);
-  if (!result.success) {
-    throw new PackValidationError(
-      dir,
-      result.error.issues.map((i) => `pack.yaml ${i.path.join('.') || '(root)'}: ${i.message}`),
+  const problems: string[] = [];
+  const read = (file: string): unknown => {
+    try {
+      return parse(readFileSync(path.join(dir, file), 'utf8'));
+    } catch (err) {
+      problems.push(`${file}: ${err instanceof Error ? err.message : String(err)}`);
+      return undefined;
+    }
+  };
+  const issues = (file: string, error: { issues: { path: PropertyKey[]; message: string }[] }) =>
+    error.issues.map((i) => `${file} ${i.path.map(String).join('.') || '(root)'}: ${i.message}`);
+
+  const manifest = packManifestSchema.safeParse(read('pack.yaml'));
+  if (!manifest.success) problems.push(...issues('pack.yaml', manifest.error));
+  const entities = packEntitiesFileSchema.safeParse(read('entities.yaml'));
+  if (!entities.success) problems.push(...issues('entities.yaml', entities.error));
+
+  if (manifest.success && manifest.data.id !== path.basename(dir)) {
+    problems.push(`pack id "${manifest.data.id}" must match its folder name`);
+  }
+  if (entities.success) {
+    problems.push(
+      ...checkEntityReferences(entities.data.entities).map((p) => `entities.yaml: ${p}`),
     );
+    if (
+      manifest.success &&
+      !entities.data.entities.some((e) => e.id === manifest.data.primary_time_entity)
+    ) {
+      problems.push(
+        `pack.yaml primary_time_entity "${manifest.data.primary_time_entity}" is not an entity`,
+      );
+    }
   }
-  if (result.data.id !== path.basename(dir)) {
-    throw new PackValidationError(dir, [`pack id "${result.data.id}" must match its folder name`]);
+
+  if (problems.length > 0 || !manifest.success || !entities.success) {
+    throw new PackValidationError(dir, problems);
   }
-  return { dir, manifest: result.data };
+  return { dir, manifest: manifest.data, entities: entities.data.entities };
 }
 
 /** Every pack shipped in this repo (folders starting with `_` are templates). */

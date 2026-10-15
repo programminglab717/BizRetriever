@@ -1,14 +1,29 @@
 /** `pnpm packs:validate` — validates every vertical pack. Runs in CI. */
-import { listPackDirs, loadPack, PackValidationError } from '../loader';
+import { readFileSync } from 'node:fs';
+
+import { GENERATED_FILE, renderGeneratedPacks } from '../bundle';
+import { listPackDirs, loadPack, PackValidationError, type LoadedPack } from '../loader';
 
 let failed = false;
+const loaded: LoadedPack[] = [];
 for (const dir of listPackDirs()) {
   try {
-    const { manifest } = loadPack(dir);
-    console.log(`✓ ${manifest.id}@${manifest.version} (${manifest.name})`);
+    const pack = loadPack(dir);
+    loaded.push(pack);
+    const { manifest, entities } = pack;
+    const fields = entities.reduce((n, e) => n + e.fields.length, 0);
+    console.log(
+      `✓ ${manifest.id}@${manifest.version} (${manifest.name}): ${entities.length} entities, ${fields} fields`,
+    );
   } catch (err) {
     failed = true;
     console.error(err instanceof PackValidationError ? err.message : err);
   }
+}
+if (!failed && readFileSync(GENERATED_FILE, 'utf8') !== renderGeneratedPacks(loaded)) {
+  failed = true;
+  console.error(
+    'src/generated/packs.ts is out of date. Run `pnpm packs:build` and commit the result.',
+  );
 }
 process.exit(failed ? 1 : 0);

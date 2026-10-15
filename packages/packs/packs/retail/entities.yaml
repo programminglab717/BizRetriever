@@ -1,0 +1,208 @@
+# Canonical entities for the Retail & Ecommerce pack (VERTICAL_PACKS.md §2.1).
+# Field types: text | integer | decimal | money | percent | date | datetime | boolean | reference
+# `reference` fields link to another entity (many-to-one). Labels are what users see.
+entities:
+  - id: product
+    label: { singular: Product, plural: Products }
+    description: Something you sell.
+    natural_keys: [[sku], [name, variant]]
+    fields:
+      - { id: sku, label: Product code, type: text, semantic: identifier }
+      - { id: name, label: Name, type: text, semantic: name, required: true }
+      - { id: variant, label: Variant, type: text, description: 'Size, colour or other option.' }
+      - { id: category, label: Category, type: text, semantic: category }
+      - { id: brand, label: Brand, type: text, semantic: category }
+      - { id: unit_price, label: Selling price, type: money, semantic: unit_price }
+      - { id: unit_cost, label: Cost per item, type: money, semantic: unit_cost }
+      - { id: supplier, label: Supplier, type: reference, references: supplier }
+      - { id: reorder_point, label: Reorder when stock reaches, type: decimal, semantic: quantity }
+      - { id: is_active, label: Still selling, type: boolean }
+      - { id: barcode, label: Barcode, type: text, semantic: identifier }
+
+  - id: customer
+    label: { singular: Customer, plural: Customers }
+    description: Someone who buys from you.
+    natural_keys: [[email], [name, city], [name]]
+    fields:
+      - { id: name, label: Name, type: text, semantic: name, required: true }
+      - { id: email, label: Email, type: text, semantic: email, pii: true }
+      - { id: phone, label: Phone, type: text, semantic: phone, pii: true }
+      - { id: city, label: City, type: text, semantic: city }
+      - { id: region, label: State or region, type: text, semantic: region }
+      - { id: country, label: Country, type: text, semantic: country }
+      - { id: postal_code, label: Postcode, type: text, semantic: postal_code, pii: true }
+      - id: customer_type
+        label: Type of customer
+        type: text
+        semantic: category
+        allowed_values: [retail, wholesale]
+      - { id: payment_terms_days, label: Days to pay, type: integer }
+
+  - id: supplier
+    label: { singular: Supplier, plural: Suppliers }
+    description: Someone you buy stock from.
+    natural_keys: [[name]]
+    fields:
+      - { id: name, label: Name, type: text, semantic: name, required: true }
+      - { id: contact_name, label: Contact, type: text, semantic: name, pii: true }
+      - { id: email, label: Email, type: text, semantic: email, pii: true }
+      - { id: phone, label: Phone, type: text, semantic: phone, pii: true }
+      - { id: lead_time_days, label: Days to deliver, type: integer }
+
+  - id: location
+    label: { singular: Sales place, plural: Sales places }
+    description: Where you sell or keep stock, like your website, shop or warehouse.
+    natural_keys: [[name]]
+    fields:
+      - { id: name, label: Name, type: text, semantic: name, required: true }
+      - id: location_type
+        label: Type
+        type: text
+        semantic: category
+        allowed_values: [online, shop, warehouse, market]
+
+  - id: sale
+    label: { singular: Sale, plural: Sales }
+    description: An order or receipt. One sale can contain several items.
+    natural_keys: [[order_number, channel], [order_number]]
+    time_field: sale_date
+    fields:
+      - { id: order_number, label: Order number, type: text, semantic: identifier }
+      - { id: sale_date, label: Date, type: datetime, required: true }
+      - { id: customer, label: Customer, type: reference, references: customer }
+      - id: channel
+        label: Sold through
+        type: text
+        semantic: channel
+        allowed_values: [online_store, etsy, amazon, ebay, social, in_store, wholesale, other]
+      - { id: location, label: Sales place, type: reference, references: location }
+      - id: status
+        label: Status
+        type: text
+        semantic: status
+        allowed_values: [completed, cancelled, refunded, pending]
+      - { id: discount_total, label: Discount, type: money, semantic: amount }
+      - { id: shipping_charged, label: Shipping charged, type: money, semantic: amount }
+      - { id: tax_total, label: Tax, type: money, semantic: amount }
+      - { id: total, label: Order total, type: money, semantic: amount }
+      - id: payment_status
+        label: Paid?
+        type: text
+        semantic: status
+        allowed_values: [paid, unpaid, partial]
+      - { id: due_date, label: Payment due, type: date }
+
+  - id: sale_line
+    label: { singular: Sale item, plural: Sale items }
+    description: One product on a sale, with how many and at what price.
+    natural_keys: [[sale, line_number], [sale, product]]
+    fields:
+      - { id: sale, label: Sale, type: reference, references: sale, required: true }
+      - { id: line_number, label: Line, type: integer }
+      - { id: product, label: Product, type: reference, references: product }
+      - { id: product_name_raw, label: Product as written, type: text, semantic: name }
+      - { id: quantity, label: Quantity, type: decimal, semantic: quantity, required: true }
+      - { id: unit_price, label: Price each, type: money, semantic: unit_price }
+      - { id: discount, label: Discount, type: money, semantic: amount }
+      - { id: line_total, label: Line total, type: money, semantic: amount }
+      - { id: unit_cost_at_sale, label: Cost each at the time, type: money, semantic: unit_cost }
+
+  - id: return
+    label: { singular: Return, plural: Returns }
+    description: Items a customer sent back.
+    natural_keys: [[sale, product, return_date]]
+    time_field: return_date
+    fields:
+      - { id: sale, label: Sale, type: reference, references: sale }
+      - { id: product, label: Product, type: reference, references: product }
+      - { id: return_date, label: Date, type: date, required: true }
+      - { id: quantity, label: Quantity, type: decimal, semantic: quantity }
+      - { id: refund_amount, label: Refund, type: money, semantic: amount }
+      - { id: reason, label: Reason, type: text, semantic: note }
+
+  - id: purchase
+    label: { singular: Supplier order, plural: Supplier orders }
+    description: Stock you ordered from a supplier.
+    natural_keys: [[po_number], [supplier, order_date]]
+    time_field: order_date
+    fields:
+      - { id: po_number, label: Order number, type: text, semantic: identifier }
+      - { id: supplier, label: Supplier, type: reference, references: supplier }
+      - { id: order_date, label: Ordered on, type: date, required: true }
+      - { id: received_date, label: Received on, type: date }
+      - id: status
+        label: Status
+        type: text
+        semantic: status
+        allowed_values: [ordered, received, cancelled]
+      - { id: total, label: Total, type: money, semantic: amount }
+      - { id: shipping_cost, label: Shipping cost, type: money, semantic: amount }
+
+  - id: purchase_line
+    label: { singular: Supplier order item, plural: Supplier order items }
+    description: One product on a supplier order.
+    natural_keys: [[purchase, product]]
+    fields:
+      - {
+          id: purchase,
+          label: Supplier order,
+          type: reference,
+          references: purchase,
+          required: true,
+        }
+      - { id: product, label: Product, type: reference, references: product }
+      - { id: quantity, label: Quantity, type: decimal, semantic: quantity, required: true }
+      - { id: unit_cost, label: Cost each, type: money, semantic: unit_cost }
+      - { id: line_total, label: Line total, type: money, semantic: amount }
+
+  - id: stock_count
+    label: { singular: Stock level, plural: Stock levels }
+    description: How many of a product you had on a given day.
+    natural_keys: [[product, location, counted_at]]
+    time_field: counted_at
+    fields:
+      - { id: product, label: Product, type: reference, references: product, required: true }
+      - { id: location, label: Sales place, type: reference, references: location }
+      - { id: counted_at, label: Counted on, type: date, required: true }
+      - { id: quantity_on_hand, label: In stock, type: decimal, semantic: quantity, required: true }
+
+  - id: stock_movement
+    label: { singular: Stock change, plural: Stock changes }
+    description: Stock going in or out, like a delivery, a breakage or a correction.
+    natural_keys: []
+    time_field: moved_at
+    fields:
+      - { id: product, label: Product, type: reference, references: product, required: true }
+      - { id: moved_at, label: Date, type: date, required: true }
+      - { id: quantity_change, label: Change, type: decimal, semantic: quantity, required: true }
+      - id: reason
+        label: Reason
+        type: text
+        semantic: category
+        allowed_values: [sale, purchase, adjustment, damage, return]
+
+  - id: expense
+    label: { singular: Expense, plural: Expenses }
+    description: Money you spent running the business.
+    natural_keys: []
+    time_field: expense_date
+    fields:
+      - { id: expense_date, label: Date, type: date, required: true }
+      - { id: category, label: Category, type: text, semantic: category }
+      - { id: description, label: Description, type: text, semantic: note }
+      - { id: amount, label: Amount, type: money, semantic: amount, required: true }
+      - { id: vendor, label: Paid to, type: text, semantic: name }
+      - { id: payment_method, label: Paid with, type: text, semantic: category }
+
+  - id: payment
+    label: { singular: Payment received, plural: Payments received }
+    description: Money a customer paid you, usually for a wholesale invoice.
+    natural_keys: [[reference]]
+    time_field: received_date
+    fields:
+      - { id: reference, label: Reference, type: text, semantic: identifier }
+      - { id: received_date, label: Date, type: date, required: true }
+      - { id: customer, label: Customer, type: reference, references: customer }
+      - { id: sale, label: Sale, type: reference, references: sale }
+      - { id: amount, label: Amount, type: money, semantic: amount, required: true }
+      - { id: method, label: Paid with, type: text, semantic: category }

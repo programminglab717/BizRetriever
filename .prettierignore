@@ -7,3 +7,4 @@ test-results
 # Markdown docs are hand-formatted (tables); keep Prettier off them.
 *.md
 packages/db/migrations/meta
+packages/packs/src/generated
