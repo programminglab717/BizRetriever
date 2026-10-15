@@ -139,6 +139,27 @@ function applyRule(value: Cell | CleanValue, rule: ValueRule, ctx: ValueContext)
       const part = parts[rule.part];
       return ok(part === undefined ? null : part.trim() || null);
     }
+    case 'month_start': {
+      const m = /^([a-z]{3,9})\.?(?:\s+'?(\d{2}|\d{4}))?$/i.exec(asText(value).trim());
+      const months = [
+        'jan',
+        'feb',
+        'mar',
+        'apr',
+        'may',
+        'jun',
+        'jul',
+        'aug',
+        'sep',
+        'oct',
+        'nov',
+        'dec',
+      ];
+      const index = m ? months.indexOf(m[1]!.slice(0, 3).toLowerCase()) : -1;
+      if (!m || index < 0) return fail(`couldn’t read ${quote(value)} as a month`);
+      const year = m[2] ? (m[2].length === 2 ? 2000 + Number(m[2]) : Number(m[2])) : rule.year;
+      return ok({ kind: 'date', date: `${year}-${String(index + 1).padStart(2, '0')}-01` });
+    }
     case 'negate': {
       const n = typeof value === 'number' ? value : parseNumber(asText(value))?.value;
       if (n === undefined) return fail(`couldn’t read ${quote(value)} as a number`);

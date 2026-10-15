@@ -92,6 +92,24 @@ describe('cleanValue', () => {
     });
   });
 
+  it('turns month names into the first day of the month', () => {
+    expect(cleanValue('Jan', [{ rule: 'month_start', year: 2026 }], 'date', ctx)).toEqual({
+      ok: true,
+      value: { kind: 'date', date: '2026-01-01' },
+    });
+    expect(cleanValue('September', [{ rule: 'month_start', year: 2026 }], 'date', ctx)).toEqual({
+      ok: true,
+      value: { kind: 'date', date: '2026-09-01' },
+    });
+    expect(cleanValue("Mar '25", [{ rule: 'month_start', year: 2026 }], 'date', ctx)).toEqual({
+      ok: true,
+      value: { kind: 'date', date: '2025-03-01' },
+    });
+    expect(cleanValue('TOTAL', [{ rule: 'month_start', year: 2026 }], 'date', ctx)).toMatchObject({
+      ok: false,
+    });
+  });
+
   it('can reject unexpected values', () => {
     expect(
       cleanValue(

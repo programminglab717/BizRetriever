@@ -111,6 +111,13 @@ export const valueRuleSchema = z.discriminatedUnion('rule', [
     })
     .strict(),
   z.object({ rule: z.literal('negate') }).strict(),
+  z
+    .object({
+      /** "Jan" / "January" / "Jan 26" → the first day of that month (wide month columns). */
+      rule: z.literal('month_start'),
+      year: z.number().int().min(1990).max(2100),
+    })
+    .strict(),
 ]);
 export type ValueRule = z.infer<typeof valueRuleSchema>;
 

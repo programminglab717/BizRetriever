@@ -1,0 +1,59 @@
+# Known export formats (VERTICAL_PACKS §2.4). Matching one raises confidence and is mentioned on the
+# processing screen ("Found a sheet that looks like Etsy orders"). Headers are normalised.
+known_formats:
+  - id: shopify_orders
+    label: Shopify orders
+    headers:
+      [
+        name,
+        email,
+        financial status,
+        paid at,
+        lineitem quantity,
+        lineitem name,
+        lineitem price,
+        lineitem sku,
+        billing name,
+        total,
+      ]
+  - id: shopify_products
+    label: Shopify products
+    headers:
+      [
+        handle,
+        title,
+        variant sku,
+        variant price,
+        cost per item,
+        variant inventory qty,
+        type,
+        vendor,
+      ]
+  - id: etsy_order_items
+    label: Etsy order items
+    headers: [sale date, item name, buyer, quantity, price, order id, sku]
+  - id: etsy_sold_orders
+    label: Etsy orders
+    headers:
+      [
+        sale date,
+        order id,
+        buyer,
+        number of items,
+        order value,
+        discount amount,
+        shipping,
+        sales tax,
+      ]
+  - id: amazon_orders
+    label: Amazon orders
+    headers: [amazon order id, purchase date, sku, product name, quantity, item price]
+  - id: woocommerce_orders
+    label: WooCommerce orders
+    headers: [order number, order date, billing first name, item name, quantity, item cost]
+  - id: square_items
+    label: Square sales
+    headers: [date, time, category, item, qty, gross sales, discounts, net sales, transaction id]
+  - id: till_export
+    label: Shop till export
+    headers: [date, time, receipt no, item, qty, gross, discount, net, payment method]

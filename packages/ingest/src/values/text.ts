@@ -54,3 +54,18 @@ export const NULL_SENTINELS = new Set([
 export function isNullSentinel(value: string): boolean {
   return NULL_SENTINELS.has(value.trim().toLowerCase());
 }
+
+/**
+ * Lighter normalisation for matching records on their natural keys: case, punctuation, "&"/"and"
+ * and accents only. Unlike `normalizeKey` it keeps legal suffixes, so "Acme Ltd" and "Acme" stay
+ * different unless the owner confirms they are the same (dedupe).
+ */
+export function normalizeLoose(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}

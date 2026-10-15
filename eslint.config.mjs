@@ -31,6 +31,7 @@ export default defineConfig([
     '**/playwright-report/',
     '**/test-results/',
     'packages/db/migrations/',
+    '.data/',
   ]),
   js.configs.recommended,
   tseslint.configs.recommendedTypeChecked,

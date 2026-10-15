@@ -296,30 +296,56 @@ export function profileRegion(
   };
 }
 
-/** The first column whose non-empty values repeat on consecutive rows for at least 10% of rows. */
+const ID_HEADER =
+  /\b(order|invoice|receipt|po|transaction|txn|id|no|number|ref|reference|name|#)\b/i;
+
+/**
+ * The column that groups consecutive rows into one thing (the order number on line-level exports).
+ * It must look like an identifier (not a date, money or quantity), repeat on consecutive rows for at
+ * least 10% of rows, and each of its values must appear in exactly one unbroken run. Identifier-like
+ * headers ("Order ID", "Invoice No") are preferred.
+ */
 function findGroupKey(sheet: RawSheet, region: Region, rows: number[]): number | undefined {
   if (rows.length < 10) return undefined;
+  let best: { index: number; score: number } | undefined;
   for (const col of region.columns) {
+    const values: string[] = [];
+    let numeric = 0;
+    let dates = 0;
+    for (const r of rows) {
+      const cell = sheet.rows[r]![col.index] ?? null;
+      if (isEmptyCell(cell)) {
+        values.push('');
+        continue;
+      }
+      if (cell instanceof Date || parseDate(cell) !== undefined) dates += 1;
+      else if (typeof cell === 'number' && !Number.isInteger(cell)) numeric += 1;
+      else if (typeof cell === 'string' && parseNumber(cell)?.currency) numeric += 1;
+      values.push(display(cell));
+    }
+    const filled = values.filter((v) => v !== '').length;
+    if (filled < rows.length * 0.9 || dates > filled * 0.2 || numeric > filled * 0.2) continue;
     let repeats = 0;
-    let filled = 0;
-    for (let i = 0; i < rows.length; i++) {
-      const cell = sheet.rows[rows[i]!]![col.index] ?? null;
-      if (isEmptyCell(cell)) continue;
-      filled += 1;
-      if (i > 0 && display(cell) === display(sheet.rows[rows[i - 1]!]![col.index] ?? null))
+    let runs = 0;
+    const seen = new Set<string>();
+    let contiguous = true;
+    for (let i = 0; i < values.length; i++) {
+      const v = values[i]!;
+      if (v === '') continue;
+      if (i > 0 && v === values[i - 1]) {
         repeats += 1;
+        continue;
+      }
+      runs += 1;
+      if (seen.has(v)) contiguous = false;
+      seen.add(v);
     }
-    // Mostly filled, repeats sometimes, but not a constant (like a currency column).
-    const distinctish = filled - repeats;
-    if (
-      filled >= rows.length * 0.9 &&
-      repeats >= rows.length * 0.1 &&
-      distinctish >= rows.length * 0.2
-    ) {
-      return col.index;
-    }
+    if (!contiguous || repeats < rows.length * 0.1 || runs < Math.max(2, rows.length * 0.02))
+      continue;
+    const score = (ID_HEADER.test(col.header) ? 2 : 1) - col.index * 0.001;
+    if (score > (best?.score ?? 0)) best = { index: col.index, score };
   }
-  return undefined;
+  return best?.index;
 }
 
 /** Up to `n` values spread across the frequency-sorted list (common and rare values both appear). */

@@ -3,6 +3,12 @@ export { getPack, listPacks } from './registry';
 export type { PackData } from './types';
 export {
   checkEntityReferences,
+  checkSynonyms,
+  knownFormatSchema,
+  packPatternsFileSchema,
+  packSynonymsFileSchema,
+  type KnownFormat,
+  type PackSynonyms,
   fieldSemantics,
   fieldTypes,
   packEntitiesFileSchema,

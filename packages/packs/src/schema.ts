@@ -135,3 +135,63 @@ export function checkEntityReferences(entities: PackEntity[]): string[] {
   }
   return problems;
 }
+
+export const packSynonymsFileSchema = z
+  .object({
+    /** "entity.field" → header words that mean it. */
+    fields: z.record(z.string().regex(/^[a-z_]+\.[a-z_]+$/), z.array(z.string().min(1)).min(1)),
+    /** "entity.field" → canonical value → words that mean it. */
+    values: z
+      .record(
+        z.string().regex(/^[a-z_]+\.[a-z_]+$/),
+        z.record(z.string(), z.array(z.string().min(1)).min(1)),
+      )
+      .default({}),
+    /** Canonical channel → words in file/sheet names that indicate it. */
+    source_channels: z.record(z.string(), z.array(z.string().min(1)).min(1)).default({}),
+  })
+  .strict();
+
+export const knownFormatSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9_]+$/),
+    label: z.string().min(1),
+    headers: z.array(z.string().min(1)).min(3),
+  })
+  .strict();
+
+export const packPatternsFileSchema = z
+  .object({ known_formats: z.array(knownFormatSchema).default([]) })
+  .strict();
+
+export type PackSynonyms = z.infer<typeof packSynonymsFileSchema>;
+export type KnownFormat = z.infer<typeof knownFormatSchema>;
+
+/** Checks that synonyms point at real entities, fields and allowed values. */
+export function checkSynonyms(entities: PackEntity[], synonyms: PackSynonyms): string[] {
+  const problems: string[] = [];
+  const fieldOf = (ref: string) => {
+    const [e, f] = ref.split('.');
+    return entities.find((x) => x.id === e)?.fields.find((x) => x.id === f);
+  };
+  for (const ref of Object.keys(synonyms.fields)) {
+    if (!fieldOf(ref)) problems.push(`synonyms for unknown field "${ref}"`);
+  }
+  for (const [ref, map] of Object.entries(synonyms.values)) {
+    const field = fieldOf(ref);
+    if (!field) {
+      problems.push(`value synonyms for unknown field "${ref}"`);
+      continue;
+    }
+    for (const value of Object.keys(map)) {
+      if (!field.allowed_values?.includes(value))
+        problems.push(`"${value}" is not an allowed value of ${ref}`);
+    }
+  }
+  const channels = fieldOf('sale.channel')?.allowed_values ?? [];
+  for (const value of Object.keys(synonyms.source_channels)) {
+    if (!channels.includes(value))
+      problems.push(`source channel "${value}" is not an allowed value of sale.channel`);
+  }
+  return problems;
+}

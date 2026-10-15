@@ -958,6 +958,698 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           }
         ]
       }
-    ]
+    ],
+    "synonyms": {
+      "fields": {
+        "product.sku": [
+          "sku",
+          "item code",
+          "product code",
+          "code",
+          "ref",
+          "style no",
+          "lineitem sku",
+          "variant sku",
+          "item sku",
+          "article no",
+          "part no"
+        ],
+        "product.name": [
+          "product",
+          "product name",
+          "item",
+          "item name",
+          "description",
+          "product title",
+          "title",
+          "lineitem name",
+          "listing",
+          "product description"
+        ],
+        "product.variant": [
+          "variant",
+          "variant title",
+          "option",
+          "size",
+          "colour",
+          "color"
+        ],
+        "product.category": [
+          "category",
+          "type",
+          "product type",
+          "department",
+          "dept",
+          "collection",
+          "section",
+          "group"
+        ],
+        "product.brand": [
+          "brand",
+          "vendor brand",
+          "make",
+          "manufacturer brand"
+        ],
+        "product.unit_price": [
+          "price",
+          "rrp",
+          "retail price",
+          "sell price",
+          "selling price",
+          "unit price",
+          "srp",
+          "sale price",
+          "retail",
+          "price rrp",
+          "variant price"
+        ],
+        "product.unit_cost": [
+          "cost",
+          "unit cost",
+          "cost price",
+          "buy price",
+          "wholesale cost",
+          "cogs",
+          "landed cost",
+          "cost ex vat",
+          "cost ex tax",
+          "price cost ex tax",
+          "cost per item",
+          "purchase price"
+        ],
+        "product.supplier": [
+          "supplier",
+          "vendor",
+          "maker",
+          "manufacturer",
+          "made by",
+          "supplied by"
+        ],
+        "product.reorder_point": [
+          "reorder at",
+          "reorder point",
+          "reorder level",
+          "min stock",
+          "minimum stock",
+          "stock reorder at",
+          "par level"
+        ],
+        "product.barcode": [
+          "barcode",
+          "ean",
+          "upc",
+          "gtin"
+        ],
+        "customer.name": [
+          "customer",
+          "cust name",
+          "customer name",
+          "buyer",
+          "billing name",
+          "client",
+          "account",
+          "ship to name",
+          "bill to",
+          "company",
+          "stockist",
+          "retailer",
+          "store name"
+        ],
+        "customer.email": [
+          "email",
+          "e mail",
+          "customer email",
+          "buyer email",
+          "email address"
+        ],
+        "customer.phone": [
+          "phone",
+          "telephone",
+          "tel",
+          "mobile",
+          "phone number",
+          "billing phone"
+        ],
+        "customer.city": [
+          "city",
+          "town",
+          "billing city",
+          "ship city",
+          "shipping city"
+        ],
+        "customer.region": [
+          "state",
+          "province",
+          "region",
+          "county",
+          "billing province",
+          "ship state",
+          "shipping province"
+        ],
+        "customer.country": [
+          "country",
+          "billing country",
+          "ship country"
+        ],
+        "customer.postal_code": [
+          "zip",
+          "zip code",
+          "postcode",
+          "postal code",
+          "billing zip"
+        ],
+        "supplier.name": [
+          "supplier",
+          "vendor",
+          "supplier name",
+          "from",
+          "manufacturer"
+        ],
+        "supplier.email": [
+          "supplier email",
+          "vendor email"
+        ],
+        "supplier.lead_time_days": [
+          "lead time",
+          "lead time days",
+          "days to deliver"
+        ],
+        "sale.order_number": [
+          "order",
+          "order number",
+          "order no",
+          "order id",
+          "name",
+          "receipt no",
+          "receipt number",
+          "invoice no",
+          "invoice number",
+          "invoice",
+          "transaction id",
+          "sale id"
+        ],
+        "sale.sale_date": [
+          "date",
+          "order date",
+          "created at",
+          "sale date",
+          "paid at",
+          "transaction date",
+          "invoice date",
+          "day",
+          "date sold"
+        ],
+        "sale.channel": [
+          "channel",
+          "source",
+          "sales channel",
+          "platform",
+          "store",
+          "marketplace"
+        ],
+        "sale.status": [
+          "status",
+          "financial status",
+          "order status",
+          "payment status"
+        ],
+        "sale.discount_total": [
+          "discount amount",
+          "discount",
+          "order discount",
+          "discounts"
+        ],
+        "sale.shipping_charged": [
+          "shipping",
+          "shipping charged",
+          "order shipping",
+          "delivery",
+          "postage",
+          "shipping price"
+        ],
+        "sale.tax_total": [
+          "taxes",
+          "tax",
+          "sales tax",
+          "vat",
+          "tax total"
+        ],
+        "sale.total": [
+          "total",
+          "order total",
+          "order value",
+          "grand total",
+          "amount"
+        ],
+        "sale.payment_status": [
+          "paid",
+          "paid?",
+          "payment status",
+          "payment",
+          "settled"
+        ],
+        "sale.due_date": [
+          "due date",
+          "payment due",
+          "due"
+        ],
+        "sale_line.quantity": [
+          "qty",
+          "quantity",
+          "pcs",
+          "units",
+          "no of items",
+          "lineitem quantity",
+          "count",
+          "qty sold",
+          "number of items"
+        ],
+        "sale_line.unit_price": [
+          "price",
+          "unit price",
+          "lineitem price",
+          "each",
+          "rate",
+          "item price"
+        ],
+        "sale_line.discount": [
+          "line discount",
+          "discount",
+          "lineitem discount",
+          "item discount"
+        ],
+        "sale_line.line_total": [
+          "line total",
+          "total",
+          "amount",
+          "gross",
+          "net",
+          "value",
+          "subtotal",
+          "line amount"
+        ],
+        "return.return_date": [
+          "return date",
+          "date returned",
+          "date",
+          "refund date"
+        ],
+        "return.quantity": [
+          "qty",
+          "quantity",
+          "units returned",
+          "qty returned"
+        ],
+        "return.refund_amount": [
+          "refund",
+          "refund amount",
+          "refunded",
+          "amount refunded"
+        ],
+        "return.reason": [
+          "reason",
+          "return reason",
+          "why"
+        ],
+        "purchase.po_number": [
+          "po number",
+          "po",
+          "purchase order",
+          "po no",
+          "order number",
+          "order no"
+        ],
+        "purchase.order_date": [
+          "order date",
+          "ordered",
+          "date ordered",
+          "date",
+          "po date"
+        ],
+        "purchase.received_date": [
+          "received",
+          "received date",
+          "date received",
+          "delivered"
+        ],
+        "purchase.total": [
+          "total",
+          "po total",
+          "order total"
+        ],
+        "purchase_line.quantity": [
+          "qty",
+          "quantity",
+          "units",
+          "qty ordered"
+        ],
+        "purchase_line.unit_cost": [
+          "unit cost",
+          "cost",
+          "cost each",
+          "price",
+          "unit price"
+        ],
+        "purchase_line.line_total": [
+          "line total",
+          "total",
+          "amount"
+        ],
+        "stock_count.quantity_on_hand": [
+          "in stock",
+          "stock",
+          "on hand",
+          "qty on hand",
+          "pcs in stock",
+          "stock pcs in stock",
+          "inventory",
+          "available",
+          "stock level",
+          "variant inventory qty"
+        ],
+        "stock_count.counted_at": [
+          "counted",
+          "count date",
+          "stock date",
+          "as of"
+        ],
+        "expense.expense_date": [
+          "date",
+          "month",
+          "expense date",
+          "paid on"
+        ],
+        "expense.category": [
+          "category",
+          "expense",
+          "type",
+          "account",
+          "item"
+        ],
+        "expense.description": [
+          "description",
+          "details",
+          "memo",
+          "note"
+        ],
+        "expense.amount": [
+          "amount",
+          "cost",
+          "value",
+          "spend",
+          "paid",
+          "total"
+        ],
+        "expense.vendor": [
+          "vendor",
+          "paid to",
+          "payee",
+          "supplier"
+        ],
+        "payment.received_date": [
+          "date",
+          "received",
+          "payment date",
+          "date paid"
+        ],
+        "payment.amount": [
+          "amount",
+          "paid",
+          "payment",
+          "amount paid"
+        ]
+      },
+      "values": {
+        "sale.channel": {
+          "online_store": [
+            "website",
+            "web",
+            "shopify",
+            "online store",
+            "online",
+            "woocommerce",
+            "woo",
+            "squarespace",
+            "wix"
+          ],
+          "etsy": [
+            "etsy"
+          ],
+          "amazon": [
+            "amazon",
+            "amz"
+          ],
+          "ebay": [
+            "ebay"
+          ],
+          "social": [
+            "instagram",
+            "ig",
+            "facebook",
+            "tiktok",
+            "tiktok shop",
+            "social"
+          ],
+          "in_store": [
+            "shop",
+            "till",
+            "pos",
+            "in store",
+            "in-store",
+            "walk in",
+            "walk-in",
+            "market",
+            "counter",
+            "retail store"
+          ],
+          "wholesale": [
+            "wholesale",
+            "trade",
+            "b2b",
+            "stockist"
+          ]
+        },
+        "sale.status": {
+          "completed": [
+            "paid",
+            "complete",
+            "completed",
+            "fulfilled",
+            "closed",
+            "done"
+          ],
+          "cancelled": [
+            "cancelled",
+            "canceled",
+            "void",
+            "voided"
+          ],
+          "refunded": [
+            "refunded",
+            "refund",
+            "partially refunded"
+          ],
+          "pending": [
+            "pending",
+            "unpaid",
+            "authorized",
+            "open"
+          ]
+        },
+        "sale.payment_status": {
+          "paid": [
+            "y",
+            "yes",
+            "paid",
+            "✓",
+            "✔",
+            "true",
+            "settled"
+          ],
+          "unpaid": [
+            "n",
+            "no",
+            "unpaid",
+            "outstanding",
+            "false",
+            "owing",
+            "due"
+          ],
+          "partial": [
+            "part",
+            "partial",
+            "partly",
+            "part paid",
+            "partially paid"
+          ]
+        },
+        "purchase.status": {
+          "ordered": [
+            "ordered",
+            "open",
+            "pending",
+            "sent"
+          ],
+          "received": [
+            "received",
+            "delivered",
+            "complete",
+            "completed"
+          ],
+          "cancelled": [
+            "cancelled",
+            "canceled",
+            "void"
+          ]
+        }
+      },
+      "source_channels": {
+        "online_store": [
+          "website",
+          "web",
+          "shopify",
+          "online store",
+          "woocommerce"
+        ],
+        "etsy": [
+          "etsy"
+        ],
+        "amazon": [
+          "amazon"
+        ],
+        "ebay": [
+          "ebay"
+        ],
+        "in_store": [
+          "till",
+          "pos",
+          "shop till",
+          "in store",
+          "register",
+          "square"
+        ],
+        "wholesale": [
+          "wholesale",
+          "invoice",
+          "invoices",
+          "trade",
+          "stockist"
+        ]
+      }
+    },
+    "knownFormats": [
+      {
+        "id": "shopify_orders",
+        "label": "Shopify orders",
+        "headers": [
+          "name",
+          "email",
+          "financial status",
+          "paid at",
+          "lineitem quantity",
+          "lineitem name",
+          "lineitem price",
+          "lineitem sku",
+          "billing name",
+          "total"
+        ]
+      },
+      {
+        "id": "shopify_products",
+        "label": "Shopify products",
+        "headers": [
+          "handle",
+          "title",
+          "variant sku",
+          "variant price",
+          "cost per item",
+          "variant inventory qty",
+          "type",
+          "vendor"
+        ]
+      },
+      {
+        "id": "etsy_order_items",
+        "label": "Etsy order items",
+        "headers": [
+          "sale date",
+          "item name",
+          "buyer",
+          "quantity",
+          "price",
+          "order id",
+          "sku"
+        ]
+      },
+      {
+        "id": "etsy_sold_orders",
+        "label": "Etsy orders",
+        "headers": [
+          "sale date",
+          "order id",
+          "buyer",
+          "number of items",
+          "order value",
+          "discount amount",
+          "shipping",
+          "sales tax"
+        ]
+      },
+      {
+        "id": "amazon_orders",
+        "label": "Amazon orders",
+        "headers": [
+          "amazon order id",
+          "purchase date",
+          "sku",
+          "product name",
+          "quantity",
+          "item price"
+        ]
+      },
+      {
+        "id": "woocommerce_orders",
+        "label": "WooCommerce orders",
+        "headers": [
+          "order number",
+          "order date",
+          "billing first name",
+          "item name",
+          "quantity",
+          "item cost"
+        ]
+      },
+      {
+        "id": "square_items",
+        "label": "Square sales",
+        "headers": [
+          "date",
+          "time",
+          "category",
+          "item",
+          "qty",
+          "gross sales",
+          "discounts",
+          "net sales",
+          "transaction id"
+        ]
+      },
+      {
+        "id": "till_export",
+        "label": "Shop till export",
+        "headers": [
+          "date",
+          "time",
+          "receipt no",
+          "item",
+          "qty",
+          "gross",
+          "discount",
+          "net",
+          "payment method"
+        ]
+      }
+    ],
+    "primer": "Small retailers and online sellers usually keep these files:\n- Order exports from their website or marketplaces (Shopify, Etsy, Amazon, WooCommerce). These are\n  usually one row per item sold, with the order's number, date and customer repeated on every item row\n  or written only on the first row of each order. In Shopify exports the \"Name\" column is the order\n  number (like \"#1001\"), not a person's name.\n- A till or point-of-sale export from a physical shop: one row per item, often without a customer.\n  Negative quantities usually mean refunds.\n- A hand-kept stock list: one row per product, with code (SKU), name, cost, selling price and how many\n  are in stock. Categories are often written as a heading row above each group of products. \"Cost\" on a\n  stock list is normally the cost per item. Quantities may be written like \"12 pcs\".\n- Supplier orders (purchase orders): one row per product ordered, with the supplier, dates, quantity\n  and cost each. These show when supplier prices change.\n- Wholesale invoices to other shops, often one sheet per month or quarter, with a \"Paid?\" column.\n- An expenses sheet, often with months as columns (Jan, Feb, …) and categories as rows.\nTotals, subtotals, notes and blank rows are common and are not records. The same customer or supplier is\noften spelled in slightly different ways. Dates may be written day-first or month-first in different files."
   }
 };

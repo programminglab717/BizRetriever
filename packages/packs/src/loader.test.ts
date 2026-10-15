@@ -18,9 +18,12 @@ const ENTITIES = [
 function tempPack(folder: string, yaml: string, entities = ENTITIES): string {
   const root = mkdtempSync(path.join(tmpdir(), 'packs-'));
   const dir = path.join(root, folder);
-  mkdirSync(dir);
+  mkdirSync(path.join(dir, 'prompts'), { recursive: true });
   writeFileSync(path.join(dir, 'pack.yaml'), yaml);
   writeFileSync(path.join(dir, 'entities.yaml'), entities);
+  writeFileSync(path.join(dir, 'synonyms.yaml'), 'fields:\n  sale.sale_date: [date]\n');
+  writeFileSync(path.join(dir, 'patterns.yaml'), 'known_formats: []\n');
+  writeFileSync(path.join(dir, 'prompts', 'domain_primer.md'), 'Primer.');
   return dir;
 }
 
@@ -93,7 +96,13 @@ const VALID_MANIFEST = [
 describe('bundled packs', () => {
   it('match the YAML on disk', () => {
     const retail = loadPack(listPackDirs().find((d) => d.endsWith('retail'))!);
-    expect(getPack('retail')).toEqual({ manifest: retail.manifest, entities: retail.entities });
+    expect(getPack('retail')).toEqual({
+      manifest: retail.manifest,
+      entities: retail.entities,
+      synonyms: retail.synonyms,
+      knownFormats: retail.knownFormats,
+      primer: retail.primer,
+    });
   });
 
   it('throw for unknown packs', () => {
