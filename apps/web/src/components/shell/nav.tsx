@@ -1,0 +1,96 @@
+'use client';
+
+import {
+  Home,
+  LayoutDashboard,
+  Menu,
+  MessageCircleQuestion,
+  Table2,
+  type LucideIcon,
+} from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+import { cn } from '@/lib/utils';
+
+type Segment = 'home' | 'ask' | 'dashboard' | 'data' | 'more' | 'settings';
+
+interface NavItem {
+  segment: Segment;
+  label: string;
+  icon: LucideIcon;
+}
+
+const ITEMS: NavItem[] = [
+  { segment: 'home', label: 'Home', icon: Home },
+  { segment: 'ask', label: 'Ask', icon: MessageCircleQuestion },
+  { segment: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { segment: 'data', label: 'My data', icon: Table2 },
+];
+const MORE: NavItem = { segment: 'more', label: 'More', icon: Menu };
+
+function useActiveSegment(slug: string): string | undefined {
+  const pathname = usePathname();
+  const rest = pathname.slice(`/w/${slug}/`.length);
+  const segment = rest.split('/')[0];
+  return segment === 'settings' ? 'more' : segment;
+}
+
+/** Left sidebar, shown from the `md` breakpoint up. */
+export function SidebarNav({ slug }: { slug: string }) {
+  const active = useActiveSegment(slug);
+  return (
+    <nav aria-label="Main" className="grid gap-1">
+      {[...ITEMS, { ...MORE, label: 'Settings', segment: 'settings' as const }].map((item) => {
+        const isActive =
+          active === item.segment || (item.segment === 'settings' && active === 'more');
+        return (
+          <Link
+            key={item.segment}
+            href={`/w/${slug}/${item.segment}`}
+            aria-current={isActive ? 'page' : undefined}
+            className={cn(
+              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground',
+              isActive && 'bg-accent text-foreground',
+            )}
+          >
+            <item.icon className="size-4" aria-hidden />
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/** Bottom tab bar for phones (below `md`). */
+export function BottomNav({ slug }: { slug: string }) {
+  const active = useActiveSegment(slug);
+  return (
+    <nav
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+    >
+      <ul className="grid grid-cols-5">
+        {[...ITEMS, MORE].map((item) => {
+          const isActive = active === item.segment;
+          return (
+            <li key={item.segment}>
+              <Link
+                href={`/w/${slug}/${item.segment}`}
+                aria-current={isActive ? 'page' : undefined}
+                className={cn(
+                  'flex min-h-14 flex-col items-center justify-center gap-1 text-xs text-muted-foreground',
+                  isActive && 'text-foreground',
+                )}
+              >
+                <item.icon className="size-5" aria-hidden />
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}

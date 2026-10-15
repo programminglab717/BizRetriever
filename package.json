@@ -24,7 +24,8 @@
     "db:migrate": "pnpm --filter @bizr/db run migrate",
     "db:setup:test": "NODE_ENV=test pnpm --filter @bizr/db run setup",
     "db:migrate:test": "NODE_ENV=test pnpm --filter @bizr/db run migrate",
-    "packs:validate": "pnpm --filter @bizr/packs run validate"
+    "packs:validate": "pnpm --filter @bizr/packs run validate",
+    "packs:build": "pnpm --filter @bizr/packs run build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

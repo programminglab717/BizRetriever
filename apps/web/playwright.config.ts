@@ -25,6 +25,8 @@ export default defineConfig({
     command: `pnpm start -p ${PORT}`,
     url: `http://localhost:${PORT}/api/health`,
     reuseExistingServer: !process.env.CI,
+    // Many sign-ups from one IP in a few seconds would trip the (real) rate limit.
+    env: { AUTH_RATE_LIMIT: 'off', APP_URL: `http://localhost:${PORT}` },
     timeout: 60_000,
   },
 });
