@@ -8,5 +8,16 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "iconv-lite": "^0.7.3",
+    "jschardet": "^4.0.0",
+    "papaparse": "^5.7.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/papaparse": "^5.5.2",
+    "@bizr/demo-data": "workspace:*"
   }
 }

@@ -196,7 +196,30 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
-  packages/ingest: {}
+  packages/ingest:
+    dependencies:
+      exceljs:
+        specifier: ^4.4.0
+        version: 4.4.0
+      iconv-lite:
+        specifier: ^0.7.3
+        version: 0.7.3
+      jschardet:
+        specifier: ^4.0.0
+        version: 4.0.0
+      papaparse:
+        specifier: ^5.7.0
+        version: 5.7.0
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@bizr/demo-data':
+        specifier: workspace:*
+        version: link:../demo-data
+      '@types/papaparse':
+        specifier: ^5.5.2
+        version: 5.5.2
 
   packages/packs:
     dependencies:
@@ -1358,6 +1381,9 @@ packages:
   '@types/node@24.19.2':
     resolution: {integrity: sha512-93d49wCWJkCyN87MxLpNN6KXPCwFw7bVUg79mGUV1OS40JGWwVCr8n61DXCSqz7CV6/VfPkb7xec7uP2M+QHWQ==}
 
+  '@types/papaparse@5.5.2':
+    resolution: {integrity: sha512-gFnFp/JMzLHCwRf7tQHrNnfhN4eYBVYYI897CGX4MY1tzY9l2aLkVyx2IlKZ/SAqDbB3I1AOZW5gTMGGsqWliA==}
+
   '@types/pg@8.23.1':
     resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
 
@@ -2276,6 +2302,11 @@ packages:
   js-tokens@10.0.0:
     resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
 
+  jschardet@4.0.0:
+    resolution: {integrity: sha512-EsNiLV+xzeMBtkGL/HeWoUivNkGIr8JmaC5A5j7DBlKnhp4CcBTWKEOtNg6vlmf+mkn9yQ9Wals47u7+LoTr7w==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
 
@@ -2627,6 +2658,9 @@ packages:
 
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
+
+  papaparse@5.7.0:
+    resolution: {integrity: sha512-qBGxg/7Q3Kl9Wfhrz2Z74UnvnHTXLNG6jmKJFeBvP2+y4lV7So+7SR62+Zd47JvdrCkX+nDcnr0ObPzek/+6RA==}
 
   path-exists@4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
@@ -3992,6 +4026,10 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
+  '@types/papaparse@5.5.2':
+    dependencies:
+      '@types/node': 24.19.2
+
   '@types/pg@8.23.1':
     dependencies:
       '@types/node': 24.19.2
@@ -5024,6 +5062,8 @@ snapshots:
 
   js-tokens@10.0.0: {}
 
+  jschardet@4.0.0: {}
+
   json-schema-traverse@0.4.1: {}
 
   json-stable-stringify-without-jsonify@1.0.1: {}
@@ -5318,6 +5358,8 @@ snapshots:
       p-limit: 3.1.0
 
   pako@1.0.11: {}
+
+  papaparse@5.7.0: {}
 
   path-exists@4.0.0: {}
 
