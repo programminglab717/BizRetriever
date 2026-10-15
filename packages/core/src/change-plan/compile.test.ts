@@ -188,6 +188,109 @@ describe('compileChangePlan', () => {
     }
   });
 
+  it('adds link fields with a foreign key, and drops unlinked tables', () => {
+    const { catalog } = compileChangePlan(SCHEMA, [], productPlan);
+    const compiled = compileChangePlan(SCHEMA, catalog, {
+      ops: [
+        {
+          op: 'add_field',
+          entity: 'supplier',
+          field: {
+            key: 'preferred_product',
+            label: 'Preferred product',
+            type: 'reference',
+            references: 'product',
+            required: false,
+            pii: false,
+          },
+        },
+      ],
+    });
+    expect(compiled.statements.join('\n')).toMatch(/ADD COLUMN "preferred_product_id" bigint/);
+    expect(compiled.statements.join('\n')).toMatch(/FOREIGN KEY \("preferred_product_id"\)/);
+
+    const dropped = compileChangePlan(SCHEMA, catalog, {
+      ops: [
+        { op: 'remove_field', entity: 'product', field: 'supplier' },
+        { op: 'remove_entity', entity: 'supplier' },
+      ],
+    });
+    expect(dropped.statements.at(-1)).toBe(`DROP TABLE "${SCHEMA}"."suppliers"`);
+    expect(dropped.destructive).toBe(true);
+  });
+
+  it('reports bad field lists, time fields, indexes and links', () => {
+    const { catalog } = compileChangePlan(SCHEMA, [], productPlan);
+    const text = (key: string) => ({
+      key,
+      label: key,
+      type: 'text' as const,
+      required: false,
+      pii: false,
+    });
+    let problems = '';
+    try {
+      compileChangePlan(SCHEMA, catalog, {
+        ops: [
+          {
+            op: 'create_entity',
+            key: 'note',
+            label: { singular: 'Note', plural: 'Notes' },
+            description: '',
+            fields: [text('body'), text('body')],
+            naturalKeys: [],
+            timeField: 'body',
+          },
+          { op: 'remove_field', entity: 'product', field: 'nope' },
+          { op: 'remove_entity', entity: 'ghost' },
+          { op: 'create_index', entity: 'ghost', fields: ['x'] },
+          { op: 'create_index', entity: 'product', fields: ['nope'] },
+          {
+            op: 'add_field',
+            entity: 'product',
+            field: {
+              key: 'maker',
+              label: 'Maker',
+              type: 'reference',
+              references: 'ghost',
+              required: false,
+              pii: false,
+            },
+          },
+        ],
+      });
+    } catch (err) {
+      problems = (err as ChangePlanError).problems.join('\n');
+    }
+    expect(problems).toContain('field "body" is listed twice');
+    expect(problems).toContain('time field "body" must be a date field');
+    expect(problems).toContain('unknown field "product.nope"');
+    expect(problems).toContain('unknown entity "ghost"');
+    expect(problems).toContain('links to unknown entity "ghost"');
+  });
+
+  it('shortens long index names deterministically', () => {
+    const long = 'a_very_long_field_name_that_keeps_going_and_going';
+    const { catalog } = compileChangePlan(SCHEMA, [], productPlan);
+    const compiled = compileChangePlan(SCHEMA, catalog, {
+      ops: [
+        {
+          op: 'add_field',
+          entity: 'product',
+          field: { key: long.slice(0, 40), label: 'L', type: 'text', required: false, pii: false },
+        },
+        {
+          op: 'create_index',
+          entity: 'product',
+          fields: [long.slice(0, 40), 'name', 'unit_price'],
+        },
+      ],
+    });
+    const name = /INDEX IF NOT EXISTS "([^"]+)"/.exec(compiled.statements.at(-1)!)![1]!;
+    expect(name.length).toBeLessThanOrEqual(63);
+    expect(name).toMatch(/_[0-9a-f]{8}$/);
+  });
+
   it('rejects unsafe or reserved keys at the schema level', () => {
     const bad = (key: string) =>
       compileChangePlan(SCHEMA, [], {

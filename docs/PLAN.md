@@ -192,29 +192,30 @@ report.
 
 **Demo data:**
 
-- [ ] ★ `scripts/demo-data`: a seeded generator for the **Fernwood Home & Gift** dataset (see
+- [x] ★ `packages/demo-data` (ADR-036): a seeded generator for the **Fernwood Home & Gift** dataset (see
   DEMO_SCRIPT §3). Has a `--today` anchor so stories are always current. Outputs messy xlsx/csv plus a
   clean ground-truth JSON.
 
 **Parsing and profiling:**
 
-- [ ] Storage interface with `local`, `postgres` (`app.upload_blob`) and `s3` drivers (the s3 driver is
-  tested against MinIO in Docker; no cloud account needed); upload route with size/type checks; sha256
-- [ ] Parsing: SheetJS (xlsx/xls), Papa Parse (csv), encoding detection; merged-cell expansion; Excel
+- [x] Storage interface with `local`, `postgres` (`app.storage_blob`) and `s3` drivers (the s3 driver is
+  tested against MinIO in Docker; no cloud account needed); upload route with size/type checks; sha256.
+  *Done: local + postgres, content-addressed. S3 deferred to the production upgrade (ADR-036).*
+- [x] Parsing: ExcelJS (xlsx; ADR-032), Papa Parse (csv), encoding detection; merged-cell expansion; Excel
   serial dates
-- [ ] Region detector: header rows, multi-row headers, title rows, section rows, totals, blank and note rows,
+- [x] Region detector: header rows, multi-row headers, title rows, section rows, totals, blank and note rows,
   multiple tables per sheet. Unit-tested on fixtures.
-- [ ] Column profiler: type candidates with ratios, date-format candidates with date-order resolution,
+- [x] Column profiler: type candidates with ratios, date-format candidates with date-order resolution,
   number locale detection, units, currency symbols, null sentinels, distinct/top values, pattern
   signatures, near-duplicate clusters
-- [ ] PII masking of samples (ADR-020)
+- [x] PII masking of samples (ADR-020)
 
 **Cleaning and AI:**
 
-- [ ] Cleaning-rule engine (`packages/ingest/cleaning`), covering all rules in AI_DESIGN §3.3, **test-first**
-- [ ] Retail pack: full `entities.yaml`, `synonyms.yaml`, `patterns.yaml` (incl. known export formats),
+- [x] Cleaning-rule engine (`packages/ingest/cleaning`), covering all rules in AI_DESIGN §3.3, **test-first**
+- [x] Retail pack: full `entities.yaml`, `synonyms.yaml`, `patterns.yaml` (incl. known export formats),
   domain primer
-- [ ] AI layer:
+- [x] AI layer (all but the model comparison, which needs the API key, Q20):
   - provider interface
   - Anthropic implementation (structured outputs, caching, refusal handling)
   - `ai_call` logging with cost
@@ -223,16 +224,17 @@ report.
   - spend guard (`AI_BUDGET_DAILY_USD` / `AI_BUDGET_MONTHLY_USD`) with deterministic fallbacks (ADR-027)
   - Sonnet-vs-Opus comparison for data modeling on the ingest eval, to pick the cheapest tier that meets
     the bar
-- [ ] Task A `proposeDataModel`, Task B `reviseDataModel`, Task C `summarizeProposal`
-- [ ] Proposal validator + dry-run executor (stats per entity, issues per row)
+- [x] Task A `proposeDataModel`, Task B `reviseDataModel`, Task C `summarizeProposal`, behind a
+  rule-based proposer (ADR-033). *Tested with fake providers; first live run waits for the key (Q20).*
+- [x] Proposal validator + dry-run executor (stats per entity, issues per row)
 
 **Change plans and loading:**
 
-- [ ] ★ Change-plan schema + compiler (create_entity, add_field, add_relationship, create_index),
+- [x] ★ Change-plan schema + compiler (create_entity, add_field, add_relationship, create_index),
   **test-first**, with golden DDL snapshots
-- [ ] Migration recorder (`app.migration`) + catalog writer (`app.entity/field/relationship`)
-- [ ] Loader:
-  - batch COPY into tenant tables
+- [x] Migration recorder (`app.migration`) + catalog writer (`app.entity/field/relationship`)
+- [x] Loader (ADR-035):
+  - batch parameterised INSERT into tenant tables (instead of COPY)
   - lineage and system columns
   - natural keys and row hashes
   - reference resolution with an `<entity>_ref` fallback
@@ -240,9 +242,9 @@ report.
 
 **Jobs and UI:**
 
-- [ ] Jobs: `ingest.parse`, `ingest.revise`, `ingest.apply`, written as checkpointed steps (each within
+- [x] Jobs: `ingest.analyze` (was `ingest.parse`), `ingest.revise`, `ingest.apply`, written as checkpointed steps (each within
   `JOB_STEP_BUDGET_MS`), with progress reporting and idempotency; verified in both runner modes
-- [ ] UI:
+- [x] UI:
   - upload screen
   - processing screen (stages + teaser)
   - **"Here's what we found" review screen** (summary, questions, record-type cards, mapping edit menu,
@@ -252,7 +254,8 @@ report.
 
 **Evals:**
 
-- [ ] Eval harness skeleton + `evals/fixtures/ingest` (≥ 10 cases at M2, ≥ 15 by M8) + injection canaries
+- [x] Eval harness skeleton + `evals/fixtures/ingest` (≥ 10 cases at M2, ≥ 15 by M8) + injection canaries
+  *(11 cases; rules-only suite runs in CI)*
 
 **Acceptance:**
 
@@ -265,6 +268,16 @@ report.
   - 0 injection canary failures
 - Cleaning-rule and compiler unit tests ≥ 90% line coverage.
 - Re-running `ingest.apply` is idempotent.
+
+**Acceptance status (2026-10-15):** met for the rule-based path.
+
+- Demo dataset: every count matches the answer key (integration + e2e tests).
+- 3 questions; upload to report takes about 15 seconds of machine time in the e2e test.
+- Ingest eval (rules): field-mapping F1 1.0, totals/notes/blank detection 100% on the cases, 0 canary
+  failures.
+- Cleaning and compiler line coverage: 96%.
+- Re-running `ingest.apply` is tested.
+- **Still open:** the live AI eval and the Sonnet-vs-Opus comparison (Q20).
 
 ---
 

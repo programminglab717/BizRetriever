@@ -185,6 +185,9 @@ the chooser honours only if it's valid for the result shape.
 
 ### Task A — `proposeDataModel`
 
+**Since ADR-033:** a deterministic proposer runs first and handles recognised layouts with no AI call. Task A
+runs only for tables it leaves unmapped or uncertain, starting from its draft.
+
 **Purpose.** Map messy sheets onto the pack's canonical entities, with cleaning rules, relationships, dedupe
 suggestions, assumptions and (at most 3) questions.
 

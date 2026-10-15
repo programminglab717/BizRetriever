@@ -77,7 +77,8 @@ docs/             all planning documentation
 | Queue a test job | `pnpm --filter @bizr/worker enqueue:noop` |
 | Seed dev data (M1) | `pnpm db:seed` |
 | Generate demo dataset (M2) | `pnpm demo:generate` |
-| AI eval suite (costs money; asks before > $1) | `pnpm eval --limit N` |
+| Eval suite, rules only (free) | `pnpm eval` |
+| AI eval suite (costs money; asks before > $1) | `pnpm eval -- --ai --limit N` |
 | Local demo machine (M8) | `pnpm demo:up` |
 
 ## Coding conventions
@@ -91,6 +92,8 @@ docs/             all planning documentation
   `.env*` files live at the repo root. Tests use `.env.test.local` and the `bizretriever_test` DB.
 - Integration tests are named `*.int.test.ts` and must use `databaseAvailable()` from
   `@bizr/platform/testing`. CI sets `REQUIRE_DB_TESTS=1` so they can't silently skip.
+- Uploaded files are read only through `getStorage()` (`@bizr/db`); bulk tenant writes only through
+  `withTenantWriter` (`@bizr/core/executor`).
 - Background work is a `defineJob` with idempotent, checkpointed steps (`@bizr/core/jobs`). Never
   write a job that assumes it runs in one go: it must work in both worker and drain modes.
 - Run pnpm scripts in filtered packages with `pnpm --filter <pkg> run <script>` (`setup` is a

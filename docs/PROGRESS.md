@@ -2,24 +2,78 @@
 
 ## Current Status
 
-- **Milestone:** M1 (accounts and workspaces) is **complete**; M2 (ingestion and AI data modeling) is
-  next. The owner authorised building through the milestones (ADR-031).
+- **Milestone:** M2 (ingestion and AI data modelling) is **complete** for the rule-based path. M3
+  (semantic layer) is next. The owner authorised building through the milestones (ADR-031).
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:**
-  - sign-up / sign-in / password reset (email); Google is built but switched off
-  - onboarding that creates a business with its own isolated data area
-  - the app shell (desktop sidebar, mobile tabs) with placeholder pages
-  - settings (edit details, delete business)
-  - the safe tenant query executor
-  - the job system
+  - accounts, onboarding, workspaces and settings (M1)
+  - **import:** upload → "Here's what we found" (questions, corrections, undo, free-text note) →
+    set up → data report. The demo files import with every count matching the answer key.
+  - background jobs in worker or inline mode
+  - `pnpm eval`: 11 ingest cases, rules only, $0
 - **Waiting on the owner (batched for the end):**
   - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
-  - the Anthropic API key (needed for live AI from M2; tests never need it)
+  - the Anthropic API key (Q20): needed for the first live AI eval and for question answering (M4)
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-15 — Session 5: M2 Ingestion and AI data modelling built
+
+**Completed:**
+
+- **Demo data:** `packages/demo-data` generates the messy Fernwood files plus an answer key
+  (ADR-036).
+- **Parsing:** ExcelJS + Papa Parse + encoding detection (ADR-032).
+- **Profiling:** region detection, column profiles and PII masking.
+- **Cleaning-rule engine:** test-first.
+- **Retail pack:** synonyms, patterns and a primer.
+- **Change-plan compiler and applier:** with the catalog.
+- **Data-model proposal:**
+  - rule-based proposer first, AI Tasks A/B/C behind it (ADR-033)
+  - versioned prompts with all file content inside `<workspace_data>`
+  - validator and copy checks (no jargon, no invented numbers)
+  - owner corrections applied by code and locked against AI changes
+  - dry-run refinement
+- **Ingestion backend:**
+  - storage (local, Postgres)
+  - migration `0004_ingestion`
+  - jobs `ingest.analyze` / `ingest.revise` / `ingest.apply`
+  - loader as the tenant writer (ADR-034, ADR-035)
+  - review builder
+  - data quality report
+- **UI:** upload, processing, review (summary, questions, record cards with "This is actually…",
+  skipped lines, assumptions with undo, "Anything look wrong?"), setting up, report. Also the My
+  data import list and the Home call to action.
+- **Evals:** `pnpm eval` with 11 messy cases including injection canaries; the rules-only suite runs in
+  CI against a baseline.
+- **Bugs found by the evals and fixed:**
+  - a date with equal day and month (03/03/2026) counted as day-first evidence
+  - "Receipt" headers weren't recognised as order numbers
+- **Tests:**
+  - 260+ unit/integration tests, including the full import through the real job system and an
+    idempotent re-apply
+  - 16 e2e tests (desktop + phone), including upload → review → answer → set up → report
+  - cleaning and compiler line coverage 96%
+
+**Notes / deviations (see ADR-032…036):**
+
+- No SheetJS (its CDN was unreachable).
+- Rules before AI.
+- INSERT instead of COPY.
+- S3 deferred.
+- Queue renamed to `ingest.analyze`.
+- The AI paths are tested with fake providers only (risk R17).
+
+**Next steps (M3):**
+
+1. Semantic layer from the pack: metrics IR, availability and plain-language definitions.
+2. Generated views (e.g. enriched sale lines).
+3. Records browser on My data.
+4. When the API key arrives: record replays, run `pnpm eval -- --ai`, and compare Sonnet with Opus
+   (Q20).
 
 ### 2026-10-15 — Session 4: M1 Accounts and workspaces built
 

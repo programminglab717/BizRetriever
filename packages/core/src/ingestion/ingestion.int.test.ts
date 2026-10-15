@@ -25,7 +25,7 @@ import {
   getMemberWorkspace,
   type MemberWorkspace,
 } from '../workspaces/service';
-import { ingestionJobs } from './jobs';
+import { ingestApplyJob, ingestionJobs } from './jobs';
 import {
   approveRun,
   getRunView,
@@ -222,4 +222,17 @@ describe.skipIf(!hasDb)('ingestion (integration)', () => {
     );
     expect(log.rows[0]!.n).toBe(1);
   }, 180_000);
+
+  it('re-running the load is harmless (idempotent apply)', async () => {
+    const before = await count('sale_lines');
+    const proposal = (await getRunView(member, runId)).proposal!;
+    await queue.enqueue(
+      ingestApplyJob,
+      { runId, proposalId: proposal.id, userId: owner },
+      { workspaceId: member.workspace.id },
+    );
+    await queue.drain({ budgetMs: 60_000 });
+    expect(await count('sale_lines')).toBe(before);
+    expect((await getRunView(member, runId)).run.status).toBe('done');
+  }, 120_000);
 });

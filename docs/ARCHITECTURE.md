@@ -136,8 +136,8 @@ sequenceDiagram
   U->>W: Upload files
   W->>S: Store originals (immutable)
   W->>DB: app.uploads, app.ingestion_runs (status=queued)
-  W->>Q: enqueue ingest.parse(run_id)
-  Q->>K: ingest.parse
+  W->>Q: enqueue ingest.analyze(run_id)
+  Q->>K: ingest.analyze
   K->>S: Read file
   K->>K: Parse sheets → raw grids (encoding detection, merged cells)
   K->>K: Region detection (header rows, section rows, totals, blanks, notes)
@@ -261,12 +261,12 @@ erDiagram
 | `workspace_member` | workspace_id, user_id, role (`owner` \| `member`; more roles later), invited_by, status |
 | `workspace_settings` | currency (ISO 4217), timezone (IANA), date_order (`DMY` \| `MDY` \| `YMD`), fiscal_year_start_month, week_start, pii_masking (bool) |
 | `upload` | file name, size, mime, storage key, sha256, data_source_id, uploaded_by, status |
-| `upload_blob` | upload_id, bytes (`bytea`). Only used by the Postgres storage driver in the free hosted preview (ADR-013) |
+| `storage_blob` | content-addressed key (`w/<workspace>/<sha256>`), workspace_id, bytes (`bytea`). Only used by the Postgres storage driver in the free hosted preview (ADR-013) |
 | `sheet_profile` | upload_id, sheet name, detected regions (JSON), column profiles (JSON), masked samples |
 | `data_source` | logical recurring source ("Online orders file"), fingerprint (header signature, sheet names), target entity mappings, last upload |
 | `job_run` | Generic background-job run (ADR-029): job name, input, checkpoint (`state`, `step_index`), status, progress {stage, pct}, error (user-safe + internal), timings. **Exists since M0.** |
 | `ingestion_run` | type (`initial` \| `reupload`), `job_run_id`, data-source links, timings |
-| `model_proposal` | run_id, proposal JSON (validated), dry-run stats JSON, status (`draft` \| `approved` \| `rejected` \| `superseded`), revisions[] |
+| `model_proposal` | run_id, version, origin (`ai` \| `heuristic`), base proposal, owner corrections, proposal (base + corrections), review JSON (dry-run counts, examples, skipped lines, warnings, summary), changes, status (`draft` \| `approved` \| `superseded`) (ADR-034) |
 | `change_plan` | origin (`ingestion` \| `chat` \| `system`), plan JSON, impact JSON, status, confirmed_by/at |
 | `migration` | per-workspace sequence `version`, change_plan_id, forward SQL (generated), inverse plan JSON, `lossy_rollback` flag, snapshot_id, applied_at, rolled_back_at |
 | `snapshot` | migration_id, objects copied (tables in `t_xxx_snap`), row counts, expires_at |
@@ -522,7 +522,7 @@ The worker simply runs steps back to back. The same handler code is used in both
 
 | Queue | Trigger | Notes |
 |---|---|---|
-| `ingest.parse` | upload complete | parse → regions → profiles → AI proposal → dry run |
+| `ingest.analyze` | upload complete | parse → regions → profiles → proposal (rules, then AI if needed, ADR-033) → dry run |
 | `ingest.revise` | user correction | AI revision + new dry run |
 | `ingest.apply` | user approval | change plan → load → quality report → semantic layer → dashboard → insights |
 | `merge.diff` / `merge.apply` | re-upload / approval | diff preview, then merge |
@@ -574,7 +574,7 @@ revenue. The code is built so that moving between stages is configuration only.
 | Web | `pnpm dev` / `pnpm start` | Vercel Hobby (or Cloudflare/Netlify free; see OPEN_QUESTIONS Q19) | Vercel Pro (or equivalent) |
 | Jobs | `apps/worker` (`JOB_RUNNER=worker`) | Inline drain (`JOB_RUNNER=inline`) + daily free cron | Dedicated worker (Railway/Fly/Render) |
 | Postgres | Docker Compose (Postgres 17) | Neon Free (pooled URL for web; direct URL for admin steps) | Neon paid (or similar) |
-| File storage | local `./.data/uploads` | Postgres driver (`app.upload_blob`, small files only) | Cloudflare R2 / S3 |
+| File storage | local `./.data/uploads` | Postgres driver (`app.storage_blob`, small files only) | Cloudflare R2 / S3 |
 | Email | console (links printed in logs) | Resend free tier, or console + manual | Resend paid as volume needs |
 | Error tracking | pino logs | pino logs (Sentry free tier optional) | Sentry |
 | Domain | `localhost` | free platform subdomain | custom domain |

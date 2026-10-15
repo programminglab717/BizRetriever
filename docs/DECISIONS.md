@@ -564,3 +564,89 @@ Template for new entries:
   - Progress is reported at each milestone boundary in PROGRESS.md rather than waiting for
     sign-off.
   - Anything that would cost money or change scope still goes to the owner first.
+
+## ADR-032 — ExcelJS for Excel files (amends ADR-014)
+
+- **Status:** Accepted (2026-10-15)
+- **Context:** ADR-014 chose SheetJS from its official CDN tarball, because the npm copy is outdated. The
+  CDN is not reachable from our build environment, and an outdated parser for untrusted files is not
+  acceptable.
+- **Decision:**
+  - **ExcelJS** (MIT, maintained on npm) reads `.xlsx`/`.xlsm`.
+  - Papa Parse and the encoding detection stay as in ADR-014.
+  - Old binary `.xls` files get a plain-language "please save as .xlsx" message.
+- **Consequences:**
+  - Merged cells, cached formula values and date cells are handled by our own wrapper
+    (`packages/ingest/parse/xlsx.ts`), which is unit-tested.
+  - `.xls` support can come back later through a separate, sandboxed converter if users need it.
+
+## ADR-033 — Data modelling: rules first, AI where needed
+
+- **Status:** Accepted (2026-10-15)
+- **Context:** AI_DESIGN Task A assumed the AI proposes every data model. That costs money on every
+  upload, makes ingestion stop working with no key or over budget, and is slower (risk R7).
+- **Decision:**
+  - A deterministic proposer (`packages/core/ingestion/heuristic.ts`) always runs first. It uses the
+    pack's header and value synonyms, known export formats and the column profiles to recognise the
+    common retail layouts.
+  - The AI (Task A) runs only when the rules leave a table unmapped or uncertain (`aiMode: 'auto'`). It
+    receives the rule-based draft as a starting point.
+  - Every AI proposal is validated against the pack and the profiles, gets one repair round (Task B with
+    the validator's findings), and falls back to the rule-based proposal on any AI failure (no key, over
+    budget, refusal, invalid output).
+  - A refusal is retried once on the standard tier by our client code. This replaces the server-side
+    refusal fallback in ADR-010, so all tiers and costs stay visible in `app.ai_call`.
+- **Consequences:**
+  - Recognised files, including the whole demo dataset, import with no AI cost and no API key.
+  - Task A prompts and evals are still needed for unfamiliar files. The live AI path has only been
+    tested with fake providers until the owner supplies a key (Q20).
+
+## ADR-034 — Ingestion state: originals plus versioned proposals
+
+- **Status:** Accepted (2026-10-15)
+- **Decision:**
+  - Every ingestion job step re-derives what it needs from the stored originals (parse → tables →
+    profiles). Parsing is deterministic and fast, so job state stays small and any step can be re-run.
+  - Each review change creates a new `model_proposal` version with:
+    - `base_proposal`: what the AI or the rules produced
+    - `corrections`: the owner's decisions, in order
+    - `proposal`: base plus corrections, which is what gets shown and applied
+    - `review`: dry-run counts, examples, skipped lines and warnings
+  - Owner corrections are applied by code and re-applied after every AI revision, so the AI can't undo
+    them.
+  - A stale page can't act on an old version; only the newest draft can be revised or approved.
+- **Consequences:**
+  - Undo is just removing a correction and re-running the test.
+  - Very large files are parsed several times per run. This is acceptable at the ADR-024 limits; cache
+    the parsed grid if it shows up in timings.
+
+## ADR-035 — Loading: parameterised batch inserts as the tenant writer
+
+- **Status:** Accepted (2026-10-15)
+- **Context:** PLAN M2 said "batch COPY". COPY needs a different code path, and makes per-row
+  parameter typing harder to keep safe.
+- **Decision:**
+  - The loader inserts in link order (linked-to records first) with multi-row parameterised `INSERT …
+    RETURNING _id`, in one transaction, as `t_<id>_writer` (through `withTenantWriter`, which pins
+    `search_path` like the executor).
+  - Links become `<field>_id` foreign keys; the original text is always kept in `<field>_ref`.
+  - Money and decimals are sent as exact decimal strings.
+  - Re-running a load is a no-op: the step first checks for records with this import's
+    `_source_upload_id`.
+- **Consequences:**
+  - The demo dataset (about 20,000 records) loads in about a second. Revisit COPY if large imports
+    approach the step budget.
+  - The writer role still has no DELETE; undoing an import arrives with the merge engine.
+
+## ADR-036 — Small structural choices made while building M2
+
+- **Status:** Accepted (2026-10-15)
+- **Decision:**
+  - The demo generator is the workspace package `packages/demo-data` (`pnpm demo:generate`), not
+    `scripts/`, so tests and evals can import it.
+  - Natural keys compare names loosely (case, punctuation, "&"/"and", legal suffixes such as Ltd), which
+    merges "Bloom & Co" and "BLOOM & CO LTD". Merges are always shown on the review screen, with a
+    question for the most important group.
+  - The S3 storage driver is deferred to the production upgrade (ADR-026). `local` and `postgres` cover
+    development, tests and the free preview.
+  - The ingestion queue names are `ingest.analyze`, `ingest.revise` and `ingest.apply`.

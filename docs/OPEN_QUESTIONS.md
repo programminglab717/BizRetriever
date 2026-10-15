@@ -16,6 +16,7 @@ overridden. When an item is decided, move it to "Resolved" with the date, and up
 
 | # | Pri | Question | Default (in use until decided) | ADR |
 |---|---|---|---|---|
+| Q20 | P1 (M4) | **Anthropic API key and the first paid eval run.** The AI paths (Tasks A–C) are built and tested with fake providers only. When can we get the key? The first run would record replays and compare Sonnet with Opus on the ingest eval (estimated well under $5). | Keep running rule-only (the demo needs no AI). Ask again before M4, where question answering needs the AI. | ADR-027, ADR-033 |
 | Q19 | P2 (M8) | **Free hosted preview platform.** Vercel Hobby's terms restrict it to non-commercial use. Is a pre-revenue investor preview OK there, or should we use a free tier that allows commercial use (e.g. Cloudflare Workers via the OpenNext adapter, Netlify)? Only matters if we want a shareable link before revenue. | Demo from a laptop (Stage 0). Decide this only if a hosted link is needed; re-check current terms then. | ADR-016 |
 | Q12 | P1 (M8) | **Branding.** Logo, colours, design references? | Neutral shadcn theme + placeholder wordmark until provided. | — |
 | Q16 | P2 | **Terminology check with real users.** Do owners say "orders" or "sales", "stock" or "inventory"? (Varies US/UK.) | "Sales" and "stock"; validate in 3–5 user interviews. | — |
@@ -42,6 +43,9 @@ overridden. When an item is decided, move it to "Resolved" with the date, and up
 | R14 | **Free-tier limits or terms change** (storage, compute hours, function duration, commercial-use clauses) | Medium | Low–Medium | Stage 0 local is the default; free preview is optional; staged design means switching vendors is config; re-verify before Stage 1 |
 | R15 | **AI spend creeps up** during development | Medium | Low | Hard budget guard, replay-only tests/CI, on-demand evals with cost estimates, cheapest tier that passes evals |
 | R16 | **Hosted Postgres may not allow revoking `set_config` from PUBLIC** (needs superuser-level rights; part of tenant isolation, ADR-005 amendment) | Medium | High | Verify on Neon before Stage 1; fallback is per-tenant login roles (ADR-005 option 3) |
+| R17 | **The live AI path is untested against the real API** (structured-output schema limits, latency, cost) | Medium | Medium | Fake-provider tests cover the fallbacks; first live eval run as soon as the key arrives (Q20); every failure falls back to the rule-based proposal |
+| R18 | **Eval cases overfit the rule-based proposer** (written while building it) | High | Medium | Add real anonymised files as they arrive; keep the AI eval separate; track rules-only and AI baselines apart |
+| R19 | **A long AI call exceeds a serverless function's time limit** in inline mode (free preview) | Medium | Medium | Rules-first means most imports make no AI call; the worker mode has no limit; split proposals per table if needed |
 | R13 | **Messy data the profiler can't structure** (pivot tables, images, multiple tables side by side) | Medium | Medium | Region detector handles multiple blocks; graceful "we couldn't read this part" with a skip option; collect such files for future work |
 
 ---
