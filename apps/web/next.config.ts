@@ -12,7 +12,14 @@ loadEnvConfig(repoRoot, process.env.NODE_ENV !== 'production', undefined, true);
 
 const config: NextConfig = {
   // Workspace packages ship TypeScript source; Next compiles them.
-  transpilePackages: ['@bizr/core', '@bizr/db', '@bizr/packs', '@bizr/platform'],
+  transpilePackages: [
+    '@bizr/ai',
+    '@bizr/core',
+    '@bizr/db',
+    '@bizr/ingest',
+    '@bizr/packs',
+    '@bizr/platform',
+  ],
   // Server-only libraries that must not be bundled.
   serverExternalPackages: ['pg', 'pg-boss', 'pino'],
   turbopack: { root: repoRoot },

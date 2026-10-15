@@ -26,7 +26,8 @@ export default defineConfig({
     url: `http://localhost:${PORT}/api/health`,
     reuseExistingServer: !process.env.CI,
     // Many sign-ups from one IP in a few seconds would trip the (real) rate limit.
-    env: { AUTH_RATE_LIMIT: 'off', APP_URL: `http://localhost:${PORT}` },
+    // No separate worker process: background jobs run inside the web server (ADR-011 inline mode).
+    env: { AUTH_RATE_LIMIT: 'off', APP_URL: `http://localhost:${PORT}`, JOB_RUNNER: 'inline' },
     timeout: 60_000,
   },
 });

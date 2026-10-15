@@ -150,6 +150,8 @@ export interface RunView {
   /** Job failure message (safe to show) when the background job failed. */
   jobError: string | null;
   proposal: StoredProposal | null;
+  /** "What we've spotted so far" while the files are being analysed. */
+  spotted: string[];
   files: { fileName: string; sizeBytes: number }[];
   report: unknown;
 }
@@ -176,6 +178,10 @@ export async function getRunView(member: MemberWorkspace, runId: string): Promis
     jobStatus: job?.status ?? null,
     jobError: job?.status === 'failed' ? (job.error?.userMessage ?? null) : null,
     proposal: (await latestProposal(run.id)) ?? null,
+    spotted:
+      job?.jobName === ingestAnalyzeJob.name
+        ? ((job.state as { spotted?: string[] }).spotted ?? [])
+        : [],
     files,
     report: report?.report ?? null,
   };

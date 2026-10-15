@@ -44,3 +44,11 @@ export async function homePathFor(userId: string): Promise<Route> {
   const active = workspaces.find((w) => w.workspace.status === 'active');
   return active ? (`/w/${active.workspace.slug}/home` as Route) : '/onboarding';
 }
+
+/** For route handlers: the member workspace, or null (never redirects). */
+export async function workspaceForApi(slug: string): Promise<MemberWorkspace | null> {
+  const s = await getSession();
+  if (!s) return null;
+  const member = await getMemberWorkspace(slug, s.user.id);
+  return member && member.workspace.status === 'active' ? member : null;
+}

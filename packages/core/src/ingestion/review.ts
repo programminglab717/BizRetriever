@@ -20,11 +20,18 @@ export interface ProposalReview {
     merged: number;
     sources: { sourceId: string; fileName: string; sheet: string }[];
     /** Up to 3 example records: detail label → display text. */
-    examples: { label: string; value: string }[][];
+    examples: { label: string; value: string; type: string }[][];
     /** "Show details": which column fills which detail. */
     mapping: {
       sourceId: string;
-      fields: { field: string; label: string; from: string; confidence: number }[];
+      fields: {
+        field: string;
+        label: string;
+        from: string;
+        confidence: number;
+        /** Set when one column fills it (the review screen can then remap that column). */
+        column?: number;
+      }[];
     }[];
   }[];
   skipped: { reason: string; label: string; count: number; examples: SkipExample[] }[];
@@ -96,7 +103,13 @@ function describeSource(
               : s.kind === 'sequence'
                 ? 'counted within each order'
                 : 'worked out from other details';
-      return { field: m.field, label, from, confidence: m.confidence };
+      return {
+        field: m.field,
+        label,
+        from,
+        confidence: m.confidence,
+        ...(s.kind === 'column' && typeof s.column === 'number' ? { column: s.column } : {}),
+      };
     });
   return { sourceId, fields };
 }
@@ -149,10 +162,16 @@ export function buildReview(input: {
     const shownFields = spec.fields.filter((f) => !f.pii).slice(0, 12);
     const examples = records.slice(0, 3).map((r) =>
       shownFields
-        .map((f) => ({
-          label: f.label,
-          value: f.type === 'reference' ? (r.refs[f.key] ?? '') : display(r.fields[f.key] ?? null),
-        }))
+        .map((f) => {
+          const raw =
+            f.type === 'reference' ? (r.refs[f.key] ?? '') : display(r.fields[f.key] ?? null);
+          // Allowed values are codes (online_store): show them as words.
+          const value =
+            f.allowedValues && raw
+              ? raw.charAt(0).toUpperCase() + raw.slice(1).replace(/_/g, ' ')
+              : raw;
+          return { label: f.label, value, type: f.type };
+        })
         .filter((x) => x.value !== '')
         .slice(0, 5),
     );

@@ -12,8 +12,10 @@
     "typegen": "next typegen"
   },
   "dependencies": {
+    "@bizr/ai": "workspace:*",
     "@bizr/core": "workspace:*",
     "@bizr/db": "workspace:*",
+    "@bizr/ingest": "workspace:*",
     "@bizr/packs": "workspace:*",
     "@bizr/platform": "workspace:*",
     "@radix-ui/react-slot": "^1.5.0",

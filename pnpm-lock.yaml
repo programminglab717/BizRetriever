@@ -44,12 +44,18 @@ importers:
 
   apps/web:
     dependencies:
+      '@bizr/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@bizr/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@bizr/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@bizr/ingest':
+        specifier: workspace:*
+        version: link:../../packages/ingest
       '@bizr/packs':
         specifier: workspace:*
         version: link:../../packages/packs
