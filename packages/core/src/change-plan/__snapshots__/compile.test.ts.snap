@@ -1,0 +1,397 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`compileChangePlan > compiles the whole retail pack deterministically (golden DDL) 1`] = `
+"CREATE TABLE "t_abcdefghij"."products" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "sku" text,
+  "name" text NOT NULL,
+  "variant" text,
+  "category" text,
+  "brand" text,
+  "unit_price" numeric(18,4),
+  "unit_cost" numeric(18,4),
+  "supplier_id" bigint,
+  "supplier_ref" text,
+  "reorder_point" numeric(18,4),
+  "is_active" boolean,
+  "barcode" text
+);
+
+CREATE INDEX "products__natural_key_idx" ON "t_abcdefghij"."products" ("_natural_key");
+
+CREATE TABLE "t_abcdefghij"."customers" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "name" text NOT NULL,
+  "email" text,
+  "phone" text,
+  "city" text,
+  "region" text,
+  "country" text,
+  "postal_code" text,
+  "customer_type" text,
+  "payment_terms_days" bigint
+);
+
+CREATE INDEX "customers__natural_key_idx" ON "t_abcdefghij"."customers" ("_natural_key");
+
+CREATE TABLE "t_abcdefghij"."suppliers" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "name" text NOT NULL,
+  "contact_name" text,
+  "email" text,
+  "phone" text,
+  "lead_time_days" bigint
+);
+
+CREATE INDEX "suppliers__natural_key_idx" ON "t_abcdefghij"."suppliers" ("_natural_key");
+
+CREATE TABLE "t_abcdefghij"."locations" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "name" text NOT NULL,
+  "location_type" text
+);
+
+CREATE INDEX "locations__natural_key_idx" ON "t_abcdefghij"."locations" ("_natural_key");
+
+CREATE TABLE "t_abcdefghij"."sales" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "order_number" text,
+  "sale_date" timestamptz NOT NULL,
+  "customer_id" bigint,
+  "customer_ref" text,
+  "channel" text,
+  "location_id" bigint,
+  "location_ref" text,
+  "status" text,
+  "discount_total" numeric(18,4),
+  "shipping_charged" numeric(18,4),
+  "tax_total" numeric(18,4),
+  "total" numeric(18,4),
+  "payment_status" text,
+  "due_date" date
+);
+
+CREATE INDEX "sales__natural_key_idx" ON "t_abcdefghij"."sales" ("_natural_key");
+
+CREATE INDEX "sales_sale_date_idx" ON "t_abcdefghij"."sales" ("sale_date");
+
+CREATE TABLE "t_abcdefghij"."sale_lines" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "sale_id" bigint,
+  "sale_ref" text NOT NULL,
+  "line_number" bigint,
+  "product_id" bigint,
+  "product_ref" text,
+  "product_name_raw" text,
+  "quantity" numeric(18,4) NOT NULL,
+  "unit_price" numeric(18,4),
+  "discount" numeric(18,4),
+  "line_total" numeric(18,4),
+  "unit_cost_at_sale" numeric(18,4)
+);
+
+CREATE INDEX "sale_lines__natural_key_idx" ON "t_abcdefghij"."sale_lines" ("_natural_key");
+
+CREATE TABLE "t_abcdefghij"."returns" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "sale_id" bigint,
+  "sale_ref" text,
+  "product_id" bigint,
+  "product_ref" text,
+  "return_date" date NOT NULL,
+  "quantity" numeric(18,4),
+  "refund_amount" numeric(18,4),
+  "reason" text
+);
+
+CREATE INDEX "returns__natural_key_idx" ON "t_abcdefghij"."returns" ("_natural_key");
+
+CREATE INDEX "returns_return_date_idx" ON "t_abcdefghij"."returns" ("return_date");
+
+CREATE TABLE "t_abcdefghij"."purchases" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "po_number" text,
+  "supplier_id" bigint,
+  "supplier_ref" text,
+  "order_date" date NOT NULL,
+  "received_date" date,
+  "status" text,
+  "total" numeric(18,4),
+  "shipping_cost" numeric(18,4)
+);
+
+CREATE INDEX "purchases__natural_key_idx" ON "t_abcdefghij"."purchases" ("_natural_key");
+
+CREATE INDEX "purchases_order_date_idx" ON "t_abcdefghij"."purchases" ("order_date");
+
+CREATE TABLE "t_abcdefghij"."purchase_lines" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "purchase_id" bigint,
+  "purchase_ref" text NOT NULL,
+  "product_id" bigint,
+  "product_ref" text,
+  "quantity" numeric(18,4) NOT NULL,
+  "unit_cost" numeric(18,4),
+  "line_total" numeric(18,4)
+);
+
+CREATE INDEX "purchase_lines__natural_key_idx" ON "t_abcdefghij"."purchase_lines" ("_natural_key");
+
+CREATE TABLE "t_abcdefghij"."stock_counts" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "product_id" bigint,
+  "product_ref" text NOT NULL,
+  "location_id" bigint,
+  "location_ref" text,
+  "counted_at" date NOT NULL,
+  "quantity_on_hand" numeric(18,4) NOT NULL
+);
+
+CREATE INDEX "stock_counts__natural_key_idx" ON "t_abcdefghij"."stock_counts" ("_natural_key");
+
+CREATE INDEX "stock_counts_counted_at_idx" ON "t_abcdefghij"."stock_counts" ("counted_at");
+
+CREATE TABLE "t_abcdefghij"."stock_movements" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "product_id" bigint,
+  "product_ref" text NOT NULL,
+  "moved_at" date NOT NULL,
+  "quantity_change" numeric(18,4) NOT NULL,
+  "reason" text
+);
+
+CREATE INDEX "stock_movements__natural_key_idx" ON "t_abcdefghij"."stock_movements" ("_natural_key");
+
+CREATE INDEX "stock_movements_moved_at_idx" ON "t_abcdefghij"."stock_movements" ("moved_at");
+
+CREATE TABLE "t_abcdefghij"."expenses" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "expense_date" date NOT NULL,
+  "category" text,
+  "description" text,
+  "amount" numeric(18,4) NOT NULL,
+  "vendor" text,
+  "payment_method" text
+);
+
+CREATE INDEX "expenses__natural_key_idx" ON "t_abcdefghij"."expenses" ("_natural_key");
+
+CREATE INDEX "expenses_expense_date_idx" ON "t_abcdefghij"."expenses" ("expense_date");
+
+CREATE TABLE "t_abcdefghij"."payments" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "reference" text,
+  "received_date" date NOT NULL,
+  "customer_id" bigint,
+  "customer_ref" text,
+  "sale_id" bigint,
+  "sale_ref" text,
+  "amount" numeric(18,4) NOT NULL,
+  "method" text
+);
+
+CREATE INDEX "payments__natural_key_idx" ON "t_abcdefghij"."payments" ("_natural_key");
+
+CREATE INDEX "payments_received_date_idx" ON "t_abcdefghij"."payments" ("received_date");
+
+ALTER TABLE "t_abcdefghij"."products" ADD CONSTRAINT "products_supplier_id_fk" FOREIGN KEY ("supplier_id") REFERENCES "t_abcdefghij"."suppliers" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "products_supplier_id_idx" ON "t_abcdefghij"."products" ("supplier_id");
+
+ALTER TABLE "t_abcdefghij"."sales" ADD CONSTRAINT "sales_customer_id_fk" FOREIGN KEY ("customer_id") REFERENCES "t_abcdefghij"."customers" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "sales_customer_id_idx" ON "t_abcdefghij"."sales" ("customer_id");
+
+ALTER TABLE "t_abcdefghij"."sales" ADD CONSTRAINT "sales_location_id_fk" FOREIGN KEY ("location_id") REFERENCES "t_abcdefghij"."locations" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "sales_location_id_idx" ON "t_abcdefghij"."sales" ("location_id");
+
+ALTER TABLE "t_abcdefghij"."sale_lines" ADD CONSTRAINT "sale_lines_sale_id_fk" FOREIGN KEY ("sale_id") REFERENCES "t_abcdefghij"."sales" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "sale_lines_sale_id_idx" ON "t_abcdefghij"."sale_lines" ("sale_id");
+
+ALTER TABLE "t_abcdefghij"."sale_lines" ADD CONSTRAINT "sale_lines_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "t_abcdefghij"."products" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "sale_lines_product_id_idx" ON "t_abcdefghij"."sale_lines" ("product_id");
+
+ALTER TABLE "t_abcdefghij"."returns" ADD CONSTRAINT "returns_sale_id_fk" FOREIGN KEY ("sale_id") REFERENCES "t_abcdefghij"."sales" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "returns_sale_id_idx" ON "t_abcdefghij"."returns" ("sale_id");
+
+ALTER TABLE "t_abcdefghij"."returns" ADD CONSTRAINT "returns_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "t_abcdefghij"."products" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "returns_product_id_idx" ON "t_abcdefghij"."returns" ("product_id");
+
+ALTER TABLE "t_abcdefghij"."purchases" ADD CONSTRAINT "purchases_supplier_id_fk" FOREIGN KEY ("supplier_id") REFERENCES "t_abcdefghij"."suppliers" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "purchases_supplier_id_idx" ON "t_abcdefghij"."purchases" ("supplier_id");
+
+ALTER TABLE "t_abcdefghij"."purchase_lines" ADD CONSTRAINT "purchase_lines_purchase_id_fk" FOREIGN KEY ("purchase_id") REFERENCES "t_abcdefghij"."purchases" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "purchase_lines_purchase_id_idx" ON "t_abcdefghij"."purchase_lines" ("purchase_id");
+
+ALTER TABLE "t_abcdefghij"."purchase_lines" ADD CONSTRAINT "purchase_lines_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "t_abcdefghij"."products" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "purchase_lines_product_id_idx" ON "t_abcdefghij"."purchase_lines" ("product_id");
+
+ALTER TABLE "t_abcdefghij"."stock_counts" ADD CONSTRAINT "stock_counts_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "t_abcdefghij"."products" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "stock_counts_product_id_idx" ON "t_abcdefghij"."stock_counts" ("product_id");
+
+ALTER TABLE "t_abcdefghij"."stock_counts" ADD CONSTRAINT "stock_counts_location_id_fk" FOREIGN KEY ("location_id") REFERENCES "t_abcdefghij"."locations" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "stock_counts_location_id_idx" ON "t_abcdefghij"."stock_counts" ("location_id");
+
+ALTER TABLE "t_abcdefghij"."stock_movements" ADD CONSTRAINT "stock_movements_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "t_abcdefghij"."products" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "stock_movements_product_id_idx" ON "t_abcdefghij"."stock_movements" ("product_id");
+
+ALTER TABLE "t_abcdefghij"."payments" ADD CONSTRAINT "payments_customer_id_fk" FOREIGN KEY ("customer_id") REFERENCES "t_abcdefghij"."customers" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "payments_customer_id_idx" ON "t_abcdefghij"."payments" ("customer_id");
+
+ALTER TABLE "t_abcdefghij"."payments" ADD CONSTRAINT "payments_sale_id_fk" FOREIGN KEY ("sale_id") REFERENCES "t_abcdefghij"."sales" ("_id") ON DELETE SET NULL;
+
+CREATE INDEX "payments_sale_id_idx" ON "t_abcdefghij"."payments" ("sale_id")"
+`;
+
+exports[`compileChangePlan > creates tables with system columns, then foreign keys 1`] = `
+[
+  "CREATE TABLE "t_abcdefghij"."suppliers" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "name" text NOT NULL
+)",
+  "CREATE INDEX "suppliers__natural_key_idx" ON "t_abcdefghij"."suppliers" ("_natural_key")",
+  "CREATE TABLE "t_abcdefghij"."products" (
+  _id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  _natural_key text,
+  _row_hash text,
+  _source_upload_id uuid,
+  _source_sheet text,
+  _source_row integer,
+  _created_at timestamptz NOT NULL DEFAULT now(),
+  _updated_at timestamptz NOT NULL DEFAULT now(),
+  _deleted_at timestamptz,
+  "sku" text,
+  "name" text NOT NULL,
+  "unit_price" numeric(18,4),
+  "supplier_id" bigint,
+  "supplier_ref" text
+)",
+  "CREATE INDEX "products__natural_key_idx" ON "t_abcdefghij"."products" ("_natural_key")",
+  "ALTER TABLE "t_abcdefghij"."products" ADD CONSTRAINT "products_supplier_id_fk" FOREIGN KEY ("supplier_id") REFERENCES "t_abcdefghij"."suppliers" ("_id") ON DELETE SET NULL",
+  "CREATE INDEX "products_supplier_id_idx" ON "t_abcdefghij"."products" ("supplier_id")",
+]
+`;

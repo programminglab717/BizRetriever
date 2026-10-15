@@ -15,6 +15,13 @@
       "when": 1792094089756,
       "tag": "0001_accounts_workspaces",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792097041968,
+      "tag": "0002_catalog_and_change_plans",
+      "breakpoints": true
     }
   ]
 }
