@@ -12,7 +12,7 @@
     "build": "pnpm --filter @bizr/web run build",
     "start": "pnpm --filter @bizr/web run start",
     "start:worker": "pnpm --filter @bizr/worker run start",
-    "lint": "eslint .",
+    "lint": "pnpm --filter @bizr/web run typegen && eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --parallel typecheck",
@@ -25,7 +25,8 @@
     "db:setup:test": "NODE_ENV=test pnpm --filter @bizr/db run setup",
     "db:migrate:test": "NODE_ENV=test pnpm --filter @bizr/db run migrate",
     "packs:validate": "pnpm --filter @bizr/packs run validate",
-    "packs:build": "pnpm --filter @bizr/packs run build"
+    "packs:build": "pnpm --filter @bizr/packs run build",
+    "demo:generate": "pnpm --filter @bizr/demo-data run generate"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
