@@ -56,7 +56,7 @@ export default defineConfig([
   },
   {
     // CLIs and scripts print to stdout on purpose.
-    files: ['**/src/cli/**', 'scripts/**'],
+    files: ['**/src/cli/**', '**/src/cli.ts', 'scripts/**'],
     rules: { 'no-console': 'off' },
   },
   {

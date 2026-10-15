@@ -1,0 +1,20 @@
+{
+  "name": "@bizr/demo-data",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "generate": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "iconv-lite": "^0.7.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}
