@@ -48,6 +48,17 @@ async function main() {
       `GRANT CREATE ON DATABASE ${db} TO ${id(roles.owner.name)}, ${id(roles.admin.name)}`,
     );
 
+    // Tenant roles must not be able to change session settings, above all `role` (which could switch
+    // to another tenant's role via set_config). Only our own login roles may call set_config; the
+    // safe executor sets everything it needs *before* SET LOCAL ROLE. (ARCHITECTURE §6)
+    await client.query(
+      'REVOKE EXECUTE ON FUNCTION pg_catalog.set_config(text, text, boolean) FROM PUBLIC',
+    );
+    await client.query(
+      `GRANT EXECUTE ON FUNCTION pg_catalog.set_config(text, text, boolean)
+         TO ${[roles.owner, roles.app, roles.admin, roles.tenant].map((r) => id(r.name)).join(', ')}`,
+    );
+
     // Job queue schema, owned by the control-plane role (pg-boss manages its own tables).
     await client.query(`CREATE SCHEMA IF NOT EXISTS pgboss AUTHORIZATION ${id(roles.app.name)}`);
 

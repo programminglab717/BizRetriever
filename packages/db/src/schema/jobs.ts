@@ -1,8 +1,17 @@
 import { sql } from 'drizzle-orm';
-import { check, index, integer, jsonb, pgSchema, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  check,
+  index,
+  integer,
+  jsonb,
+  text,
+  timestamp,
+  uuid,
+  type AnyPgColumn,
+} from 'drizzle-orm/pg-core';
 
-/** Control-plane schema (ARCHITECTURE §4). Tenant data never lives here. */
-export const app = pgSchema('app');
+import { app } from './base';
+import { workspace } from './workspace';
 
 export const jobRunStatus = ['queued', 'running', 'succeeded', 'failed'] as const;
 export type JobRunStatus = (typeof jobRunStatus)[number];
@@ -28,8 +37,9 @@ export const jobRun = app.table(
   'job_run',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    // FK to app.workspace is added in M1 when the workspace table exists.
-    workspaceId: uuid('workspace_id'),
+    workspaceId: uuid('workspace_id').references((): AnyPgColumn => workspace.id, {
+      onDelete: 'cascade',
+    }),
     jobName: text('job_name').notNull(),
     status: text('status', { enum: jobRunStatus }).notNull().default('queued'),
     input: jsonb('input').notNull(),

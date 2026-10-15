@@ -12,24 +12,47 @@ const postgresUrl = z
   .string()
   .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// connection string');
 
-export const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
-  APP_URL: z.url().default('http://localhost:3000'),
+export const envSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    LOG_LEVEL: z
+      .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+      .default('info'),
+    APP_URL: z.url().default('http://localhost:3000'),
 
-  // Database roles (ARCHITECTURE §6). The control-plane role can never read tenant data.
-  DATABASE_URL_APP: postgresUrl,
-  DATABASE_URL_ADMIN: postgresUrl,
-  DATABASE_URL_TENANT: postgresUrl,
-  // Only needed by `pnpm db:migrate` (owner of the `app` schema) and `pnpm db:setup` (superuser).
-  DATABASE_URL_MIGRATE: postgresUrl.optional(),
-  DATABASE_URL_SUPERUSER: postgresUrl.optional(),
+    // Database roles (ARCHITECTURE §6). The control-plane role can never read tenant data.
+    DATABASE_URL_APP: postgresUrl,
+    DATABASE_URL_ADMIN: postgresUrl,
+    DATABASE_URL_TENANT: postgresUrl,
+    // Only needed by `pnpm db:migrate` (owner of the `app` schema) and `pnpm db:setup` (superuser).
+    DATABASE_URL_MIGRATE: postgresUrl.optional(),
+    DATABASE_URL_SUPERUSER: postgresUrl.optional(),
 
-  // Background jobs (ADR-011): `worker` = long-running process, `inline` = serverless drain route.
-  JOB_RUNNER: z.enum(['worker', 'inline']).default('worker'),
-  JOB_STEP_BUDGET_MS: z.coerce.number().int().min(1_000).default(45_000),
-  JOB_DRAIN_SECRET: z.string().min(32).optional(),
-});
+    // Background jobs (ADR-011): `worker` = long-running process, `inline` = serverless drain route.
+    JOB_RUNNER: z.enum(['worker', 'inline']).default('worker'),
+    JOB_STEP_BUDGET_MS: z.coerce.number().int().min(1_000).default(45_000),
+    JOB_DRAIN_SECRET: z.string().min(32).optional(),
+
+    // Auth (ADR-012). The secret signs sessions; required outside development and tests.
+    BETTER_AUTH_SECRET: z.string().min(32).optional(),
+    // Google sign-in is switched on only when both are set (owner creates the free OAuth client later).
+    GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+    // Email: with no API key, emails (verification, password reset) are written to the server log.
+    RESEND_API_KEY: z.string().min(1).optional(),
+    EMAIL_FROM: z.string().min(3).default('BizRetriever <onboarding@resend.dev>'),
+    // Sign-in/sign-up rate limiting. Only the end-to-end test server turns it off.
+    AUTH_RATE_LIMIT: z.enum(['on', 'off']).default('on'),
+  })
+  .superRefine((env, ctx) => {
+    if (env.NODE_ENV === 'production' && !env.BETTER_AUTH_SECRET) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['BETTER_AUTH_SECRET'],
+        message: 'required in production (at least 32 characters)',
+      });
+    }
+  });
 
 export type Env = z.infer<typeof envSchema>;
 
@@ -51,7 +74,9 @@ export function loadRootEnv(): void {
 export function getEnv(): Env {
   if (cached) return cached;
   loadRootEnv();
-  const result = envSchema.safeParse(process.env);
+  // `KEY=` in a .env file means "not set", not "set to an empty string".
+  const raw = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== ''));
+  const result = envSchema.safeParse(raw);
   if (!result.success) {
     const problems = result.error.issues
       .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
