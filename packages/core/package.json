@@ -5,16 +5,25 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./jobs": "./src/jobs/index.ts"
+    "./jobs": "./src/jobs/index.ts",
+    "./tenancy": "./src/tenancy/index.ts",
+    "./executor": "./src/executor/index.ts",
+    "./sql": "./src/sql/ident.ts",
+    "./workspaces": "./src/workspaces/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@bizr/db": "workspace:*",
+    "@bizr/packs": "workspace:*",
     "@bizr/platform": "workspace:*",
     "drizzle-orm": "^0.45.4",
+    "pg": "^8.23.1",
     "pg-boss": "^12.37.1",
     "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.6"
   }
 }
