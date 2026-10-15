@@ -18,6 +18,8 @@ permissions:
 
 env:
   LOG_LEVEL: silent
+  # Never call the live AI API from CI (ADR-027); the app also forces this when NODE_ENV=test.
+  AI_REPLAY_MODE: replay
   REQUIRE_DB_TESTS: '1'
   DATABASE_URL_SUPERUSER: postgres://postgres:postgres@localhost:5432/bizretriever
   DATABASE_URL_MIGRATE: postgres://bizr_owner:ci_owner_pw@localhost:5432/bizretriever

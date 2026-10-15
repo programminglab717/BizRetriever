@@ -41,6 +41,16 @@ export const envSchema = z
     // Email: with no API key, emails (verification, password reset) are written to the server log.
     RESEND_API_KEY: z.string().min(1).optional(),
     EMAIL_FROM: z.string().min(3).default('BizRetriever <onboarding@resend.dev>'),
+    // AI (ADR-010, ADR-027). Without a key, AI features fall back to deterministic behaviour.
+    ANTHROPIC_API_KEY: z.string().min(1).optional(),
+    AI_MODEL_STRONG: z.string().default('claude-opus-5-5'),
+    AI_MODEL_STANDARD: z.string().default('claude-sonnet-5-5'),
+    AI_MODEL_FAST: z.string().default('claude-haiku-5-5'),
+    // off | record (replay if recorded, else live + record) | replay (recordings only). Tests: always replay.
+    AI_REPLAY_MODE: z.enum(['off', 'record', 'replay']).default('record'),
+    AI_RECORDINGS_DIR: z.string().optional(),
+    AI_BUDGET_DAILY_USD: z.coerce.number().min(0).default(2),
+    AI_BUDGET_MONTHLY_USD: z.coerce.number().min(0).default(15),
     // Sign-in/sign-up rate limiting. Only the end-to-end test server turns it off.
     AUTH_RATE_LIMIT: z.enum(['on', 'off']).default('on'),
   })

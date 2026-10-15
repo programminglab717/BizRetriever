@@ -9,13 +9,17 @@
     "./tenancy": "./src/tenancy/index.ts",
     "./executor": "./src/executor/index.ts",
     "./sql": "./src/sql/ident.ts",
-    "./workspaces": "./src/workspaces/index.ts"
+    "./workspaces": "./src/workspaces/index.ts",
+    "./ai": "./src/ai/index.ts",
+    "./change-plan": "./src/change-plan/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@bizr/ai": "workspace:*",
     "@bizr/db": "workspace:*",
+    "@bizr/ingest": "workspace:*",
     "@bizr/packs": "workspace:*",
     "@bizr/platform": "workspace:*",
     "drizzle-orm": "^0.45.4",
