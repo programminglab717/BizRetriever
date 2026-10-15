@@ -2,21 +2,85 @@
 
 ## Current Status
 
-- **Milestone:** M0 — Foundation is **complete**: all tasks done, and CI is green on GitHub (run #1).
-  **Waiting on:** owner confirmation to start M1.
+- **Milestone:** M1 (accounts and workspaces) is **complete**; M2 (ingestion and AI data modeling) is
+  next. The owner authorised building through the milestones (ADR-031).
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:**
-  - a landing page
-  - `/api/health`
-  - the job system (worker mode and serverless drain mode)
-  - database roles with baseline privilege tests
-  - the pack validator
+  - sign-up / sign-in / password reset (email); Google is built but switched off
+  - onboarding that creates a business with its own isolated data area
+  - the app shell (desktop sidebar, mobile tabs) with placeholder pages
+  - settings (edit details, delete business)
+  - the safe tenant query executor
+  - the job system
+- **Waiting on the owner (batched for the end):**
+  - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
+  - the Anthropic API key (needed for live AI from M2; tests never need it)
 - **Spend to date:** $0 infrastructure, $0 AI.
-- **Next step:** M1 (accounts, workspaces, tenant provisioning) after the owner confirms M0.
 
 ---
 
 ## Session log
+
+### 2026-10-15 — Session 4: M1 Accounts and workspaces built
+
+**Completed:**
+
+- **Owner instructions:** confirmed M0; "build everything for now"; Google OAuth client to be created
+  at the end (ADR-031).
+- **Control plane:** migration `0001_accounts_workspaces` adds:
+  - Better Auth tables (UUID ids)
+  - `workspace`, `workspace_member`, `workspace_settings`
+  - `audit_event`, `query_run`
+  - an FK from `job_run` to `workspace`
+- **Tenancy (`@bizr/core/tenancy`):** idempotent provisioning/deprovisioning of `t_<id>`, `t_<id>_snap`
+  and the reader/writer roles; `sql/ident.ts` identifier helper.
+- **Safe executor (`@bizr/core/executor`):** settings set first, then `SET LOCAL ROLE`; READ ONLY cursor
+  with a row cap; timeouts; `query_run` logging; user-safe errors.
+- **Security finding fixed:** the new isolation suite showed a tenant role could
+  `set_config('role', …)` into another tenant's role. `set_config` is now revoked from PUBLIC
+  (ADR-005 amendment). Open risk R16: verify this works on Neon before hosting.
+- **Workspaces (`@bizr/core/workspaces`):** create (with provisioning), list, membership-checked lookup,
+  update details, owner-only delete.
+- **Packs:**
+  - entities schema with cross-checks
+  - full retail catalog (13 entities, 86 fields)
+  - packs compiled into a generated module (ADR-030)
+- **Web:**
+  - Better Auth (email/password; Google behind env vars; console/Resend email; rate limit
+    switchable for e2e only)
+  - auth pages: sign-up, sign-in, forgot/reset password
+  - onboarding with locale guesses
+  - app shell (sidebar / bottom tabs) with placeholder pages
+  - settings with typed-name delete
+  - `proxy.ts` signed-out redirect
+  - `safeNextPath` open-redirect guard
+- **Tests:**
+  - 74 unit/integration tests (17 isolation cases, workspace service, packs, redirects)
+  - 14 e2e tests across desktop + mobile
+- **Docs:**
+  - PLAN M1 ticked
+  - ADR-005 amendment, ADR-030, ADR-031
+  - `docs/RUNBOOK_GOOGLE_OAUTH.md`
+  - ARCHITECTURE executor section
+  - CLAUDE.md conventions (executor-only tenant access, `requireWorkspace`)
+
+**Notes:**
+
+- Screens were checked visually on desktop and phone sizes.
+- Fixed a time-zone select bug where "UTC" was missing from Intl's list.
+
+**Next steps (M2):**
+
+1. Demo dataset generator (Fernwood Home & Gift) with ground truth.
+2. Storage drivers (local / postgres / s3) and the upload route.
+3. Parsing, region detection and profiling.
+4. Cleaning-rule engine (test-first).
+5. Change-plan compiler for create operations (test-first).
+6. AI provider layer with replay and spend guard; Tasks A/B/C.
+7. Loader, quality report, ingestion jobs.
+8. Review screens.
+9. Ingest eval harness.
+
 
 ### 2026-10-13 — Session 3: M0 Foundation built
 

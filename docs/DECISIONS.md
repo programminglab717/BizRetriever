@@ -118,6 +118,15 @@ Template for new entries:
   - Planned hardening, option 3 (per-tenant login roles with short-lived credentials), recorded in
     OPEN_QUESTIONS.
   - The SQL validator has an adversarial test suite as an M4 acceptance criterion.
+- **Amendment (2026-10-15, M1).** The isolation suite showed the residual risk was real:
+  `SELECT set_config('role', 't_other_reader', true)` let a tenant role switch to another tenant's role
+  within the transaction. Fixed at the database level:
+  - `EXECUTE` on `pg_catalog.set_config` is revoked from PUBLIC and granted only to our four login roles
+    (`pnpm db:setup`).
+  - The executor sets `search_path` and timeouts *before* `SET LOCAL ROLE`.
+  - Tenant roles therefore can't change any setting, including `role`. A test locks this in.
+  - Note for hosted stages: the revoke needs superuser-level rights; verify on Neon before Stage 1
+    (OPEN_QUESTIONS R16).
 
 ## ADR-006 — Drizzle for the control plane; our own migration engine for tenant schemas
 
@@ -525,3 +534,33 @@ Template for new entries:
 - **Consequences:**
   - A step failure marks the run failed. The user (or code) re-queues explicitly.
   - pg-boss retries (2, with backoff) only cover infrastructure errors around a step.
+
+## ADR-030 — Vertical packs are compiled into a generated module
+
+- **Status:** Accepted (2026-10-15)
+- **Context:** Packs are authored as YAML (VERTICAL_PACKS §1). Reading YAML from disk at runtime breaks
+  under bundlers (Next.js) and serverless file tracing.
+- **Decision:**
+  - `pnpm packs:build` validates all packs and writes `packages/packs/src/generated/packs.ts`. The app
+    uses `getPack()` / `listPacks()` from that module.
+  - The file-system loader is a separate entry point (`@bizr/packs/fs`) for CLIs and tests.
+  - `pnpm packs:validate` (in CI) fails if the generated file is stale.
+- **Consequences:**
+  - No runtime file access and no YAML parser in the bundle.
+  - Pack authors must run `pnpm packs:build` and commit the result.
+
+## ADR-031 — Owner authorised building through the milestones
+
+- **Status:** Accepted (owner, 2026-10-15)
+- **Context:** The working conventions said to wait for owner confirmation between milestones.
+- **Decision:**
+  - The owner confirmed M0 and asked to "build everything for now".
+  - Milestones continue back to back, each still meeting its acceptance criteria, with docs and CI
+    green.
+  - Steps that need the owner are batched for the end:
+    - creating the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
+    - providing the Anthropic API key (needed for live AI in M2+)
+- **Consequences:**
+  - Progress is reported at each milestone boundary in PROGRESS.md rather than waiting for
+    sign-off.
+  - Anything that would cost money or change scope still goes to the owner first.

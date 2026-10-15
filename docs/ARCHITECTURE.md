@@ -335,17 +335,22 @@ Decision: schema-per-tenant plus per-tenant roles (ADR-004, ADR-005).
 | `t_<id>_reader` | no | `USAGE` on `t_<id>`, `SELECT` on its tables/views. Nothing else. |
 | `t_<id>_writer` | no | Reader privileges plus `INSERT`/`UPDATE` on business tables (used for confirmed record edits). No DDL, no `DELETE` (soft delete only). |
 
-**Every tenant query through the safe executor:**
+**Every tenant query through the safe executor** (`executeTenantQuery`, `@bizr/core/executor`):
 
 ```sql
 BEGIN READ ONLY;                                  -- (writer path: BEGIN; no READ ONLY)
+-- settings first, as the broker role: tenant roles cannot call set_config at all
+SELECT set_config('search_path', '"t_abc123"', true),        -- only the tenant schema
+       set_config('statement_timeout', '8000', true),
+       set_config('idle_in_transaction_session_timeout', '10000', true);
 SET LOCAL ROLE t_abc123_reader;
-SET LOCAL search_path = t_abc123;                 -- only the tenant schema (pg_catalog is implicit)
-SET LOCAL statement_timeout = '8s';
-SET LOCAL idle_in_transaction_session_timeout = '10s';
-SELECT * FROM ( <validated or compiled SQL> ) AS q LIMIT 5001;   -- 5001 to detect truncation
+DECLARE bizr_q NO SCROLL CURSOR FOR <validated or compiled SQL>;   -- values as bound parameters
+FETCH FORWARD 5001 FROM bizr_q;                   -- 5001 to detect truncation
 COMMIT;
 ```
+
+`EXECUTE` on `pg_catalog.set_config` is revoked from PUBLIC (granted only to our login roles), so SQL
+running as a tenant role cannot switch to another role or undo the timeout (ADR-005 amendment).
 
 **Layers of defence for AI-originated SQL:**
 

@@ -41,6 +41,7 @@ overridden. When an item is decided, move it to "Resolved" with the date, and up
 | R12 | **Vendor model changes** (model IDs, API behaviour) | Medium | Low | Model IDs in env; provider abstraction; eval suite run before changing models |
 | R14 | **Free-tier limits or terms change** (storage, compute hours, function duration, commercial-use clauses) | Medium | Low–Medium | Stage 0 local is the default; free preview is optional; staged design means switching vendors is config; re-verify before Stage 1 |
 | R15 | **AI spend creeps up** during development | Medium | Low | Hard budget guard, replay-only tests/CI, on-demand evals with cost estimates, cheapest tier that passes evals |
+| R16 | **Hosted Postgres may not allow revoking `set_config` from PUBLIC** (needs superuser-level rights; part of tenant isolation, ADR-005 amendment) | Medium | High | Verify on Neon before Stage 1; fallback is per-tenant login roles (ADR-005 option 3) |
 | R13 | **Messy data the profiler can't structure** (pivot tables, images, multiple tables side by side) | Medium | Medium | Region detector handles multiple blocks; graceful "we couldn't read this part" with a skip option; collect such files for future work |
 
 ---

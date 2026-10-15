@@ -123,40 +123,60 @@ tenant schema.
 
 **Depends on:** M0.
 
-- [ ] Better Auth: email/password + Google OAuth; sessions; password reset. Email goes to the console
-  locally; an `EmailSender` interface gets a Resend (free tier) driver for hosted stages.
-- [ ] Control-plane tables:
+- [x] Better Auth: email/password + Google OAuth; sessions; password reset. Email goes to the server
+  log locally; a Resend (free tier) sender is used when `RESEND_API_KEY` is set. Google is built but
+  switched off until the owner creates the free OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`).
+- [x] Control-plane tables:
   - `workspace`
   - `workspace_member`
   - `workspace_settings`
   - `audit_event`
-- [ ] Onboarding screen: business name, industry picker (retail pack), currency, date order (live
-  example), timezone
-- [ ] Tenant provisioning service (`packages/db/tenant`), run as `bizr_admin`:
-  - create schema `t_<id>` and `t_<id>_snap`
-  - create the roles `t_<id>_reader` and `t_<id>_writer`
-  - set up grants
-  - grant role membership to `bizr_tenant`
-- [ ] Tenant deprovisioning (workspace delete) with typed confirmation
-- [ ] Safe executor skeleton (`packages/core/executor`): transaction + `SET LOCAL ROLE` + `search_path` +
-  timeout + row cap + `query_runs` logging
-- [ ] **Isolation integration tests:**
-  - tenant A's reader cannot read B's tables (even schema-qualified)
-  - `bizr_app` cannot read any tenant
-  - the reader cannot write
-  - the writer cannot DDL
-- [ ] App shell:
+  - `query_run`
+  - Better Auth `user`/`session`/`account`/`verification`
+- [x] Onboarding screen: business name, industry picker (retail pack + "coming soon" options), currency,
+  date order (live example), time zone, with locale-based guesses
+- [x] Tenant provisioning service (`@bizr/core/tenancy`, moved from `packages/db` so it can use the
+  identifier helper), run as `bizr_admin`:
+  - creates schemas `t_<id>` and `t_<id>_snap`
+  - creates the roles `t_<id>_reader` and `t_<id>_writer`
+  - sets up grants and default privileges
+  - grants role membership to `bizr_tenant`
+  - idempotent
+- [x] Tenant deprovisioning (workspace delete) with typed confirmation (owner only)
+- [x] Safe executor (`@bizr/core/executor`):
+  - transaction, pinned `search_path` + timeouts, then `SET LOCAL ROLE`
+  - READ ONLY cursor with a row cap
+  - `query_run` logging
+  - user-safe errors
+- [x] **Isolation integration tests** (17 cases), including:
+  - cross-tenant reads, even schema-qualified
+  - snapshot schema and control plane unreachable
+  - the reader can't write; the writer can't delete or change structure
+  - `bizr_app` and the bare broker can't read tenants
+  - `set_config` role switching blocked
+  - timeout, row cap and parameters
+- [x] App shell:
   - sidebar (desktop) and bottom tabs (mobile)
   - placeholder pages for Home / Ask / Dashboard / My data / More
-  - workspace resolution from session + membership in every server action
-- [ ] Members model (invite UI deferred; data model and owner/member roles in place)
-- [ ] Pack loader (`packages/packs`): Zod schema for the pack format; `retail` pack skeleton (manifest +
-  entities); `pnpm packs:validate`
+  - Settings page (edit details, delete business)
+  - every page and action resolves the workspace from session + membership (`requireWorkspace`)
+- [x] Members model (invite UI deferred; data model and owner/member roles in place)
+- [x] Pack loader (`packages/packs`):
+  - Zod schemas for manifest + entities, with cross-reference checks
+  - full `retail` entity catalog (13 entities, 86 fields)
+  - packs compiled to a generated module (`pnpm packs:build`); `pnpm packs:validate` fails if stale
+- [x] E2E journeys (desktop + mobile):
+  - sign up → onboarding → shell → settings
+  - sign out → sign in
+  - delete
+  - duplicate email and wrong password messages
+  - non-member gets 404
+  - signed-out redirect
 
 **Acceptance:**
 
-- A new user can sign up (email or Google), create a workspace, and see the app shell on desktop and
-  mobile.
+- A new user can sign up (email ✅; Google once the owner adds the OAuth client), create a workspace, and
+  see the app shell on desktop and mobile.
 - A tenant schema and roles exist for the workspace.
 - The isolation test suite passes in CI.
 - No tenant access path exists through `bizr_app`.

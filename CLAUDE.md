@@ -48,9 +48,9 @@ physical shops, multi-channel, light wholesale). Industry knowledge lives in swa
 apps/web          Next.js app (UI, route handlers, server actions)
 apps/worker       background job worker
 packages/platform env config (Zod), logging (pino + correlation ids); no other @bizr deps
-packages/db       control-plane Drizzle schema + migrations, db roles/pools, tenant provisioning
-packages/core     semantic layer, change-plan schema + compiler, query-spec compiler,
-                  SQL validator, safe query executor, merge/diff engine
+packages/db       control-plane Drizzle schema + migrations, db roles/pools
+packages/core     tenancy (provisioning), executor (safe tenant queries), workspaces, jobs, sql/ident;
+                  later: semantic layer, change-plan + query-spec compilers, SQL validator, merge
 packages/ingest   parsing, region detection, profiling, cleaning rules, loaders
 packages/ai       provider abstraction, versioned prompts, AI tasks, cost tracking
 packages/packs    pack format schema + loader; packs/retail/
@@ -73,7 +73,7 @@ docs/             all planning documentation
 | E2E tests | `pnpm test:e2e` |
 | Create DB roles (idempotent) | `pnpm db:setup` (test DB: `pnpm db:setup:test`) |
 | Control-plane migrations | `pnpm db:migrate` (test DB: `pnpm db:migrate:test`; generate: `pnpm db:generate --name <x>`) |
-| Validate vertical packs | `pnpm packs:validate` |
+| Validate vertical packs | `pnpm packs:validate` (after editing pack YAML: `pnpm packs:build`) |
 | Queue a test job | `pnpm --filter @bizr/worker enqueue:noop` |
 | Seed dev data (M1) | `pnpm db:seed` |
 | Generate demo dataset (M2) | `pnpm demo:generate` |
@@ -96,7 +96,11 @@ docs/             all planning documentation
 - Run pnpm scripts in filtered packages with `pnpm --filter <pkg> run <script>` (`setup` is a
   built-in pnpm command, so the `run` matters).
 - Never build SQL by string concatenation with user/AI values. Use parameters, and quote identifiers through
-  the single helper in `packages/core/sql/ident.ts`.
+  the single helper in `packages/core/src/sql/ident.ts`.
+- Tenant data is only ever read or written through `executeTenantQuery` (`@bizr/core/executor`). DDL on
+  tenant schemas only through tenancy/change-plan code running as `bizr_admin`.
+- Every workspace page and server action starts with `requireWorkspace(slug)` (`apps/web/src/lib/session.ts`),
+  which checks session + membership. Never trust a slug or id from the client on its own.
 - Money is `numeric(18,4)` in Postgres and handled as decimal strings/`Decimal` in TS. Never JS floats for
   money.
 - Every prompt lives in `packages/ai/prompts/<task>/v<N>.ts` with a version id. Never edit a released
