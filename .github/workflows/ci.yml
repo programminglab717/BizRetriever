@@ -24,6 +24,8 @@ env:
   DATABASE_URL_APP: postgres://bizr_app:ci_app_pw@localhost:5432/bizretriever
   DATABASE_URL_ADMIN: postgres://bizr_admin:ci_admin_pw@localhost:5432/bizretriever
   DATABASE_URL_TENANT: postgres://bizr_tenant:ci_tenant_pw@localhost:5432/bizretriever
+  # CI-only throwaway value (the e2e server runs in production mode, where a secret is required).
+  BETTER_AUTH_SECRET: ci-only-not-a-real-secret-0123456789abcdef
 
 jobs:
   checks:
