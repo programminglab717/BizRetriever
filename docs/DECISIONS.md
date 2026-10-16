@@ -650,3 +650,58 @@ Template for new entries:
   - The S3 storage driver is deferred to the production upgrade (ADR-026). `local` and `postgres` cover
     development, tests and the free preview.
   - The ingestion queue names are `ingest.analyze`, `ingest.revise` and `ingest.apply`.
+
+## ADR-037 — Metric IR additions and derived requirements (amends VERTICAL_PACKS §1.6)
+
+- **Status:** Accepted (2026-10-16)
+- **Context:** Several retail metrics aren't plain period totals: stock as of the latest count, dead
+  stock, new or lapsed customers, and money owed. Shopify discounts are per order, but category
+  breakdowns need them per item.
+- **Decision:** The IR gains:
+  - **windows** per aggregate: `period`, `to_end`, `all`, `{ last_days: N }`
+  - **`latest`**: the most recent value per linked record (stock counts)
+  - **`per` roll-ups with conditions**: e.g. count customers whose first order is in the period
+  - **`days_between`** and **period bounds**, with an optional `offset_days`
+  - **`allocate`**: shares a parent's amount (an order discount) across child records by weight
+  - **named `expressions` and `filters`** in the pack
+  - optional **`from` / `time`** overrides
+
+  `requires` is no longer hand-written. A metric needs every detail outside a `coalesce`; parts
+  inside `coalesce` are optional and drop out when missing. `requires_any` covers either/or metrics
+  (discounts).
+- **Consequences:**
+  - Availability can't drift from the definition.
+  - `{ period: end }` means the first day after the period (the "as of" date). Snapshot metrics
+    therefore count whole days before it.
+
+## ADR-038 — Query compiler shape
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - Each aggregate is its own CTE over its base record type, joining only many-to-one links, grouped
+    by the breakdown. This avoids double counting.
+  - Roll-ups group the inner aggregates by the per-record key plus the breakdown.
+  - A CTE per period joins the aggregates on the breakdown (`IS NOT DISTINCT FROM`) and computes the
+    metrics.
+  - Comparisons join two such CTEs. Whole calendar months compare with the months before; any other
+    range compares with the same number of days before.
+  - Sums and counts of nothing are 0 inside arithmetic.
+  - All values are parameters, allocated only when used.
+- **Consequences:**
+  - The SQL is longer than hand-written SQL but always correct for any combination.
+  - A breakdown or filter that a metric can't reach (expenses by channel) is refused with a plain
+    message instead of returning misleading numbers.
+
+## ADR-039 — Semantic catalog storage
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - Links come from `app.field.references_entity`; there is no separate `relationship` table.
+  - `app.metric` stores each workspace's measures with availability, the reason and renameable labels.
+    `field.has_data` and `entity.record_count` are refreshed after every import (the last step of
+    `ingest.apply`).
+  - `v_<table>_enriched` views are dropped and rebuilt inside every change-plan transaction.
+  - Renames change labels only and are audited.
+- **Consequences:**
+  - Query-time model loading reads only the control plane.
+  - Availability is as fresh as the last import or change.

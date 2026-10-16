@@ -46,6 +46,7 @@ overridden. When an item is decided, move it to "Resolved" with the date, and up
 | R17 | **The live AI path is untested against the real API** (structured-output schema limits, latency, cost) | Medium | Medium | Fake-provider tests cover the fallbacks; first live eval run as soon as the key arrives (Q20); every failure falls back to the rule-based proposal |
 | R18 | **Eval cases overfit the rule-based proposer** (written while building it) | High | Medium | Add real anonymised files as they arrive; keep the AI eval separate; track rules-only and AI baselines apart |
 | R19 | **A long AI call exceeds a serverless function's time limit** in inline mode (free preview) | Medium | Medium | Rules-first means most imports make no AI call; the worker mode has no limit; split proposals per table if needed |
+| R20 | **Item names that differ between files** (till "Sage Mug" vs stock list "Sage Stoneware Mug") don't link to a product, so product-level numbers (days of cover, margins by product) undercount | High | Medium | Unmatched links are kept and reported in the data report; M5 adds "these look like the same product" suggestions and a fix screen; tests scope product checks to linked sales |
 | R13 | **Messy data the profiler can't structure** (pivot tables, images, multiple tables side by side) | Medium | Medium | Region detector handles multiple blocks; graceful "we couldn't read this part" with a skip option; collect such files for future work |
 
 ---

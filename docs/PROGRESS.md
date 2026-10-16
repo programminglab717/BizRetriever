@@ -2,23 +2,77 @@
 
 ## Current Status
 
-- **Milestone:** M2 (ingestion and AI data modelling) is **complete** for the rule-based path. M3
-  (semantic layer) is next. The owner authorised building through the milestones (ADR-031).
+- **Milestone:** M3 (semantic layer) is **complete**. M4 (Ask) is next. The owner authorised building
+  through the milestones (ADR-031).
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:**
   - accounts, onboarding, workspaces and settings (M1)
-  - **import:** upload → "Here's what we found" (questions, corrections, undo, free-text note) →
-    set up → data report. The demo files import with every count matching the answer key.
-  - background jobs in worker or inline mode
-  - `pnpm eval`: 11 ingest cases, rules only, $0
+  - import from upload to data report (M2)
+  - **28 retail measures** computed from the owner's data. Each one is checked against the demo's
+    simulated business. Availability comes with plain-language "unlock" hints.
+  - **query compiler**: measures × breakdowns × filters × date ranges × comparisons → one safe SQL
+    query, run as the tenant reader
+  - **"What we track"** page with renames
+  - `pnpm eval` (11 ingest cases, rules only, $0)
 - **Waiting on the owner (batched for the end):**
   - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
-  - the Anthropic API key (Q20): needed for the first live AI eval and for question answering (M4)
+  - the Anthropic API key (Q20). M4 (questions in plain language) needs it for live use. Until then
+    M4 can be built and tested with replays and fakes.
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-16 — Session 6: M3 Semantic layer built
+
+**Completed:**
+
+- **Metric IR** (`@bizr/packs`):
+  - windows, `latest`, per-record roll-ups with conditions, days-between and shifted period bounds
+  - order-discount allocation, named expressions and filters
+  - cross-checks and cycle detection
+- **Retail `metrics.yaml`:** all 28 metrics from VERTICAL_PACKS §2.5, 11 breakdowns, and assumptions
+  stated per metric (ADR-037).
+- **Semantic core** (`@bizr/core/semantic`):
+  - link graph with ambiguity detection
+  - availability that drops optional parts
+  - the query compiler: one CTE per aggregate (no double counting), roll-ups, period variants,
+    comparisons, time buckets in the workspace time zone with week start and fiscal year, plain
+    errors (ADR-038)
+  - `fieldsWithData`, `refreshSemanticCatalog` (after every import), `loadSemanticModel`, `runQuery`
+  - the glossary and renames
+- **Database:**
+  - migration `0005_semantic_catalog`: `app.metric`, `field.has_data`, `entity.record_count`
+  - `v_<table>_enriched` views rebuilt with every structural change (ADR-039)
+- **Web:** the "What we track" page (measures, "Unlock more", records, links, renames) in the sidebar
+  and under More.
+- **Tests:**
+  - 294 unit/integration tests (up from 265) and 16 e2e
+  - ground truth: every metric on the demo data matches the simulation across a month, channel /
+    category / monthly breakdowns, a comparison, stock, customers and money owed; unavailable reasons
+    are checked
+  - golden SQL snapshots
+
+**Bugs found by the ground-truth tests and fixed:**
+
+- Unused parameters made Postgres fail.
+- A channel with refunds but no sales showed blank instead of a negative number.
+- "Previous period" for a calendar month used the 30 days before it.
+- Overdue money owed missed invoices with a blank due date. They now count as due 30 days after the
+  sale, and this is stated as an assumption.
+
+**Notes / deviations:** no `app.relationship` table (links are fields); `requires` derived from the
+IR (ADR-037).
+
+**Next steps (M4 — Ask):**
+
+1. `interpretQuestion` (Task D) producing a query spec, with clarifying questions and stated
+   assumptions; replay-tested.
+2. Deterministic chart choice and placeholder narration (Task E), with numbers filled by code.
+3. SQL fallback through the `libpg-query` allowlist validator.
+4. The Ask screen and "How I calculated this".
+5. The first live AI eval run as soon as the key arrives (Q20).
 
 ### 2026-10-15 — Session 5: M2 Ingestion and AI data modelling built
 

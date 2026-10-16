@@ -288,17 +288,17 @@ report.
 
 **Depends on:** M2.
 
-- [ ] Metric IR schema + compiler (aggregation, safe divide, filters, refs, time bucketing in the workspace
+- [x] Metric IR schema + compiler (aggregation, safe divide, filters, refs, time bucketing in the workspace
   timezone, comparison periods, fan-out-safe aggregation across joins)
-- [ ] Join-path resolver over the relationship graph (preferred paths from the pack; ambiguity → error)
-- [ ] Retail pack `metrics.yaml` (all metrics in VERTICAL_PACKS §2.5), with pack-level compile tests
-- [ ] Metric availability computation + plain-language unavailable reasons + "unlock" hints
-- [ ] System views per workspace (e.g. `v_sale_lines_enriched`), regenerated after structural changes
-- [ ] Query-spec schema + compiler (`QuerySpec` → SQL), **test-first**, with golden SQL snapshots and
+- [x] Join-path resolver over the relationship graph (preferred paths from the pack; ambiguity → error)
+- [x] Retail pack `metrics.yaml` (all metrics in VERTICAL_PACKS §2.5), with pack-level compile tests
+- [x] Metric availability computation + plain-language unavailable reasons + "unlock" hints
+- [x] System views per workspace (e.g. `v_sale_lines_enriched`), regenerated after structural changes
+- [x] Query-spec schema + compiler (`QuerySpec` → SQL), **test-first**, with golden SQL snapshots and
   result tests against the demo dataset
-- [ ] "What we track" glossary page: measures with definitions, record types and their details, links
+- [x] "What we track" glossary page: measures with definitions, record types and their details, links
   ("Sales are linked to customers")
-- [ ] Rename display names (metadata only) from the glossary
+- [x] Rename display names (metadata only) from the glossary
 
 **Acceptance:**
 
@@ -308,6 +308,19 @@ report.
   - channel and category breakdowns
   - comparison periods
 - Unavailable metrics show the correct reason when costs or stock are removed from the fixture.
+
+**Acceptance status (2026-10-16):** met.
+
+- All 28 retail metrics run on the demo data loaded the normal way and match values computed from the
+  simulated business (`semantic.int.test.ts`):
+  - a month
+  - channel, category and monthly breakdowns
+  - a previous-period comparison
+  - stock, customer and money-owed snapshots
+- Removing costs or stock gives the pack's plain-language reason. Removing returns makes net sales
+  equal sales after discounts.
+- Known data limit: till items written differently from the stock list ("Sage Mug") don't link to a
+  product, so product-level numbers there wait for M5's matching fixes (R20).
 
 ---
 

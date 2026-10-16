@@ -49,8 +49,8 @@ apps/web          Next.js app (UI, route handlers, server actions)
 apps/worker       background job worker
 packages/platform env config (Zod), logging (pino + correlation ids); no other @bizr deps
 packages/db       control-plane Drizzle schema + migrations, db roles/pools
-packages/core     tenancy (provisioning), executor (safe tenant queries), workspaces, jobs, sql/ident;
-                  later: semantic layer, change-plan + query-spec compilers, SQL validator, merge
+packages/core     tenancy, executor (safe tenant queries), workspaces, jobs, sql/ident, change plans,
+                  ingestion, semantic layer (metrics + query compiler); later: SQL validator, merge
 packages/ingest   parsing, region detection, profiling, cleaning rules, loaders
 packages/ai       provider abstraction, versioned prompts, AI tasks, cost tracking
 packages/packs    pack format schema + loader; packs/retail/
@@ -94,6 +94,8 @@ docs/             all planning documentation
   `@bizr/platform/testing`. CI sets `REQUIRE_DB_TESTS=1` so they can't silently skip.
 - Uploaded files are read only through `getStorage()` (`@bizr/db`); bulk tenant writes only through
   `withTenantWriter` (`@bizr/core/executor`).
+- Every number shown to users comes from `runQuery` / `compileQuery` (`@bizr/core/semantic`) or, in M4's
+  fallback, validated SQL through the executor. Metric definitions live only in pack `metrics.yaml`.
 - Background work is a `defineJob` with idempotent, checkpointed steps (`@bizr/core/jobs`). Never
   write a job that assumes it runs in one go: it must work in both worker and drain modes.
 - Run pnpm scripts in filtered packages with `pnpm --filter <pkg> run <script>` (`setup` is a

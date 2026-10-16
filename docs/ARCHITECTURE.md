@@ -382,8 +382,9 @@ shared-table + RLS. See ADR-004.
 
 ## 7. Semantic layer
 
-The semantic layer is the product's heart. It is stored in `app.entity`, `app.field`, `app.relationship`
-and `app.metric`, seeded from the Vertical Pack and adjusted per workspace.
+The semantic layer is the product's heart. It is stored in `app.entity`, `app.field` (links are fields
+with `references_entity`) and `app.metric`, seeded from the Vertical Pack and adjusted per workspace
+(ADR-039). Code: `packages/core/src/semantic` (link graph, availability, compiler, service).
 
 - **Entities and fields** carry display names, synonyms (pack synonyms plus the user's own column headers),
   semantic types, and PII flags.
