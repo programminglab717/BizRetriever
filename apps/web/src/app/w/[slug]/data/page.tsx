@@ -1,9 +1,10 @@
 import { listRuns } from '@bizr/core/ingestion';
+import { listRecordTypes } from '@bizr/core/records';
 import { FileUp } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
 
-import { ComingSoon, PageHeader } from '@/components/shell/page-header';
+import { PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireWorkspace } from '@/lib/session';
@@ -20,12 +21,14 @@ const STATUS: Record<string, string> = {
   cancelled: 'Stopped',
 };
 
+const count = new Intl.NumberFormat('en-US');
 const when = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
 export default async function DataPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const member = await requireWorkspace(slug);
-  const runs = await listRuns(member, 10);
+  const [runs, types] = await Promise.all([listRuns(member, 10), listRecordTypes(member)]);
+  const shown = types.filter((t) => t.count > 0 || t.deleted > 0);
   return (
     <div className="grid gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -36,6 +39,34 @@ export default async function DataPage({ params }: { params: Promise<{ slug: str
           </Link>
         </Button>
       </div>
+      {shown.length > 0 ? (
+        <section className="grid gap-3" aria-labelledby="records-heading">
+          <h2 id="records-heading" className="font-medium">
+            Your records
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {shown.map((t) => (
+              <li key={t.key}>
+                <Link
+                  href={`/w/${slug}/data/${t.key}` as Route}
+                  data-testid={`records-${t.key}`}
+                  className="grid gap-1 rounded-xl border p-4 hover:bg-muted/50"
+                >
+                  <span className="font-medium">{t.label.plural}</span>
+                  <span className="text-2xl font-semibold tabular-nums">
+                    {count.format(t.count)}
+                  </span>
+                  <span className="text-sm text-muted-foreground">{t.description}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        <p className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+          Your products, sales, customers and more will be here once you bring in your files.
+        </p>
+      )}
       {runs.length > 0 ? (
         <Card>
           <CardHeader>
@@ -64,9 +95,6 @@ export default async function DataPage({ params }: { params: Promise<{ slug: str
           </CardContent>
         </Card>
       ) : null}
-      <ComingSoon title="Your records">
-        Browsing your products, sales, customers and more arrives in the next update.
-      </ComingSoon>
     </div>
   );
 }

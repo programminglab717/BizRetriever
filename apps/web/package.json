@@ -19,6 +19,7 @@
     "@bizr/packs": "workspace:*",
     "@bizr/platform": "workspace:*",
     "@radix-ui/react-slot": "^1.5.0",
+    "@tanstack/react-virtual": "^3.14.21",
     "better-auth": "1.7.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
