@@ -734,3 +734,27 @@ Template for new entries:
   - The common questions cost nothing and answer instantly; the AI handles the long tail.
   - The rules can be wrong while "confident": the question eval set (M4) measures both paths, and
     any rule miss becomes a test.
+
+## ADR-041 — Answers: facts, code-written fallbacks, stored answers and tiles
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - Every answer is built from the query result by code: facts (values, top three, changes, counts)
+    with exact decimal money; the AI (Task E, fast tier) only writes a template with placeholders.
+    It must pass the placeholder, digit, sentence-count, causal-claim, markdown and jargon checks,
+    with one retry, or code's own template is used. The AI never sees result values.
+  - "How I calculated this" is written by code from the spec and the pack's definitions; the SQL and
+    row count sit under "Details". Fallback SQL gets Task F steps (checked for digits and jargon), or
+    generic plain steps.
+  - The chart comes from the result's shape (AI_DESIGN §5); a requested chart is used only if it fits.
+  - `app.conversation` / `app.answer` store each question with its interpretation and the rendered
+    answer (result capped at 200 rows). Follow-ups use the last six interpretations as context.
+  - `app.dashboard` / `app.dashboard_tile` store pinned questions as specs. Tiles re-run live and keep
+    their own dates only when the question named fixed dates. M5 builds on these tables.
+  - The Ask screen and tiles render a view model formatted on the server, so the browser never
+    formats money itself.
+  - Tenant tables are `ANALYZE`d after every load: without statistics a fresh table looks empty and
+    joins can take tens of seconds.
+- **Consequences:**
+  - Answers work fully without AI; the AI only improves wording and understanding.
+  - Stored answers read back without re-running; tiles always show current data.

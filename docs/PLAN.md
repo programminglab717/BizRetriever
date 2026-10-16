@@ -330,19 +330,19 @@ report.
 
 **Depends on:** M3.
 
-- [ ] Task D `interpretQuestion` (spec / clarify / sql / unanswerable), with the ambiguity policy
-- [ ] SQL validator (`libpg-query`) per AI_DESIGN §6, **test-first**, plus an adversarial suite of
+- [x] Task D `interpretQuestion` (spec / clarify / sql / unanswerable), with the ambiguity policy
+- [x] SQL validator (`libpg-query`) per AI_DESIGN §6, **test-first**, plus an adversarial suite of
   ≥ 150 cases
-- [ ] Fact extraction (deterministic) + Task E `narrateAnswer` with placeholder validation + template
+- [x] Fact extraction (deterministic) + Task E `narrateAnswer` with placeholder validation + template
   fallback
-- [ ] Task F `explainSql` (fallback path only)
-- [ ] Deterministic chart chooser + Recharts components (kpi, line, bar, bar_horizontal, stacked_bar,
+- [x] Task F `explainSql` (fallback path only)
+- [x] Deterministic chart chooser + Recharts components (kpi, line, bar, bar_horizontal, stacked_bar,
   table); accessible table alternative
-- [ ] "How I calculated this" generator (deterministic from spec) + Details (SQL, records scanned)
-- [ ] Ask UI: empty state with chips, thinking state, answer card, clarify card, unanswerable card,
+- [x] "How I calculated this" generator (deterministic from spec) + Details (SQL, records scanned)
+- [x] Ask UI: empty state with chips, thinking state, answer card, clarify card, unanswerable card,
   follow-ups (conversation context), 👍/👎 feedback
-- [ ] Pin to dashboard (needs the M5 tile model; implement the tile storage here if M5 hasn't started)
-- [ ] Question eval set (≥ 150 cases) + demo-script subset
+- [x] Pin to dashboard (needs the M5 tile model; implement the tile storage here if M5 hasn't started)
+- [x] Question eval set (≥ 150 cases) + demo-script subset
 
 **Acceptance:**
 

@@ -77,7 +77,7 @@ docs/             all planning documentation
 | Queue a test job | `pnpm --filter @bizr/worker enqueue:noop` |
 | Seed dev data (M1) | `pnpm db:seed` |
 | Generate demo dataset (M2) | `pnpm demo:generate` |
-| Eval suite, rules only (free) | `pnpm eval` |
+| Eval suite, rules only (free) | `pnpm eval` (questions only: `pnpm eval -- --suite questions`) |
 | AI eval suite (costs money; asks before > $1) | `pnpm eval -- --ai --limit N` |
 | Local demo machine (M8) | `pnpm demo:up` |
 

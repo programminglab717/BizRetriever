@@ -2,27 +2,86 @@
 
 ## Current Status
 
-- **Milestone:** M3 (semantic layer) is **complete**. M4 (Ask) is next. The owner authorised building
-  through the milestones (ADR-031).
+- **Milestone:** M4 (Ask) is **complete on the rules path**; its one open check is the live-AI eval
+  run, which needs the API key (Q20). M5 (Dashboards) is next, once the owner confirms. The owner
+  authorised building through the milestones (ADR-031).
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:**
   - accounts, onboarding, workspaces and settings (M1)
   - import from upload to data report (M2)
-  - **28 retail measures** computed from the owner's data. Each one is checked against the demo's
-    simulated business. Availability comes with plain-language "unlock" hints.
-  - **query compiler**: measures × breakdowns × filters × date ranges × comparisons → one safe SQL
-    query, run as the tenant reader
-  - **"What we track"** page with renames
-  - `pnpm eval` (11 ingest cases, rules only, $0)
+  - 28 retail measures, the query compiler and "What we track" (M3)
+  - **Ask**: plain-language questions → rules-first interpretation (AI for the rest), answers with
+    bold facts, charts with a table view, assumptions, "How I calculated this" with the SQL,
+    clarifying questions, follow-ups, 👍/👎 with reasons, and "Add to dashboard" (pinned tiles show
+    live on the Dashboard page)
+  - **SQL fallback** behind a 160+ case adversarial validator, read-only as the tenant reader
+  - `pnpm eval`: 11 ingest cases and **185 question cases** (rules only, $0)
+- **M4 acceptance (rules only, no AI):** 91.9% of questions correct (≥ 85% needed), 100% on the demo
+  script (≥ 95%), clarify precision 100% (≥ 80%), validator suite 100%, no number in any sentence that
+  doesn't come from a fact (by construction and tested), interpretation + query p95 under 0.1 s. With
+  the AI on, latency and accuracy are still to be measured (R22, Q20).
 - **Waiting on the owner (batched for the end):**
   - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
-  - the Anthropic API key (Q20). M4 (questions in plain language) needs it for live use. Until then
-    M4 can be built and tested with replays and fakes.
+  - the Anthropic API key (Q20), for the first AI eval runs
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-16 — Session 7: M4 Ask built
+
+**Completed:**
+
+- **SQL validator** (`@bizr/core/sql-validator`): libpg-query parse, default-deny allowlists, tenant
+  relations only, internal columns hidden, rewrite through filtered shadow CTEs; 160+ attack cases;
+  `runFallbackSql` read-only with a timeout and row cap.
+- **Interpretation** (`@bizr/core/ask`, ADR-040):
+  - time presets resolved by code in the workspace calendar
+  - the typed interpretation (query / clarify / sql / unanswerable)
+  - the rules interpreter (pack words, the owner's own values, time phrases, follow-ups, "best
+    customers" → clarify)
+  - Task D `interpret_question@v1` with code checks, one repair and one strong-tier try
+  - best guesses only when most of the question was understood
+- **Answers** (ADR-041):
+  - facts with exact money, code's own sentence, Task E `narrate_answer@v1` with placeholder checks
+  - Task F `explain_sql@v1`, "How I calculated this" from the spec, and the chart chooser
+  - pack nouns and display names (`online_store` → "Website") and pack example questions
+    (`questions.yaml`)
+- **Storage:** migration `0007_ask_and_tiles`: `conversation`, `answer`, `dashboard`, `dashboard_tile`.
+- **Web:**
+  - Ask screen: chips, thinking state, answer / clarify / can't-answer cards, Recharts charts with a
+    table toggle, feedback, pin with Undo, conversation kept in the URL
+  - Dashboard shows pinned tiles live
+- **Evals:**
+  - `evals/questions/retail.yaml`: 185 cases scored by result on the seeded demo data
+  - `pnpm eval -- --suite questions [--ai]` with a cost guard
+  - a rules-only CI test and a baseline (`evals/baselines/questions.json`)
+- **Tests:** 590 unit/integration (up from 294) and 16 e2e, which now cover asking, clarifying,
+  feedback, pinning, reload and the dashboard.
+
+**Bugs found and fixed:**
+
+- Comparisons with a breakdown crashed: Postgres can't FULL JOIN on `IS NOT DISTINCT FROM`. Both
+  periods now join onto the union of their keys. A golden test and a ground-truth test were added.
+- Supplier spend had two link paths (pack `join_paths` entry added).
+- Fresh tenant tables had no planner statistics, so a customer ranking took 33 s. Tables are now
+  `ANALYZE`d after every load.
+- The value list kept only the 200 most frequent names, so small stockists weren't recognised. It
+  now keeps up to 1000.
+- Rule misreadings found by the evals: verbs read as measures, "who are my best customers" taken as
+  a follow-up, nouns next to values, "since September", expense types, snapshot measures by day.
+- `revalidatePath` in the pin action refreshed and reset the Ask screen.
+- The pack loader test didn't expect `questions` (it was red on 442b139; fixed in d0cf2f4).
+
+**Blockers:** none for building. The AI paths still need the API key for a live run (Q20).
+
+**Next steps:**
+
+1. When the key arrives: `pnpm eval -- --suite questions --ai --limit 40`, then the full AI suite and
+   the ingest AI eval. Record the baselines and measure Ask p95 latency with AI on (R22).
+2. On the owner's go-ahead, M5: the pack's default dashboard, date range picker, tile editing and
+   versions on top of `dashboard` / `dashboard_tile`.
 
 ### 2026-10-16 — Session 6: M3 Semantic layer built
 
