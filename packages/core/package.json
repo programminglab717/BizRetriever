@@ -23,7 +23,8 @@
     "./records": "./src/records/index.ts",
     "./structure": "./src/structure/index.ts",
     "./insights": "./src/insights/index.ts",
-    "./demo": "./src/demo/index.ts"
+    "./demo": "./src/demo/index.ts",
+    "./admin": "./src/admin/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
