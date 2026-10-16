@@ -17,6 +17,7 @@ export function renderGeneratedPacks(packs: LoadedPack[]): string {
         metrics: p.metrics,
         questions: p.questions,
         dashboard: p.dashboard,
+        insights: p.insights,
         primer: p.primer,
       },
     ]),

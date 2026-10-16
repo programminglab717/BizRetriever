@@ -6,9 +6,16 @@ import { getPack } from './registry';
 const pack = getPack('retail');
 
 describe('retail metrics', () => {
-  it('defines every metric in VERTICAL_PACKS §2.5', () => {
+  it('defines every metric in VERTICAL_PACKS §2.5, and the ones insights need', () => {
     const ids = pack.metrics.metrics.map((m) => m.id);
-    expect(ids).toHaveLength(28);
+    expect(ids).toHaveLength(32);
+    for (const id of [
+      'units_returned',
+      'purchase_unit_cost',
+      'days_since_last_order',
+      'days_overdue',
+    ])
+      expect(ids).toContain(id);
     for (const id of [
       'net_sales',
       'gross_profit',

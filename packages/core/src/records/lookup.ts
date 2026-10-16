@@ -1,9 +1,10 @@
 import { normalizeLoose } from '@bizr/ingest';
 
 /**
- * Finding the records someone names in chat (Task H lookups): "Sage mugs" → Sage Stoneware Mug.
- * Pure scoring; the service fetches the names. Words are compared loosely (case, punctuation,
- * simple plurals), and every word typed has to be found.
+ * Finding the records someone names (Task H lookups, and links between imported records): "Sage
+ * mugs" → Sage Stoneware Mug. Pure scoring; callers fetch the names. Words are compared loosely
+ * (case, punctuation, simple plurals, common shop abbreviations), and every word written has to be
+ * found.
  */
 
 const STOP = new Set(['the', 'a', 'an', 'of', 'my', 'our']);
@@ -17,10 +18,24 @@ const stem = (w: string) =>
         ? w.slice(0, -1)
         : w;
 
+/** How tills and spreadsheets shorten words ("Candle Sml"). */
+const ABBREVIATIONS: Record<string, string> = {
+  sml: 'small',
+  sm: 'small',
+  med: 'medium',
+  md: 'medium',
+  lrg: 'large',
+  lg: 'large',
+  pk: 'pack',
+  pr: 'pair',
+  asst: 'assorted',
+};
+
 export const words = (s: string) =>
   normalizeLoose(s)
     .split(' ')
     .filter((w) => w && !STOP.has(w))
+    .map((w) => ABBREVIATIONS[w] ?? w)
     .map(stem);
 
 /** 0…1: how well `mention` names `title`. 1 is an exact match (ignoring case and plurals). */

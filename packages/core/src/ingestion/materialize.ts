@@ -18,6 +18,7 @@ import {
   type TargetType,
 } from '@bizr/ingest';
 
+import { bestMatches, words } from '../records/lookup';
 import type { FieldDef } from '../change-plan/schema';
 import {
   toExpr,
@@ -102,6 +103,9 @@ export interface MaterializeResult {
       matched: number;
       unmatched: number;
       unmatchedExamples: string[];
+      /** Linked by a close name (included in `matched`), shown in the data report. */
+      closeMatches: number;
+      closeExamples: { written: string; to: string }[];
     }[];
   };
 }
@@ -146,6 +150,15 @@ function sameThing(a: (string | null)[], b: (string | null)[]): boolean {
     if (a[i] !== null && b[i] !== null) return a[i] === b[i];
   }
   return false;
+}
+
+/** "We linked “Sage Mug” to Sage Stoneware Mug", for the data report's assumptions. */
+export function closeLinkNotes(result: MaterializeResult): string[] {
+  return result.stats.references.flatMap((r) =>
+    r.closeExamples.map(
+      (x) => `We linked “${x.written}” to ${x.to}: it’s the only one with all those words.`,
+    ),
+  );
 }
 
 /** Text of a cleaned value, for link keys (dates as ISO). */
@@ -502,8 +515,23 @@ export function materialize(
         }
         return map;
       };
+      // A close name: every word written is in exactly one record's name ("Sage Mug" → Sage
+      // Stoneware Mug, "Fig Candle Sml" → Fig Candle Small). Only for names of two words or more.
+      const nameField = targetSpec.fields.find((f) => f.semantic === 'name' && !f.pii)?.key;
+      let names: { id: string; title: string }[] | undefined;
+      const closeMatch = (written: string): number | undefined => {
+        if (!nameField || words(written).length < 2) return undefined;
+        names ??= targetList.flatMap((t, i) => {
+          const v = t.fields[nameField];
+          return typeof v === 'string' && v.trim() ? [{ id: String(i), title: v }] : [];
+        });
+        const found = bestMatches(written, names, 2);
+        return found.length === 1 ? Number(found[0]!.id) : undefined;
+      };
       let matched = 0;
       let unmatched = 0;
+      let close = 0;
+      const closeExamples = new Map<string, string>();
       const examples = new Set<string>();
       for (const rec of list) {
         const ref = rec.refs[def.key];
@@ -519,6 +547,16 @@ export function materialize(
             if (found !== undefined) break;
           }
           if (found !== undefined) break;
+        }
+        if (found === undefined) {
+          found = closeMatch(ref);
+          if (found !== undefined) {
+            close += 1;
+            if (closeExamples.size < 5 && !closeExamples.has(ref)) {
+              const name = targetList[found]!.fields[nameField!];
+              closeExamples.set(ref, typeof name === 'string' ? name : ref);
+            }
+          }
         }
         if (found !== undefined) {
           rec.links[def.key] = found;
@@ -547,6 +585,8 @@ export function materialize(
           matched,
           unmatched,
           unmatchedExamples: [...examples],
+          closeMatches: close,
+          closeExamples: [...closeExamples].map(([written, to]) => ({ written, to })),
         });
       }
     }

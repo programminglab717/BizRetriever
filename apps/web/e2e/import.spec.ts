@@ -79,7 +79,7 @@ test('an owner imports their messy spreadsheets and gets a data report', async (
   // What we track: every measure is available on the demo data, and names can be changed.
   await page.goto(page.url().replace(/\/data$/, '/glossary'));
   await expect(page.getByRole('heading', { name: 'What we track' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Measures (28)' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Measures (32)' })).toBeVisible();
   await expect(page.getByTestId('record-type-sale')).toContainText('5,571 records');
   await expect(page.getByTestId('record-type-sale')).toContainText('Sales are linked to customers');
   const netSales = page.getByTestId('measure-net_sales');

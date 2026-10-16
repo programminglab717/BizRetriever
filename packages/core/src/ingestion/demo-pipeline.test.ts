@@ -9,7 +9,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { planFromPack } from '../change-plan/from-pack';
 import { analyzeFiles, type Analysis } from './analyze';
 import { proposeHeuristically, type HeuristicResult } from './heuristic';
-import { materialize, type EntitySpec, type MaterializeResult } from './materialize';
+import {
+  closeLinkNotes,
+  materialize,
+  type EntitySpec,
+  type MaterializeResult,
+} from './materialize';
 import { validateProposal } from './validate';
 import { findJargon } from '../narration';
 
@@ -119,8 +124,13 @@ describe('deterministic pipeline on the demo files', () => {
     const refs = result.stats.references.find(
       (r) => r.entity === 'sale_line' && r.field === 'product',
     )!;
-    expect(refs.matched / (refs.matched + refs.unmatched)).toBeGreaterThan(0.95);
-    expect(refs.unmatchedExamples.join(' ')).toMatch(/Sage Mug|Sml/);
+    expect(refs.matched / (refs.matched + refs.unmatched)).toBeGreaterThan(0.99);
+    // The till's short names are linked by their words, and said so in the data report.
+    expect(refs.closeExamples).toContainEqual({ written: 'Sage Mug', to: 'Sage Stoneware Mug' });
+    expect(refs.closeExamples.some((x) => /Sml$/.test(x.written) && /Small$/.test(x.to))).toBe(
+      true,
+    );
+    expect(closeLinkNotes(result).join(' ')).toMatch(/We linked “Sage Mug” to Sage Stoneware Mug/);
   });
 
   it('never treats the injection canary as anything but data', () => {

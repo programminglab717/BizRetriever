@@ -1,0 +1,461 @@
+# Insight rules for the retail pack (VERTICAL_PACKS §2.7). Each rule asks one or more questions with
+# dates relative to today (today itself isn't included: its sales aren't in yet), then decides from
+# the answers. `query.metric` is a measure, `query.dN` a breakdown, `key` the first breakdown (the
+# product, the customer…). Every number in a sentence is a {{fact}} filled by code from the answers.
+# {{n|one|many}} picks a word by the fact n. Percent thresholds are fractions (0.1 = 10%).
+
+rules:
+  # --- Stock -------------------------------------------------------------------------------------
+  - id: stockout_risk
+    category: stock
+    label: Running out of stock
+    description: Products that will run out soon at the rate they're selling.
+    thresholds:
+      warn_days:
+        label: Warn me when stock will run out within {{value}} days
+        default: 14
+        min: 1
+        max: 90
+        unit: days
+      urgent_days:
+        label: Call it urgent when it's within {{value}} days
+        default: 7
+        min: 1
+        max: 60
+        unit: days
+    queries:
+      cover:
+        metrics: [days_of_cover, daily_sales_rate, stock_on_hand]
+        dimensions:
+          - { field: product.name }
+          - { field: supplier.name }
+          - { field: supplier.lead_time_days }
+        period: { to_date: true }
+        having: [{ metric: daily_sales_rate, op: gt, value: 0 }]
+        sort: { by: days_of_cover, dir: asc }
+        limit: 100
+      price:
+        metrics: [net_sales, units_sold]
+        dimensions: [{ field: product.name }]
+        period: { last_days: 90 }
+    scope: each
+    where: { lt: [cover.days_of_cover, { threshold: warn_days }] }
+    facts:
+      product: { text: key }
+      days: { value: cover.days_of_cover, format: integer }
+      rate: { value: cover.daily_sales_rate, format: number }
+      on_hand: { value: cover.stock_on_hand, format: integer }
+      # Reorder suggestion (VERTICAL_PACKS reorder_suggestion): cover the supplier's lead time + 30 days.
+      cover_days: { value: { add: [{ coalesce: [cover.d2, 14] }, 30] }, format: integer }
+      qty:
+        value:
+          max:
+            - 0
+            - sub:
+                - { mul: [cover.daily_sales_rate, { add: [{ coalesce: [cover.d2, 14] }, 30] }] }
+                - cover.stock_on_hand
+        format: integer
+      supplier: { text: cover.d1, fallback: your supplier }
+    severity:
+      urgent: { lt: [cover.days_of_cover, { threshold: urgent_days }] }
+      otherwise: warn
+      # Two weeks of sales at the price it's been selling for.
+      impact:
+        mul:
+          - cover.daily_sales_rate
+          - 14
+          - { coalesce: [{ div: [price.net_sales, price.units_sold] }, 0] }
+    template: '**{{product}}** will run out in about {{days}} {{days|day|days}} at the current sales rate ({{rate}} a day). You have {{on_hand}} left.'
+    context: Consider reordering about {{qty}} from {{supplier}} to cover the next {{cover_days}} days.
+    action: { label: See product, records: product, search: key }
+    limit: 5
+    cooldown_days: 3
+
+  - id: dead_stock
+    category: stock
+    label: Stock that isn't selling
+    description: Products in stock that haven't sold in 90 days, and the money they hold.
+    thresholds:
+      min_value:
+        label: Only tell me when unsold stock is worth more than {{value}}
+        default: 100
+        min: 0
+        max: 1000000
+        unit: money
+    queries:
+      dead:
+        metrics: [dead_stock_value, stock_on_hand]
+        dimensions: [{ field: product.name }]
+        period: { to_date: true }
+        having: [{ metric: dead_stock_value, op: gt, value: 0 }]
+        sort: { by: dead_stock_value, dir: desc }
+    scope: summary
+    require: { gt: [{ total: dead.dead_stock_value }, { threshold: min_value }] }
+    facts:
+      count: { count: true }
+      value: { sum: dead.dead_stock_value, format: money }
+      top_product: { top: key, by: dead.dead_stock_value }
+      days: { value: 90, format: integer }
+    severity:
+      otherwise: warn
+      impact: { total: dead.dead_stock_value }
+    template: "{{count}} {{count|product hasn't|products haven't}} sold in {{days}} days. They're holding {{value}} of your money, led by **{{top_product}}**."
+    action: { label: See which, ask: Which products haven't sold in the last 90 days? }
+    cooldown_days: 30
+
+  # --- Customers ---------------------------------------------------------------------------------
+  - id: customer_slipping
+    category: customers
+    label: Regular customers buying less
+    description: Customers with several past orders whose spending has dropped well below their usual.
+    thresholds:
+      drop:
+        label: Tell me when a regular customer's spending drops by {{value}}% or more
+        default: 0.5
+        min: 0.1
+        max: 0.95
+        unit: percent
+      min_orders:
+        label: Count customers as regulars after {{value}} orders
+        default: 3
+        min: 2
+        max: 20
+        unit: count
+    needs_history_days: 240
+    queries:
+      before:
+        metrics: [net_sales, order_count]
+        dimensions: [{ field: customer.name }]
+        period: { days_ago: [240, 60] }
+        having: [{ metric: net_sales, op: gt, value: 0 }]
+      recent:
+        metrics: [net_sales]
+        dimensions: [{ field: customer.name }]
+        period: { last_days: 60 }
+      last:
+        metrics: [days_since_last_order]
+        dimensions: [{ field: customer.name }]
+        period: { to_date: true }
+    scope: each
+    rows: before
+    where:
+      all:
+        - { gte: [before.order_count, { threshold: min_orders }] }
+        - lte:
+            - { coalesce: [recent.net_sales, 0] }
+            - mul: [{ div: [before.net_sales, 3] }, { sub: [1, { threshold: drop }] }]
+    facts:
+      customer: { text: key }
+      drop_pct:
+        value:
+          {
+            sub:
+              [1, { div: [{ coalesce: [recent.net_sales, 0] }, { div: [before.net_sales, 3] }] }],
+          }
+        format: percent
+      recent: { value: { coalesce: [recent.net_sales, 0] }, format: money }
+      usual: { value: { div: [before.net_sales, 3] }, format: money }
+      days_since: { value: last.days_since_last_order, format: integer }
+    severity:
+      otherwise: warn
+      impact: { sub: [{ div: [before.net_sales, 3] }, { coalesce: [recent.net_sales, 0] }] }
+    template: "**{{customer}}**'s orders dropped {{drop_pct}} compared with their usual. Their last order was {{days_since}} {{days_since|day|days}} ago."
+    context: They spent {{recent}} in the last two months, against a usual {{usual}}.
+    action: { label: View customer, records: customer, search: key }
+    limit: 3
+
+  # --- Profit ------------------------------------------------------------------------------------
+  - id: margin_squeeze
+    category: profit
+    label: Costs going up
+    description: Products whose latest supplier cost rose, squeezing your margin.
+    thresholds:
+      rise:
+        label: Tell me when a supplier's cost goes up by {{value}}% or more
+        default: 0.1
+        min: 0.01
+        max: 1
+        unit: percent
+    queries:
+      costs:
+        metrics: [purchase_unit_cost]
+        dimensions:
+          - { field: product.name }
+          - { field: purchase.order_date }
+          - { field: product.unit_price }
+        period: { last_days: 730 }
+      sold:
+        metrics: [units_sold]
+        dimensions: [{ field: product.name }]
+        period: { last_days: 90 }
+    scope: each
+    where:
+      gte:
+        - { pct_change: [{ last: costs.purchase_unit_cost }, { prior: costs.purchase_unit_cost }] }
+        - { threshold: rise }
+    facts:
+      product: { text: key }
+      cost_change:
+        value:
+          { pct_change: [{ last: costs.purchase_unit_cost }, { prior: costs.purchase_unit_cost }] }
+        format: percent
+      old_cost: { value: { prior: costs.purchase_unit_cost }, format: money }
+      new_cost: { value: { last: costs.purchase_unit_cost }, format: money }
+      price: { value: { last: costs.d2 }, format: money }
+      old_margin:
+        value:
+          {
+            div:
+              [
+                { sub: [{ last: costs.d2 }, { prior: costs.purchase_unit_cost }] },
+                { last: costs.d2 },
+              ],
+          }
+        format: percent
+      new_margin:
+        value:
+          {
+            div:
+              [
+                { sub: [{ last: costs.d2 }, { last: costs.purchase_unit_cost }] },
+                { last: costs.d2 },
+              ],
+          }
+        format: percent
+    severity:
+      otherwise: warn
+      # A quarter's sales at the higher cost.
+      impact:
+        mul:
+          - { sub: [{ last: costs.purchase_unit_cost }, { prior: costs.purchase_unit_cost }] }
+          - { coalesce: [sold.units_sold, 0] }
+    template: 'The cost of **{{product}}** went up {{cost_change}}, from {{old_cost}} to {{new_cost}}. At your price of {{price}}, your margin fell from {{old_margin}} to {{new_margin}}.'
+    action: { label: See product, records: product, search: key }
+    limit: 3
+    cooldown_days: 30
+
+  # --- Products ----------------------------------------------------------------------------------
+  - id: return_spike
+    category: products
+    label: Products coming back a lot
+    description: Products with a high return rate over the last 60 days.
+    thresholds:
+      rate:
+        label: Tell me when {{value}}% or more of a product comes back
+        default: 0.1
+        min: 0.02
+        max: 0.9
+        unit: percent
+      min_returns:
+        label: Only once at least {{value}} have come back
+        default: 5
+        min: 1
+        max: 100
+        unit: count
+    queries:
+      ret:
+        metrics: [return_rate, units_returned]
+        dimensions: [{ field: product.name }]
+        period: { last_days: 60 }
+        having: [{ metric: units_returned, op: gt, value: 0 }]
+        sort: { by: units_returned, dir: desc }
+      reasons:
+        metrics: [units_returned]
+        dimensions: [{ field: product.name }, { field: return.reason }]
+        period: { last_days: 60 }
+      value:
+        metrics: [net_sales, units_sold]
+        dimensions: [{ field: product.name }]
+        period: { last_days: 60 }
+    scope: each
+    where:
+      all:
+        - { gte: [ret.return_rate, { threshold: rate }] }
+        - { gte: [ret.units_returned, { threshold: min_returns }] }
+    facts:
+      product: { text: key }
+      return_rate: { value: ret.return_rate, format: percent }
+      returned: { value: ret.units_returned, format: integer }
+      top_reason: { text: reasons.d1, by: reasons.units_returned, fallback: not recorded }
+    severity:
+      warn: { gte: [ret.return_rate, { mul: [{ threshold: rate }, 1.5] }] }
+      otherwise: info
+      impact:
+        mul:
+          - ret.units_returned
+          - { coalesce: [{ div: [value.net_sales, value.units_sold] }, 0] }
+    template: '**{{product}}** is being returned a lot: {{return_rate}} of sales in the last two months ({{returned}} {{returned|item|items}}). Top reason: {{top_reason}}.'
+    action: { label: See returns, ask: 'What is the return rate of {{product}} by month?' }
+    limit: 3
+
+  - id: rising_star
+    category: products
+    label: Products taking off
+    description: Products selling much faster in the last four weeks than the four before.
+    thresholds:
+      growth:
+        label: Tell me when sales of a product are up {{value}}% or more
+        default: 0.5
+        min: 0.1
+        max: 10
+        unit: percent
+      min_units:
+        label: Only for products that sold at least {{value}} in the last four weeks
+        default: 10
+        min: 1
+        max: 1000
+        unit: count
+    needs_history_days: 56
+    queries:
+      units:
+        metrics: [units_sold]
+        dimensions: [{ field: product.name }]
+        period: { last_days: 28 }
+        compare: previous_period
+    scope: each
+    where:
+      all:
+        - { gte: [units.units_sold, { threshold: min_units }] }
+        - { gt: [units.units_sold__prev, 0] }
+        - {
+            gte:
+              [{ pct_change: [units.units_sold, units.units_sold__prev] }, { threshold: growth }],
+          }
+    facts:
+      product: { text: key }
+      change: { value: { pct_change: [units.units_sold, units.units_sold__prev] }, format: percent }
+      units: { value: units.units_sold, format: integer }
+      before: { value: units.units_sold__prev, format: integer }
+    severity:
+      otherwise: info
+      impact: { sub: [units.units_sold, units.units_sold__prev] }
+    template: '**{{product}}** is taking off: sales are up {{change}} in the last four weeks.'
+    context: '{{units}} sold, against {{before}} in the four weeks before.'
+    action: { label: See product, records: product, search: key }
+    limit: 3
+
+  # --- Trends ------------------------------------------------------------------------------------
+  - id: sales_change
+    category: trends
+    label: Big changes in weekly sales
+    description: This week's sales compared with last week's.
+    thresholds:
+      change:
+        label: Tell me when weekly sales change by {{value}}% or more
+        default: 0.25
+        min: 0.05
+        max: 2
+        unit: percent
+    needs_history_days: 14
+    queries:
+      week:
+        metrics: [net_sales]
+        period: { last_days: 7 }
+        compare: previous_period
+    scope: each
+    where:
+      all:
+        - { gt: [week.net_sales__prev, 0] }
+        - {
+            gte:
+              [
+                { abs: { pct_change: [week.net_sales, week.net_sales__prev] } },
+                { threshold: change },
+              ],
+          }
+    facts:
+      direction: { choose: { gt: [week.net_sales, week.net_sales__prev] }, then: up, else: down }
+      change:
+        { value: { abs: { pct_change: [week.net_sales, week.net_sales__prev] } }, format: percent }
+      this_week: { value: week.net_sales, format: money }
+      last_week: { value: week.net_sales__prev, format: money }
+    severity:
+      warn: { lt: [week.net_sales, week.net_sales__prev] }
+      otherwise: info
+      impact: { abs: { sub: [week.net_sales, week.net_sales__prev] } }
+    template: 'Sales in the last week are {{direction}} {{change}} on the week before ({{this_week}} vs {{last_week}}).'
+    action:
+      {
+        label: See why,
+        ask: Net sales by product in the last 7 days compared with the 7 days before,
+      }
+    cooldown_days: 6
+
+  - id: channel_shift
+    category: trends
+    label: Where your sales come from
+    description: A sales channel whose share of your sales grew a lot over the last 90 days.
+    thresholds:
+      points:
+        label: Tell me when a channel's share grows by {{value}} points or more
+        default: 0.1
+        min: 0.02
+        max: 0.5
+        unit: points
+    needs_history_days: 180
+    queries:
+      ch:
+        metrics: [net_sales]
+        dimensions: [{ field: sale.channel }]
+        period: { last_days: 90 }
+        compare: previous_period
+    scope: each
+    where:
+      gte:
+        - { sub: [{ share: ch.net_sales }, { share: ch.net_sales__prev }] }
+        - { threshold: points }
+    facts:
+      channel: { text: key }
+      share: { value: { share: ch.net_sales }, format: percent }
+      prev_share: { value: { share: ch.net_sales__prev }, format: percent }
+    severity:
+      otherwise: info
+      impact: { sub: [ch.net_sales, ch.net_sales__prev] }
+    template: '**{{channel}}** now brings in {{share}} of your sales, up from {{prev_share}}.'
+    context: Over the last three months, compared with the three months before.
+    action: { label: See channels, ask: Net sales by channel by month this year }
+    limit: 2
+    cooldown_days: 30
+
+  # --- Cash --------------------------------------------------------------------------------------
+  - id: overdue_payments
+    category: cash
+    label: Customers who owe you
+    description: Customers with unpaid sales past their due date.
+    thresholds:
+      min_amount:
+        label: Tell me when overdue money owed is more than {{value}}
+        default: 50
+        min: 0
+        max: 1000000
+        unit: money
+      urgent_days:
+        label: Call it urgent when a payment is {{value}} days late
+        default: 60
+        min: 7
+        max: 365
+        unit: days
+    queries:
+      owed:
+        metrics: [overdue_receivables, days_overdue]
+        dimensions: [{ field: customer.name }]
+        period: { to_date: true }
+        having: [{ metric: overdue_receivables, op: gt, value: 0 }]
+        sort: { by: overdue_receivables, dir: desc }
+    scope: summary
+    require: { gt: [{ total: owed.overdue_receivables }, { threshold: min_amount }] }
+    facts:
+      count: { count: true }
+      amount: { sum: owed.overdue_receivables, format: money }
+      customer: { top: key, by: owed.overdue_receivables }
+      customer_amount:
+        { top: owed.overdue_receivables, by: owed.overdue_receivables, format: money }
+      days: { top: owed.days_overdue, by: owed.overdue_receivables, format: integer }
+      oldest: { top: owed.days_overdue, by: owed.days_overdue, format: integer }
+    severity:
+      urgent: { gte: [{ coalesce: [{ fact: oldest }, 0] }, { threshold: urgent_days }] }
+      otherwise: warn
+      impact: { total: owed.overdue_receivables }
+    template: "{{count}} {{count|customer owes|customers owe}} you {{amount}} that's overdue. The largest is **{{customer}}** ({{customer_amount}}, {{days}} {{days|day|days}} late)."
+    action: { label: See who owes, ask: Who owes me money? }
+    cooldown_days: 7

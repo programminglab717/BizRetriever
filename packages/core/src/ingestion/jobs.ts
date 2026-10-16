@@ -26,7 +26,7 @@ import { applyCorrections, type Correction } from './corrections';
 import { dryRunProblems } from './dry-run';
 import type { ProfiledSource } from './heuristic';
 import { alreadyLoaded, loadOrder, loadRecords } from './load';
-import { materialize, type MaterializeResult } from './materialize';
+import { closeLinkNotes, materialize, type MaterializeResult } from './materialize';
 import {
   analyzeRun,
   entitySpecs,
@@ -476,7 +476,10 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
             missingRequired: result.issues.filter((i) => i.code === 'missing_required').length,
             links: result.stats.references,
             warnings: stored.review.warnings,
-            assumptions: stored.proposal.assumptions.map((a) => a.text),
+            assumptions: [
+              ...stored.proposal.assumptions.map((a) => a.text),
+              ...closeLinkNotes(result),
+            ],
           };
           await tx
             .insert(qualityReport)

@@ -27,7 +27,7 @@ import { ensureEditLog, undoBatch } from '../records/edits';
 import { refreshSemanticCatalog } from '../semantic/service';
 import { analyzeTenant } from '../tenancy/provision';
 import type { MaterializedRecord } from './materialize';
-import { materialize } from './materialize';
+import { closeLinkNotes, materialize } from './materialize';
 import { analyzeRun, entitySpecs, getProposal, loadRunContext, type RunContext } from './pipeline';
 
 /**
@@ -171,7 +171,10 @@ export const ingestMergeJob = defineJob<z.infer<typeof mergeInput>, Record<strin
             missingRequired: result.issues.filter((i) => i.code === 'missing_required').length,
             links: result.stats.references,
             warnings: stored.review.warnings,
-            assumptions: stored.proposal.assumptions.map((a) => a.text),
+            assumptions: [
+              ...stored.proposal.assumptions.map((a) => a.text),
+              ...closeLinkNotes(result),
+            ],
           };
           await tx
             .insert(qualityReport)

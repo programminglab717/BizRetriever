@@ -190,11 +190,11 @@ describe.skipIf(!hasDb)('ingestion (integration)', () => {
       workspaceId: member.workspace.id,
       tenantSchema: member.workspace.tenantSchema,
     };
-    // Links resolved to foreign keys; unmatched ones keep their text.
+    // Links resolved to foreign keys; the name as written is kept ("Sage Mug" linked by its words).
     const links = await executeTenantQuery({
       tenant,
       sql: `SELECT count(*) FILTER (WHERE product_id IS NOT NULL)::int AS linked,
-                   count(*) FILTER (WHERE product_id IS NULL AND product_ref IS NOT NULL)::int AS kept
+                   count(*) FILTER (WHERE product_id IS NOT NULL AND product_ref = 'Sage Mug')::int AS kept
               FROM sale_lines`,
       origin: 'system',
       path: 'system',

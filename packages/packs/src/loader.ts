@@ -18,6 +18,7 @@ import {
 } from './schema';
 import { checkMetrics, packMetricsFileSchema, type PackMetrics } from './metrics';
 import { checkDashboard, packDashboardFileSchema, type PackDashboard } from './dashboard';
+import { checkInsights, packInsightsFileSchema, type PackInsights } from './insights';
 import { checkQuestions, packQuestionsFileSchema, type PackQuestion } from './questions';
 
 export const PACKS_DIR = fileURLToPath(new URL('../packs', import.meta.url));
@@ -31,6 +32,7 @@ export interface LoadedPack {
   metrics: PackMetrics;
   questions: PackQuestion[];
   dashboard: PackDashboard;
+  insights: PackInsights;
   primer: string;
 }
 
@@ -71,6 +73,8 @@ export function loadPack(dir: string): LoadedPack {
   if (!questions.success) problems.push(...issues('questions.yaml', questions.error));
   const dashboard = packDashboardFileSchema.safeParse(read('dashboard.yaml'));
   if (!dashboard.success) problems.push(...issues('dashboard.yaml', dashboard.error));
+  const insights = packInsightsFileSchema.safeParse(read('insights.yaml'));
+  if (!insights.success) problems.push(...issues('insights.yaml', insights.error));
   let primer = '';
   try {
     primer = readFileSync(path.join(dir, 'prompts', 'domain_primer.md'), 'utf8').trim();
@@ -119,8 +123,13 @@ export function loadPack(dir: string): LoadedPack {
     );
   }
 
+  if (metrics.success && insights.success) {
+    problems.push(...checkInsights(metrics.data, insights.data).map((p) => `insights.yaml: ${p}`));
+  }
+
   if (
     problems.length > 0 ||
+    !insights.success ||
     !dashboard.success ||
     !questions.success ||
     !manifest.success ||
@@ -140,6 +149,7 @@ export function loadPack(dir: string): LoadedPack {
     metrics: metrics.data,
     questions: questions.data.examples,
     dashboard: dashboard.data,
+    insights: insights.data,
     primer,
   };
 }

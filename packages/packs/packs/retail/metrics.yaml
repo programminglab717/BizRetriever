@@ -527,6 +527,77 @@ metrics:
         - { sum: { field: sale_line.quantity }, where: [completed] }
     unavailable_hint: Upload your returns with how many items came back to see your return rate.
 
+  - id: units_returned
+    label: Items returned
+    synonyms: ['items returned', 'units returned', 'returned items', 'how many came back']
+    description: Items that came back, counted on the day they were returned.
+    format: number
+    good_direction: down
+    ir:
+      sum: { field: return.quantity }
+    unavailable_hint: Upload your returns with how many items came back.
+
+  - id: purchase_unit_cost
+    label: Supplier cost per item
+    synonyms:
+      [
+        'supplier cost',
+        'cost from the supplier',
+        'what i pay for',
+        'buying price',
+        'purchase price',
+      ]
+    description: What you paid suppliers per item, from your supplier orders.
+    format: money
+    good_direction: down
+    ir:
+      div:
+        - { sum: { expr: purchase_line_value } }
+        - { sum: { field: purchase_line.quantity } }
+    unavailable_hint: Upload your supplier orders with quantities and prices.
+
+  - id: days_since_last_order
+    label: Days since last order
+    synonyms: ['days since last order', 'last ordered', 'since they last ordered']
+    description: Days from the most recent completed order to today.
+    format: days
+    good_direction: down
+    snapshot: true
+    ir:
+      days_between:
+        - { max: { field: sale.sale_date }, from: sale_line, where: [completed], window: to_end }
+        - { period: end }
+    unavailable_hint: Upload your sales with dates to see when customers last ordered.
+
+  - id: days_overdue
+    label: Days overdue
+    synonyms: ['days late', 'how late', 'days overdue', 'overdue by']
+    description: How many days past its due date the oldest unpaid sale is.
+    format: days
+    good_direction: down
+    snapshot: true
+    ir:
+      coalesce:
+        - days_between:
+            - min: { field: sale.due_date }
+              where: [completed, owed, { field: sale.due_date, op: lt, value: { period: end } }]
+              window: to_end
+            - { period: end }
+        - sub:
+            - days_between:
+                - min: { field: sale.sale_date }
+                  where:
+                    - completed
+                    - owed
+                    - { field: sale.due_date, op: is_null }
+                    - { field: sale.sale_date, op: lt, value: { period: end, offset_days: -30 } }
+                  window: to_end
+                - { period: end }
+            - { const: 30 }
+    assumptions:
+      - Sales without a due date count as due thirty days after the sale.
+    unavailable_hint: Include due dates and a “Paid?” column on your invoices to see how late payments are.
+
   - id: expenses_total
     label: Expenses
     synonyms:

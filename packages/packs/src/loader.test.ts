@@ -104,6 +104,7 @@ describe('bundled packs', () => {
       metrics: retail.metrics,
       questions: retail.questions,
       dashboard: retail.dashboard,
+      insights: retail.insights,
       primer: retail.primer,
     });
   });

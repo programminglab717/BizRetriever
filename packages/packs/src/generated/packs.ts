@@ -2836,6 +2836,172 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "snapshot": false
         },
         {
+          "id": "units_returned",
+          "label": "Items returned",
+          "description": "Items that came back, counted on the day they were returned.",
+          "format": "number",
+          "good_direction": "down",
+          "ir": {
+            "sum": {
+              "field": "return.quantity"
+            }
+          },
+          "unavailable_hint": "Upload your returns with how many items came back.",
+          "synonyms": [
+            "items returned",
+            "units returned",
+            "returned items",
+            "how many came back"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "purchase_unit_cost",
+          "label": "Supplier cost per item",
+          "description": "What you paid suppliers per item, from your supplier orders.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "div": [
+              {
+                "sum": {
+                  "expr": "purchase_line_value"
+                }
+              },
+              {
+                "sum": {
+                  "field": "purchase_line.quantity"
+                }
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your supplier orders with quantities and prices.",
+          "synonyms": [
+            "supplier cost",
+            "cost from the supplier",
+            "what i pay for",
+            "buying price",
+            "purchase price"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "days_since_last_order",
+          "label": "Days since last order",
+          "description": "Days from the most recent completed order to today.",
+          "format": "days",
+          "good_direction": "down",
+          "ir": {
+            "days_between": [
+              {
+                "max": {
+                  "field": "sale.sale_date"
+                },
+                "where": [
+                  "completed"
+                ],
+                "window": "to_end",
+                "from": "sale_line"
+              },
+              {
+                "period": "end"
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your sales with dates to see when customers last ordered.",
+          "synonyms": [
+            "days since last order",
+            "last ordered",
+            "since they last ordered"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "days_overdue",
+          "label": "Days overdue",
+          "description": "How many days past its due date the oldest unpaid sale is.",
+          "format": "days",
+          "good_direction": "down",
+          "ir": {
+            "coalesce": [
+              {
+                "days_between": [
+                  {
+                    "min": {
+                      "field": "sale.due_date"
+                    },
+                    "where": [
+                      "completed",
+                      "owed",
+                      {
+                        "field": "sale.due_date",
+                        "op": "lt",
+                        "value": {
+                          "period": "end"
+                        }
+                      }
+                    ],
+                    "window": "to_end"
+                  },
+                  {
+                    "period": "end"
+                  }
+                ]
+              },
+              {
+                "sub": [
+                  {
+                    "days_between": [
+                      {
+                        "min": {
+                          "field": "sale.sale_date"
+                        },
+                        "where": [
+                          "completed",
+                          "owed",
+                          {
+                            "field": "sale.due_date",
+                            "op": "is_null"
+                          },
+                          {
+                            "field": "sale.sale_date",
+                            "op": "lt",
+                            "value": {
+                              "period": "end",
+                              "offset_days": -30
+                            }
+                          }
+                        ],
+                        "window": "to_end"
+                      },
+                      {
+                        "period": "end"
+                      }
+                    ]
+                  },
+                  {
+                    "const": 30
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Include due dates and a “Paid?” column on your invoices to see how late payments are.",
+          "synonyms": [
+            "days late",
+            "how late",
+            "days overdue",
+            "overdue by"
+          ],
+          "assumptions": [
+            "Sales without a due date count as due thirty days after the sale."
+          ],
+          "snapshot": true
+        },
+        {
           "id": "expenses_total",
           "label": "Expenses",
           "description": "Everything you recorded as an expense.",
@@ -3505,6 +3671,1276 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "having": []
           },
           "auto_grain": false
+        }
+      ]
+    },
+    "insights": {
+      "rules": [
+        {
+          "id": "stockout_risk",
+          "category": "stock",
+          "label": "Running out of stock",
+          "description": "Products that will run out soon at the rate they're selling.",
+          "enabled": true,
+          "thresholds": {
+            "warn_days": {
+              "label": "Warn me when stock will run out within {{value}} days",
+              "default": 14,
+              "min": 1,
+              "max": 90,
+              "unit": "days",
+              "editable": true
+            },
+            "urgent_days": {
+              "label": "Call it urgent when it's within {{value}} days",
+              "default": 7,
+              "min": 1,
+              "max": 60,
+              "unit": "days",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "cover": {
+              "metrics": [
+                "days_of_cover",
+                "daily_sales_rate",
+                "stock_on_hand"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                },
+                {
+                  "field": "supplier.name"
+                },
+                {
+                  "field": "supplier.lead_time_days"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": [
+                {
+                  "metric": "daily_sales_rate",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "days_of_cover",
+                "dir": "asc"
+              },
+              "limit": 100
+            },
+            "price": {
+              "metrics": [
+                "net_sales",
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 90
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "lt": [
+              "cover.days_of_cover",
+              {
+                "threshold": "warn_days"
+              }
+            ]
+          },
+          "facts": {
+            "product": {
+              "text": "key"
+            },
+            "days": {
+              "value": "cover.days_of_cover",
+              "format": "integer"
+            },
+            "rate": {
+              "value": "cover.daily_sales_rate",
+              "format": "number"
+            },
+            "on_hand": {
+              "value": "cover.stock_on_hand",
+              "format": "integer"
+            },
+            "cover_days": {
+              "value": {
+                "add": [
+                  {
+                    "coalesce": [
+                      "cover.d2",
+                      14
+                    ]
+                  },
+                  30
+                ]
+              },
+              "format": "integer"
+            },
+            "qty": {
+              "value": {
+                "max": [
+                  0,
+                  {
+                    "sub": [
+                      {
+                        "mul": [
+                          "cover.daily_sales_rate",
+                          {
+                            "add": [
+                              {
+                                "coalesce": [
+                                  "cover.d2",
+                                  14
+                                ]
+                              },
+                              30
+                            ]
+                          }
+                        ]
+                      },
+                      "cover.stock_on_hand"
+                    ]
+                  }
+                ]
+              },
+              "format": "integer"
+            },
+            "supplier": {
+              "text": "cover.d1",
+              "fallback": "your supplier"
+            }
+          },
+          "severity": {
+            "urgent": {
+              "lt": [
+                "cover.days_of_cover",
+                {
+                  "threshold": "urgent_days"
+                }
+              ]
+            },
+            "otherwise": "warn",
+            "impact": {
+              "mul": [
+                "cover.daily_sales_rate",
+                14,
+                {
+                  "coalesce": [
+                    {
+                      "div": [
+                        "price.net_sales",
+                        "price.units_sold"
+                      ]
+                    },
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          "template": "**{{product}}** will run out in about {{days}} {{days|day|days}} at the current sales rate ({{rate}} a day). You have {{on_hand}} left.",
+          "context": "Consider reordering about {{qty}} from {{supplier}} to cover the next {{cover_days}} days.",
+          "action": {
+            "label": "See product",
+            "records": "product",
+            "search": "key"
+          },
+          "limit": 5,
+          "cooldown_days": 3
+        },
+        {
+          "id": "dead_stock",
+          "category": "stock",
+          "label": "Stock that isn't selling",
+          "description": "Products in stock that haven't sold in 90 days, and the money they hold.",
+          "enabled": true,
+          "thresholds": {
+            "min_value": {
+              "label": "Only tell me when unsold stock is worth more than {{value}}",
+              "default": 100,
+              "min": 0,
+              "max": 1000000,
+              "unit": "money",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "dead": {
+              "metrics": [
+                "dead_stock_value",
+                "stock_on_hand"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": [
+                {
+                  "metric": "dead_stock_value",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "dead_stock_value",
+                "dir": "desc"
+              }
+            }
+          },
+          "scope": "summary",
+          "require": {
+            "gt": [
+              {
+                "total": "dead.dead_stock_value"
+              },
+              {
+                "threshold": "min_value"
+              }
+            ]
+          },
+          "facts": {
+            "count": {
+              "count": true
+            },
+            "value": {
+              "sum": "dead.dead_stock_value",
+              "format": "money"
+            },
+            "top_product": {
+              "top": "key",
+              "by": "dead.dead_stock_value",
+              "format": "text"
+            },
+            "days": {
+              "value": 90,
+              "format": "integer"
+            }
+          },
+          "severity": {
+            "otherwise": "warn",
+            "impact": {
+              "total": "dead.dead_stock_value"
+            }
+          },
+          "template": "{{count}} {{count|product hasn't|products haven't}} sold in {{days}} days. They're holding {{value}} of your money, led by **{{top_product}}**.",
+          "action": {
+            "label": "See which",
+            "ask": "Which products haven't sold in the last 90 days?"
+          },
+          "limit": 3,
+          "cooldown_days": 30
+        },
+        {
+          "id": "customer_slipping",
+          "category": "customers",
+          "label": "Regular customers buying less",
+          "description": "Customers with several past orders whose spending has dropped well below their usual.",
+          "enabled": true,
+          "thresholds": {
+            "drop": {
+              "label": "Tell me when a regular customer's spending drops by {{value}}% or more",
+              "default": 0.5,
+              "min": 0.1,
+              "max": 0.95,
+              "unit": "percent",
+              "editable": true
+            },
+            "min_orders": {
+              "label": "Count customers as regulars after {{value}} orders",
+              "default": 3,
+              "min": 2,
+              "max": 20,
+              "unit": "count",
+              "editable": true
+            }
+          },
+          "needs_history_days": 240,
+          "queries": {
+            "before": {
+              "metrics": [
+                "net_sales",
+                "order_count"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "days_ago": [
+                  240,
+                  60
+                ]
+              },
+              "having": [
+                {
+                  "metric": "net_sales",
+                  "op": "gt",
+                  "value": 0
+                }
+              ]
+            },
+            "recent": {
+              "metrics": [
+                "net_sales"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 60
+              },
+              "having": []
+            },
+            "last": {
+              "metrics": [
+                "days_since_last_order"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "rows": "before",
+          "where": {
+            "all": [
+              {
+                "gte": [
+                  "before.order_count",
+                  {
+                    "threshold": "min_orders"
+                  }
+                ]
+              },
+              {
+                "lte": [
+                  {
+                    "coalesce": [
+                      "recent.net_sales",
+                      0
+                    ]
+                  },
+                  {
+                    "mul": [
+                      {
+                        "div": [
+                          "before.net_sales",
+                          3
+                        ]
+                      },
+                      {
+                        "sub": [
+                          1,
+                          {
+                            "threshold": "drop"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "customer": {
+              "text": "key"
+            },
+            "drop_pct": {
+              "value": {
+                "sub": [
+                  1,
+                  {
+                    "div": [
+                      {
+                        "coalesce": [
+                          "recent.net_sales",
+                          0
+                        ]
+                      },
+                      {
+                        "div": [
+                          "before.net_sales",
+                          3
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "format": "percent"
+            },
+            "recent": {
+              "value": {
+                "coalesce": [
+                  "recent.net_sales",
+                  0
+                ]
+              },
+              "format": "money"
+            },
+            "usual": {
+              "value": {
+                "div": [
+                  "before.net_sales",
+                  3
+                ]
+              },
+              "format": "money"
+            },
+            "days_since": {
+              "value": "last.days_since_last_order",
+              "format": "integer"
+            }
+          },
+          "severity": {
+            "otherwise": "warn",
+            "impact": {
+              "sub": [
+                {
+                  "div": [
+                    "before.net_sales",
+                    3
+                  ]
+                },
+                {
+                  "coalesce": [
+                    "recent.net_sales",
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          "template": "**{{customer}}**'s orders dropped {{drop_pct}} compared with their usual. Their last order was {{days_since}} {{days_since|day|days}} ago.",
+          "context": "They spent {{recent}} in the last two months, against a usual {{usual}}.",
+          "action": {
+            "label": "View customer",
+            "records": "customer",
+            "search": "key"
+          },
+          "limit": 3,
+          "cooldown_days": 14
+        },
+        {
+          "id": "margin_squeeze",
+          "category": "profit",
+          "label": "Costs going up",
+          "description": "Products whose latest supplier cost rose, squeezing your margin.",
+          "enabled": true,
+          "thresholds": {
+            "rise": {
+              "label": "Tell me when a supplier's cost goes up by {{value}}% or more",
+              "default": 0.1,
+              "min": 0.01,
+              "max": 1,
+              "unit": "percent",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "costs": {
+              "metrics": [
+                "purchase_unit_cost"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                },
+                {
+                  "field": "purchase.order_date"
+                },
+                {
+                  "field": "product.unit_price"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 730
+              },
+              "having": []
+            },
+            "sold": {
+              "metrics": [
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 90
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "gte": [
+              {
+                "pct_change": [
+                  {
+                    "last": "costs.purchase_unit_cost"
+                  },
+                  {
+                    "prior": "costs.purchase_unit_cost"
+                  }
+                ]
+              },
+              {
+                "threshold": "rise"
+              }
+            ]
+          },
+          "facts": {
+            "product": {
+              "text": "key"
+            },
+            "cost_change": {
+              "value": {
+                "pct_change": [
+                  {
+                    "last": "costs.purchase_unit_cost"
+                  },
+                  {
+                    "prior": "costs.purchase_unit_cost"
+                  }
+                ]
+              },
+              "format": "percent"
+            },
+            "old_cost": {
+              "value": {
+                "prior": "costs.purchase_unit_cost"
+              },
+              "format": "money"
+            },
+            "new_cost": {
+              "value": {
+                "last": "costs.purchase_unit_cost"
+              },
+              "format": "money"
+            },
+            "price": {
+              "value": {
+                "last": "costs.d2"
+              },
+              "format": "money"
+            },
+            "old_margin": {
+              "value": {
+                "div": [
+                  {
+                    "sub": [
+                      {
+                        "last": "costs.d2"
+                      },
+                      {
+                        "prior": "costs.purchase_unit_cost"
+                      }
+                    ]
+                  },
+                  {
+                    "last": "costs.d2"
+                  }
+                ]
+              },
+              "format": "percent"
+            },
+            "new_margin": {
+              "value": {
+                "div": [
+                  {
+                    "sub": [
+                      {
+                        "last": "costs.d2"
+                      },
+                      {
+                        "last": "costs.purchase_unit_cost"
+                      }
+                    ]
+                  },
+                  {
+                    "last": "costs.d2"
+                  }
+                ]
+              },
+              "format": "percent"
+            }
+          },
+          "severity": {
+            "otherwise": "warn",
+            "impact": {
+              "mul": [
+                {
+                  "sub": [
+                    {
+                      "last": "costs.purchase_unit_cost"
+                    },
+                    {
+                      "prior": "costs.purchase_unit_cost"
+                    }
+                  ]
+                },
+                {
+                  "coalesce": [
+                    "sold.units_sold",
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          "template": "The cost of **{{product}}** went up {{cost_change}}, from {{old_cost}} to {{new_cost}}. At your price of {{price}}, your margin fell from {{old_margin}} to {{new_margin}}.",
+          "action": {
+            "label": "See product",
+            "records": "product",
+            "search": "key"
+          },
+          "limit": 3,
+          "cooldown_days": 30
+        },
+        {
+          "id": "return_spike",
+          "category": "products",
+          "label": "Products coming back a lot",
+          "description": "Products with a high return rate over the last 60 days.",
+          "enabled": true,
+          "thresholds": {
+            "rate": {
+              "label": "Tell me when {{value}}% or more of a product comes back",
+              "default": 0.1,
+              "min": 0.02,
+              "max": 0.9,
+              "unit": "percent",
+              "editable": true
+            },
+            "min_returns": {
+              "label": "Only once at least {{value}} have come back",
+              "default": 5,
+              "min": 1,
+              "max": 100,
+              "unit": "count",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "ret": {
+              "metrics": [
+                "return_rate",
+                "units_returned"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 60
+              },
+              "having": [
+                {
+                  "metric": "units_returned",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "units_returned",
+                "dir": "desc"
+              }
+            },
+            "reasons": {
+              "metrics": [
+                "units_returned"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                },
+                {
+                  "field": "return.reason"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 60
+              },
+              "having": []
+            },
+            "value": {
+              "metrics": [
+                "net_sales",
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 60
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "all": [
+              {
+                "gte": [
+                  "ret.return_rate",
+                  {
+                    "threshold": "rate"
+                  }
+                ]
+              },
+              {
+                "gte": [
+                  "ret.units_returned",
+                  {
+                    "threshold": "min_returns"
+                  }
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "product": {
+              "text": "key"
+            },
+            "return_rate": {
+              "value": "ret.return_rate",
+              "format": "percent"
+            },
+            "returned": {
+              "value": "ret.units_returned",
+              "format": "integer"
+            },
+            "top_reason": {
+              "text": "reasons.d1",
+              "by": "reasons.units_returned",
+              "fallback": "not recorded"
+            }
+          },
+          "severity": {
+            "warn": {
+              "gte": [
+                "ret.return_rate",
+                {
+                  "mul": [
+                    {
+                      "threshold": "rate"
+                    },
+                    1.5
+                  ]
+                }
+              ]
+            },
+            "otherwise": "info",
+            "impact": {
+              "mul": [
+                "ret.units_returned",
+                {
+                  "coalesce": [
+                    {
+                      "div": [
+                        "value.net_sales",
+                        "value.units_sold"
+                      ]
+                    },
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          "template": "**{{product}}** is being returned a lot: {{return_rate}} of sales in the last two months ({{returned}} {{returned|item|items}}). Top reason: {{top_reason}}.",
+          "action": {
+            "label": "See returns",
+            "ask": "What is the return rate of {{product}} by month?"
+          },
+          "limit": 3,
+          "cooldown_days": 14
+        },
+        {
+          "id": "rising_star",
+          "category": "products",
+          "label": "Products taking off",
+          "description": "Products selling much faster in the last four weeks than the four before.",
+          "enabled": true,
+          "thresholds": {
+            "growth": {
+              "label": "Tell me when sales of a product are up {{value}}% or more",
+              "default": 0.5,
+              "min": 0.1,
+              "max": 10,
+              "unit": "percent",
+              "editable": true
+            },
+            "min_units": {
+              "label": "Only for products that sold at least {{value}} in the last four weeks",
+              "default": 10,
+              "min": 1,
+              "max": 1000,
+              "unit": "count",
+              "editable": true
+            }
+          },
+          "needs_history_days": 56,
+          "queries": {
+            "units": {
+              "metrics": [
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 28
+              },
+              "compare": "previous_period",
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "all": [
+              {
+                "gte": [
+                  "units.units_sold",
+                  {
+                    "threshold": "min_units"
+                  }
+                ]
+              },
+              {
+                "gt": [
+                  "units.units_sold__prev",
+                  0
+                ]
+              },
+              {
+                "gte": [
+                  {
+                    "pct_change": [
+                      "units.units_sold",
+                      "units.units_sold__prev"
+                    ]
+                  },
+                  {
+                    "threshold": "growth"
+                  }
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "product": {
+              "text": "key"
+            },
+            "change": {
+              "value": {
+                "pct_change": [
+                  "units.units_sold",
+                  "units.units_sold__prev"
+                ]
+              },
+              "format": "percent"
+            },
+            "units": {
+              "value": "units.units_sold",
+              "format": "integer"
+            },
+            "before": {
+              "value": "units.units_sold__prev",
+              "format": "integer"
+            }
+          },
+          "severity": {
+            "otherwise": "info",
+            "impact": {
+              "sub": [
+                "units.units_sold",
+                "units.units_sold__prev"
+              ]
+            }
+          },
+          "template": "**{{product}}** is taking off: sales are up {{change}} in the last four weeks.",
+          "context": "{{units}} sold, against {{before}} in the four weeks before.",
+          "action": {
+            "label": "See product",
+            "records": "product",
+            "search": "key"
+          },
+          "limit": 3,
+          "cooldown_days": 14
+        },
+        {
+          "id": "sales_change",
+          "category": "trends",
+          "label": "Big changes in weekly sales",
+          "description": "This week's sales compared with last week's.",
+          "enabled": true,
+          "thresholds": {
+            "change": {
+              "label": "Tell me when weekly sales change by {{value}}% or more",
+              "default": 0.25,
+              "min": 0.05,
+              "max": 2,
+              "unit": "percent",
+              "editable": true
+            }
+          },
+          "needs_history_days": 14,
+          "queries": {
+            "week": {
+              "metrics": [
+                "net_sales"
+              ],
+              "dimensions": [],
+              "filters": [],
+              "period": {
+                "last_days": 7
+              },
+              "compare": "previous_period",
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "all": [
+              {
+                "gt": [
+                  "week.net_sales__prev",
+                  0
+                ]
+              },
+              {
+                "gte": [
+                  {
+                    "abs": {
+                      "pct_change": [
+                        "week.net_sales",
+                        "week.net_sales__prev"
+                      ]
+                    }
+                  },
+                  {
+                    "threshold": "change"
+                  }
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "direction": {
+              "choose": {
+                "gt": [
+                  "week.net_sales",
+                  "week.net_sales__prev"
+                ]
+              },
+              "then": "up",
+              "else": "down"
+            },
+            "change": {
+              "value": {
+                "abs": {
+                  "pct_change": [
+                    "week.net_sales",
+                    "week.net_sales__prev"
+                  ]
+                }
+              },
+              "format": "percent"
+            },
+            "this_week": {
+              "value": "week.net_sales",
+              "format": "money"
+            },
+            "last_week": {
+              "value": "week.net_sales__prev",
+              "format": "money"
+            }
+          },
+          "severity": {
+            "warn": {
+              "lt": [
+                "week.net_sales",
+                "week.net_sales__prev"
+              ]
+            },
+            "otherwise": "info",
+            "impact": {
+              "abs": {
+                "sub": [
+                  "week.net_sales",
+                  "week.net_sales__prev"
+                ]
+              }
+            }
+          },
+          "template": "Sales in the last week are {{direction}} {{change}} on the week before ({{this_week}} vs {{last_week}}).",
+          "action": {
+            "label": "See why",
+            "ask": "Net sales by product in the last 7 days compared with the 7 days before"
+          },
+          "limit": 3,
+          "cooldown_days": 6
+        },
+        {
+          "id": "channel_shift",
+          "category": "trends",
+          "label": "Where your sales come from",
+          "description": "A sales channel whose share of your sales grew a lot over the last 90 days.",
+          "enabled": true,
+          "thresholds": {
+            "points": {
+              "label": "Tell me when a channel's share grows by {{value}} points or more",
+              "default": 0.1,
+              "min": 0.02,
+              "max": 0.5,
+              "unit": "points",
+              "editable": true
+            }
+          },
+          "needs_history_days": 180,
+          "queries": {
+            "ch": {
+              "metrics": [
+                "net_sales"
+              ],
+              "dimensions": [
+                {
+                  "field": "sale.channel"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 90
+              },
+              "compare": "previous_period",
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "gte": [
+              {
+                "sub": [
+                  {
+                    "share": "ch.net_sales"
+                  },
+                  {
+                    "share": "ch.net_sales__prev"
+                  }
+                ]
+              },
+              {
+                "threshold": "points"
+              }
+            ]
+          },
+          "facts": {
+            "channel": {
+              "text": "key"
+            },
+            "share": {
+              "value": {
+                "share": "ch.net_sales"
+              },
+              "format": "percent"
+            },
+            "prev_share": {
+              "value": {
+                "share": "ch.net_sales__prev"
+              },
+              "format": "percent"
+            }
+          },
+          "severity": {
+            "otherwise": "info",
+            "impact": {
+              "sub": [
+                "ch.net_sales",
+                "ch.net_sales__prev"
+              ]
+            }
+          },
+          "template": "**{{channel}}** now brings in {{share}} of your sales, up from {{prev_share}}.",
+          "context": "Over the last three months, compared with the three months before.",
+          "action": {
+            "label": "See channels",
+            "ask": "Net sales by channel by month this year"
+          },
+          "limit": 2,
+          "cooldown_days": 30
+        },
+        {
+          "id": "overdue_payments",
+          "category": "cash",
+          "label": "Customers who owe you",
+          "description": "Customers with unpaid sales past their due date.",
+          "enabled": true,
+          "thresholds": {
+            "min_amount": {
+              "label": "Tell me when overdue money owed is more than {{value}}",
+              "default": 50,
+              "min": 0,
+              "max": 1000000,
+              "unit": "money",
+              "editable": true
+            },
+            "urgent_days": {
+              "label": "Call it urgent when a payment is {{value}} days late",
+              "default": 60,
+              "min": 7,
+              "max": 365,
+              "unit": "days",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "owed": {
+              "metrics": [
+                "overdue_receivables",
+                "days_overdue"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": [
+                {
+                  "metric": "overdue_receivables",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "overdue_receivables",
+                "dir": "desc"
+              }
+            }
+          },
+          "scope": "summary",
+          "require": {
+            "gt": [
+              {
+                "total": "owed.overdue_receivables"
+              },
+              {
+                "threshold": "min_amount"
+              }
+            ]
+          },
+          "facts": {
+            "count": {
+              "count": true
+            },
+            "amount": {
+              "sum": "owed.overdue_receivables",
+              "format": "money"
+            },
+            "customer": {
+              "top": "key",
+              "by": "owed.overdue_receivables",
+              "format": "text"
+            },
+            "customer_amount": {
+              "top": "owed.overdue_receivables",
+              "by": "owed.overdue_receivables",
+              "format": "money"
+            },
+            "days": {
+              "top": "owed.days_overdue",
+              "by": "owed.overdue_receivables",
+              "format": "integer"
+            },
+            "oldest": {
+              "top": "owed.days_overdue",
+              "by": "owed.days_overdue",
+              "format": "integer"
+            }
+          },
+          "severity": {
+            "urgent": {
+              "gte": [
+                {
+                  "coalesce": [
+                    {
+                      "fact": "oldest"
+                    },
+                    0
+                  ]
+                },
+                {
+                  "threshold": "urgent_days"
+                }
+              ]
+            },
+            "otherwise": "warn",
+            "impact": {
+              "total": "owed.overdue_receivables"
+            }
+          },
+          "template": "{{count}} {{count|customer owes|customers owe}} you {{amount}} that's overdue. The largest is **{{customer}}** ({{customer_amount}}, {{days}} {{days|day|days}} late).",
+          "action": {
+            "label": "See who owes",
+            "ask": "Who owes me money?"
+          },
+          "limit": 3,
+          "cooldown_days": 7
         }
       ]
     },
