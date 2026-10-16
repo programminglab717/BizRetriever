@@ -62,7 +62,13 @@ export const condOps = [
 export type CondOp = (typeof condOps)[number];
 
 const literal = z.union([z.string(), z.number(), z.boolean()]);
-const periodBound = z.object({ period: z.enum(['start', 'end']) }).strict();
+/** The first day of the period or the first day after it, optionally shifted by whole days. */
+const periodBound = z
+  .object({
+    period: z.enum(['start', 'end']),
+    offset_days: z.number().int().min(-3660).max(3660).optional(),
+  })
+  .strict();
 
 /** A row filter. `not_in` and `neq` keep blank values (unknown status counts as completed). */
 export const condSchema = z.union([
@@ -142,7 +148,7 @@ export type MetricExpr =
   | { coalesce: MetricExpr[] }
   /** Days from the first date to the second (both from date aggregates or period bounds). */
   | { days_between: MetricExpr[] }
-  | { period: 'start' | 'end' }
+  | { period: 'start' | 'end'; offset_days?: number | undefined }
   /**
    * Computes `measure` (or nothing, for `rollup: count`) once per record of `per` (e.g. per
    * customer), keeps those that meet every condition, then sums / counts / averages them.
@@ -271,7 +277,8 @@ export function checkMetrics(entities: readonly EntityLike[], file: PackMetrics)
         problems.push(`${where}: "${e.allocate.within}" must be a link`);
       visitRow(where, e.allocate.by);
     } else if (!('const' in e)) {
-      for (const arg of Object.values(e) as RowExpr[][]) arg.forEach((a) => visitRow(where, a));
+      for (const arg of Object.values<RowExpr[]>(e as Record<string, RowExpr[]>))
+        arg.forEach((a) => visitRow(where, a));
     }
   };
   const visitCond = (where: string, c: Cond) => {
@@ -336,8 +343,7 @@ export function checkMetrics(entities: readonly EntityLike[], file: PackMetrics)
   const deps = new Map<string, string[]>();
   const refsIn = (e: unknown, out: string[]) => {
     if (!e || typeof e !== 'object') return;
-    if ('ref' in e && typeof (e as { ref: unknown }).ref === 'string')
-      out.push((e as { ref: string }).ref);
+    if ('ref' in e && typeof e.ref === 'string') out.push((e as { ref: string }).ref);
     for (const v of Object.values(e)) {
       if (Array.isArray(v)) v.forEach((x) => refsIn(x, out));
       else if (typeof v === 'object') refsIn(v, out);

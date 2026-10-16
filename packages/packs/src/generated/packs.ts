@@ -2661,27 +2661,60 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
         {
           "id": "overdue_receivables",
           "label": "Overdue money owed",
-          "description": "Money owed to you on sales past their payment due date.",
+          "description": "Money owed to you on sales past their payment due date. Sales without a due date count as due thirty days after the sale.",
           "format": "money",
           "good_direction": "down",
           "ir": {
             "sub": [
               {
-                "sum": {
-                  "expr": "line_net"
-                },
-                "where": [
-                  "completed",
-                  "owed",
+                "add": [
                   {
-                    "field": "sale.due_date",
-                    "op": "lt",
-                    "value": {
-                      "period": "end"
-                    }
+                    "sum": {
+                      "expr": "line_net"
+                    },
+                    "where": [
+                      "completed",
+                      "owed",
+                      {
+                        "field": "sale.due_date",
+                        "op": "lt",
+                        "value": {
+                          "period": "end"
+                        }
+                      }
+                    ],
+                    "window": "to_end"
+                  },
+                  {
+                    "coalesce": [
+                      {
+                        "sum": {
+                          "expr": "line_net"
+                        },
+                        "where": [
+                          "completed",
+                          "owed",
+                          {
+                            "field": "sale.due_date",
+                            "op": "is_null"
+                          },
+                          {
+                            "field": "sale.sale_date",
+                            "op": "lt",
+                            "value": {
+                              "period": "end",
+                              "offset_days": -30
+                            }
+                          }
+                        ],
+                        "window": "to_end"
+                      },
+                      {
+                        "const": 0
+                      }
+                    ]
                   }
-                ],
-                "window": "to_end"
+                ]
               },
               {
                 "coalesce": [
@@ -2717,7 +2750,8 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           },
           "unavailable_hint": "Include due dates and a “Paid?” column on your invoices to see overdue payments.",
           "assumptions": [
-            "Without payment records, part-paid invoices are counted as fully owed."
+            "Without payment records, part-paid invoices are counted as fully owed.",
+            "Sales without a due date count as due thirty days after the sale."
           ],
           "snapshot": true
         },

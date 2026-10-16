@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`compileQuery (golden SQL) > a per-product roll-up (dead stock) 1`] = `
+"WITH "a0" AS (SELECT j1."_id" AS "pk", SUM(b."quantity_on_hand") AS "v" FROM (SELECT t.*, ROW_NUMBER() OVER (PARTITION BY t."product_id" ORDER BY t."counted_at" DESC, t."_id" DESC) AS "__rn" FROM "stock_counts" t WHERE t."_deleted_at" IS NULL) b LEFT JOIN "products" j1 ON j1."_id" = b."product_id" AND j1."_deleted_at" IS NULL WHERE b."__rn" = 1 AND j1."_id" IS NOT NULL GROUP BY j1."_id"),
+"a1" AS (SELECT b."_id" AS "pk", MAX(b."unit_cost") AS "v" FROM "products" b WHERE b."_deleted_at" IS NULL AND b."_id" IS NOT NULL GROUP BY b."_id"),
+"a2" AS (SELECT j2."_id" AS "pk", SUM(b."quantity") AS "v" FROM "sale_lines" b LEFT JOIN "sales" j1 ON j1."_id" = b."sale_id" AND j1."_deleted_at" IS NULL LEFT JOIN "products" j2 ON j2."_id" = b."product_id" AND j2."_deleted_at" IS NULL WHERE b."_deleted_at" IS NULL AND j1."sale_date" >= (($2::date - 90)::timestamp AT TIME ZONE $3::text) AND j1."sale_date" < ($2::date::timestamp AT TIME ZONE $3::text) AND (j1."status" IS NULL OR NOT (lower(j1."status") = ANY($4::text[]))) AND j2."_id" IS NOT NULL GROUP BY j2."_id"),
+"r3" AS (SELECT SUM(((COALESCE(s0."v", 0))::numeric * (s1."v")::numeric)) FILTER (WHERE (COALESCE(s0."v", 0)) > ($1::numeric) AND (COALESCE(COALESCE(s2."v", 0), $5::numeric)) = ($6::numeric)) AS "v" FROM (SELECT "pk" FROM "a0" UNION SELECT "pk" FROM "a1" UNION SELECT "pk" FROM "a2") k LEFT JOIN "a0" s0 ON s0."pk" IS NOT DISTINCT FROM k."pk" LEFT JOIN "a1" s1 ON s1."pk" IS NOT DISTINCT FROM k."pk" LEFT JOIN "a2" s2 ON s2."pk" IS NOT DISTINCT FROM k."pk"),
+"cur" AS (SELECT s0."v" AS "m_dead_stock_value" FROM (SELECT 1) k LEFT JOIN "r3" s0 ON true)
+SELECT * FROM "cur""
+`;
+
+exports[`compileQuery (golden SQL) > monthly with a comparison-free time breakdown and a filter 1`] = `
+"WITH "a0" AS (SELECT date_trunc('month', (j1."sale_date" AT TIME ZONE $2::text))::date AS "d0", SUM((b."line_total" - COALESCE((j1."discount_total" * b."line_total" / NULLIF(b."__w0", 0)), $4::numeric))) AS "v" FROM (SELECT t.*, SUM(t."line_total") OVER (PARTITION BY t."sale_id") AS "__w0" FROM "sale_lines" t WHERE t."_deleted_at" IS NULL) b LEFT JOIN "sales" j1 ON j1."_id" = b."sale_id" AND j1."_deleted_at" IS NULL LEFT JOIN "products" j2 ON j2."_id" = b."product_id" AND j2."_deleted_at" IS NULL WHERE j1."sale_date" >= ($1::date::timestamp AT TIME ZONE $2::text) AND j1."sale_date" < ($3::date::timestamp AT TIME ZONE $2::text) AND (j1."status" IS NULL OR NOT (lower(j1."status") = ANY($5::text[]))) AND lower(j2."category") = ANY($6::text[]) GROUP BY date_trunc('month', (j1."sale_date" AT TIME ZONE $2::text))::date),
+"a1" AS (SELECT date_trunc('month', (b."return_date")::timestamp)::date AS "d0", SUM(b."refund_amount") AS "v" FROM "returns" b LEFT JOIN "products" j1 ON j1."_id" = b."product_id" AND j1."_deleted_at" IS NULL WHERE b."_deleted_at" IS NULL AND b."return_date" >= $1::date AND b."return_date" < $3::date AND lower(j1."category") = ANY($7::text[]) GROUP BY date_trunc('month', (b."return_date")::timestamp)::date),
+"a2" AS (SELECT date_trunc('month', (j1."sale_date" AT TIME ZONE $2::text))::date AS "d0", SUM((b."quantity" * COALESCE(b."unit_cost_at_sale", j2."unit_cost"))) AS "v" FROM "sale_lines" b LEFT JOIN "sales" j1 ON j1."_id" = b."sale_id" AND j1."_deleted_at" IS NULL LEFT JOIN "products" j2 ON j2."_id" = b."product_id" AND j2."_deleted_at" IS NULL WHERE b."_deleted_at" IS NULL AND j1."sale_date" >= ($1::date::timestamp AT TIME ZONE $2::text) AND j1."sale_date" < ($3::date::timestamp AT TIME ZONE $2::text) AND (j1."status" IS NULL OR NOT (lower(j1."status") = ANY($9::text[]))) AND lower(j2."category") = ANY($10::text[]) GROUP BY date_trunc('month', (j1."sale_date" AT TIME ZONE $2::text))::date),
+"a3" AS (SELECT date_trunc('month', (b."return_date")::timestamp)::date AS "d0", SUM((b."quantity" * j1."unit_cost")) AS "v" FROM "returns" b LEFT JOIN "products" j1 ON j1."_id" = b."product_id" AND j1."_deleted_at" IS NULL WHERE b."_deleted_at" IS NULL AND b."return_date" >= $1::date AND b."return_date" < $3::date AND lower(j1."category") = ANY($11::text[]) GROUP BY date_trunc('month', (b."return_date")::timestamp)::date),
+"cur" AS (SELECT k."d0" AS "d0", ((((COALESCE(s0."v", 0))::numeric - (COALESCE(COALESCE(s1."v", 0), $8::numeric))::numeric))::numeric - (((COALESCE(s2."v", 0))::numeric - (COALESCE(COALESCE(s3."v", 0), $12::numeric))::numeric))::numeric) AS "m_gross_profit" FROM (SELECT "d0" FROM "a0" UNION SELECT "d0" FROM "a1" UNION SELECT "d0" FROM "a2" UNION SELECT "d0" FROM "a3") k LEFT JOIN "a0" s0 ON s0."d0" IS NOT DISTINCT FROM k."d0" LEFT JOIN "a1" s1 ON s1."d0" IS NOT DISTINCT FROM k."d0" LEFT JOIN "a2" s2 ON s2."d0" IS NOT DISTINCT FROM k."d0" LEFT JOIN "a3" s3 ON s3."d0" IS NOT DISTINCT FROM k."d0")
+SELECT * FROM "cur" ORDER BY "d0" ASC, "d0""
+`;
+
+exports[`compileQuery (golden SQL) > net sales by channel for a month 1`] = `
+"WITH "a0" AS (SELECT j1."channel" AS "d0", SUM((b."line_total" - COALESCE((j1."discount_total" * b."line_total" / NULLIF(b."__w0", 0)), $4::numeric))) AS "v" FROM (SELECT t.*, SUM(t."line_total") OVER (PARTITION BY t."sale_id") AS "__w0" FROM "sale_lines" t WHERE t."_deleted_at" IS NULL) b LEFT JOIN "sales" j1 ON j1."_id" = b."sale_id" AND j1."_deleted_at" IS NULL WHERE j1."sale_date" >= ($1::date::timestamp AT TIME ZONE $2::text) AND j1."sale_date" < ($3::date::timestamp AT TIME ZONE $2::text) AND (j1."status" IS NULL OR NOT (lower(j1."status") = ANY($5::text[]))) GROUP BY j1."channel"),
+"a1" AS (SELECT j1."channel" AS "d0", SUM(b."refund_amount") AS "v" FROM "returns" b LEFT JOIN "sales" j1 ON j1."_id" = b."sale_id" AND j1."_deleted_at" IS NULL WHERE b."_deleted_at" IS NULL AND b."return_date" >= $1::date AND b."return_date" < $3::date GROUP BY j1."channel"),
+"a2" AS (SELECT j1."channel" AS "d0", COUNT(DISTINCT b."sale_id") AS "v" FROM "sale_lines" b LEFT JOIN "sales" j1 ON j1."_id" = b."sale_id" AND j1."_deleted_at" IS NULL WHERE b."_deleted_at" IS NULL AND j1."sale_date" >= ($1::date::timestamp AT TIME ZONE $2::text) AND j1."sale_date" < ($3::date::timestamp AT TIME ZONE $2::text) AND (j1."status" IS NULL OR NOT (lower(j1."status") = ANY($7::text[]))) GROUP BY j1."channel"),
+"cur" AS (SELECT k."d0" AS "d0", ((COALESCE(s0."v", 0))::numeric - (COALESCE(COALESCE(s1."v", 0), $6::numeric))::numeric) AS "m_net_sales", COALESCE(s2."v", 0) AS "m_order_count" FROM (SELECT "d0" FROM "a0" UNION SELECT "d0" FROM "a1" UNION SELECT "d0" FROM "a2") k LEFT JOIN "a0" s0 ON s0."d0" IS NOT DISTINCT FROM k."d0" LEFT JOIN "a1" s1 ON s1."d0" IS NOT DISTINCT FROM k."d0" LEFT JOIN "a2" s2 ON s2."d0" IS NOT DISTINCT FROM k."d0")
+SELECT * FROM "cur" ORDER BY "m_net_sales" DESC NULLS LAST, "d0""
+`;
+
+exports[`compileQuery (golden SQL) > net sales by channel for a month 2`] = `
+[
+  "2026-09-01",
+  "America/New_York",
+  "2026-10-01",
+  0,
+  [
+    "cancelled",
+    "pending",
+  ],
+  0,
+  [
+    "cancelled",
+    "pending",
+  ],
+]
+`;

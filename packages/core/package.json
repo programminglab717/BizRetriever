@@ -13,7 +13,8 @@
     "./ai": "./src/ai/index.ts",
     "./change-plan": "./src/change-plan/index.ts",
     "./narration": "./src/narration/index.ts",
-    "./ingestion": "./src/ingestion/index.ts"
+    "./ingestion": "./src/ingestion/index.ts",
+    "./semantic": "./src/semantic/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

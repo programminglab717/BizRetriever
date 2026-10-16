@@ -23,3 +23,14 @@ export async function generateDemoDataset(options: GenerateOptions): Promise<Gro
   writeFileSync(path.join(options.outDir, 'ground_truth.json'), JSON.stringify(truth, null, 2));
   return truth;
 }
+
+export type { Product } from './catalog';
+export type { ReturnRecord, Sale, SaleLine, Simulation } from './simulate';
+
+/**
+ * The simulated business behind the demo files, for tests that check computed numbers against what
+ * really happened (independently of reading the files).
+ */
+export function simulateDemo(options: { today: string; seed?: number }) {
+  return simulate({ today: options.today, seed: options.seed ?? 42 });
+}
