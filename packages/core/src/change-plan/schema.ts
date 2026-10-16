@@ -70,6 +70,59 @@ export const changeOpSchema = z.discriminatedUnion('op', [
       fields: z.array(keySchema).min(1).max(4),
     })
     .strict(),
+  /** What a record type is called. The data doesn't change. */
+  z
+    .object({
+      op: z.literal('rename_entity'),
+      entity: keySchema,
+      label: z
+        .object({ singular: z.string().min(1).max(60), plural: z.string().min(1).max(60) })
+        .strict(),
+    })
+    .strict(),
+  /** What a detail is called. The data doesn't change. */
+  z
+    .object({
+      op: z.literal('rename_field'),
+      entity: keySchema,
+      field: keySchema,
+      label: z.string().min(1).max(80),
+    })
+    .strict(),
+  /** Turn a detail into another kind (text → number…). Values that can't be read become blank. */
+  z
+    .object({
+      op: z.literal('change_field_type'),
+      entity: keySchema,
+      field: keySchema,
+      type: z.enum(fieldTypes).exclude(['reference']),
+    })
+    .strict(),
+  z
+    .object({
+      op: z.literal('add_allowed_values'),
+      entity: keySchema,
+      field: keySchema,
+      values: z
+        .array(z.string().regex(/^[a-z0-9_]{1,40}$/))
+        .min(1)
+        .max(50),
+    })
+    .strict(),
+  /** The values stay on the records that have them; they just can't be chosen any more. */
+  z
+    .object({
+      op: z.literal('remove_allowed_values'),
+      entity: keySchema,
+      field: keySchema,
+      values: z
+        .array(z.string().regex(/^[a-z0-9_]{1,40}$/))
+        .min(1)
+        .max(50),
+    })
+    .strict(),
+  /** Unlink: the detail keeps the linked record's name as text. */
+  z.object({ op: z.literal('remove_relationship'), entity: keySchema, field: keySchema }).strict(),
 ]);
 export type ChangeOp = z.infer<typeof changeOpSchema>;
 

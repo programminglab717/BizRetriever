@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { ident, qualified } from '../sql/ident';
+import { conversion } from './convert';
 import { columnsFor, SQL_TYPES, SYSTEM_COLUMNS, tableNameFor } from './names';
 import { changePlanSchema, type ChangeOp, type ChangePlan, type FieldDef } from './schema';
 
@@ -27,11 +28,17 @@ export interface CompiledPlan {
     removedEntities: string[];
     addedFields: { entity: string; field: string }[];
     removedFields: { entity: string; field: string }[];
+    /** Renamed record types (labels only). */
+    changedEntities: string[];
+    /** Details whose name, kind, allowed values or link changed (the row is updated in place). */
+    changedFields: { entity: string; field: string }[];
   };
   /** A plan that undoes this one, when that is possible without a snapshot. */
   inverse: ChangePlan | null;
   /** True if the plan drops anything (needs typed confirmation and a snapshot first). */
   destructive: boolean;
+  /** Tables to copy into the snapshot schema before applying (ADR-023). */
+  snapshotTables: string[];
 }
 
 export class ChangePlanError extends Error {
@@ -40,7 +47,7 @@ export class ChangePlanError extends Error {
   }
 }
 
-function indexName(table: string, columns: string[]): string {
+export function indexName(table: string, columns: string[]): string {
   const base = `${table}_${columns.join('_')}_idx`;
   if (base.length <= 63) return base;
   const hash = createHash('sha256').update(base).digest('hex').slice(0, 8);
@@ -79,7 +86,10 @@ export function compileChangePlan(
     removedEntities: [],
     addedFields: [],
     removedFields: [],
+    changedEntities: [],
+    changedFields: [],
   };
+  const snapshotTables = new Set<string>();
   const inverseOps: ChangeOp[] = [];
   let destructive = false;
   let invertible = true;
@@ -180,6 +190,7 @@ export function compileChangePlan(
           statements.push(`ALTER TABLE ${table(op.entity)} DROP COLUMN ${ident(c)}`);
         }
         delta.removedFields.push({ entity: op.entity, field: op.field });
+        snapshotTables.add(entity.tableName);
         destructive = true;
         invertible = false;
         break;
@@ -200,11 +211,162 @@ export function compileChangePlan(
           break;
         }
         statements.push(`DROP TABLE ${table(op.entity)}`);
+        snapshotTables.add(entity.tableName);
         tables.delete(entity.tableName);
         catalog.delete(op.entity);
         delta.removedEntities.push(op.entity);
         destructive = true;
         invertible = false;
+        break;
+      }
+      case 'rename_entity': {
+        const entity = catalog.get(op.entity);
+        if (!entity) {
+          problems.push(`${where}: unknown entity "${op.entity}"`);
+          break;
+        }
+        inverseOps.unshift({ op: 'rename_entity', entity: op.entity, label: entity.label });
+        entity.label = op.label;
+        if (!delta.changedEntities.includes(op.entity)) delta.changedEntities.push(op.entity);
+        break;
+      }
+      case 'rename_field':
+      case 'add_allowed_values':
+      case 'remove_allowed_values':
+      case 'change_field_type':
+      case 'remove_relationship': {
+        const entity = catalog.get(op.entity);
+        const field = entity?.fields.find((f) => f.key === op.field);
+        if (!entity || !field) {
+          problems.push(`${where}: unknown field "${op.entity}.${op.field}"`);
+          break;
+        }
+        const changed = () => {
+          if (!delta.changedFields.some((c) => c.entity === op.entity && c.field === op.field))
+            delta.changedFields.push({ entity: op.entity, field: op.field });
+        };
+        if (op.op === 'rename_field') {
+          inverseOps.unshift({
+            op: 'rename_field',
+            entity: op.entity,
+            field: op.field,
+            label: field.label,
+          });
+          field.label = op.label;
+          changed();
+          break;
+        }
+        if (op.op === 'add_allowed_values' || op.op === 'remove_allowed_values') {
+          if (field.type !== 'text') {
+            problems.push(`${where}: only text details have a list of allowed values`);
+            break;
+          }
+          const before = field.allowedValues ?? [];
+          if (op.op === 'add_allowed_values') {
+            const added = op.values.filter(
+              (v, i) => !before.includes(v) && op.values.indexOf(v) === i,
+            );
+            if (before.length + added.length > 50) {
+              problems.push(`${where}: a detail can have at most 50 allowed values`);
+              break;
+            }
+            field.allowedValues = [...before, ...added];
+            if (added.length)
+              inverseOps.unshift({
+                op: 'remove_allowed_values',
+                entity: op.entity,
+                field: op.field,
+                values: added,
+              });
+          } else {
+            const removed = before.filter((v) => op.values.includes(v));
+            if (removed.length === 0) {
+              problems.push(`${where}: none of those values are in the list`);
+              break;
+            }
+            const rest = before.filter((v) => !removed.includes(v));
+            if (rest.length) field.allowedValues = rest;
+            else delete field.allowedValues;
+            inverseOps.unshift({
+              op: 'add_allowed_values',
+              entity: op.entity,
+              field: op.field,
+              values: removed,
+            });
+          }
+          changed();
+          break;
+        }
+        if (op.op === 'change_field_type') {
+          if (field.type === 'reference') {
+            problems.push(`${where}: "${op.entity}.${op.field}" is a link; unlink it first`);
+            break;
+          }
+          const conv = conversion(field.key, field.type, op.type);
+          if (!conv) {
+            problems.push(
+              field.type === op.type
+                ? `${where}: "${op.entity}.${op.field}" is already ${op.type}`
+                : `${where}: can't turn ${field.type} into ${op.type}`,
+            );
+            break;
+          }
+          if (entity.timeField === op.field && op.type !== 'date' && op.type !== 'datetime') {
+            problems.push(
+              `${where}: "${op.entity}.${op.field}" dates these records; it must stay a date`,
+            );
+            break;
+          }
+          if (!conv.lossless && field.required) {
+            problems.push(
+              `${where}: "${op.entity}.${op.field}" is required, and some values might not convert`,
+            );
+            break;
+          }
+          statements.push(
+            `ALTER TABLE ${table(op.entity)} ALTER COLUMN ${ident(field.key)} TYPE ${SQL_TYPES[op.type]!} USING ${conv.using}`,
+          );
+          if (conv.lossless) {
+            const back: ChangeOp[] = [
+              { op: 'change_field_type', entity: op.entity, field: op.field, type: field.type },
+            ];
+            if (field.allowedValues?.length)
+              back.push({
+                op: 'add_allowed_values',
+                entity: op.entity,
+                field: op.field,
+                values: field.allowedValues,
+              });
+            inverseOps.unshift(...back);
+          } else {
+            destructive = true;
+            invertible = false;
+            snapshotTables.add(entity.tableName);
+          }
+          field.type = op.type;
+          if (op.type !== 'text') delete field.allowedValues;
+          changed();
+          break;
+        }
+        // remove_relationship: keep the linked record's name as text.
+        if (field.type !== 'reference') {
+          problems.push(`${where}: "${op.entity}.${op.field}" isn't a link`);
+          break;
+        }
+        const cols = columnsFor(field);
+        const fkName = indexName(entity.tableName, [cols.fk!]).replace(/_idx$/, '_fk');
+        statements.push(
+          `ALTER TABLE ${table(op.entity)} DROP CONSTRAINT IF EXISTS ${ident(fkName)}`,
+          `DROP INDEX IF EXISTS ${qualified(tenantSchema, indexName(entity.tableName, [cols.fk!]))}`,
+          `ALTER TABLE ${table(op.entity)} DROP COLUMN ${ident(cols.fk!)}`,
+          `ALTER TABLE ${table(op.entity)} RENAME COLUMN ${ident(cols.ref!)} TO ${ident(field.key)}`,
+        );
+        field.type = 'text';
+        delete field.references;
+        changed();
+        destructive = true;
+        invertible = false;
+        snapshotTables.add(entity.tableName);
         break;
       }
       case 'create_index': {
@@ -251,5 +413,6 @@ export function compileChangePlan(
     delta,
     inverse: invertible && inverseOps.length > 0 ? { ops: inverseOps } : null,
     destructive,
+    snapshotTables: [...snapshotTables].filter((t) => current.some((e) => e.tableName === t)),
   };
 }

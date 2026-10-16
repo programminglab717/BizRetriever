@@ -131,8 +131,41 @@ export const migration = app.table(
     lossyRollback: boolean('lossy_rollback').notNull().default(false),
     appliedAt: timestamp('applied_at', { withTimezone: true }).notNull().defaultNow(),
     rolledBackAt: timestamp('rolled_back_at', { withTimezone: true }),
+    /** The catalog just before this change (for undoing it). */
+    catalogBefore: jsonb('catalog_before'),
+    /** This migration undid version N (ADR-044). */
+    undoesVersion: integer('undoes_version'),
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
   },
   (t) => [unique('migration_workspace_version_uq').on(t.workspaceId, t.version)],
+);
+
+/**
+ * Copies of tables taken before a destructive change (ADR-023), in `t_<id>_snap`. Kept 30 days, then
+ * dropped by `snapshot.gc`.
+ */
+export const snapshot = app.table(
+  'snapshot',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    migrationId: uuid('migration_id')
+      .notNull()
+      .references(() => migration.id, { onDelete: 'cascade' }),
+    /** `{ table, snapshotTable, rows }` per copied table. */
+    objects: jsonb('objects')
+      .$type<{ table: string; snapshotTable: string; rows: number }[]>()
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    droppedAt: timestamp('dropped_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('snapshot_migration_idx').on(t.migrationId),
+    index('snapshot_expiry_idx').on(t.expiresAt),
+  ],
 );
 
 /**

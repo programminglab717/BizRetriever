@@ -1,9 +1,21 @@
-import { changePlan, entity, field, getAppDb, getPool, migration, type AppDb } from '@bizr/db';
+import {
+  changePlan,
+  entity,
+  field,
+  getAppDb,
+  getPool,
+  migration,
+  snapshot,
+  type AppDb,
+} from '@bizr/db';
 import * as schema from '@bizr/db/schema';
 import { getLogger } from '@bizr/platform';
 import { and, asc, eq, inArray, max } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 
+import type { PoolClient } from 'pg';
+
+import { qualified } from '../sql/ident';
 import { compileChangePlan, type CatalogEntity, type CompiledPlan } from './compile';
 import type { ChangePlan, FieldDef } from './schema';
 import { createViewStatements, dropViewStatements } from './views';
@@ -101,12 +113,18 @@ export async function applyChangePlan(options: {
       );
     }
 
-    // Views depend on the tables: drop them first, rebuild them from the new catalog afterwards.
-    for (const s of dropViewStatements(options.workspace.tenantSchema, current))
-      await client.query(s);
-    for (const statement of compiled.statements) await client.query(statement);
-    for (const s of createViewStatements(options.workspace.tenantSchema, compiled.catalog))
-      await client.query(s);
+    const version = (await lastVersion(tx, options.workspace.id)) + 1;
+    // Safety rule 3: copy what a destructive change touches before running it.
+    const snapshotObjects = compiled.destructive
+      ? await takeSnapshot(client, options.workspace.tenantSchema, compiled.snapshotTables, version)
+      : [];
+    await runDdl(
+      client,
+      options.workspace.tenantSchema,
+      current,
+      compiled.statements,
+      compiled.catalog,
+    );
 
     const [planRow] = await tx
       .insert(changePlan)
@@ -121,20 +139,27 @@ export async function applyChangePlan(options: {
         appliedAt: new Date(),
       })
       .returning({ id: changePlan.id });
-    const [{ current: lastVersion } = { current: 0 }] = await tx
-      .select({ current: max(migration.version) })
-      .from(migration)
-      .where(eq(migration.workspaceId, options.workspace.id));
-    const version = (lastVersion ?? 0) + 1;
-    await tx.insert(migration).values({
-      workspaceId: options.workspace.id,
-      version,
-      changePlanId: planRow!.id,
-      statements: compiled.statements,
-      inversePlan: compiled.inverse,
-      destructive: compiled.destructive,
-      lossyRollback: compiled.inverse === null,
-    });
+    const [migrationRow] = await tx
+      .insert(migration)
+      .values({
+        workspaceId: options.workspace.id,
+        version,
+        changePlanId: planRow!.id,
+        statements: compiled.statements,
+        inversePlan: compiled.inverse,
+        destructive: compiled.destructive,
+        lossyRollback: compiled.inverse === null,
+        catalogBefore: current,
+        createdBy: options.userId ?? null,
+      })
+      .returning({ id: migration.id });
+    if (snapshotObjects.length > 0)
+      await tx.insert(snapshot).values({
+        workspaceId: options.workspace.id,
+        migrationId: migrationRow!.id,
+        objects: snapshotObjects,
+        expiresAt: new Date(Date.now() + SNAPSHOT_DAYS * 86_400_000),
+      });
 
     await syncCatalog(tx, options.workspace.id, compiled);
     if (options.alsoInTransaction) await options.alsoInTransaction(tx);
@@ -152,7 +177,54 @@ export async function applyChangePlan(options: {
   }
 }
 
-async function syncCatalog(tx: AppDb, workspaceId: string, compiled: CompiledPlan): Promise<void> {
+export const SNAPSHOT_DAYS = 30;
+
+export async function lastVersion(tx: AppDb, workspaceId: string): Promise<number> {
+  const [{ current } = { current: 0 }] = await tx
+    .select({ current: max(migration.version) })
+    .from(migration)
+    .where(eq(migration.workspaceId, workspaceId));
+  return current ?? 0;
+}
+
+/** Copies tables into `<schema>_snap` as `<table>__v<version>` (ADR-023). Same transaction. */
+export async function takeSnapshot(
+  client: PoolClient,
+  tenantSchema: string,
+  tables: readonly string[],
+  version: number,
+): Promise<{ table: string; snapshotTable: string; rows: number }[]> {
+  const out: { table: string; snapshotTable: string; rows: number }[] = [];
+  for (const table of tables) {
+    const snapshotTable = `${table}__v${version}`;
+    const target = qualified(`${tenantSchema}_snap`, snapshotTable);
+    await client.query(`DROP TABLE IF EXISTS ${target}`);
+    const r = await client.query(
+      `CREATE TABLE ${target} AS TABLE ${qualified(tenantSchema, table)}`,
+    );
+    out.push({ table, snapshotTable, rows: r.rowCount ?? 0 });
+  }
+  return out;
+}
+
+/** Views depend on the tables: drop them first, run the DDL, rebuild them from the new catalog. */
+export async function runDdl(
+  client: PoolClient,
+  tenantSchema: string,
+  before: readonly CatalogEntity[],
+  statements: readonly string[],
+  after: readonly CatalogEntity[],
+): Promise<void> {
+  for (const s of dropViewStatements(tenantSchema, before)) await client.query(s);
+  for (const statement of statements) await client.query(statement);
+  for (const s of createViewStatements(tenantSchema, after)) await client.query(s);
+}
+
+export async function syncCatalog(
+  tx: AppDb,
+  workspaceId: string,
+  compiled: Pick<CompiledPlan, 'catalog' | 'delta'>,
+): Promise<void> {
   const byKey = new Map(compiled.catalog.map((e) => [e.key, e]));
   if (compiled.delta.removedEntities.length > 0) {
     await tx
@@ -200,6 +272,28 @@ async function syncCatalog(tx: AppDb, workspaceId: string, compiled: CompiledPla
   for (const { entity: key, field: fieldKey } of compiled.delta.removedFields) {
     await tx
       .delete(field)
+      .where(and(eq(field.entityId, entityIds.get(key)!), eq(field.key, fieldKey)));
+  }
+  for (const key of compiled.delta.changedEntities) {
+    const e = byKey.get(key);
+    if (!e) continue;
+    await tx
+      .update(entity)
+      .set({ labelSingular: e.label.singular, labelPlural: e.label.plural })
+      .where(and(eq(entity.workspaceId, workspaceId), eq(entity.key, key)));
+  }
+  // Changed details keep their row (and what profiling learned about them).
+  for (const { entity: key, field: fieldKey } of compiled.delta.changedFields) {
+    const f = byKey.get(key)?.fields.find((x) => x.key === fieldKey);
+    if (!f || !entityIds.has(key)) continue;
+    await tx
+      .update(field)
+      .set({
+        label: f.label,
+        type: f.type,
+        allowedValues: f.allowedValues ?? null,
+        referencesEntity: f.references ?? null,
+      })
       .where(and(eq(field.entityId, entityIds.get(key)!), eq(field.key, fieldKey)));
   }
 }
