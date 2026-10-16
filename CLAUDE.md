@@ -81,7 +81,9 @@ docs/             all planning documentation
 | Drop expired snapshots | `pnpm --filter @bizr/worker run snapshot:gc` (daily via M7's cron) |
 | Demo re-upload file (M6) | `pnpm demo:generate --next-month <dir>` |
 | AI eval suite (costs money; asks before > $1) | `pnpm eval -- --ai --limit N` |
-| Local demo machine (M8) | `pnpm demo:up` |
+| Local demo machine (M8) | `pnpm demo:up` (reset only: `--no-start`; rebuild first: `--build`) |
+| Speed check on a workspace (M8) | `pnpm perf <slug>` (production build running; signs in as `DEMO_EMAIL`) |
+| Internal admin page (M8) | `/admin`, for `ADMIN_EMAILS` only |
 
 ## Coding conventions
 

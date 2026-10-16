@@ -25,10 +25,10 @@ import {
 } from '@bizr/core/demo';
 import { createDefaultRegistry, JobQueue } from '@bizr/core/jobs';
 import { createWorkspace } from '@bizr/core/workspaces';
-import { account, closePools, getAppDb, user } from '@bizr/db';
+import { account, closePools, getAppDb, insight, user, workspace } from '@bizr/db';
 import { findRepoRoot, getEnv } from '@bizr/platform';
 import { hashPassword } from 'better-auth/crypto';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import pg from 'pg';
 
 const args = new Set(process.argv.slice(2));
@@ -134,9 +134,20 @@ async function main() {
 
   const folder = path.join(root, 'demo-files');
   rmSync(folder, { recursive: true, force: true });
-  writeFolder(path.join(folder, 'Fernwood files'), (await demoFiles({ today })).files);
+  const { files, truth } = await demoFiles({ today });
+  writeFolder(path.join(folder, 'Fernwood files'), files);
   writeFolder(path.join(folder, 'Next month'), (await demoNextMonthFile({ today })).files);
+  // Today's numbers for the script (DEMO_SCRIPT §2 reads these out).
+  const said = await getAppDb()
+    .select({ text: insight.text })
+    .from(insight)
+    .innerJoin(workspace, eq(workspace.id, insight.workspaceId))
+    .where(eq(workspace.slug, ready))
+    .orderBy(desc(insight.score))
+    .limit(8);
   await closePools();
+  const c = truth.counts as Record<string, number>;
+  const fmt = (n: number | undefined) => new Intl.NumberFormat('en-US').format(n ?? 0);
 
   const url = env.APP_URL;
   say('');
@@ -146,6 +157,12 @@ async function main() {
   say(`  Tab B (already in):   ${url}/w/${ready}/home`);
   say(`  Files to drag in:     ${path.join(folder, 'Fernwood files')}`);
   say(`  Next month's export:  ${path.join(folder, 'Next month')}`);
+  say('');
+  say(
+    `Today's numbers: ${fmt(c.products)} products, ${fmt(c.sales)} sales, ${fmt(c.namedCustomers)} named customers.`,
+  );
+  say('What Home will say (most important first):');
+  for (const s of said) say(`  - ${s.text}`);
   say('');
 
   if (args.has('--no-start')) return;

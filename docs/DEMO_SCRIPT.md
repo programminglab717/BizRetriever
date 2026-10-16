@@ -12,17 +12,19 @@
 
 ## 1. Setup (before the meeting)
 
-- [ ] Demo runs **locally on the presenter's laptop** (zero-cost rule, ADR-026): `pnpm demo:up` started
-  ≥ 10 minutes before. Signed in as `demo@…`. Browser zoom at 110%. Notifications off. Laptop on mains
-  power.
+- [ ] Demo runs **locally on the presenter's laptop** (zero-cost rule, ADR-026). Run `pnpm demo:up` at least 10 minutes before. It:
+  - starts Postgres (Docker) if needed, then sets up the database
+  - makes the sign-in `DEMO_EMAIL` / `DEMO_PASSWORD` (a fresh password is printed if none is set)
+  - resets **tab A** (an empty "Fernwood Home & Gift" for the live upload) and **tab B** (the same shop already imported, insights included)
+  - writes today's messy files to `demo-files/Fernwood files/` and next month's export to `demo-files/Next month/`
+  - starts the web app and the worker with AI in **replay mode** (recordings only; nothing reaches the AI provider)
+  - prints the links, the sign-in and **today's numbers**: products, sales, customers, and the insight sentences Home will show. Use those numbers below.
+- [ ] Browser zoom at 110%. Notifications off. Laptop on mains power.
+- [ ] Two tabs open, signed in: **(A)** the upload screen link, **(B)** the ready shop's Home link.
+- [ ] `demo-files/Fernwood files/` open in Finder/Explorer, with Excel ready to open `Stock list & costs.xlsx`.
 - [ ] *(Only if a Stage 1 free hosted preview exists)* hosted link open in a third tab as a further backup.
-- [ ] Two tabs open:
-  - **(A)** the upload screen of a fresh, empty workspace "Fernwood Home & Gift"
-  - **(B)** a pre-imported backup workspace with the same data, in case live import has trouble
-- [ ] The messy demo files are in a desktop folder `Fernwood files/`, with Excel ready to open one of them.
-- [ ] `AI_REPLAY_MODE=replay` enabled for demo workspaces (live calls on cache miss).
 - [ ] Phone with the app open on Home, for the mobile moment (optional).
-- [ ] Generator run with `--today` = demo day, so "about to run out" and "last month" are current.
+- [ ] Anyone can also try it themselves: **"Try the demo shop"** on the first screen after sign-up (or More → "Start the demo shop again") makes a fresh copy dated today and imports it live.
 
 ---
 
@@ -70,11 +72,11 @@ While the stages tick by ("Finding the real data — skipping titles, totals and
 > "We found **N products**, **N sales** across **4 channels**, and **N customers**. We'll skip **N rows**
 > that look like totals or notes."
 
-**Answer the three quick questions, one tap each:**
+**Answer the quick questions, one tap each** (at most three; usually these):
 
-1. *Bloom & Co / Bloom and Co. / BLOOM & CO LTD* → **Same**.
-2. *"Cost" means cost per item?* → **Yes**.
-3. *Etsy dates are day/month?* → **Yes**.
+1. *Are “Bloom & Co”, “Bloom and Co.” and “BLOOM & CO LTD” the same customer?* → **Yes, same customer**.
+2. *The dates in “Etsy” look day-first. Is that right?* → **Yes**.
+3. *Does “Cost” in “Stock list” mean the cost of one item?* → **Yes, per item**.
 
 **Say:**
 
@@ -92,7 +94,8 @@ stock"). Then click **"Looks good, set it up"**.
 
 > "Here's exactly what came in, what was skipped and why, and what we assumed. Full honesty."
 
-Point at the line "6 sales mention a product we couldn't find… we kept them". Then click **"See my
+Point at the assumption "We linked “Sage Mug” to Sage Stoneware Mug: it’s the only one with all those
+words." It shows it matched the till's short names to the stock list, and says so. Then click **"See my
 dashboard"**.
 
 **Say:**
@@ -105,12 +108,15 @@ switch to tab B.
 
 ### 3:10 — Proactive insights (≈ 45s)
 
-**Do:** go to **Home**. Read the top insight cards:
+**Do:** go to **Home**. Point at the key numbers and the weekly summary, then read the top insight cards
+(today's exact sentences are printed by `pnpm demo:up`):
 
-- "**Sage Stoneware Mug** will run out in about **6 days** at the current sales rate."
-- "**Bloom & Co**'s orders dropped **6x%** compared with their usual."
-- "The cost of **Linen Napkin Set** went up **22%** but your price hasn't changed. Your margin fell from
-  **58%** to **49%**."
+- "**Sage Stoneware Mug** will run out in about **6 days** at the current sales rate (**3.9** a day). You
+  have **24** left." Point at the line under it: "Consider reordering about … from Hearth & Kiln
+  Ceramics to cover the next 44 days."
+- "**Bloom & Co**'s orders dropped **6x%** compared with their usual. Their last order was **41** days ago."
+- "The cost of **Linen Napkin Set** went up **22%**, from **$8.40** to **$10.25**. At your price of
+  **$20.00**, your margin fell from **58%** to **48.8%**."
 
 **Say:**
 
@@ -155,10 +161,11 @@ Show the preview, then click **Apply**.
 
 ### 5:40 — (Optional, if M6 is done) Keeping up to date (≈ 40s)
 
-**Do:** go to My data → "Add or update files". Upload `Online orders — October update.xlsx`.
+**Do:** go to My data → "Add or update files". Upload `demo-files/Next month/Online orders 2025-26.xlsx`
+(the same export, a month later). Click **"Looks good, compare with my data"**.
 
-Show: "**86 new sales**, **4 changed**, nothing deleted without asking." Click **Update**. The insights
-refresh.
+Show "Here's what would change": the new sales, the few cancelled ones, and that sales missing from the
+newer file are kept. Click **Update my data**. The insights refresh.
 
 **Say:**
 
@@ -215,13 +222,13 @@ entities and the expected values for every planted story and demo question.
 | `Stock list & costs.xlsx` | Product master with stock | Category as **section header rows** (CANDLES, LINENS…); merged two-row header ("Price" over "Cost (ex tax) / RRP"); some SKUs missing; "Pcs in stock" with "pcs" suffixes; note rows ("DISCONTINUED - do not reorder"); a SUM row at the bottom |
 | `Supplier orders.csv` | Purchase lines from 5 suppliers | Mixed date formats; supplier names with trailing spaces; cost history showing the Linen Napkin price rise in June |
 | `Expenses 2026.xlsx` | Monthly expenses | **Wide format**: categories as rows, months as columns (Jan…Oct); "–" for zero; a TOTAL column and TOTAL row |
-| `Online orders — October update.xlsx` *(M6 scene)* | Same format as the Website sheet, covering the last 3 weeks | Overlaps the previous file by 1 week (dedupe/merge test); 4 orders with changed status (refunded/cancelled); 86 genuinely new orders |
+| `Next month/Online orders 2025-26.xlsx` *(M6 scene)* | Same format as the Website sheet, covering the last 3 weeks | Overlaps the previous file by 1 week (dedupe/merge test); 4 orders with changed status (refunded/cancelled); 86 genuinely new orders |
 
 ### 3.3 Planted stories (must be detected with exact numbers from `ground_truth.json`)
 
 | Story | Setup in generator | Expected insight |
 |---|---|---|
-| **Stock-out risk** | Sage Stoneware Mug: best seller, ~7.5 sales a day over the last 28 days, 45 on hand at last count → ~6 days | `stockout_risk` urgent, ≈ 6 days |
+| **Stock-out risk** | Sage Stoneware Mug: best seller, ~4 sales a day over the last 28 days, stock set to 6 days of sales (~25 on hand) → ~6 days | `stockout_risk` urgent, ≈ 6 days |
 | **Declining customer** | Bloom & Co (wholesale): ~monthly orders of ~$900 for 10 months, then the last 2 months down ~65%, last order 41 days ago | `customer_slipping` |
 | **Dead stock** | Christmas Spice Candle (and 4 other seasonal items): ~140 units on hand, no sales since January | `dead_stock`, with ~$X tied up |
 | **Margin squeeze** | Linen Napkin Set: supplier cost $8.40 → $10.25 (+22%) from June; price unchanged at $20 → margin 58% → 49%. (Final numbers set by the generator; script copy reads from ground truth.) | `margin_squeeze` |
@@ -231,9 +238,10 @@ entities and the expected values for every planted story and demo question.
 | **Rising star** | Terracotta Herb Pot: sales +70% over the last 4 weeks | `rising_star` |
 | **Control** | Everything else follows stable seasonal patterns with noise | no false urgent alerts |
 
-**Note:** the "Here's what we found" numbers (products/sales/customers/skipped rows) and the insight
-numbers in the script above are placeholders. The final rehearsal checklist requires updating the script
-with the exact values from `ground_truth.json` for the chosen `--today`.
+**Note:** the numbers move with the demo day, because the files are generated for today. `pnpm demo:up`
+prints the day's import counts and Home's insight sentences; read those out. The M7 acceptance test
+checks every story against `ground_truth.json` for a fixed day (2026-10-13), and the demo shop's test
+checks the stories still appear for today.
 
 ### 3.4 Demo questions (in the eval "demo subset"; must be 100% correct)
 
@@ -261,10 +269,14 @@ with the exact values from `ground_truth.json` for the chosen `--today`.
 
 ## 5. Rehearsal checklist
 
-- [ ] Generator run for the demo date; `ground_truth.json` values copied into this script
-- [ ] Fresh demo workspace created; tab B workspace pre-imported
-- [ ] Full run 1 timed: ____ min. Issues: ____
-- [ ] Full run 2 timed: ____ min. Issues: ____
-- [ ] Run with the AI network blocked (replay only) passes
-- [ ] Phone view checked
+- [x] Generator dated automatically: `pnpm demo:up` and "Try the demo shop" generate for today; `demo:up` prints the day's numbers
+- [x] Fresh demo workspace (tab A) and pre-imported backup (tab B) made by `pnpm demo:up`
+- [x] Automated rehearsal (`apps/web/e2e/demo.spec.ts`), twice in a row with AI off (replay only, no key), 2026-10-16:
+  - run 1: 38.5 s of machine time, no errors
+  - run 2: 33.1 s of machine time, no errors
+  - longest waits: the live import (about 17 s from upload to the data report) and next month's file (about 12 s)
+- [ ] Presenter run 1 timed (talking included): ____ min. Issues: ____
+- [ ] Presenter run 2 timed: ____ min. Issues: ____
+- [x] Run with the AI network blocked (replay only) passes (the automated runs above)
+- [x] Phone view checked: every main page fits an iPhone SE with no sideways scrolling (`e2e/quality.spec.ts`)
 - [ ] Backup screen recording made with this build

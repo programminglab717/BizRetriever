@@ -985,3 +985,64 @@ Template for new entries:
   - **Demo data:** with stories on, the generator's output is unchanged, so earlier tests keep their numbers.
 - **Consequences:**
   - The acceptance test (`insights.int.test.ts`) fails if any story is missed, mis-numbered, or the control raises an urgent alert.
+
+## ADR-051 — The demo shop and the demo machine
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - **Generated for today.** The demo shop (`@bizr/core/demo`) is Fernwood Home & Gift, generated for today in its own time zone and brought in through the normal import. The rules path only, so no AI is needed. The stories are therefore always current, whatever the demo day. Fixed-date checks stay where they belong: the M7 acceptance test uses 2026-10-13.
+  - **"Try the demo shop"** (onboarding, and More/Settings → "Your businesses") makes a fresh demo shop and starts its live import, so people see exactly what happens with their own files.
+    - Demo shops carry `workspace.is_demo` and a "Demo" badge.
+    - Starting again replaces the person's previous demo shop.
+  - **`pnpm demo:up`** does the presenter's setup in one command:
+    - starts Postgres if needed, then sets up roles and migrations
+    - makes the demo sign-in (`DEMO_EMAIL` / `DEMO_PASSWORD`; the password is hashed with Better Auth's own function)
+    - resets tab A (empty) and tab B (already imported, insights included)
+    - writes today's files and next month's export to `demo-files/`
+    - starts web and worker with `AI_REPLAY_MODE=replay`
+    - prints the day's import counts and Home's insight sentences for the script
+  - **Spellings:** a merged customer keeps the spelling used most often ("Bloom & Co", not a one-off "Bloom and Co."). The generator gives each stockist's own spelling three times the weight, using the same random draws.
+  - **Noisy rules:** stockist invoices are left out of the weekly sales change, as they were from "Products taking off" (ADR-047). One invoice swings a week on its own.
+- **Consequences:**
+  - The automated rehearsal (`e2e/demo.spec.ts`) runs the whole script from "Try the demo shop" to next month's file with AI off. It took 38.5 s and 33.1 s of machine time in two runs in a row.
+  - Each "Try the demo shop" makes a tenant schema; the reset keeps it to one per person.
+
+## ADR-052 — Quality gates for the demo: copy, small phones, accessibility, speed
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - **Copy linter** (`apps/web/src/copy.test.ts`, runs with `pnpm test`). It checks JSX text, shown attributes and sentence-like strings in every web source file with the same `findJargon` the AI's text is checked with. The admin page is exempt, and "Join" (a business) is allowed.
+  - **Quality e2e** (`e2e/quality.spec.ts`) signs up, imports the demo shop and opens eleven main pages at iPhone SE size (375 × 667). It fails on any sideways scrolling, and on any serious or critical axe-core finding (WCAG 2 A/AA).
+  - **Fixes it found:**
+    - darker helper text (`--muted-foreground`)
+    - urgent badge contrast
+    - Ask's suggestion chips now wrap (the button base class stopped them shrinking)
+    - links inside text are underlined
+  - **Speed:** `pnpm perf <slug>` measures LCP on the main pages and Ask's time to answer on the production build. On the demo shop (2026-10-16):
+
+    | Measure | Result | Target |
+    |---|---|---|
+    | Home LCP | p50 188–208 ms | ≤ 2 s |
+    | Ask | p95 250–298 ms | ≤ 6 s |
+    | Dashboard tile queries | p95 154 ms (`app.query_run`) | ≤ 1.5 s |
+
+  - **Indexes:** tenant tables already index every link and date field. Control-plane tables are looked up by run or dashboard ids, which are indexed. No new indexes are needed.
+- **Consequences:**
+  - New pages are covered by adding them to the quality spec's list.
+  - Ask timings with the AI on are still unmeasured (R22).
+
+## ADR-053 — The internal admin page
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - `/admin` is shown only to `ADMIN_EMAILS`; anyone else gets "not found".
+  - It reads control-plane logs only:
+    - AI spend today and this month against the caps, and per business
+    - AI calls by task: live, replayed, failed checks, errors, blocked (budget or no key), p50/p95 latency
+    - query latency and errors by origin and path (7 days)
+    - background job failures (7 days)
+    - the rules-only eval baselines from `evals/baselines/`
+  - No tenant data is shown.
+- **Consequences:**
+  - The weekly cost and quality check needs no database access.
+  - Once the AI key is in use, the "failed checks" rate is the early warning for prompt problems.

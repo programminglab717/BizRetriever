@@ -27,7 +27,14 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     // Many sign-ups from one IP in a few seconds would trip the (real) rate limit.
     // No separate worker process: background jobs run inside the web server (ADR-011 inline mode).
-    env: { AUTH_RATE_LIMIT: 'off', APP_URL: `http://localhost:${PORT}`, JOB_RUNNER: 'inline' },
+    // AI is replay-only with no key: the tests (and the demo rehearsal) never reach the AI provider.
+    env: {
+      AUTH_RATE_LIMIT: 'off',
+      APP_URL: `http://localhost:${PORT}`,
+      JOB_RUNNER: 'inline',
+      AI_REPLAY_MODE: 'replay',
+      ANTHROPIC_API_KEY: '',
+    },
     timeout: 60_000,
   },
 });

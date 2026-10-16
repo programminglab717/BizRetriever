@@ -2,44 +2,86 @@
 
 ## Current Status
 
-- **Milestone:** M7 (Insights) is **complete on the rules path**. Every acceptance criterion is met with no AI. M8 (Demo readiness) is next, once the owner confirms.
+- **Milestone:** M8 (Demo readiness) is **built and checked automatically**. Two items need a person:
+  - the two timed presenter rehearsals and the backup screen recording (Q24)
+  - the optional free hosted preview (Q19). This stays skipped under the zero-cost rule unless the owner wants a shareable link.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **What runs today:**
-  - accounts, onboarding, workspaces, settings and People (M1, M6)
-  - import, re-upload with merge preview and undo (M2, M6). Short names on the till ("Sage Mug") now link to their product.
-  - 32 retail measures, the query compiler and "What we track" (M3)
-  - Ask (M4), the dashboard (M5), My data with records, chat changes and Change history (M6)
-  - **Home:**
-    - key numbers for the last 30 days
-    - an "Ask anything" box
-    - the weekly digest card
-    - the top five insights, each with its action and ⋮ menu (Dismiss, Not useful, Change alert settings)
-    - empty and not-enough-history states
-  - **All insights** (topic filters) and **Alert settings** (toggles and thresholds in plain words)
-  - **Insight runs:**
-    - at the end of every import and merge
-    - after record edits and structural changes (one waiting run per business)
-    - when Home sees the data or the day moved on
-    - daily via the drain cron or the worker, with `snapshot.gc`
-  - `pnpm eval`: ingest 11/11, questions 0.919 (unchanged), dashboard edits 44, record writes 44, change plans 33 (rules only, $0)
-- **M7 acceptance (rules only, no AI), from `insights.int.test.ts`:** every planted story is found with the ground truth's numbers.
-  - stock-out risk (urgent): Sage Stoneware Mug, 116 sold in 28 days, 25 left, about 6 days
-  - declining customer: Bloom & Co, $663 vs a usual $1,975, down 66.4%, last order 41 days ago
-  - dead stock: 7 products, $2,707.10, led by Christmas Spice Candle
-  - margin squeeze: Linen Napkin Set, $8.40 → $10.25 (+22%), margin 58% → 48.8%
-  - return spike: Glass Carafe, 10 of 46 (21.7%) by return date, "Arrived broken"
-  - channel shift: Etsy 23.5% vs 11.4%, after refunds
-  - overdue payments: 2 customers, $1,470.00 as invoiced, North Star Mercantile $1,098.00, 50 days late
-  - The control business (no stories) raises no urgent alert, and none of those seven rules fire.
-- **Waiting on the owner (batched for the end):**
+- **What runs today:** everything from M1–M7, plus:
+  - **"Try the demo shop"**: a fresh Fernwood dated today, imported live. It is on the first screen after sign-up and under "Your businesses" on More and Settings, with a "Demo" badge and "Start the demo shop again".
+  - **`pnpm demo:up`**: the presenter's laptop in one command. It sets up Postgres and the database, the demo sign-in, tab A (empty) and tab B (ready), today's files in `demo-files/`, and web plus worker with AI replay-only, and prints the day's numbers.
+  - **`/admin`** (`ADMIN_EMAILS` only): AI spend vs caps and per business, AI failures and latency, query latency, job failures, eval baselines.
+  - Friendly not-found and error pages, loading skeletons, a favicon.
+- **M8 acceptance:**
+  - **Rehearsals:** the automated rehearsal ran twice in a row with zero errors (38.5 s and 33.1 s of machine time). The script's spoken timings add up to under 7 minutes. Presenter runs are pending (Q24).
+  - **AI blocked:** the demo works with the AI provider unreachable. The whole path runs on rules, and the e2e server runs replay-only with no key.
+  - **Spend:** $0 infrastructure; $0 AI (`/admin` shows no live AI calls).
+  - **Earlier milestones:** all acceptance criteria still hold. 707 unit/integration tests pass, 26 e2e (desktop + mobile; two desktop-only).
+- **Performance** (production build, demo shop):
+
+  | Measure | Result | Target |
+  |---|---|---|
+  | Home LCP | p50 about 200 ms | ≤ 2 s |
+  | Ask | p95 under 300 ms | ≤ 6 s |
+  | Dashboard tiles | p95 154 ms | ≤ 1.5 s |
+
+- **Evals (rules only, $0):**
+
+  | Suite | Result |
+  |---|---|
+  | Ingest | 11/11 |
+  | Questions | 0.919 (demo subset 1.0) |
+  | Dashboard edits | 0.932 |
+  | Record writes | 1.0 |
+  | Change plans | 1.0 |
+
+- **Waiting on the owner:**
+  - presenter rehearsals and the backup recording (Q24)
   - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
-  - the Anthropic API key (Q20), for the first AI eval runs. Task J's rewording also waits on it; the pack's sentences show until then.
-  - confirmation to start M8
+  - the Anthropic API key (Q20), for the AI evals and the demo's replay recordings
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-16 — Session 11: M8 Demo readiness
+
+**Completed:**
+
+- **Demo shop** (`@bizr/core/demo`, ADR-051): `startDemoShop`, `finishDemoImport`, `removeDemoShops`, `demoFiles`, `demoNextMonthFile`.
+  - "Try the demo shop" on onboarding
+  - "Your businesses" on More and Settings
+  - the "Demo" badge
+- **`pnpm demo:up`** (`apps/worker/src/cli/demo-up.ts`). New env settings: `DEMO_EMAIL`, `DEMO_PASSWORD`, `ADMIN_EMAILS`.
+- **Data quality found by the rehearsal:**
+  - merged customers keep their most common spelling
+  - demo stockists mostly use their own spelling
+  - stockist invoices are left out of the weekly sales change
+- **Performance pass:** `pnpm perf <slug>`. All targets met with a wide margin; indexes reviewed, no changes needed (ADR-052).
+- **Polish pass:**
+  - the copy linter
+  - not-found and error pages, loading skeletons, a favicon
+  - the iPhone SE and accessibility e2e, plus the contrast, chip-wrapping and link fixes it found
+- **Admin page** (`/admin`, ADR-053).
+- **Rehearsal:** `e2e/demo.spec.ts` follows DEMO_SCRIPT §2 and records each scene's time. It passed twice in a row with AI off.
+- **Docs:**
+  - DEMO_SCRIPT: setup via `demo:up`, today's questions and sentences, the re-upload scene, the rehearsal checklist
+  - `docs/RUNBOOK_PRODUCTION.md` (Stage 2, not executed)
+  - ADR-051 to ADR-053
+  - PLAN M8 ticked
+  - OPEN_QUESTIONS: Q24, R31, R32
+- **Full eval run:** results in Current Status, unchanged from the baselines.
+
+**In progress:** nothing.
+
+**Blockers:** none. The presenter rehearsals need a person (Q24).
+
+**Next steps:**
+
+1. Owner: two timed rehearsals with `pnpm demo:up`, and the backup screen recording (DEMO_SCRIPT §5).
+2. When the key arrives (Q20): the AI eval runs, replay recordings for the demo path, and the Task J faithfulness sample.
+3. After M8 is confirmed: the M9+ backlog in PLAN (connectors, more vertical packs), as the owner prioritises.
+
 
 ### 2026-10-16 — Session 10: M7 Insights built
 

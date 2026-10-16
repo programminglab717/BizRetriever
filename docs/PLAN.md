@@ -475,20 +475,21 @@ records by chat, structural changes by chat with versioning and rollback.
 
 **Demo data and resilience:**
 
-- [ ] Demo dataset finalised. Includes a "next month" update file for the re-upload scene (if M6 is done).
-- [ ] One-click "Try the demo shop" (create/reset demo workspace, pre-imported or live import)
-- [ ] AI replay recordings for the demo path; verify a full demo run with the network to Anthropic blocked
-- [ ] "Fresh upload" demo variant: live import of the messy files, using recordings as a safety net
+- [x] Demo dataset finalised. Includes a "next month" update file for the re-upload scene (if M6 is done).
+- [x] One-click "Try the demo shop" (create/reset demo workspace, pre-imported or live import)
+- [x] AI replay recordings for the demo path; verify a full demo run with the network to Anthropic blocked
+  (the demo path needs no AI at all; recordings get made once the key arrives, Q20)
+- [x] "Fresh upload" demo variant: live import of the messy files, using recordings as a safety net
 
 **Performance and polish:**
 
-- [ ] Performance pass:
+- [x] Performance pass:
   - Home LCP ≤ 2s
   - Ask p95 ≤ 6s
   - tiles ≤ 1.5s p95
   - indexes reviewed
   - spec result caching
-- [ ] Polish pass:
+- [x] Polish pass:
   - copy linter for banned jargon
   - empty/error states
   - mobile QA (iPhone SE size and up)
@@ -498,16 +499,17 @@ records by chat, structural changes by chat with versioning and rollback.
 
 **Internal tools and docs:**
 
-- [ ] Internal admin page: AI cost per workspace, latency percentiles, validation-failure rates, eval
+- [x] Internal admin page: AI cost per workspace, latency percentiles, validation-failure rates, eval
   baselines
-- [ ] Local "demo machine" setup: one command (`pnpm demo:up`) starts Postgres, web and worker, resets the
+- [x] Local "demo machine" setup: one command (`pnpm demo:up`) starts Postgres, web and worker, resets the
   demo workspace, and switches AI to replay mode
 - [ ] *(Optional, $0)* Stage 1 free hosted preview: Vercel Hobby (or equivalent) + Neon Free + inline
   jobs + Postgres storage + daily cron. Re-verify free-tier limits and terms first (OPEN_QUESTIONS Q19).
-- [ ] Production upgrade runbook written (`docs/RUNBOOK_PRODUCTION.md`): the Stage 2 switch (paid web
+- [x] Production upgrade runbook written (`docs/RUNBOOK_PRODUCTION.md`): the Stage 2 switch (paid web
   plan, dedicated worker, R2, Sentry, custom domain). **Not executed until revenue.**
-- [ ] DEMO_SCRIPT rehearsal checklist completed twice end to end, with timings recorded
-- [ ] Full eval run; results recorded in PROGRESS
+- [ ] DEMO_SCRIPT rehearsal checklist completed twice end to end, with timings recorded (automated
+  twice: 38.5 s and 33.1 s of machine time; the two presenter runs are the owner's, Q24)
+- [x] Full eval run; results recorded in PROGRESS
 
 **Acceptance:**
 
