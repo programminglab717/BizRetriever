@@ -1897,7 +1897,16 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "value_labels": {}
         }
       ],
-      "join_paths": [],
+      "join_paths": [
+        {
+          "from": "purchase_line",
+          "to": "supplier",
+          "via": [
+            "purchase_line.purchase",
+            "purchase.supplier"
+          ]
+        }
+      ],
       "metrics": [
         {
           "id": "gross_sales",
@@ -2043,6 +2052,9 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "sell",
             "selling",
             "sell the most",
+            "sells best",
+            "sell best",
+            "sells",
             "best seller",
             "best sellers",
             "bestseller",
@@ -2401,6 +2413,7 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "come back",
             "came back",
             "repeat rate",
+            "repeat customer rate",
             "loyal"
           ],
           "assumptions": [],
@@ -2616,7 +2629,11 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "stock value",
             "value of stock",
             "tied up in stock",
+            "tie up the most money in stock",
+            "money in stock",
             "inventory value",
+            "inventory worth",
+            "stock worth",
             "worth of stock"
           ],
           "assumptions": [],
@@ -3027,7 +3044,8 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "late payments",
             "paid late",
             "past due",
-            "late paying"
+            "late paying",
+            "paying late"
           ],
           "assumptions": [
             "Without payment records, part-paid invoices are counted as fully owed.",
@@ -3052,7 +3070,9 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "supplier spend",
             "spend with suppliers",
             "bought from suppliers",
-            "supplier orders total"
+            "supplier orders total",
+            "spend with",
+            "spent with"
           ],
           "assumptions": [],
           "snapshot": false

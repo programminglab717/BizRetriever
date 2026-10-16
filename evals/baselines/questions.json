@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "cases": 185,
+    "accuracy": 0.919,
+    "executionAccuracy": 0.912,
+    "demoAccuracy": 1,
+    "clarifyPrecision": 1,
+    "clarifyRecall": 1,
+    "rulesRate": 0.811,
+    "p95LatencyMs": 99
+  }
+}

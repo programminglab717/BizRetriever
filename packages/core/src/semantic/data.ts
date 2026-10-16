@@ -39,6 +39,12 @@ export async function fieldsWithData(
 }
 
 /**
+ * How many distinct values of each breakdown we keep. Enough for every product and customer of a
+ * small business, so question words can match the owner's own names (the AI sees fewer).
+ */
+export const TOP_VALUES_LIMIT = 1000;
+
+/**
  * The most common values of the pack's text breakdowns (channels, categories, product names…),
  * for recognising them in questions. Values come from the owner's data: treat them as untrusted.
  */
@@ -46,7 +52,7 @@ export async function topValues(
   tenant: TenantRef,
   catalog: readonly CatalogEntity[],
   dimensionFields: readonly string[],
-  limit = 200,
+  limit = TOP_VALUES_LIMIT,
 ): Promise<Map<string, string[]>> {
   const out = new Map<string, string[]>();
   for (const ref of dimensionFields) {

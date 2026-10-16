@@ -102,6 +102,7 @@ describe('bundled packs', () => {
       synonyms: retail.synonyms,
       knownFormats: retail.knownFormats,
       metrics: retail.metrics,
+      questions: retail.questions,
       primer: retail.primer,
     });
   });

@@ -1,5 +1,6 @@
 /**
- * `pnpm eval [--case NAME] [--limit N] [--ai] [--yes] [--update-baseline]`
+ * `pnpm eval [--suite ingest|questions|all] [--case NAME] [--limit N] [--demo] [--ai] [--yes]
+ * [--update-baseline]`
  *
  * Without `--ai` the suite runs the rule-based proposer only: free and offline. With `--ai` it calls
  * the real AI (through replay recordings when they exist), which costs money: the run prints an
@@ -32,8 +33,20 @@ const { values } = parseArgs({
     ai: { type: 'boolean', default: false },
     yes: { type: 'boolean', default: false },
     'update-baseline': { type: 'boolean', default: false },
+    suite: { type: 'string', default: 'all' },
+    demo: { type: 'boolean', default: false },
   },
 });
+
+const suite = values.suite ?? 'all';
+if (!['ingest', 'questions', 'all'].includes(suite)) {
+  console.error('--suite is ingest, questions or all');
+  process.exit(1);
+}
+if (suite === 'questions') {
+  const { runQuestionsCli } = await import('./questions-cli');
+  process.exit(await runQuestionsCli(values));
+}
 
 const root = path.resolve(import.meta.dirname, '..');
 const baselinePath = path.join(root, 'baselines', 'ingest.json');
@@ -114,4 +127,10 @@ if (values['update-baseline']) {
   writeFileSync(baselinePath, `${JSON.stringify(baselines, null, 2)}\n`);
   console.log(`Updated the ${mode} baseline.`);
 }
-process.exit(regressed.length > 0 ? 1 : 0);
+let code = regressed.length > 0 ? 1 : 0;
+if (suite === 'all' && !values.case) {
+  console.log('\n--- Questions ---');
+  const { runQuestionsCli } = await import('./questions-cli');
+  code = Math.max(code, await runQuestionsCli(values));
+}
+process.exit(code);

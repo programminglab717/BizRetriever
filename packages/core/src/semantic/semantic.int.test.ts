@@ -244,6 +244,23 @@ describe.skipIf(!hasDb)('metrics on the demo data (integration)', () => {
     const rows = await run({ metrics: ['order_count'], period: SEP, compare: 'previous_period' });
     expect(Number(rows[0]!.m_order_count)).toBe(h.sales(SEP).length);
     expect(Number(rows[0]!.m_order_count__prev)).toBe(h.sales(AUG).length);
+
+    // With a breakdown: every channel from either month, each paired with its own earlier value.
+    const byChannel = await run({
+      metrics: ['order_count'],
+      dimensions: [{ field: 'sale.channel' }],
+      period: SEP,
+      compare: 'previous_period',
+    });
+    const channels = new Set([...h.sales(SEP), ...h.sales(AUG)].map((s) => s.channel));
+    expect(byChannel.map((r) => r.d0).sort()).toEqual([...channels].sort());
+    for (const r of byChannel) {
+      const ch = String(r.d0);
+      expect(Number(r.m_order_count ?? 0), ch).toBe(h.sales(SEP, (s) => s.channel === ch).length);
+      expect(Number(r.m_order_count__prev ?? 0), ch).toBe(
+        h.sales(AUG, (s) => s.channel === ch).length,
+      );
+    }
   });
 
   it('breaks online-store sales and profit down by category', async () => {

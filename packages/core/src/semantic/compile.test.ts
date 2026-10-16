@@ -154,6 +154,21 @@ describe('compileQuery semantics', () => {
     expect(userError(() => compileQuery(model, { metrics: ['nope'] }, ctx))).toMatch(/nope/);
   });
 
+  it('compares a breakdown with the period before', () => {
+    const q = compileQuery(
+      model,
+      {
+        metrics: ['net_sales'],
+        dimensions: [{ field: 'sale.channel' }],
+        period: SEP,
+        compare: 'previous_period',
+      },
+      ctx,
+    );
+    expect(q.sql).not.toContain('FULL JOIN');
+    expect(q.sql).toMatchSnapshot();
+  });
+
   it('compares calendar months with the month before, other ranges with the same length', () => {
     expect(
       compileQuery(

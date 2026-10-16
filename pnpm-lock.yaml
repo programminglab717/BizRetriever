@@ -145,6 +145,9 @@ importers:
       '@bizr/core':
         specifier: workspace:*
         version: link:../packages/core
+      '@bizr/db':
+        specifier: workspace:*
+        version: link:../packages/db
       '@bizr/demo-data':
         specifier: workspace:*
         version: link:../packages/demo-data

@@ -753,15 +753,18 @@ export function compileQuery(
   const dimKeys = spec.dimensions.map((_, i) => `d${i}`);
   let select: string;
   if (previous) {
-    const dims = dimKeys.map((k) => `COALESCE(c.${ident(k)}, p.${ident(k)}) AS ${ident(k)}`);
     const ms = metrics.flatMap((m) => [
       `c.${ident(`m_${m.id}`)}`,
       `p.${ident(`m_${m.id}`)} AS ${ident(`m_${m.id}__prev`)}`,
     ]);
-    const join = dimKeys.length
-      ? `FULL JOIN "prev" p ON ${dimKeys.map((k) => `c.${ident(k)} IS NOT DISTINCT FROM p.${ident(k)}`).join(' AND ')}`
-      : 'CROSS JOIN "prev" p';
-    select = `SELECT ${[...dims, ...ms].join(', ')} FROM "cur" c ${join}`;
+    if (dimKeys.length) {
+      // Every breakdown value from either period. (A FULL JOIN can't use IS NOT DISTINCT FROM, and
+      // blank values must still pair up, so join both periods onto the union of their keys.)
+      const cols = dimKeys.map((k) => ident(k)).join(', ');
+      const on = (alias: string) =>
+        dimKeys.map((k) => `${alias}.${ident(k)} IS NOT DISTINCT FROM k.${ident(k)}`).join(' AND ');
+      select = `SELECT ${[...dimKeys.map((k) => `k.${ident(k)}`), ...ms].join(', ')} FROM (SELECT ${cols} FROM "cur" UNION SELECT ${cols} FROM "prev") k LEFT JOIN "cur" c ON ${on('c')} LEFT JOIN "prev" p ON ${on('p')}`;
+    } else select = `SELECT ${ms.join(', ')} FROM "cur" c CROSS JOIN "prev" p`;
   } else {
     select = `SELECT * FROM "cur"`;
   }

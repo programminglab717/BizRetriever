@@ -23,12 +23,14 @@ export interface RulesResult {
   confident: boolean;
   /** Words it didn't understand (for logs and the AI). */
   leftover: string[];
+  /** How many things it did recognise (measures, breakdowns, values, periods). */
+  understood: number;
 }
 
 type Entry =
   | { kind: 'metric'; phrase: string; id: string }
   | { kind: 'dim'; phrase: string; field: string }
-  | { kind: 'value'; phrase: string; field: string; value: string }
+  | { kind: 'value'; phrase: string; field: string; value: string; pack?: boolean }
   | { kind: 'time'; phrase: string; preset: TimePreset }
   | { kind: 'grain'; phrase: string; grain: TimeGrain }
   | { kind: 'rank'; phrase: string; dir: 'asc' | 'desc' }
@@ -43,7 +45,7 @@ const STOPWORDS = new Set(
   please there this that these those it its it's so far than then as about over up down out more less
   most least just only also now again same time times number amount value values total overall much
   chart graph table there's thing things make made get got look looks like going go goes very really
-  ever since between during while when where why come came compare compared vs versus did i'
+  ever between during while when why come came compare compared vs versus did i'
   week weeks month months year years day days quarter quarters some money share`
     .split(/\s+/)
     .filter(Boolean),
@@ -203,14 +205,22 @@ function entries(catalog: AskCatalog): Entry[] {
       const phrase = normalizeQuestion(v).trim();
       if (phrase.length < 3 || /^\d+$/.test(phrase) || STOPWORDS.has(phrase)) continue;
       out.push({ kind: 'value', phrase, field: d.field, value: v });
-      // "How many Sage Stoneware Mugs": owners pluralise their product names.
+      // "How many Sage Stoneware Mugs", "candle sales": owners change the number of names.
       if (!phrase.endsWith('s'))
         out.push({ kind: 'value', phrase: plural(phrase), field: d.field, value: v });
+      else if (phrase.length > 4 && !phrase.endsWith('ss'))
+        out.push({ kind: 'value', phrase: phrase.slice(0, -1), field: d.field, value: v });
     }
     for (const [canonical, words] of Object.entries(d.valueSynonyms)) {
       for (const w of [...words, canonical.replace(/_/g, ' ')])
         if (w.length >= 3 && !STOPWORDS.has(w))
-          out.push({ kind: 'value', phrase: w.toLowerCase(), field: d.field, value: canonical });
+          out.push({
+            kind: 'value',
+            phrase: w.toLowerCase(),
+            field: d.field,
+            value: canonical,
+            pack: true,
+          });
     }
   }
   for (const [phrase, preset] of TIME_PHRASES) out.push({ kind: 'time', phrase, preset });
@@ -232,8 +242,14 @@ function entries(catalog: AskCatalog): Entry[] {
     rank: 7,
     who: 8,
   };
+  // The pack's words for a value ("wholesale" the channel) before the same word in the owner's data
+  // (a customer type called "Wholesale").
+  const packFirst = (e: Entry) => (e.kind === 'value' && e.pack ? 0 : 1);
   return out.sort(
-    (a, b) => b.phrase.length - a.phrase.length || priority[a.kind] - priority[b.kind],
+    (a, b) =>
+      b.phrase.length - a.phrase.length ||
+      priority[a.kind] - priority[b.kind] ||
+      packFirst(a) - packFirst(b),
   );
 }
 
@@ -281,11 +297,14 @@ function parse(question: string, catalog: AskCatalog): Parsed {
     p.timePhrase = lastN[0].trim();
   }
   const month = take(
-    / (?:in |for |during )?(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)(?: (20\d\d))? /,
+    / (?:in |for |during |since (?:the (?:start|beginning) of )?)?(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)(?: (20\d\d))? /,
   );
   if (month && !p.time) {
     const mi = monthIndex(month[1]!)!;
     p.time = namedMonth(mi, catalog.calendar, month[2] ? Number(month[2]) : undefined);
+    // "since September": from the start of that month until today.
+    if (/ since /.test(month[0]))
+      p.time = { from: p.time.from, to: addDays(catalog.calendar.today, 1) };
     p.timePhrase = month[0].trim();
   }
   // Breakdowns we can't do yet: leave a marker so the AI gets the question.
@@ -349,6 +368,8 @@ function parse(question: string, catalog: AskCatalog): Parsed {
   return p;
 }
 
+const primary0 = (metrics: string[]) => metrics[0];
+
 const sentence = (s: string) => `${s[0]!.toUpperCase()}${s.slice(1)}`;
 
 export function interpretWithRules(
@@ -357,6 +378,8 @@ export function interpretWithRules(
   previous?: QuestionSpec,
 ): RulesResult | null {
   const p = parse(question, catalog);
+  const understood =
+    p.metrics.length + p.dims.length + p.values.length + (p.time ? 1 : 0) + (p.grain ? 1 : 0);
   const metric = (id: string) => catalog.metrics.find((m) => m.id === id);
   const assumptions: string[] = [];
   // A follow-up starts like one ("and…", "what about…"), or names only a new breakdown, value or
@@ -374,6 +397,10 @@ export function interpretWithRules(
     for (const m of p.metrics)
       if (m.id === 'net_sales' && ['sell', 'sold', 'selling'].includes(m.phrase))
         m.id = 'units_sold';
+  // "Which products sold the most units?": "sold" is just the verb when a measure is named.
+  const verbs = ['sell', 'sold', 'selling', 'sells'];
+  if (p.metrics.some((m) => !verbs.includes(m.phrase)))
+    p.metrics = p.metrics.filter((m) => !(verbs.includes(m.phrase) && m.id === 'net_sales'));
   let metrics = [...new Set(p.metrics.map((m) => m.id))];
   if (metrics.length === 0 && followUp && previous) metrics = [...previous.metrics];
 
@@ -399,6 +426,7 @@ export function interpretWithRules(
       return {
         confident: p.leftover.length === 0,
         leftover: p.leftover,
+        understood,
         interpretation: {
           kind: 'clarify',
           question:
@@ -414,10 +442,16 @@ export function interpretWithRules(
   if (metrics.length === 0) {
     const anything = p.dims.length || p.values.length || p.time || p.grain || p.rank;
     if (!anything) return null;
-    metrics = ['net_sales'];
-    assumptions.push(
-      p.rank ? 'I took “best” to mean highest net sales.' : 'I looked at your net sales.',
-    );
+    // "Customers by state" counts customers in each state.
+    if (p.dims[0] === 'customer.name' && p.dims.length > 1 && metric('customer_count')) {
+      metrics = ['customer_count'];
+      assumptions.push('I counted the customers who bought.');
+    } else {
+      metrics = ['net_sales'];
+      assumptions.push(
+        p.rank ? 'I took “best” to mean highest net sales.' : 'I looked at your net sales.',
+      );
+    }
   }
 
   const unavailable = metrics.map(metric).find((m) => m && !m.available);
@@ -425,6 +459,7 @@ export function interpretWithRules(
     return {
       confident: true,
       leftover: p.leftover,
+      understood,
       interpretation: {
         kind: 'unanswerable',
         reason: 'missing_data',
@@ -452,8 +487,19 @@ export function interpretWithRules(
   const splitWord = /\b(by|per|each|every|which|list|top|best|worst)\b/.test(
     question.toLowerCase(),
   );
-  let dims: QuestionSpec['dimensions'] = p.dims
-    .filter((f) => !(f === 'customer.name' && customerMeasure && !splitWord))
+  const entityOf = (field: string) => field.split('.')[0];
+  const valueEntities = new Set(p.values.map((v) => entityOf(v.field)));
+  let dimFields = p.dims
+    // "Customers by state" counts customers per state; it doesn't list them too.
+    .filter((f) => !(f === 'customer.name' && customerMeasure && (!splitWord || p.dims.length > 1)))
+    // "glassware items", "customers in Portland": the noun names what the value is, not a split.
+    .filter(
+      (f) => splitWord || !valueEntities.has(entityOf(f)) || p.values.some((v) => v.field === f),
+    );
+  // Expenses have their own types: "expenses by type" isn't product categories.
+  if (primary0(metrics) === 'expenses_total')
+    dimFields = dimFields.map((f) => (f === 'product.category' ? 'expense.category' : f));
+  let dims: QuestionSpec['dimensions'] = [...new Set(dimFields)]
     .slice(0, 2)
     .map((field) => ({ field }));
   if (followUp && previous && dims.length === 0 && !p.grain)
@@ -467,9 +513,11 @@ export function interpretWithRules(
   };
   if (
     ['dead_stock_value', 'days_of_cover'].includes(primary) ||
-    p.metrics.some((m) => /best seller/.test(m.phrase))
+    p.metrics.some((m) => /best seller|sells? best/.test(m.phrase))
   )
     want('product.name');
+  // "What are my biggest expenses?" lists expense types.
+  if (primary === 'expenses_total' && p.rank) want('expense.category');
   if (primary === 'lapsed_customers' || (p.who && /receivables$/.test(primary)))
     want('customer.name');
   if (
@@ -479,7 +527,7 @@ export function interpretWithRules(
   ) {
     if (dims.length) having.push({ metric: primary, op: 'gt', value: 0 });
   }
-  if (p.grain) dims = [{ time: p.grain }, ...dims].slice(0, 2);
+  if (p.grain && !metric(primary)?.snapshot) dims = [{ time: p.grain }, ...dims].slice(0, 2);
 
   // Filters from recognised values ("on Etsy", "mugs").
   const filters: QuestionSpec['filters'] = [];
@@ -551,9 +599,14 @@ export function interpretWithRules(
     ...(limit ? { limit } : {}),
   };
   return {
-    // "What was my best month?": a ranking over something we don't break down by.
-    confident: p.leftover.length === 0 && !(p.rank && !hasCategoryDim),
+    // "What was my best month?": a ranking over something we don't break down by. "How many do I
+    // sell per day?" asks for an average, not a list of days.
+    confident:
+      p.leftover.length === 0 &&
+      !(p.rank && !hasCategoryDim) &&
+      !(p.grain && !p.time && /^\s*how (many|much)\b/i.test(question)),
     leftover: p.leftover,
+    understood,
     interpretation: {
       kind: 'query',
       spec,

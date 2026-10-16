@@ -6,6 +6,7 @@ import { getLogger } from '@bizr/platform';
 import { queryableRelations } from '../change-plan/views';
 import { findJargon } from '../narration';
 import { compileQuery } from '../semantic/compile';
+import { TOP_VALUES_LIMIT } from '../semantic/data';
 import { SemanticError } from '../semantic/graph';
 import type { CompileContext, SemanticModel } from '../semantic/model';
 import { validateFallbackSql } from '../sql-validator/validate';
@@ -74,7 +75,10 @@ export async function interpret(input: InterpretInput): Promise<InterpretOutcome
     return { interpretation: ruled.interpretation, origin: 'rules', aiCalls: 0 };
 
   const fallback = (note: string, aiCalls: number): InterpretOutcome => {
-    if (rules && ruled && ruled.problems.length === 0)
+    // A best guess only when most of the question was understood: "write me a poem about my shop"
+    // isn't a question about shop sales.
+    const mostlyUnderstood = rules && rules.leftover.length <= Math.max(1, rules.understood);
+    if (rules && ruled && ruled.problems.length === 0 && mostlyUnderstood)
       return {
         interpretation: withUncertainty(ruled.interpretation, rules),
         origin: 'rules_fallback',
@@ -319,7 +323,7 @@ function checkSpec(
         ([key, words]) => key === v.toLowerCase() || words.includes(v.toLowerCase()),
       );
       if (canonical) return canonical[0];
-      if (dim.values.length > 0 && dim.values.length < 200)
+      if (dim.values.length > 0 && dim.values.length < TOP_VALUES_LIMIT)
         problems.push(`"${v}" isn't one of the values of ${f.field}; use one from "values"`);
       return v;
     });

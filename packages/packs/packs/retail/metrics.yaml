@@ -81,6 +81,11 @@ dimensions:
     synonyms: [expense category, cost type]
     noun: [expense type, expense types]
 
+# Where two routes link the same records, the one that means what owners mean.
+join_paths:
+  # Spend with a supplier is what was ordered from them, not what their products cost elsewhere.
+  - { from: purchase_line, to: supplier, via: [purchase_line.purchase, purchase.supplier] }
+
 metrics:
   - id: gross_sales
     label: Sales before discounts
@@ -135,6 +140,9 @@ metrics:
         'sell',
         'selling',
         'sell the most',
+        'sells best',
+        'sell best',
+        'sells',
         'best seller',
         'best sellers',
         'bestseller',
@@ -282,7 +290,15 @@ metrics:
     label: Returning customers
     default_time: this_year
     synonyms:
-      ['returning customers', 'repeat customers', 'come back', 'came back', 'repeat rate', 'loyal']
+      [
+        'returning customers',
+        'repeat customers',
+        'come back',
+        'came back',
+        'repeat rate',
+        'repeat customer rate',
+        'loyal',
+      ]
     description: Share of customers who bought in the period and had ordered before it.
     format: percent
     ir:
@@ -397,7 +413,17 @@ metrics:
   - id: stock_value
     label: Stock value (at cost)
     synonyms:
-      ['stock value', 'value of stock', 'tied up in stock', 'inventory value', 'worth of stock']
+      [
+        'stock value',
+        'value of stock',
+        'tied up in stock',
+        'tie up the most money in stock',
+        'money in stock',
+        'inventory value',
+        'inventory worth',
+        'stock worth',
+        'worth of stock',
+      ]
     description: Items in stock × what each costs you.
     format: money
     snapshot: true
@@ -554,7 +580,7 @@ metrics:
 
   - id: overdue_receivables
     label: Overdue money owed
-    synonyms: ['overdue', 'late payments', 'paid late', 'past due', 'late paying']
+    synonyms: ['overdue', 'late payments', 'paid late', 'past due', 'late paying', 'paying late']
     description: >-
       Money owed to you on sales past their payment due date.
     format: money
@@ -596,6 +622,8 @@ metrics:
         'spend with suppliers',
         'bought from suppliers',
         'supplier orders total',
+        'spend with',
+        'spent with',
       ]
     description: Total of your supplier orders, by the date you ordered.
     format: money
