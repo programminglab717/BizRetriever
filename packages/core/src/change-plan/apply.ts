@@ -6,6 +6,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 
 import { compileChangePlan, type CatalogEntity, type CompiledPlan } from './compile';
 import type { ChangePlan, FieldDef } from './schema';
+import { createViewStatements, dropViewStatements } from './views';
 
 export interface TenantWorkspace {
   id: string;
@@ -100,7 +101,12 @@ export async function applyChangePlan(options: {
       );
     }
 
+    // Views depend on the tables: drop them first, rebuild them from the new catalog afterwards.
+    for (const s of dropViewStatements(options.workspace.tenantSchema, current))
+      await client.query(s);
     for (const statement of compiled.statements) await client.query(statement);
+    for (const s of createViewStatements(options.workspace.tenantSchema, compiled.catalog))
+      await client.query(s);
 
     const [planRow] = await tx
       .insert(changePlan)

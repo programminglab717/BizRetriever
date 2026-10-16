@@ -39,6 +39,8 @@ export const entity = app.table(
       .notNull()
       .default(sql`'[]'::jsonb`),
     timeField: text('time_field'),
+    /** Records of this type (refreshed after each import). */
+    recordCount: integer('record_count').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -71,6 +73,8 @@ export const field = app.table(
       .notNull()
       .default(sql`'[]'::jsonb`),
     position: integer('position').notNull(),
+    /** True when at least one record has a value (refreshed after each import; drives availability). */
+    hasData: boolean('has_data').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique('field_entity_key_uq').on(t.entityId, t.key)],
@@ -126,5 +130,39 @@ export const migration = app.table(
   (t) => [unique('migration_workspace_version_uq').on(t.workspaceId, t.version)],
 );
 
+/**
+ * The measures a workspace has (ARCHITECTURE §7): seeded from its pack, with availability computed
+ * from which details hold data. `label` can be renamed by the owner; the definition can't.
+ */
+export const metric = app.table(
+  'metric',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    /** Pack metric id, or null for custom measures (later). */
+    packMetric: text('pack_metric'),
+    label: text('label').notNull(),
+    /** True once the owner renamed it (refreshes keep their name). */
+    labelCustomized: boolean('label_customized').notNull().default(false),
+    description: text('description').notNull(),
+    format: text('format').notNull(),
+    goodDirection: text('good_direction').notNull().default('up'),
+    snapshot: boolean('snapshot').notNull().default(false),
+    available: boolean('available').notNull().default(false),
+    unavailableReason: text('unavailable_reason'),
+    missing: jsonb('missing')
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    position: integer('position').notNull(),
+    refreshedAt: timestamp('refreshed_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique('metric_workspace_key_uq').on(t.workspaceId, t.key)],
+);
+
+export type MetricRow = typeof metric.$inferSelect;
 export type EntityRow = typeof entity.$inferSelect;
 export type FieldRow = typeof field.$inferSelect;

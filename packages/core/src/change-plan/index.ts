@@ -21,3 +21,4 @@ export {
   type ChangePlan,
   type FieldDef,
 } from './schema';
+export { createViewStatements, dropViewStatements, enrichedViewName } from './views';

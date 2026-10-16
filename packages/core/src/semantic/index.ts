@@ -19,3 +19,15 @@ export {
   type TimeGrain,
 } from './query-spec';
 export { fieldsWithData } from './data';
+export {
+  compileContext,
+  getGlossary,
+  loadSemanticModel,
+  refreshSemanticCatalog,
+  RenameError,
+  renameLabel,
+  runQuery,
+  type Glossary,
+  type QueryResult,
+  type RenameTarget,
+} from './service';

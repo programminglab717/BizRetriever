@@ -215,6 +215,15 @@ describe.skipIf(!hasDb)('ingestion (integration)', () => {
     const issues = await getAppDb().select().from(rowIssue).where(eq(rowIssue.runId, runId));
     expect(issues.some((i) => i.code === 'skipped_totals')).toBe(true);
 
+    // The measures were worked out from what the data holds.
+    const { getGlossary, runQuery } = await import('../semantic/service');
+    const glossary = await getGlossary(member);
+    expect(glossary.measures.find((m) => m.key === 'net_sales')?.available).toBe(true);
+    expect(glossary.measures.every((m) => m.available)).toBe(true);
+    expect(glossary.recordTypes.find((e) => e.key === 'product')?.count).toBe(c.products);
+    const orders = await runQuery(member, { metrics: ['order_count'] }, 'system');
+    expect(Number(orders.rows[0]!.m_order_count)).toBe(c.sales! - (c.cancelledSales ?? 0));
+
     // The load ran as the writer role, not the admin: the query log has it.
     const log = await getPool('admin').query<{ n: number }>(
       `SELECT count(*)::int AS n FROM app.query_run WHERE workspace_id = $1 AND sql_text LIKE 'ingest.apply load%'`,

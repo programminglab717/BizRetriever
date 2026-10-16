@@ -88,6 +88,15 @@ describe.skipIf(!hasDb)('applying change plans (integration)', () => {
       path: 'system',
     });
     expect(joined.rows).toEqual([{ name: 'Sage Mug', supplier: 'Kiln Co' }]);
+
+    // System views join each record to what it links to, and the reader can use them.
+    const view = await executeTenantQuery({
+      tenant: { workspaceId: ws.id, tenantSchema: schemaName },
+      sql: 'SELECT name, supplier__name FROM v_products_enriched',
+      origin: 'system',
+      path: 'system',
+    });
+    expect(view.rows).toEqual([{ name: 'Sage Mug', supplier__name: 'Kiln Co' }]);
   });
 
   it('is all-or-nothing: an invalid plan changes neither tables nor catalog', async () => {

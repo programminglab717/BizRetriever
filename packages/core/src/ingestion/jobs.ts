@@ -17,6 +17,7 @@ import { applyChangePlan, loadCatalog } from '../change-plan/apply';
 import { planFromPack } from '../change-plan/from-pack';
 import { withTenantWriter } from '../executor/write';
 import { defineJob } from '../jobs/define';
+import { refreshSemanticCatalog } from '../semantic/service';
 import { proposeDataModel, refineWithDryRun, reviseDataModel } from './ai-proposal';
 import { describeChanges } from './changes';
 import { applyCorrections, type Correction } from './corrections';
@@ -366,6 +367,12 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
           { timezone: ctx.settings.timezone },
         );
 
+        await reportProgress('Working out what we can measure', 80);
+        await refreshSemanticCatalog({
+          id: ctx.workspace.id,
+          tenantSchema: ctx.workspace.tenantSchema,
+          packId: ctx.workspace.packId,
+        });
         await reportProgress('Writing your data quality report', 85);
         const db = getAppDb();
         await db.transaction(async (tx) => {

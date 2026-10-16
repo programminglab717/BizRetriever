@@ -36,6 +36,13 @@
       "when": 1792099339545,
       "tag": "0004_ingestion",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792144698089,
+      "tag": "0005_semantic_catalog",
+      "breakpoints": true
     }
   ]
 }
