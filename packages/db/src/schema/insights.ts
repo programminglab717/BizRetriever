@@ -64,8 +64,10 @@ export const insight = app.table(
     /** Plain text of the headline, for search, digests and logs. */
     text: text('text').notNull(),
     action: jsonb('action').$type<StoredInsightAction>(),
-    /** Set when Task J's phrasing is shown instead of the pack sentence. */
+    /** Set when Task J's phrasing is shown instead of the pack sentence: its prompt version… */
     phrasedBy: text('phrased_by'),
+    /** …and the checked template, re-filled with fresh facts on later runs (no new AI call). */
+    phrasedTemplate: text('phrased_template'),
     status: text('status', { enum: insightStatuses }).notNull().default('new'),
     feedback: text('feedback', { enum: ['useful', 'not_useful'] }),
     firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).notNull().defaultNow(),

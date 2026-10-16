@@ -7,6 +7,7 @@ export { narrateAnswerV1 as narrateAnswer } from './narrate_answer/v1';
 export { planDashboardEditV1 as planDashboardEdit } from './plan_dashboard_edit/v1';
 export { planRecordWriteV1 as planRecordWrite } from './plan_record_write/v1';
 export { planChangeV1 as planChange } from './plan_change/v1';
+export { phraseInsightsV1 as phraseInsights } from './phrase_insights/v1';
 export { reviseDataModelV1 as reviseDataModel } from './revise_data_model/v1';
 export { summarizeProposalV1 as summarizeProposal } from './summarize_proposal/v1';
 
@@ -17,6 +18,7 @@ export type { NarrateAnswerInput } from './narrate_answer/v1';
 export type { PlanDashboardEditInput } from './plan_dashboard_edit/v1';
 export type { PlanRecordWriteInput, RecordCatalog } from './plan_record_write/v1';
 export type { PlanChangeInput } from './plan_change/v1';
+export type { PhraseInsightsInput } from './phrase_insights/v1';
 export type { ReviseDataModelInput } from './revise_data_model/v1';
 export type { SummarizeProposalInput } from './summarize_proposal/v1';
 export { jsonBlock, workspaceDataBlock } from './shared';

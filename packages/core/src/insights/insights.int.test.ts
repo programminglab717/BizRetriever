@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import type { GenerateRequest, GenerateResult, LLMProvider } from '@bizr/ai';
 import { closePools, digest, getAppDb, insight, type Insight } from '@bizr/db';
 import { generateDemoDataset, type GroundTruth } from '@bizr/demo-data';
 import { databaseAvailable } from '@bizr/platform/testing';
@@ -30,6 +31,32 @@ const TODAY = '2026-10-13';
 const NOW = new Date(`${TODAY}T16:00:00Z`);
 
 type Stories = Record<string, Record<string, unknown>>;
+
+/** Task J without the live AI: rewords the slipping-customer alert, keeps the rest as they are. */
+const SLIPPING =
+  '{{customer}} is spending less: down {{drop_pct}} on their usual, and their last order was {{days_since}} {{days_since|day|days}} ago.';
+const phraser: LLMProvider = {
+  generate<T>(request: GenerateRequest<T>): Promise<GenerateResult<T>> {
+    const content = String(request.messages[0]!.content);
+    const alerts = JSON.parse(/<alerts>\n(.*)\n<\/alerts>/s.exec(content)![1]!) as {
+      id: string;
+      topic: string;
+      template: string;
+    }[];
+    const items = alerts.map((a) => ({
+      id: a.id,
+      text: a.topic === 'Regular customers buying less' ? SLIPPING : a.template,
+    }));
+    return Promise.resolve({
+      data: request.schema.parse({ items }),
+      model: 'fake',
+      usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 },
+      costUsd: 0,
+      latencyMs: 0,
+      replayed: true,
+    });
+  },
+};
 const num = (f: FactValue | undefined) => (f && f.format !== 'text' ? f.value : NaN);
 const txt = (f: FactValue | undefined) => (f?.format === 'text' ? f.value : undefined);
 /** Money kept as the exact decimal Postgres returned (summed without floats). */
@@ -62,8 +89,8 @@ describe.skipIf(!hasDb)('insights on the demo data (integration)', () => {
     }
     demo = await loadDemoWorkspace({ today: TODAY });
     control = await loadDemoWorkspace({ today: TODAY, stories: false, name: 'Control Shop' });
-    await runInsights(demo.member, { trigger: 'import', now: NOW });
-    await runInsights(control.member, { trigger: 'import', now: NOW });
+    await runInsights(demo.member, { trigger: 'import', now: NOW, provider: phraser });
+    await runInsights(control.member, { trigger: 'import', now: NOW, provider: null });
   }, 240_000);
 
   afterAll(async () => {
@@ -96,6 +123,19 @@ describe.skipIf(!hasDb)('insights on the demo data (integration)', () => {
     expect(num(f.usual)).toBeCloseTo(Number(s.averageSpendPer60DaysBefore), 2);
     expect(num(f.drop_pct) * 100).toBeCloseTo(Number(s.dropPct), 1);
     expect(num(f.days_since)).toBe(s.daysSinceLastOrder);
+  });
+
+  it('shows the AI’s rewording when it passes the checks, filled by code', async () => {
+    const r = await one(demo, 'customer_slipping', 'Bloom & Co');
+    expect(r.phrasedBy).toBe('phrase_insights@v1');
+    expect(r.text).toBe(
+      'Bloom & Co is spending less: down 66.4% on their usual, and their last order was 41 days ago.',
+    );
+    // The pack's bold comes back on the customer.
+    expect(r.headline[0]).toEqual({ text: 'Bloom & Co', bold: true, fact: 'customer' });
+    // Later runs refill it with fresh facts, with no new AI call.
+    await runInsights(demo.member, { trigger: 'daily', now: NOW, provider: null });
+    expect((await one(demo, 'customer_slipping', 'Bloom & Co')).text).toBe(r.text);
   });
 
   it('finds the dead stock, valued exactly', async () => {
@@ -201,7 +241,7 @@ describe.skipIf(!hasDb)('insights on the demo data (integration)', () => {
 
   it('keeps insights across runs, honours dismissals and brings back what got worse', async () => {
     const m = demo.member;
-    const again = await runInsights(m, { trigger: 'daily', now: NOW });
+    const again = await runInsights(m, { trigger: 'daily', now: NOW, provider: null });
     expect(again.created).toBe(0);
     expect(again.resolved).toBe(0);
 
@@ -209,7 +249,7 @@ describe.skipIf(!hasDb)('insights on the demo data (integration)', () => {
     const dead = await one(demo, 'dead_stock');
     await dismissInsight(m, demo.ownerId, dead.id, { notUseful: true });
     await expect(dismissInsight(m, demo.ownerId, dead.id)).rejects.toThrow(InsightError);
-    await runInsights(m, { trigger: 'daily', now: NOW });
+    await runInsights(m, { trigger: 'daily', now: NOW, provider: null });
     expect(await one(demo, 'dead_stock')).toMatchObject({
       status: 'dismissed',
       feedback: 'not_useful',
@@ -219,25 +259,25 @@ describe.skipIf(!hasDb)('insights on the demo data (integration)', () => {
     const stockout = async () => one(demo, 'stockout_risk', 'Sage Stoneware Mug');
     const thresholds = { warn_days: 14, urgent_days: 3 };
     await saveAlertSetting(m, demo.ownerId, 'stockout_risk', { enabled: true, thresholds });
-    await runInsights(m, { trigger: 'settings', now: NOW });
+    await runInsights(m, { trigger: 'settings', now: NOW, provider: null });
     expect((await stockout()).level).toBe('warn');
     await dismissInsight(m, demo.ownerId, (await stockout()).id);
-    await runInsights(m, { trigger: 'daily', now: NOW });
+    await runInsights(m, { trigger: 'daily', now: NOW, provider: null });
     expect((await stockout()).status).toBe('dismissed');
     await saveAlertSetting(m, demo.ownerId, 'stockout_risk', {
       enabled: true,
       thresholds: { ...thresholds, urgent_days: 7 },
     });
-    await runInsights(m, { trigger: 'settings', now: NOW });
+    await runInsights(m, { trigger: 'settings', now: NOW, provider: null });
     expect(await stockout()).toMatchObject({ level: 'urgent', status: 'new', dismissedAt: null });
 
     // Switched off: resolved. Back on: it comes back.
     await saveAlertSetting(m, demo.ownerId, 'channel_shift', { enabled: false, thresholds: {} });
-    const off = await runInsights(m, { trigger: 'settings', now: NOW });
+    const off = await runInsights(m, { trigger: 'settings', now: NOW, provider: null });
     expect(off.rules.find((r) => r.id === 'channel_shift')).toMatchObject({ status: 'skipped' });
     expect((await one(demo, 'channel_shift', 'etsy')).status).toBe('resolved');
     await saveAlertSetting(m, demo.ownerId, 'channel_shift', { enabled: true, thresholds: {} });
-    await runInsights(m, { trigger: 'settings', now: NOW });
+    await runInsights(m, { trigger: 'settings', now: NOW, provider: null });
     expect((await one(demo, 'channel_shift', 'etsy')).status).toBe('new');
     const active = await getAppDb()
       .select({ id: insight.id })

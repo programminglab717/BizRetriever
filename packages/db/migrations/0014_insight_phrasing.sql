@@ -1,0 +1,1 @@
+ALTER TABLE "app"."insight" ADD COLUMN "phrased_template" text;

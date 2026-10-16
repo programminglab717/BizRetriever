@@ -12,9 +12,11 @@ import {
   type WorkspaceSettings,
 } from '@bizr/db';
 import { getPack, type InsightPeriod, type InsightQuery, type PackInsightRule } from '@bizr/packs';
+import type { LLMProvider } from '@bizr/ai';
 import { getLogger } from '@bizr/platform';
 import { and, eq, inArray, notInArray, sql } from 'drizzle-orm';
 
+import { getAiProvider } from '../ai/runtime';
 import { localeFor } from '../ask/view';
 import { executeTenantQuery } from '../executor/execute';
 import { compileQuery } from '../semantic/compile';
@@ -23,8 +25,16 @@ import type { CompileContext, SemanticModel } from '../semantic/model';
 import type { QuerySpecInput } from '../semantic/query-spec';
 import { compileContext, loadSemanticModel } from '../semantic/service';
 import { ensureWeeklyDigest } from './digest';
-import { effectiveThresholds, evaluateRule, type Candidate, type Row } from './evaluate';
+import {
+  effectiveThresholds,
+  evaluateRule,
+  type Candidate,
+  type FactValue,
+  type Row,
+} from './evaluate';
+import { phraseInsights, phrasingProblems, type PhraseRequest } from './phrase';
 import { insightText, renderInsight, type RenderOptions } from './render';
+import { phraseInsights as phrasePrompt } from '@bizr/ai/prompts';
 
 /**
  * `insights.run` (AI_DESIGN §7): runs every enabled pack rule over a workspace's data through the
@@ -177,6 +187,8 @@ export interface RunOptions {
   trigger: string;
   /** For tests and demos: the moment "today" is taken from (in the business's timezone). */
   now?: Date;
+  /** Task J's provider; null keeps the pack's sentences. Defaults to the configured one. */
+  provider?: LLMProvider | null;
 }
 
 /** Runs the pack's rules for one workspace and stores what they found. */
@@ -244,7 +256,13 @@ export async function runInsights(
     }
   }
 
-  const counts = await store(ws.id, found, rules, now);
+  const { created: newIds, ...counts } = await store(ws.id, found, rules, now, o);
+  await phraseNew(
+    ws.id,
+    newIds,
+    options.provider === undefined ? getAiProvider() : options.provider,
+    o,
+  );
   const [run] = await db
     .insert(insightRun)
     .values({
@@ -254,6 +272,7 @@ export async function runInsights(
       dataVersion: ws.dataVersion,
       historyDays: history,
       rules,
+      created: newIds.length,
       ...counts,
       startedAt: now,
       finishedAt: new Date(),
@@ -262,7 +281,14 @@ export async function runInsights(
   log().info({ workspaceId: ws.id, ...counts, trigger: options.trigger }, 'insights run');
   // The first run of a week writes its digest.
   await ensureWeeklyDigest(target, { now });
-  return { runId: run!.id, today: ctx.today, historyDays: history, rules, ...counts };
+  return {
+    runId: run!.id,
+    today: ctx.today,
+    historyDays: history,
+    rules,
+    created: newIds.length,
+    ...counts,
+  };
 }
 
 /** The lifecycle (ADR-047): one row per fingerprint, refreshed, reopened or resolved. */
@@ -271,7 +297,8 @@ async function store(
   found: { rule: PackInsightRule; rendered: RenderedInsight }[],
   rules: InsightRunRule[],
   now: Date,
-): Promise<{ created: number; updated: number; resolved: number }> {
+  o: RenderOptions,
+): Promise<{ created: PhraseRequest[]; updated: number; resolved: number }> {
   const db = getAppDb();
   return db.transaction(async (tx) => {
     // One run at a time per workspace (a cron run and a data change can overlap).
@@ -286,7 +313,7 @@ async function store(
         : []
       ).map((r) => [r.fingerprint, r]),
     );
-    let created = 0;
+    const created: PhraseRequest[] = [];
     let updated = 0;
     for (const { rule, rendered } of found) {
       const c = rendered.candidate;
@@ -302,17 +329,34 @@ async function store(
         context: rendered.context,
         text: rendered.text,
         action: rendered.action,
-        phrasedBy: null,
+        phrasedBy: null as string | null,
+        phrasedTemplate: null as string | null,
         lastSeenAt: now,
         resolvedAt: null,
       };
       const r = existing.get(c.fingerprint);
       if (!r) {
-        await tx
+        const [row] = await tx
           .insert(insight)
-          .values({ workspaceId, fingerprint: c.fingerprint, ...content, firstSeenAt: now });
-        created += 1;
+          .values({ workspaceId, fingerprint: c.fingerprint, ...content, firstSeenAt: now })
+          .returning({ id: insight.id });
+        created.push({ id: row!.id, rule });
         continue;
+      }
+      // An approved rewording stays, filled with today's facts, while it still fits them.
+      const phrased =
+        r.phrasedTemplate &&
+        phrasingProblems(r.phrasedTemplate.replaceAll('**', ''), rule.template).length === 0
+          ? r.phrasedTemplate
+          : null;
+      if (phrased) {
+        const headline = renderInsight(phrased, c.facts, o);
+        Object.assign(content, {
+          headline,
+          text: insightText(headline),
+          phrasedBy: r.phrasedBy,
+          phrasedTemplate: phrased,
+        });
       }
       const cooldown = now.getTime() - rule.cooldown_days * DAY_MS;
       let status = r.status;
@@ -354,4 +398,30 @@ async function store(
       .returning({ id: insight.id });
     return { created, updated, resolved: gone.length };
   });
+}
+
+/** Task J for this run's new insights (optional: on any trouble the pack sentences stay). */
+async function phraseNew(
+  workspaceId: string,
+  created: PhraseRequest[],
+  provider: LLMProvider | null,
+  o: RenderOptions,
+): Promise<void> {
+  if (!provider || created.length === 0) return;
+  const db = getAppDb();
+  const phrased = await phraseInsights(created, provider, workspaceId);
+  for (const [id, template] of phrased) {
+    const [row] = await db.select({ facts: insight.facts }).from(insight).where(eq(insight.id, id));
+    if (!row) continue;
+    const headline = renderInsight(template, row.facts as Record<string, FactValue>, o);
+    await db
+      .update(insight)
+      .set({
+        headline,
+        text: insightText(headline),
+        phrasedBy: phrasePrompt.version,
+        phrasedTemplate: template,
+      })
+      .where(eq(insight.id, id));
+  }
 }
