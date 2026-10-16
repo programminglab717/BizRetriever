@@ -22,3 +22,8 @@ export type {
   RecordRow,
 } from './service';
 export { parseEditValue, titleFieldOf } from './values';
+export { applyRecordWrite, prepareRecordWrite, recordWritePlanSchema } from './write';
+export type { RecordWritePlan, WriteCard } from './write';
+export { CANT_WRITE, planRecordWrite } from './write-plan';
+export type { WriteOutcome } from './write-plan';
+export { draftWithRules } from './write-rules';
