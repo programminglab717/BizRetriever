@@ -27,7 +27,8 @@
     "packs:validate": "pnpm --filter @bizr/packs run validate",
     "packs:build": "pnpm --filter @bizr/packs run build",
     "demo:generate": "pnpm --filter @bizr/demo-data run generate",
-    "eval": "pnpm --filter @bizr/evals run eval"
+    "eval": "pnpm --filter @bizr/evals run eval",
+    "demo:up": "pnpm --filter @bizr/worker run demo:up"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

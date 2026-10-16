@@ -8,14 +8,19 @@
     "start": "BIZR_SERVICE=worker tsx src/main.ts",
     "enqueue:noop": "tsx src/cli/enqueue-noop.ts",
     "snapshot:gc": "tsx src/cli/snapshot-gc.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "demo:up": "tsx src/cli/demo-up.ts"
   },
   "dependencies": {
     "@bizr/core": "workspace:*",
     "@bizr/db": "workspace:*",
-    "@bizr/platform": "workspace:*"
+    "@bizr/platform": "workspace:*",
+    "better-auth": "1.7.10",
+    "drizzle-orm": "^0.45.4",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "@types/pg": "^8.15.6"
   }
 }

@@ -57,6 +57,11 @@ export const envSchema = z
     STORAGE_LOCAL_DIR: z.string().optional(),
     // Sign-in/sign-up rate limiting. Only the end-to-end test server turns it off.
     AUTH_RATE_LIMIT: z.enum(['on', 'off']).default('on'),
+    // Who can open the internal admin page (/admin): comma-separated emails. Empty: nobody.
+    ADMIN_EMAILS: z.string().default(''),
+    // The demo machine's sign-in (`pnpm demo:up`). Without a password, a new one is made and shown.
+    DEMO_EMAIL: z.email().default('demo@fernwood.test'),
+    DEMO_PASSWORD: z.string().min(10).optional(),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && !env.BETTER_AUTH_SECRET) {
