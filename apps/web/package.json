@@ -9,7 +9,8 @@
     "start": "next start",
     "typecheck": "next typegen && tsc -p tsconfig.json",
     "test:e2e": "playwright test",
-    "typegen": "next typegen"
+    "typegen": "next typegen",
+    "perf": "node scripts/perf.mjs"
   },
   "dependencies": {
     "@bizr/ai": "workspace:*",

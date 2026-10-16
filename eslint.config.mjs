@@ -66,8 +66,14 @@ export default defineConfig([
       'evals/runner/dashboard-cli.ts',
       'evals/runner/chat-cli.ts',
       'apps/worker/src/cli/snapshot-gc.ts',
+      'apps/web/scripts/**',
     ],
     rules: { 'no-console': 'off' },
+  },
+  {
+    // Browser automation scripts run code inside the page too.
+    files: ['apps/web/scripts/**'],
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   {
     files: ['apps/web/**/*.{ts,tsx}'],
