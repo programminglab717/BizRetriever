@@ -13,12 +13,14 @@ export interface GenerateOptions {
   today: string;
   seed?: number;
   outDir: string;
+  /** False writes the control business: same shape, no planted stories. */
+  stories?: boolean;
 }
 
 /** Writes the messy demo files and `ground_truth.json` to `outDir`. */
 export async function generateDemoDataset(options: GenerateOptions): Promise<GroundTruth> {
   const seed = options.seed ?? 42;
-  const sim = simulate({ today: options.today, seed });
+  const sim = simulate({ today: options.today, seed, stories: options.stories ?? true });
   const files = await writeFiles(sim, options.outDir, seed);
   const truth = buildTruth(sim, files, seed);
   writeFileSync(path.join(options.outDir, 'ground_truth.json'), JSON.stringify(truth, null, 2));
@@ -32,8 +34,12 @@ export type { ReturnRecord, Sale, SaleLine, Simulation } from './simulate';
  * The simulated business behind the demo files, for tests that check computed numbers against what
  * really happened (independently of reading the files).
  */
-export function simulateDemo(options: { today: string; seed?: number }) {
-  return simulate({ today: options.today, seed: options.seed ?? 42 });
+export function simulateDemo(options: { today: string; seed?: number; stories?: boolean }) {
+  return simulate({
+    today: options.today,
+    seed: options.seed ?? 42,
+    stories: options.stories ?? true,
+  });
 }
 
 export type { NextMonthTruth } from './next-month';

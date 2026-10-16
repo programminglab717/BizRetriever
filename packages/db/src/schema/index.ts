@@ -6,3 +6,4 @@ export * from './jobs';
 export * from './workspace';
 export * from './ingestion';
 export * from './ask';
+export * from './insights';

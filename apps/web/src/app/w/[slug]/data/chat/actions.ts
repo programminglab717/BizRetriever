@@ -21,6 +21,7 @@ import {
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
+import { withInsights } from '@/lib/insights';
 import { requireWorkspace } from '@/lib/session';
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -77,7 +78,9 @@ export async function addRecords(
   const parsed = recordWritePlanSchema.safeParse(plan);
   if (!parsed.success) return { ok: false, error: 'This card is out of date. Please ask again.' };
   return guard(slug, 'write', () =>
-    applyRecordWrite({ member, userId: member.user.id, plan: parsed.data }),
+    withInsights(member.workspace.id, 'record_edit', () =>
+      applyRecordWrite({ member, userId: member.user.id, plan: parsed.data }),
+    ),
   );
 }
 
@@ -87,7 +90,9 @@ export async function undoRecords(
 ): Promise<Result<{ edits: number }>> {
   const member = await requireWorkspace(slug);
   if (!z.uuid().safeParse(batchId).success) return { ok: false, error: 'There’s nothing to undo.' };
-  return guard(slug, 'undo', () => undoRecordEdit(member, batchId));
+  return guard(slug, 'undo', () =>
+    withInsights(member.workspace.id, 'record_edit', () => undoRecordEdit(member, batchId)),
+  );
 }
 
 export async function makeChange(
@@ -99,11 +104,13 @@ export async function makeChange(
   const parsed = changePlanSchema.safeParse(plan);
   if (!parsed.success) return { ok: false, error: 'This card is out of date. Please ask again.' };
   return guard(slug, 'change', () =>
-    makeStructuralChange({
-      member,
-      userId: member.user.id,
-      plan: parsed.data,
-      confirmation: confirmation.slice(0, 200),
-    }),
+    withInsights(member.workspace.id, 'structure_change', () =>
+      makeStructuralChange({
+        member,
+        userId: member.user.id,
+        plan: parsed.data,
+        confirmation: confirmation.slice(0, 200),
+      }),
+    ),
   );
 }

@@ -3974,6 +3974,14 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
               "max": 20,
               "unit": "count",
               "editable": true
+            },
+            "min_spend": {
+              "label": "Only for customers who usually spend {{value}} or more every two months",
+              "default": 200,
+              "min": 0,
+              "max": 1000000,
+              "unit": "money",
+              "editable": true
             }
           },
           "needs_history_days": 240,
@@ -4043,6 +4051,19 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
                   "before.order_count",
                   {
                     "threshold": "min_orders"
+                  }
+                ]
+              },
+              {
+                "gte": [
+                  {
+                    "div": [
+                      "before.net_sales",
+                      3
+                    ]
+                  },
+                  {
+                    "threshold": "min_spend"
                   }
                 ]
               },
@@ -4520,7 +4541,7 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             },
             "min_units": {
               "label": "Only for products that sold at least {{value}} in the last four weeks",
-              "default": 10,
+              "default": 25,
               "min": 1,
               "max": 1000,
               "unit": "count",
@@ -4538,7 +4559,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
                   "field": "product.name"
                 }
               ],
-              "filters": [],
+              "filters": [
+                {
+                  "field": "sale.channel",
+                  "op": "neq",
+                  "value": "wholesale"
+                }
+              ],
               "period": {
                 "last_days": 28
               },

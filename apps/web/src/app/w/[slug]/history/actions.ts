@@ -9,6 +9,7 @@ import {
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
+import { withInsights } from '@/lib/insights';
 import { requireWorkspace } from '@/lib/session';
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -40,6 +41,8 @@ export async function undoChange(
   const member = await requireWorkspace(slug);
   if (!version.safeParse(v).success) return { ok: false, error: 'We couldn’t find that change.' };
   return guard(slug, () =>
-    undoStructuralChange({ member, userId: member.user.id, version: v, confirmed }),
+    withInsights(member.workspace.id, 'structure_change', () =>
+      undoStructuralChange({ member, userId: member.user.id, version: v, confirmed }),
+    ),
   );
 }

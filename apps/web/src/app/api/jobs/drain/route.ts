@@ -1,12 +1,14 @@
 import { timingSafeEqual } from 'node:crypto';
 
+import { scheduleDailyJobs } from '@bizr/core/insights';
 import { getEnv, getLogger, withLogContext } from '@bizr/platform';
 
 import { getJobQueue } from '@/lib/jobs';
 
 /**
  * Serverless job processing for the free hosted preview (ADR-011, `JOB_RUNNER=inline`).
- * Called by the UI while a user waits on a job, and by a daily platform cron (`?maintenance=1`).
+ * Called by the UI while a user waits on a job, and by a daily platform cron (`?maintenance=1`),
+ * which also queues the daily jobs (insight catch-up with weekly digests, old-backup clean-up).
  * Requires `Authorization: Bearer <JOB_DRAIN_SECRET>`; disabled when the secret is not set.
  */
 export const dynamic = 'force-dynamic';
@@ -30,8 +32,9 @@ async function handle(request: Request): Promise<Response> {
   const maintenance = new URL(request.url).searchParams.get('maintenance') === '1';
   return withLogContext({}, async () => {
     const queue = await getJobQueue();
+    const scheduled = maintenance ? await scheduleDailyJobs(queue) : [];
     const summary = await queue.drain({ budgetMs: env.JOB_STEP_BUDGET_MS, maintenance });
-    getLogger('jobs').info({ summary, maintenance }, 'drain finished');
+    getLogger('jobs').info({ summary, maintenance, scheduled }, 'drain finished');
     return Response.json(summary, { headers: { 'cache-control': 'no-store' } });
   });
 }

@@ -130,7 +130,10 @@ export async function loadSemanticModel(ws: WorkspaceRef): Promise<SemanticModel
   );
 }
 
-export function compileContext(member: MemberWorkspace, now = new Date()): CompileContext {
+export function compileContext(
+  member: Pick<MemberWorkspace, 'settings'>,
+  now = new Date(),
+): CompileContext {
   const s = member.settings;
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: s.timezone,

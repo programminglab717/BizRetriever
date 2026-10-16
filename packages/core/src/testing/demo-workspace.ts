@@ -41,13 +41,20 @@ export async function loadDemoWorkspace(options: {
   seed?: number;
   timezone?: string;
   name?: string;
+  /** False loads the control business (no planted stories). */
+  stories?: boolean;
 }): Promise<DemoWorkspace> {
   const seed = options.seed ?? 42;
   const timezone = options.timezone ?? 'America/New_York';
   const pack = getPack('retail');
   const dir = mkdtempSync(path.join(tmpdir(), 'fernwood-'));
   try {
-    await generateDemoDataset({ today: options.today, seed, outDir: dir });
+    await generateDemoDataset({
+      today: options.today,
+      seed,
+      outDir: dir,
+      stories: options.stories ?? true,
+    });
     const files = readdirSync(dir)
       .filter((f) => f !== 'ground_truth.json')
       .sort()
@@ -101,7 +108,7 @@ export async function loadDemoWorkspace(options: {
     return {
       member,
       ownerId,
-      sim: simulateDemo({ today: options.today, seed }),
+      sim: simulateDemo({ today: options.today, seed, stories: options.stories ?? true }),
       async dispose() {
         await deleteWorkspace(member, ownerId);
         await getAppDb().delete(user).where(eq(user.id, ownerId));

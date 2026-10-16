@@ -44,6 +44,27 @@ describe('demo dataset generator', () => {
     );
   });
 
+  it('runs the control business steadily, with none of the stories', async () => {
+    const control = await generateDemoDataset({
+      today: TODAY,
+      seed: 42,
+      outDir: mkdtempSync(path.join(tmpdir(), 'fernwood-control-')),
+      stories: false,
+    });
+    const s = control.stories as Record<string, Record<string, number | string | unknown[]>>;
+    expect(s.stockoutRisk!.daysOfCover).toBeGreaterThan(14);
+    expect(s.slippingCustomer!.dropPct).toBeLessThan(50);
+    expect(s.deadStock!.totalValueAtCost).toBeLessThan(100);
+    expect(s.returnSpike!.returnRatePct).toBeLessThan(10);
+    expect(s.overduePayments!.invoices).toEqual([]);
+    expect(
+      Number(s.channelShift!.sharePctLast90Days) - Number(s.channelShift!.sharePctPrior90Days),
+    ).toBeLessThan(5);
+    // Same shape of business: the same files and products.
+    expect(control.files.map((f) => f.sheet)).toEqual(truth.files.map((f) => f.sheet));
+    expect(control.counts.products).toBe(truth.counts.products);
+  }, 30_000);
+
   it('writes the messy workbook features the importer must handle', async () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.readFile(path.join(dir, 'Online orders 2025-26.xlsx'));

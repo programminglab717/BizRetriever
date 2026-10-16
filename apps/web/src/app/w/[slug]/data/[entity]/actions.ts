@@ -16,6 +16,7 @@ import {
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
+import { withInsights } from '@/lib/insights';
 import { requireWorkspace } from '@/lib/session';
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -95,7 +96,11 @@ export async function saveEdit(
   const member = await requireWorkspace(slug);
   const parsed = editSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'That change isn’t possible here.' };
-  return guard(slug, 'edit', () => editRecord({ member, userId: member.user.id, ...parsed.data }));
+  return guard(slug, 'edit', () =>
+    withInsights(member.workspace.id, 'record_edit', () =>
+      editRecord({ member, userId: member.user.id, ...parsed.data }),
+    ),
+  );
 }
 
 const idsSchema = z.object({ entity: key, ids: z.array(id).min(1).max(500) }).strict();
@@ -108,7 +113,9 @@ export async function removeRecords(
   const parsed = idsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Choose up to 500 records.' };
   return guard(slug, 'delete', () =>
-    deleteRecords({ member, userId: member.user.id, ...parsed.data }),
+    withInsights(member.workspace.id, 'record_edit', () =>
+      deleteRecords({ member, userId: member.user.id, ...parsed.data }),
+    ),
   );
 }
 
@@ -120,7 +127,9 @@ export async function bringBack(
   const parsed = idsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Choose up to 500 records.' };
   return guard(slug, 'restore', () =>
-    restoreRecords({ member, userId: member.user.id, ...parsed.data }),
+    withInsights(member.workspace.id, 'record_edit', () =>
+      restoreRecords({ member, userId: member.user.id, ...parsed.data }),
+    ),
   );
 }
 
@@ -139,7 +148,7 @@ export async function undoChange(
   )
     return { ok: false, error: 'There’s nothing to undo.' };
   return guard(slug, 'undo', async () => {
-    await undoRecordEdit(member, batchId);
+    await withInsights(member.workspace.id, 'record_edit', () => undoRecordEdit(member, batchId));
     const rows: RecordRow[] = [];
     for (const r of recordIds.slice(0, 50)) rows.push((await getRecord(member, entity, r)).record);
     return rows;

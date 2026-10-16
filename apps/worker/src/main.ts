@@ -2,12 +2,15 @@
  * Background worker (ADR-011, `JOB_RUNNER=worker`). Subscribes to every job queue and runs
  * pg-boss maintenance. In the free hosted preview there is no worker; the drain route is used.
  */
+import { scheduleDailyJobs } from '@bizr/core/insights';
 import { createDefaultRegistry, JobQueue } from '@bizr/core/jobs';
 import { closePools } from '@bizr/db';
 import { getEnv, getLogger } from '@bizr/platform';
 
 // In worker mode a run may use much longer than a serverless step budget before yielding.
 const WORKER_BUDGET_MS = 5 * 60_000;
+// The daily jobs are queued at most once per day; checking hourly catches restarts and new days.
+const DAILY_CHECK_MS = 60 * 60_000;
 
 async function main() {
   const env = getEnv();
@@ -21,11 +24,23 @@ async function main() {
   await queue.work({ budgetMs: WORKER_BUDGET_MS });
   log.info({ queues: registry.names() }, 'worker started');
 
+  const daily = async () => {
+    try {
+      const queued = await scheduleDailyJobs(queue);
+      if (queued.length) log.info({ queued }, 'daily jobs queued');
+    } catch (err) {
+      log.error({ err }, 'queueing daily jobs failed');
+    }
+  };
+  await daily();
+  const timer = setInterval(() => void daily(), DAILY_CHECK_MS);
+
   let stopping = false;
   const shutdown = async (signal: string) => {
     if (stopping) return;
     stopping = true;
     log.info({ signal }, 'worker stopping');
+    clearInterval(timer);
     await queue.stop();
     await closePools();
     process.exit(0);

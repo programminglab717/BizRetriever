@@ -92,6 +92,11 @@ export function buildTruth(sim: Simulation, files: SheetReport[], seed: number):
   const carafeReturned60 = sim.returns
     .filter((r) => r.product === carafe && ago(r.sale.date) <= 60)
     .reduce((t, r) => t + r.qty, 0);
+  // The same, counting returns on the day they came back (the pack's return rate): this is what an
+  // owner's own files can show, since a returns log rarely says which sale an item came from.
+  const carafeReturnedByDate60 = sim.returns
+    .filter((r) => r.product === carafe && ago(r.date) <= 60 && ago(r.date) > 0)
+    .reduce((t, r) => t + r.qty, 0);
 
   // Rising star: units in the last 28 days vs the 28 days before.
   const pot = byName(STORY.risingStar);
@@ -110,6 +115,18 @@ export function buildTruth(sim: Simulation, files: SheetReport[], seed: number):
   };
   const shareRecent = share(90, 0);
   const sharePrior = share(180, 90);
+  // The same after refunds, counted on the day of the return (the pack's net sales). Till refunds
+  // aren't linked to a sale, so they have no channel and stay out of the shares.
+  const shareNet = (fromAgo: number, toAgo: number) => {
+    const totals = new Map<Channel, number>();
+    const inWindow = (d: IsoDate) => ago(d) <= fromAgo && ago(d) > toAgo;
+    for (const s of completed.filter((x) => inWindow(x.date)))
+      totals.set(s.channel, (totals.get(s.channel) ?? 0) + lineNet(s));
+    for (const r of sim.returns.filter((x) => !x.viaTill && inWindow(x.date)))
+      totals.set(r.sale.channel, (totals.get(r.sale.channel) ?? 0) - r.refund * r.qty);
+    const all = [...totals.values()].reduce((a, b) => a + b, 0);
+    return Object.fromEntries([...totals].map(([c, v]) => [c, pct(v / all)]));
+  };
 
   // Overdue payments: wholesale invoices past their due date (invoice date + 30) not fully paid.
   const overdue = completed
@@ -121,8 +138,18 @@ export function buildTruth(sim: Simulation, files: SheetReport[], seed: number):
       customer: s.stockist!.name,
       invoice: s.number,
       owed: dollars(saleTotal(s) - s.amountPaid),
+      invoiced: dollars(saleTotal(s)),
       daysLate: daysBetween(s.dueDate!, sim.today),
     }));
+  // What the files can show: invoices carry a "Paid?" flag but not how much of a part-paid one came
+  // in, so those count in full.
+  const overdueByCustomer = new Map<string, { amount: number; daysLate: number }>();
+  for (const o of overdue) {
+    const c = overdueByCustomer.get(o.customer) ?? { amount: 0, daysLate: 0 };
+    c.amount = Math.round((c.amount + o.invoiced) * 100) / 100;
+    c.daysLate = Math.max(c.daysLate, o.daysLate);
+    overdueByCustomer.set(o.customer, c);
+  }
 
   const napkin = byName(STORY.marginSqueeze);
   const margin = (cost: Cents) => pct((NAPKIN_PRICE - cost) / NAPKIN_PRICE);
@@ -231,8 +258,12 @@ export function buildTruth(sim: Simulation, files: SheetReport[], seed: number):
         unitsSoldLast60Days: carafeSold60,
         unitsReturned: carafeReturned60,
         returnRatePct: pct(carafeReturned60 / carafeSold60),
+        unitsReturnedByReturnDate: carafeReturnedByDate60,
+        returnRateByReturnDatePct: pct(carafeReturnedByDate60 / carafeSold60),
         topReason: 'Arrived broken',
         definition: 'units returned ÷ units sold, for sales in the last 60 days',
+        definitionByReturnDate:
+          'units returned in the last 60 days ÷ units sold in the last 60 days',
       },
       risingStar: {
         product: pot.name,
@@ -247,11 +278,19 @@ export function buildTruth(sim: Simulation, files: SheetReport[], seed: number):
         sharesLast90Days: shareRecent,
         sharesPrior90Days: sharePrior,
         definition: 'share of net line sales (after discounts) by channel',
+        sharePctLast90DaysNetOfRefunds: shareNet(90, 0).etsy,
+        sharePctPrior90DaysNetOfRefunds: shareNet(180, 90).etsy,
+        definitionNetOfRefunds:
+          'the same after refunds on the day of the return; till refunds have no channel',
       },
       overduePayments: {
         invoices: overdue,
         customers: [...new Set(overdue.map((o) => o.customer))],
         totalOwed: Math.round(overdue.reduce((t, o) => t + o.owed, 0) * 100) / 100,
+        byCustomerAsInvoiced: Object.fromEntries(overdueByCustomer),
+        totalAsInvoiced: Math.round(overdue.reduce((t, o) => t + o.invoiced, 0) * 100) / 100,
+        definitionAsInvoiced:
+          'invoice totals past due and not marked paid; part-paid invoices count in full',
       },
       advertisingThisYear: {
         total: dollars(adsThisYear),

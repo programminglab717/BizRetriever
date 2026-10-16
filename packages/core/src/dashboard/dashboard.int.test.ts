@@ -58,9 +58,9 @@ describe.skipIf(!hasDb)('default dashboard (integration)', () => {
     // "Running low" lists only products with under 14 days left.
     const low = view.tiles.find((t) => t.packKey === 'running_low')!;
     expect(low.table!.rows.every((r) => (r.cells[1]!.value ?? 0) < 14)).toBe(true);
-    // Unmatched till items (no product) are left out, and the tile says so.
+    // Till items written differently ("Sage Mug") now link to their product, so none is left out.
     expect(low.table!.rows.some((r) => r.label === 'Not recorded')).toBe(false);
-    expect(low.note).toBe('Leaves out records with no product.');
+    expect(low.note).toBeUndefined();
   }, 60_000);
 
   it('follows the date range: monthly over a year, no comparison when it’s off', async () => {

@@ -112,8 +112,20 @@ export function napkinCostOn(date: IsoDate, today: IsoDate): Cents {
   return date >= juneFirst ? NAPKIN_COST_AFTER : NAPKIN_COST_BEFORE;
 }
 
-export function simulate(options: { today: IsoDate; seed: number }): Simulation {
+export interface SimulateOptions {
+  today: IsoDate;
+  seed: number;
+  /**
+   * Plant the demo stories (default true). With false the same kind of business runs steadily: no
+   * stockout, dead stock, slipping stockist, cost rise, return spike, rising star, channel shift or
+   * late payers. Insight tests use it as the control business that must raise no urgent alerts.
+   */
+  stories?: boolean;
+}
+
+export function simulate(options: SimulateOptions): Simulation {
   const rng = new Rng(options.seed);
+  const stories = options.stories ?? true;
   const today = options.today;
   const start = addDays(today, -365);
   const products = buildProducts(rng);
@@ -136,7 +148,7 @@ export function simulate(options: { today: IsoDate; seed: number }): Simulation 
       return p.weight * 1.6;
     }
     let w = p.weight;
-    if (p.name === STORY.risingStar && daysBetween(date, today) <= 28) w *= 2.2;
+    if (stories && p.name === STORY.risingStar && daysBetween(date, today) <= 28) w *= 2.2;
     return w;
   };
 
@@ -173,7 +185,7 @@ export function simulate(options: { today: IsoDate; seed: number }): Simulation 
   for (let d = 0; d < days; d++) {
     const date = addDays(start, d);
     const factor = SEASON[month(date)]! * WEEKDAY[weekday(date)]!;
-    const etsyRamp = Math.min(1, Math.max(0, (d - (days - 150)) / 150));
+    const etsyRamp = stories ? Math.min(1, Math.max(0, (d - (days - 150)) / 150)) : 0;
 
     const channelCounts: [Channel, number][] = [
       ['online_store', rng.poisson(5.2 * factor)],
@@ -232,7 +244,7 @@ export function simulate(options: { today: IsoDate; seed: number }): Simulation 
   // --- Wholesale invoices -------------------------------------------------------------------
   for (const stockist of STOCKISTS) {
     let day = rng.int(3, 25);
-    const isBloom = stockist.name === STORY.slippingStockist;
+    const isBloom = stories && stockist.name === STORY.slippingStockist;
     while (day < days) {
       const date = addDays(start, day);
       const daysAgo = daysBetween(date, today);
@@ -264,7 +276,7 @@ export function simulate(options: { today: IsoDate; seed: number }): Simulation 
       }
       const dueDate = addDays(date, 30);
       const overdueStory =
-        OVERDUE_STOCKISTS.includes(stockist.name) && daysAgo >= 40 && daysAgo <= 80;
+        stories && OVERDUE_STOCKISTS.includes(stockist.name) && daysAgo >= 40 && daysAgo <= 80;
       const notDueYet = dueDate >= today;
       const payment: Sale['payment'] = overdueStory
         ? rng.chance(0.5)
@@ -311,7 +323,8 @@ export function simulate(options: { today: IsoDate; seed: number }): Simulation 
   for (const sale of sales) {
     if (sale.status !== 'completed' || sale.channel === 'wholesale') continue;
     for (const line of sale.lines) {
-      const recentCarafe = line.product === carafe && daysBetween(sale.date, today) <= 66;
+      const recentCarafe =
+        stories && line.product === carafe && daysBetween(sale.date, today) <= 66;
       const p = recentCarafe ? 0.19 : sale.channel === 'in_store' ? 0.006 : 0.015;
       if (!rng.chance(p)) continue;
       const date = addDays(sale.date, rng.int(2, 8));
@@ -345,11 +358,17 @@ export function simulate(options: { today: IsoDate; seed: number }): Simulation 
           product,
           qty: rng.pick([12, 12, 24, 24, 36, 48]),
           unitCost:
-            product.name === STORY.marginSqueeze ? napkinCostOn(orderDate, today) : product.cost,
+            stories && product.name === STORY.marginSqueeze
+              ? napkinCostOn(orderDate, today)
+              : product.cost,
         }));
       const napkin = supplied.find((p) => p.name === STORY.marginSqueeze);
       if (napkin && !lines.some((l) => l.product === napkin)) {
-        lines.push({ product: napkin, qty: 24, unitCost: napkinCostOn(orderDate, today) });
+        lines.push({
+          product: napkin,
+          qty: 24,
+          unitCost: stories ? napkinCostOn(orderDate, today) : napkin.cost,
+        });
       }
       if (lines.length > 0) {
         const received = addDays(orderDate, supplier.leadTimeDays + rng.int(-3, 4));
@@ -377,9 +396,9 @@ export function simulate(options: { today: IsoDate; seed: number }): Simulation 
   for (const p of products) {
     const rate = (unitsLast28.get(p) ?? 0) / 28;
     let stock: number;
-    if (p.name === STORY.stockout) stock = Math.round(rate * 6);
-    else if (p.name === STORY.deadStock) stock = 140;
-    else if (p.deadAfterHolidays) stock = rng.int(20, 60);
+    if (stories && p.name === STORY.stockout) stock = Math.round(rate * 6);
+    else if (stories && p.name === STORY.deadStock) stock = 140;
+    else if (p.deadAfterHolidays) stock = stories ? rng.int(20, 60) : 0;
     else if (p.seasonal || p.discontinued) stock = rng.int(0, 3);
     else stock = Math.max(rng.int(10, 60), Math.ceil(rate * rng.int(25, 60)));
     stockOnHand.set(p, stock);

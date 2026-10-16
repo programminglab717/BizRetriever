@@ -121,6 +121,12 @@ rules:
         min: 2
         max: 20
         unit: count
+      min_spend:
+        label: Only for customers who usually spend {{value}} or more every two months
+        default: 200
+        min: 0
+        max: 1000000
+        unit: money
     needs_history_days: 240
     queries:
       before:
@@ -141,6 +147,7 @@ rules:
     where:
       all:
         - { gte: [before.order_count, { threshold: min_orders }] }
+        - { gte: [{ div: [before.net_sales, 3] }, { threshold: min_spend }] }
         - lte:
             - { coalesce: [recent.net_sales, 0] }
             - mul: [{ div: [before.net_sales, 3] }, { sub: [1, { threshold: drop }] }]
@@ -301,15 +308,17 @@ rules:
         unit: percent
       min_units:
         label: Only for products that sold at least {{value}} in the last four weeks
-        default: 10
+        default: 25
         min: 1
         max: 1000
         unit: count
     needs_history_days: 56
     queries:
+      # One big wholesale order isn't a trend, so stockists' orders don't count here.
       units:
         metrics: [units_sold]
         dimensions: [{ field: product.name }]
+        filters: [{ field: sale.channel, op: neq, value: wholesale }]
         period: { last_days: 28 }
         compare: previous_period
     scope: each

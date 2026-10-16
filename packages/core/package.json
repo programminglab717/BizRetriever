@@ -21,7 +21,8 @@
     "./dashboard": "./src/dashboard/index.ts",
     "./merge": "./src/merge/index.ts",
     "./records": "./src/records/index.ts",
-    "./structure": "./src/structure/index.ts"
+    "./structure": "./src/structure/index.ts",
+    "./insights": "./src/insights/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
