@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { ProposalReview, RunView } from '@bizr/core/ingestion';
+import type { MergePreview, MergeStats } from '@bizr/core/merge';
 import { renderTemplate, type Segment } from '@bizr/core/narration';
 import type { MemberWorkspace } from '@bizr/core/workspaces';
 import { getPack } from '@bizr/packs';
@@ -13,7 +14,11 @@ import { getJobQueue } from './jobs';
 export interface ImportView {
   runId: string;
   currency: string;
+  /** `reupload`: the workspace already has data, so the new files are merged into it. */
+  kind: RunView['run']['kind'];
   status: RunView['run']['status'];
+  /** The update was undone ("Undo this update"). */
+  undone: boolean;
   error: string | null;
   progress: { stage: string; pct: number } | null;
   spotted: string[];
@@ -45,10 +50,19 @@ export interface ImportView {
     skipped: { reason: string; label: string; count: number }[];
     warnings: string[];
     assumptions: string[];
+    /** Re-upload: what the update did, per record type. */
+    merge: MergeStats[] | null;
   };
+  /** Re-upload, waiting for the owner: what the new files would change. */
+  merge: MergePreview | null;
 }
 
-export const BUSY_STATUSES: ReadonlySet<string> = new Set(['analyzing', 'revising', 'applying']);
+export const BUSY_STATUSES: ReadonlySet<string> = new Set([
+  'analyzing',
+  'revising',
+  'applying',
+  'merging',
+]);
 
 export function toImportView(view: RunView, member: MemberWorkspace): ImportView {
   const p = view.proposal;
@@ -96,11 +110,13 @@ export function toImportView(view: RunView, member: MemberWorkspace): ImportView
       ),
     };
   }
-  const report = view.report as ImportView['report'] | null;
+  const report = view.report as (ImportView['report'] & { merge?: MergeStats[] }) | null;
   return {
     runId: view.run.id,
     currency: member.settings.currency,
+    kind: view.run.kind,
     status: view.run.status,
+    undone: view.run.undoneAt !== null,
     error: view.run.error ?? view.jobError,
     progress: view.progress,
     spotted: view.spotted,
@@ -112,8 +128,10 @@ export function toImportView(view: RunView, member: MemberWorkspace): ImportView
           skipped: report.skipped,
           warnings: report.warnings,
           assumptions: report.assumptions,
+          merge: report.merge ?? null,
         }
       : null,
+    merge: view.run.status === 'merge_review' ? view.merge : null,
   };
 }
 

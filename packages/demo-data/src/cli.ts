@@ -1,23 +1,32 @@
 /**
- * `pnpm demo:generate [--today YYYY-MM-DD] [--seed N] [--out DIR]`
- * Writes the Fernwood Home & Gift demo files (DEMO_SCRIPT §3) plus ground_truth.json.
+ * `pnpm demo:generate [--today YYYY-MM-DD] [--seed N] [--out DIR] [--next-month DIR]`
+ * Writes the Fernwood Home & Gift demo files (DEMO_SCRIPT §3) plus ground_truth.json. With
+ * `--next-month`, also writes next month's website export there (for trying a re-upload).
  */
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 
-import { generateDemoDataset } from './index';
+import { generateDemoDataset, generateNextMonthUpdate } from './index';
 
 const { values } = parseArgs({
   options: {
     today: { type: 'string' },
     seed: { type: 'string', default: '42' },
     out: { type: 'string', default: '.data/demo/fernwood' },
+    'next-month': { type: 'string' },
   },
 });
 
 const today = values.today ?? new Date().toISOString().slice(0, 10);
 const outDir = path.resolve(process.env.INIT_CWD ?? process.cwd(), values.out);
 const truth = await generateDemoDataset({ today, seed: Number(values.seed), outDir });
+if (values['next-month']) {
+  const nextDir = path.resolve(process.env.INIT_CWD ?? process.cwd(), values['next-month']);
+  const next = await generateNextMonthUpdate({ today, seed: Number(values.seed), outDir: nextDir });
+  console.log(
+    `Next month's website export (to ${next.today}) written to ${nextDir}: ${next.added.length} new orders, ${next.cancelled.length} cancelled, ${next.dropped.length} left out`,
+  );
+}
 
 console.log(`Fernwood demo data for ${today} (seed ${truth.meta.seed}) written to ${outDir}`);
 for (const f of truth.files) console.log(`  ${f.file} › ${f.sheet}: ${f.dataRows} rows`);

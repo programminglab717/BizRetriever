@@ -16,7 +16,7 @@ export default async function ImportPage({ params }: { params: Promise<{ slug: s
     <div className="grid gap-6">
       <PageHeader
         title="Bring in your files"
-        description="Upload the spreadsheets you already have. We’ll work out what’s in them and check anything we’re unsure about with you."
+        description="Upload the spreadsheets you already have. We’ll work out what’s in them and check anything we’re unsure about with you. Newer versions of files you brought in before are recognised, and you’ll see what changes before anything is updated."
       />
       <UploadForm slug={slug} />
       <section className="grid gap-2 text-sm">

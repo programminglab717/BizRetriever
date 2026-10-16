@@ -4,7 +4,9 @@ import {
   approveRun,
   cancelRun,
   IngestionRequestError,
+  mergeRun,
   reviseRun,
+  undoRun,
   type ReviewAction,
 } from '@bizr/core/ingestion';
 import { getLogger } from '@bizr/platform';
@@ -108,4 +110,39 @@ export async function cancelImport(slug: string, runId: string): Promise<ActionR
   const member = await requireWorkspace(slug);
   if (!idSchema.safeParse(runId).success) return { error: 'We couldn’t find that import.' };
   return run(slug, () => cancelRun(member, runId));
+}
+
+/** Conflict choices from the merge review: `<record id>:<field>` → keep mine / take the file's. */
+const resolutionsSchema = z
+  .record(z.string().regex(/^\d{1,18}:[a-z][a-z0-9_]{0,40}$/), z.enum(['mine', 'theirs']))
+  .refine((r) => Object.keys(r).length <= 1_000);
+
+/** "Update my data". */
+export async function mergeImport(
+  slug: string,
+  runId: string,
+  resolutions: Record<string, 'mine' | 'theirs'>,
+): Promise<ActionResult> {
+  const member = await requireWorkspace(slug);
+  const parsed = resolutionsSchema.safeParse(resolutions);
+  if (!idSchema.safeParse(runId).success || !parsed.success)
+    return { error: 'This page is out of date. Please reload it.' };
+  return run(slug, async () =>
+    mergeRun({
+      member,
+      userId: member.user.id,
+      runId,
+      resolutions: parsed.data,
+      queue: await getJobQueue(),
+    }),
+  );
+}
+
+/** "Undo this update": new records are hidden and changed details get their old values back. */
+export async function undoImport(slug: string, runId: string): Promise<ActionResult> {
+  const member = await requireWorkspace(slug);
+  if (!idSchema.safeParse(runId).success) return { error: 'We couldn’t find that import.' };
+  return run(slug, async () => {
+    await undoRun(member, member.user.id, runId);
+  });
 }

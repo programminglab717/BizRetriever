@@ -26,6 +26,7 @@ export function Review({
   runId,
   proposal,
   currency,
+  reupload = false,
   updating,
   onAction,
   onApproved,
@@ -34,6 +35,8 @@ export function Review({
   runId: string;
   proposal: Proposal;
   currency: string;
+  /** New files for a workspace that already has data: next comes the comparison, not the set-up. */
+  reupload?: boolean;
   updating: boolean;
   onAction: () => void;
   onApproved: () => void;
@@ -76,6 +79,13 @@ export function Review({
             <p className="text-sm text-muted-foreground">
               {proposal.aiNote} We used our standard checks instead.
             </p>
+          ) : null}
+          {proposal.spotted.length > 0 ? (
+            <ul className="grid gap-1 text-sm text-muted-foreground" data-testid="review-spotted">
+              {proposal.spotted.slice(0, 5).map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
           ) : null}
         </CardContent>
       </Card>
@@ -261,7 +271,7 @@ export function Review({
           disabled={disabled || proposal.entities.length === 0}
           onClick={() => perform(() => approveImport(slug, runId, proposal.id), onApproved)}
         >
-          Looks good, set it up
+          {reupload ? 'Looks good, compare with my data' : 'Looks good, set it up'}
         </Button>
         <Button
           size="lg"

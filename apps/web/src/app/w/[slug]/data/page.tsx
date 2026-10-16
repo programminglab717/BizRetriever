@@ -13,6 +13,8 @@ const STATUS: Record<string, string> = {
   review: 'Waiting for you to check',
   revising: 'Updating',
   applying: 'Setting up',
+  merge_review: 'Waiting for you to check the changes',
+  merging: 'Updating your data',
   done: 'Brought in',
   failed: 'Didn’t finish',
   cancelled: 'Stopped',
@@ -48,7 +50,13 @@ export default async function DataPage({ params }: { params: Promise<{ slug: str
                     className="flex items-center justify-between gap-4 py-3 hover:underline"
                   >
                     <span>{when.format(r.createdAt)}</span>
-                    <span className="text-muted-foreground">{STATUS[r.status] ?? r.status}</span>
+                    <span className="text-muted-foreground">
+                      {r.undoneAt
+                        ? 'Undone'
+                        : r.kind === 'reupload' && r.status === 'done'
+                          ? 'Updated your data'
+                          : (STATUS[r.status] ?? r.status)}
+                    </span>
                   </Link>
                 </li>
               ))}

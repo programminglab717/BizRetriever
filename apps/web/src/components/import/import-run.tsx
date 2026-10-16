@@ -1,18 +1,28 @@
 'use client';
 
-import { AlertTriangle, Check, CheckCircle2, Lightbulb, Loader2, SkipForward } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  Lightbulb,
+  Loader2,
+  SkipForward,
+  Undo2,
+} from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
+import { undoImport } from '@/app/w/[slug]/data/import/[runId]/actions';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ImportView } from '@/lib/imports';
 import { cn } from '@/lib/utils';
 
+import { MergeReview } from './merge-review';
 import { Review } from './review';
 
-const BUSY = new Set(['analyzing', 'revising', 'applying']);
+const BUSY = new Set(['analyzing', 'revising', 'applying', 'merging']);
 const POLL_MS = 1_500;
 const fmt = new Intl.NumberFormat('en-US');
 
@@ -51,7 +61,23 @@ export function ImportRun({ slug, initial }: { slug: string; initial: ImportView
     case 'analyzing':
       return <Processing view={view} kind="analyze" />;
     case 'applying':
-      return <Processing view={view} kind="apply" />;
+      return <Processing view={view} kind={view.kind === 'reupload' ? 'compare' : 'apply'} />;
+    case 'merging':
+      return <Processing view={view} kind="merge" />;
+    case 'merge_review':
+      return view.merge ? (
+        <MergeReview
+          slug={slug}
+          runId={view.runId}
+          preview={view.merge}
+          onMerged={() => {
+            setView((v) => ({ ...v, status: 'merging', progress: null }));
+            setRefreshKey((k) => k + 1);
+          }}
+        />
+      ) : (
+        <Processing view={view} kind="compare" />
+      );
     case 'review':
     case 'revising':
       return view.proposal ? (
@@ -60,6 +86,7 @@ export function ImportRun({ slug, initial }: { slug: string; initial: ImportView
           runId={view.runId}
           proposal={view.proposal}
           currency={view.currency}
+          reupload={view.kind === 'reupload'}
           updating={view.status === 'revising'}
           onAction={onAction}
           onApproved={() => {
@@ -71,7 +98,15 @@ export function ImportRun({ slug, initial }: { slug: string; initial: ImportView
         <Processing view={view} kind="analyze" />
       );
     case 'done':
-      return <Report slug={slug} view={view} />;
+      return view.kind === 'reupload' ? (
+        <UpdateReport
+          slug={slug}
+          view={view}
+          onUndone={() => setView((v) => ({ ...v, undone: true }))}
+        />
+      ) : (
+        <Report slug={slug} view={view} />
+      );
     case 'failed':
       return (
         <Card>
@@ -122,19 +157,37 @@ const APPLY_STAGES = [
   { label: 'Bringing in your records', until: 85 },
   { label: 'Writing your data report', until: 100 },
 ];
+const COMPARE_STAGES = [
+  { label: 'Reading the new files', until: 50 },
+  { label: 'Comparing them with your data', until: 100 },
+];
+const MERGE_STAGES = [
+  { label: 'Updating your records', until: 80 },
+  { label: 'Refreshing your numbers', until: 100 },
+];
 
-function Processing({ view, kind }: { view: ImportView; kind: 'analyze' | 'apply' }) {
+type ProcessingKind = 'analyze' | 'apply' | 'compare' | 'merge';
+const PROCESSING: Record<ProcessingKind, { title: string; stages: typeof APPLY_STAGES }> = {
+  analyze: { title: 'Working on it', stages: ANALYZE_STAGES },
+  apply: { title: 'Setting things up', stages: APPLY_STAGES },
+  compare: { title: 'Comparing with your data', stages: COMPARE_STAGES },
+  merge: { title: 'Updating your data', stages: MERGE_STAGES },
+};
+
+function Processing({ view, kind }: { view: ImportView; kind: ProcessingKind }) {
   const pct = view.progress?.pct ?? 0;
-  const stages = kind === 'analyze' ? ANALYZE_STAGES : APPLY_STAGES;
+  const { title, stages } = PROCESSING[kind];
   const current = stages.findIndex((s) => pct < s.until);
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{kind === 'analyze' ? 'Working on it' : 'Setting things up'}</CardTitle>
+        <CardTitle>{title}</CardTitle>
         <CardDescription>
           {kind === 'analyze'
             ? `Looking through ${view.files.length === 1 ? 'your file' : `your ${view.files.length} files`}. This usually takes under a minute. You can close this page; we’ll keep going.`
-            : 'Bringing your records in. This takes a few moments.'}
+            : kind === 'compare'
+              ? 'Working out what’s new and what changed. Nothing is changed yet.'
+              : 'This takes a few moments.'}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
@@ -237,6 +290,94 @@ function Report({ slug, view }: { slug: string; view: ImportView }) {
         <Button asChild size="lg" variant="outline">
           <Link href={`/w/${slug}/data`}>Go to my data</Link>
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/** After a re-upload: what changed, with "Undo this update". */
+function UpdateReport({
+  slug,
+  view,
+  onUndone,
+}: {
+  slug: string;
+  view: ImportView;
+  onUndone: () => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const r = view.report;
+  if (!r) return <Processing view={view} kind="merge" />;
+  const label = new Map(r.entities.map((e) => [e.key, e.label]));
+  const lines = (r.merge ?? [])
+    .filter((m) => m.inserted + m.updated > 0)
+    .map((m) => {
+      const l = label.get(m.entity) ?? { singular: m.entity, plural: m.entity };
+      const name = (n: number) => (n === 1 ? l.singular : l.plural).toLowerCase();
+      return [
+        m.inserted > 0 ? `${fmt.format(m.inserted)} new ${name(m.inserted)}` : null,
+        m.updated > 0 ? `${fmt.format(m.updated)} ${name(m.updated)} updated` : null,
+      ]
+        .filter(Boolean)
+        .join(', ');
+    });
+  const kept = (r.merge ?? []).reduce((n, m) => n + m.missing, 0);
+  const undo = () =>
+    startTransition(async () => {
+      setError(null);
+      const res = await undoImport(slug, view.runId);
+      if (res.error) setError(res.error);
+      else onUndone();
+    });
+  return (
+    <div className="grid gap-6">
+      <header className="grid gap-1">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {view.undone ? 'This update was undone' : 'Your data is up to date'}
+        </h1>
+        <p className="text-muted-foreground">
+          {view.undone
+            ? 'Your records are back to how they were before these files.'
+            : 'Your dashboard and answers now include the new files.'}
+        </p>
+      </header>
+      <Card>
+        <CardContent className="grid gap-4 pt-6 text-sm" data-testid="update-report">
+          {lines.length > 0 ? (
+            lines.map((l) => (
+              <p
+                key={l}
+                className={cn('flex gap-3', view.undone && 'text-muted-foreground line-through')}
+              >
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+                <span>{l}.</span>
+              </p>
+            ))
+          ) : (
+            <p>Nothing needed changing.</p>
+          )}
+          {kept > 0 && !view.undone ? (
+            <p className="flex gap-3 text-muted-foreground">
+              <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <span>
+                {fmt.format(kept)} {kept === 1 ? 'record wasn’t' : 'records weren’t'} in the new
+                files. We kept {kept === 1 ? 'it' : 'them'}.
+              </span>
+            </p>
+          ) : null}
+          {error ? <Alert tone="error">{error}</Alert> : null}
+        </CardContent>
+      </Card>
+      <div className="flex flex-wrap gap-3">
+        <Button asChild size="lg">
+          <Link href={`/w/${slug}/dashboard`}>See my dashboard</Link>
+        </Button>
+        {!view.undone && lines.length > 0 ? (
+          <Button size="lg" variant="outline" disabled={pending} onClick={undo}>
+            {pending ? <Loader2 className="animate-spin" /> : <Undo2 />} Undo this update
+          </Button>
+        ) : null}
       </div>
     </div>
   );
