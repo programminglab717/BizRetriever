@@ -1653,6 +1653,1091 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
         ]
       }
     ],
+    "metrics": {
+      "expressions": {
+        "line_net": {
+          "sub": [
+            {
+              "field": "sale_line.line_total"
+            },
+            {
+              "coalesce": [
+                {
+                  "allocate": {
+                    "amount": "sale.discount_total",
+                    "by": {
+                      "field": "sale_line.line_total"
+                    },
+                    "within": "sale_line.sale"
+                  }
+                },
+                {
+                  "const": 0
+                }
+              ]
+            }
+          ]
+        },
+        "line_cost": {
+          "mul": [
+            {
+              "field": "sale_line.quantity"
+            },
+            {
+              "coalesce": [
+                {
+                  "field": "sale_line.unit_cost_at_sale"
+                },
+                {
+                  "field": "product.unit_cost"
+                }
+              ]
+            }
+          ]
+        },
+        "purchase_line_value": {
+          "coalesce": [
+            {
+              "field": "purchase_line.line_total"
+            },
+            {
+              "mul": [
+                {
+                  "field": "purchase_line.quantity"
+                },
+                {
+                  "field": "purchase_line.unit_cost"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "filters": {
+        "completed": [
+          {
+            "field": "sale.status",
+            "op": "not_in",
+            "value": [
+              "cancelled",
+              "pending"
+            ]
+          }
+        ],
+        "owed": [
+          {
+            "field": "sale.payment_status",
+            "op": "in",
+            "value": [
+              "unpaid",
+              "partial"
+            ]
+          }
+        ]
+      },
+      "dimensions": [
+        {
+          "field": "product.name",
+          "label": "Product",
+          "synonyms": [
+            "item",
+            "product",
+            "products",
+            "items"
+          ]
+        },
+        {
+          "field": "product.category",
+          "label": "Category",
+          "synonyms": [
+            "category",
+            "type",
+            "department"
+          ]
+        },
+        {
+          "field": "product.brand",
+          "label": "Brand",
+          "synonyms": [
+            "brand"
+          ]
+        },
+        {
+          "field": "customer.name",
+          "label": "Customer",
+          "synonyms": [
+            "customer",
+            "buyer",
+            "client",
+            "stockist"
+          ]
+        },
+        {
+          "field": "customer.customer_type",
+          "label": "Type of customer",
+          "synonyms": [
+            "customer type"
+          ]
+        },
+        {
+          "field": "customer.city",
+          "label": "City",
+          "synonyms": [
+            "city",
+            "town"
+          ]
+        },
+        {
+          "field": "customer.region",
+          "label": "State or region",
+          "synonyms": [
+            "state",
+            "region",
+            "county"
+          ]
+        },
+        {
+          "field": "sale.channel",
+          "label": "Sold through",
+          "synonyms": [
+            "channel",
+            "platform",
+            "marketplace",
+            "where sold"
+          ]
+        },
+        {
+          "field": "location.name",
+          "label": "Sales place",
+          "synonyms": [
+            "shop",
+            "store",
+            "location"
+          ]
+        },
+        {
+          "field": "supplier.name",
+          "label": "Supplier",
+          "synonyms": [
+            "supplier",
+            "vendor",
+            "maker"
+          ]
+        },
+        {
+          "field": "expense.category",
+          "label": "Expense type",
+          "synonyms": [
+            "expense category",
+            "cost type"
+          ]
+        }
+      ],
+      "join_paths": [],
+      "metrics": [
+        {
+          "id": "gross_sales",
+          "label": "Sales before discounts",
+          "description": "Price × quantity for every item on completed sales, before discounts.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "sum": {
+              "mul": [
+                {
+                  "field": "sale_line.quantity"
+                },
+                {
+                  "field": "sale_line.unit_price"
+                }
+              ]
+            },
+            "where": [
+              "completed"
+            ]
+          },
+          "unavailable_hint": "Add the price of each item sold to see sales before discounts.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "discounts",
+          "label": "Discounts given",
+          "description": "Discounts on completed sales, from item discounts and order discounts.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sum": {
+              "add": [
+                {
+                  "coalesce": [
+                    {
+                      "field": "sale_line.discount"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                },
+                {
+                  "coalesce": [
+                    {
+                      "allocate": {
+                        "amount": "sale.discount_total",
+                        "by": {
+                          "field": "sale_line.line_total"
+                        },
+                        "within": "sale_line.sale"
+                      }
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            "where": [
+              "completed"
+            ]
+          },
+          "requires_any": [
+            "sale_line.discount",
+            "sale.discount_total"
+          ],
+          "unavailable_hint": "Include the discount column from your sales export to see discounts.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "refunds",
+          "label": "Refunds",
+          "description": "Money refunded on returns, by the date of the return.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sum": {
+              "field": "return.refund_amount"
+            }
+          },
+          "unavailable_hint": "Upload your returns or refunds to see refunds.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "net_sales",
+          "label": "Net sales",
+          "description": "Money from completed sales after discounts and refunds. Excludes tax and shipping charged. Refunds count on the day of the return.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "sub": [
+              {
+                "sum": {
+                  "expr": "line_net"
+                },
+                "where": [
+                  "completed"
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "ref": "refunds"
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your sales with the amount of each item to see net sales.",
+          "assumptions": [
+            "Order discounts are shared across the order’s items in proportion to their price."
+          ],
+          "snapshot": false
+        },
+        {
+          "id": "units_sold",
+          "label": "Items sold",
+          "description": "Number of items sold on completed sales, minus items returned.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "sub": [
+              {
+                "sum": {
+                  "field": "sale_line.quantity"
+                },
+                "where": [
+                  "completed"
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "sum": {
+                      "field": "return.quantity"
+                    }
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "order_count",
+          "label": "Orders",
+          "description": "Number of completed orders.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "count_distinct": {
+              "field": "sale_line.sale"
+            },
+            "where": [
+              "completed"
+            ]
+          },
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "average_order_value",
+          "label": "Average order value",
+          "description": "Net sales ÷ orders.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "net_sales"
+              },
+              {
+                "ref": "order_count"
+              }
+            ]
+          },
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "items_per_order",
+          "label": "Items per order",
+          "description": "Items sold ÷ orders.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "units_sold"
+              },
+              {
+                "ref": "order_count"
+              }
+            ]
+          },
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "cogs",
+          "label": "Cost of goods sold",
+          "description": "Items sold × their cost (the cost at the time of sale if known, otherwise the product’s current cost), minus the cost of items returned.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sub": [
+              {
+                "sum": {
+                  "expr": "line_cost"
+                },
+                "where": [
+                  "completed"
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "sum": {
+                      "mul": [
+                        {
+                          "field": "return.quantity"
+                        },
+                        {
+                          "field": "product.unit_cost"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Add what each product costs you (for example in your stock list) to see profit.",
+          "assumptions": [
+            "Where we don’t know what an item cost when it was sold, we use its current cost."
+          ],
+          "snapshot": false
+        },
+        {
+          "id": "gross_profit",
+          "label": "Gross profit",
+          "description": "Net sales − cost of goods sold.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "sub": [
+              {
+                "ref": "net_sales"
+              },
+              {
+                "ref": "cogs"
+              }
+            ]
+          },
+          "unavailable_hint": "Add what each product costs you (for example in your stock list) to see profit.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "gross_margin_pct",
+          "label": "Profit margin",
+          "description": "Gross profit ÷ net sales.",
+          "format": "percent",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "gross_profit"
+              },
+              {
+                "ref": "net_sales"
+              }
+            ]
+          },
+          "unavailable_hint": "Add what each product costs you (for example in your stock list) to see your margin.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "customer_count",
+          "label": "Customers who bought",
+          "description": "Different customers with a completed sale in the period.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "count_distinct": {
+              "field": "sale.customer"
+            },
+            "where": [
+              "completed"
+            ],
+            "from": "sale_line"
+          },
+          "unavailable_hint": "Include customer names or emails in your sales to see customers.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "new_customers",
+          "label": "New customers",
+          "description": "Customers whose first-ever completed order was in the period.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "per": "customer",
+            "rollup": "count",
+            "where": [
+              {
+                "of": {
+                  "min": {
+                    "field": "sale.sale_date"
+                  },
+                  "where": [
+                    "completed"
+                  ],
+                  "window": "to_end",
+                  "from": "sale_line"
+                },
+                "op": "gte",
+                "value": {
+                  "period": "start"
+                }
+              }
+            ]
+          },
+          "unavailable_hint": "Include customer names or emails in your sales to see new customers.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "repeat_customer_rate",
+          "label": "Returning customers",
+          "description": "Share of customers who bought in the period and had ordered before it.",
+          "format": "percent",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "per": "customer",
+                "rollup": "count",
+                "where": [
+                  {
+                    "of": {
+                      "count_distinct": {
+                        "field": "sale_line.sale"
+                      },
+                      "where": [
+                        "completed"
+                      ]
+                    },
+                    "op": "gt",
+                    "value": 0
+                  },
+                  {
+                    "of": {
+                      "min": {
+                        "field": "sale.sale_date"
+                      },
+                      "where": [
+                        "completed"
+                      ],
+                      "window": "to_end",
+                      "from": "sale_line"
+                    },
+                    "op": "lt",
+                    "value": {
+                      "period": "start"
+                    }
+                  }
+                ]
+              },
+              {
+                "ref": "customer_count"
+              }
+            ]
+          },
+          "unavailable_hint": "Include customer names or emails in your sales to see returning customers.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "customer_revenue",
+          "label": "Customer spend",
+          "description": "Net sales ÷ customers who bought.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "net_sales"
+              },
+              {
+                "ref": "customer_count"
+              }
+            ]
+          },
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "lapsed_customers",
+          "label": "Customers who stopped ordering",
+          "description": "Customers with at least three past orders whose time since their last order is more than twice their usual gap between orders, and more than thirty days.",
+          "format": "number",
+          "good_direction": "down",
+          "ir": {
+            "per": "customer",
+            "rollup": "count",
+            "where": [
+              {
+                "of": {
+                  "count_distinct": {
+                    "field": "sale_line.sale"
+                  },
+                  "where": [
+                    "completed"
+                  ],
+                  "window": "to_end"
+                },
+                "op": "gte",
+                "value": 3
+              },
+              {
+                "of": {
+                  "days_between": [
+                    {
+                      "max": {
+                        "field": "sale.sale_date"
+                      },
+                      "where": [
+                        "completed"
+                      ],
+                      "window": "to_end",
+                      "from": "sale_line"
+                    },
+                    {
+                      "period": "end"
+                    }
+                  ]
+                },
+                "op": "gt",
+                "value": 30
+              },
+              {
+                "of": {
+                  "days_between": [
+                    {
+                      "max": {
+                        "field": "sale.sale_date"
+                      },
+                      "where": [
+                        "completed"
+                      ],
+                      "window": "to_end",
+                      "from": "sale_line"
+                    },
+                    {
+                      "period": "end"
+                    }
+                  ]
+                },
+                "op": "gt",
+                "value": {
+                  "mul": [
+                    {
+                      "const": 2
+                    },
+                    {
+                      "div": [
+                        {
+                          "days_between": [
+                            {
+                              "min": {
+                                "field": "sale.sale_date"
+                              },
+                              "where": [
+                                "completed"
+                              ],
+                              "window": "to_end",
+                              "from": "sale_line"
+                            },
+                            {
+                              "max": {
+                                "field": "sale.sale_date"
+                              },
+                              "where": [
+                                "completed"
+                              ],
+                              "window": "to_end",
+                              "from": "sale_line"
+                            }
+                          ]
+                        },
+                        {
+                          "sub": [
+                            {
+                              "count_distinct": {
+                                "field": "sale_line.sale"
+                              },
+                              "where": [
+                                "completed"
+                              ],
+                              "window": "to_end"
+                            },
+                            {
+                              "const": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "unavailable_hint": "Include customer names or emails in your sales to see who stopped ordering.",
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "stock_on_hand",
+          "label": "Items in stock",
+          "description": "How many items you have, from your latest stock count of each product.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "latest": {
+              "field": "stock_count.quantity_on_hand"
+            },
+            "per": "stock_count.product",
+            "by": "stock_count.counted_at",
+            "window": "all"
+          },
+          "unavailable_hint": "Upload a stock list with how many of each product you have.",
+          "assumptions": [
+            "Stock is as of your latest count; sales since then aren’t taken off yet."
+          ],
+          "snapshot": true
+        },
+        {
+          "id": "stock_value",
+          "label": "Stock value (at cost)",
+          "description": "Items in stock × what each costs you.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "per": "product",
+            "rollup": "sum",
+            "measure": {
+              "mul": [
+                {
+                  "ref": "stock_on_hand"
+                },
+                {
+                  "max": {
+                    "field": "product.unit_cost"
+                  }
+                }
+              ]
+            }
+          },
+          "unavailable_hint": "Upload a stock list with how many you have and what each product costs.",
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "daily_sales_rate",
+          "label": "Average items sold per day",
+          "description": "Items sold in the last 28 days ÷ 28.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "sum": {
+                  "field": "sale_line.quantity"
+                },
+                "where": [
+                  "completed"
+                ],
+                "window": {
+                  "last_days": 28
+                }
+              },
+              {
+                "const": 28
+              }
+            ]
+          },
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "days_of_cover",
+          "label": "Days of stock left",
+          "description": "Items in stock ÷ average items sold per day.",
+          "format": "days",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "stock_on_hand"
+              },
+              {
+                "ref": "daily_sales_rate"
+              }
+            ]
+          },
+          "unavailable_hint": "Upload a stock list and your sales to see how many days of stock you have left.",
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "dead_stock_value",
+          "label": "Money tied up in unsold stock",
+          "description": "Stock value (at cost) of products you have in stock but haven’t sold in 90 days.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "per": "product",
+            "rollup": "sum",
+            "measure": {
+              "mul": [
+                {
+                  "ref": "stock_on_hand"
+                },
+                {
+                  "max": {
+                    "field": "product.unit_cost"
+                  }
+                }
+              ]
+            },
+            "where": [
+              {
+                "of": {
+                  "ref": "stock_on_hand"
+                },
+                "op": "gt",
+                "value": 0
+              },
+              {
+                "of": {
+                  "coalesce": [
+                    {
+                      "sum": {
+                        "field": "sale_line.quantity"
+                      },
+                      "where": [
+                        "completed"
+                      ],
+                      "window": {
+                        "last_days": 90
+                      }
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                },
+                "op": "eq",
+                "value": 0
+              }
+            ]
+          },
+          "unavailable_hint": "Upload a stock list with costs and your sales to see unsold stock.",
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "sell_through_rate",
+          "label": "Sell-through",
+          "description": "Items sold ÷ (items sold + items in stock).",
+          "format": "percent",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "units_sold"
+              },
+              {
+                "add": [
+                  {
+                    "ref": "units_sold"
+                  },
+                  {
+                    "ref": "stock_on_hand"
+                  }
+                ]
+              }
+            ]
+          },
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "return_rate",
+          "label": "Return rate",
+          "description": "Items returned ÷ items sold.",
+          "format": "percent",
+          "good_direction": "down",
+          "ir": {
+            "div": [
+              {
+                "sum": {
+                  "field": "return.quantity"
+                }
+              },
+              {
+                "sum": {
+                  "field": "sale_line.quantity"
+                },
+                "where": [
+                  "completed"
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your returns with how many items came back to see your return rate.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "expenses_total",
+          "label": "Expenses",
+          "description": "Everything you recorded as an expense.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sum": {
+              "field": "expense.amount"
+            }
+          },
+          "unavailable_hint": "Upload your expenses to see your costs of running the business.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "net_profit_estimate",
+          "label": "Profit after expenses (estimate)",
+          "description": "Gross profit − expenses. An estimate, because it leaves out anything not recorded.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "sub": [
+              {
+                "ref": "gross_profit"
+              },
+              {
+                "ref": "expenses_total"
+              }
+            ]
+          },
+          "unavailable_hint": "Add product costs and upload your expenses to see profit after expenses.",
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "outstanding_receivables",
+          "label": "Money owed to you",
+          "description": "Sales marked unpaid or part paid, minus payments received for them.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sub": [
+              {
+                "sum": {
+                  "expr": "line_net"
+                },
+                "where": [
+                  "completed",
+                  "owed"
+                ],
+                "window": "to_end"
+              },
+              {
+                "coalesce": [
+                  {
+                    "sum": {
+                      "field": "payment.amount"
+                    },
+                    "where": [
+                      {
+                        "field": "sale.payment_status",
+                        "op": "in",
+                        "value": [
+                          "unpaid",
+                          "partial"
+                        ]
+                      }
+                    ],
+                    "window": "to_end"
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Include a “Paid?” column on your invoices to see money owed to you.",
+          "assumptions": [
+            "Without payment records, part-paid invoices are counted as fully owed."
+          ],
+          "snapshot": true
+        },
+        {
+          "id": "overdue_receivables",
+          "label": "Overdue money owed",
+          "description": "Money owed to you on sales past their payment due date.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sub": [
+              {
+                "sum": {
+                  "expr": "line_net"
+                },
+                "where": [
+                  "completed",
+                  "owed",
+                  {
+                    "field": "sale.due_date",
+                    "op": "lt",
+                    "value": {
+                      "period": "end"
+                    }
+                  }
+                ],
+                "window": "to_end"
+              },
+              {
+                "coalesce": [
+                  {
+                    "sum": {
+                      "field": "payment.amount"
+                    },
+                    "where": [
+                      {
+                        "field": "sale.payment_status",
+                        "op": "in",
+                        "value": [
+                          "unpaid",
+                          "partial"
+                        ]
+                      },
+                      {
+                        "field": "sale.due_date",
+                        "op": "lt",
+                        "value": {
+                          "period": "end"
+                        }
+                      }
+                    ],
+                    "window": "to_end"
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Include due dates and a “Paid?” column on your invoices to see overdue payments.",
+          "assumptions": [
+            "Without payment records, part-paid invoices are counted as fully owed."
+          ],
+          "snapshot": true
+        },
+        {
+          "id": "supplier_spend",
+          "label": "Spent with suppliers",
+          "description": "Total of your supplier orders, by the date you ordered.",
+          "format": "money",
+          "good_direction": "neutral",
+          "ir": {
+            "sum": {
+              "expr": "purchase_line_value"
+            }
+          },
+          "unavailable_hint": "Upload your supplier orders to see what you spend with suppliers.",
+          "assumptions": [],
+          "snapshot": false
+        }
+      ]
+    },
     "primer": "Small retailers and online sellers usually keep these files:\n- Order exports from their website or marketplaces (Shopify, Etsy, Amazon, WooCommerce). These are\n  usually one row per item sold, with the order's number, date and customer repeated on every item row\n  or written only on the first row of each order. In Shopify exports the \"Name\" column is the order\n  number (like \"#1001\"), not a person's name.\n- A till or point-of-sale export from a physical shop: one row per item, often without a customer.\n  Negative quantities usually mean refunds.\n- A hand-kept stock list: one row per product, with code (SKU), name, cost, selling price and how many\n  are in stock. Categories are often written as a heading row above each group of products. \"Cost\" on a\n  stock list is normally the cost per item. Quantities may be written like \"12 pcs\".\n- Supplier orders (purchase orders): one row per product ordered, with the supplier, dates, quantity\n  and cost each. These show when supplier prices change.\n- Wholesale invoices to other shops, often one sheet per month or quarter, with a \"Paid?\" column.\n- An expenses sheet, often with months as columns (Jan, Feb, …) and categories as rows.\nTotals, subtotals, notes and blank rows are common and are not records. The same customer or supplier is\noften spelled in slightly different ways. Dates may be written day-first or month-first in different files."
   }
 };

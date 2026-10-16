@@ -13,7 +13,7 @@ for (const dir of listPackDirs()) {
     const { manifest, entities } = pack;
     const fields = entities.reduce((n, e) => n + e.fields.length, 0);
     console.log(
-      `✓ ${manifest.id}@${manifest.version} (${manifest.name}): ${entities.length} entities, ${fields} fields`,
+      `✓ ${manifest.id}@${manifest.version} (${manifest.name}): ${entities.length} entities, ${fields} fields, ${pack.metrics.metrics.length} metrics`,
     );
   } catch (err) {
     failed = true;

@@ -14,6 +14,7 @@ export function renderGeneratedPacks(packs: LoadedPack[]): string {
         entities: p.entities,
         synonyms: p.synonyms,
         knownFormats: p.knownFormats,
+        metrics: p.metrics,
         primer: p.primer,
       },
     ]),
