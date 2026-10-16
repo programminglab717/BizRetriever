@@ -48,3 +48,11 @@ export {
   type Window,
 } from './metrics';
 export { packQuestionSchema, type PackQuestion } from './questions';
+export {
+  checkDashboard,
+  dashboardCharts,
+  dashboardPresets,
+  packTileSchema,
+  type PackDashboard,
+  type PackTile,
+} from './dashboard';

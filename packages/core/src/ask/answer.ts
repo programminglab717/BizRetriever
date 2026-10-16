@@ -5,7 +5,7 @@ import type { ResultColumn } from '../semantic/compile';
 import type { TimeGrain } from '../semantic/query-spec';
 import type { AskCatalog } from './catalog';
 import { decimalAbs, decimalCompare, decimalSub, isDecimal } from './decimal';
-import type { ChartType, QuestionSpec } from './interpretation';
+import { chartTypes, type ChartType, type QuestionSpec } from './interpretation';
 import { periodLabel, type Calendar, type Period } from './time';
 
 /**
@@ -493,6 +493,11 @@ export function explainSpec(
 
 // --- Chart --------------------------------------------------------------------------------------
 
+/** Every chart that can show this result (for "change chart"). */
+export function fittingCharts(data: AnswerData): ChartType[] {
+  return chartTypes.filter((c) => chooseChart(data, { having: [] }, c) === c);
+}
+
 /** The chart for a result's shape (AI_DESIGN §5). A preference is used only when it fits. */
 export function chooseChart(
   data: AnswerData,
@@ -518,7 +523,13 @@ export function chooseChart(
           (fields.length === 0 ? metrics.length <= 2 : metrics.length === 1 && categories <= 6)
         );
       case 'bar':
-        return time.length === 1 && fields.length === 0 && metrics.length <= 2;
+        return (
+          (time.length === 1 && fields.length === 0 && metrics.length <= 2) ||
+          (time.length === 0 &&
+            fields.length === 1 &&
+            metrics.length === 1 &&
+            data.rows.length <= 15)
+        );
       case 'stacked_bar':
         return (
           time.length === 1 &&

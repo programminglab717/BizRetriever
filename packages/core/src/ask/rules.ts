@@ -370,6 +370,11 @@ function parse(question: string, catalog: AskCatalog): Parsed {
 
 const primary0 = (metrics: string[]) => metrics[0];
 
+/** The dates a question names ("in March", "last month"), if any. */
+export function mentionedTime(question: string, catalog: AskCatalog): TimeRange | undefined {
+  return parse(question, catalog).time;
+}
+
 const sentence = (s: string) => `${s[0]!.toUpperCase()}${s.slice(1)}`;
 
 export function interpretWithRules(

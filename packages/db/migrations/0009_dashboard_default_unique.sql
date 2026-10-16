@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "dashboard_default_unique" ON "app"."dashboard" USING btree ("workspace_id") WHERE "app"."dashboard"."is_default";

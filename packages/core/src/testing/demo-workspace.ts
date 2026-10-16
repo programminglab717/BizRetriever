@@ -15,6 +15,7 @@ import { proposeHeuristically } from '../ingestion/heuristic';
 import { loadRecords } from '../ingestion/load';
 import { materialize } from '../ingestion/materialize';
 import { entitySpecs } from '../ingestion/pipeline';
+import { bumpDataVersion, ensureDefaultDashboard } from '../dashboard/service';
 import { refreshSemanticCatalog } from '../semantic/service';
 import { analyzeTenant } from '../tenancy/provision';
 import {
@@ -95,6 +96,8 @@ export async function loadDemoWorkspace(options: {
     );
     await analyzeTenant(ws.tenantSchema);
     await refreshSemanticCatalog(ws);
+    await bumpDataVersion(ws.id);
+    await ensureDefaultDashboard(ws, ownerId);
     return {
       member,
       ownerId,

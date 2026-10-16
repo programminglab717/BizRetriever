@@ -34,6 +34,8 @@ export const workspace = app.table(
     packVersion: text('pack_version').notNull(),
     status: text('status', { enum: workspaceStatus }).notNull().default('provisioning'),
     isDemo: boolean('is_demo').notNull().default(false),
+    /** Bumped whenever the business's records change (imports, edits): keys cached results. */
+    dataVersion: integer('data_version').notNull().default(0),
     createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

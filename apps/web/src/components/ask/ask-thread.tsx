@@ -41,16 +41,19 @@ export function AskThread({
   initial,
   chips,
   style,
+  initialQuestion,
 }: {
   slug: string;
   conversationId?: string;
   initial: Turn[];
   chips: string[];
   style: NumberStyle;
+  /** Prefilled question ("Ask about this" from a dashboard tile). */
+  initialQuestion?: string;
 }) {
   const [turns, setTurns] = useState<Turn[]>(initial);
   const [conversationId, setConversationId] = useState(initialConversation);
-  const [question, setQuestion] = useState('');
+  const [question, setQuestion] = useState(initialQuestion ?? '');
   const [asking, setAsking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);

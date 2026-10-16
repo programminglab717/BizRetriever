@@ -1,0 +1,80 @@
+# Default dashboard (VERTICAL_PACKS §2.6). Tiles follow the dashboard's date range; tiles whose
+# measures aren't available are left out until an import makes them available.
+default_range: { preset: last_30_days, compare: true }
+tiles:
+  - { id: net_sales, title: Net sales, chart: kpi, size: [3, 2], spec: { metrics: [net_sales] } }
+  - {
+      id: gross_profit,
+      title: Gross profit,
+      chart: kpi,
+      size: [3, 2],
+      spec: { metrics: [gross_profit] },
+    }
+  - { id: orders, title: Orders, chart: kpi, size: [3, 2], spec: { metrics: [order_count] } }
+  - id: average_order_value
+    title: Average order value
+    chart: kpi
+    size: [3, 2]
+    spec: { metrics: [average_order_value] }
+  - id: sales_over_time
+    title: Sales over time
+    chart: line
+    size: [8, 4]
+    auto_grain: true
+    spec: { metrics: [net_sales], dimensions: [{ time: week }] }
+  - id: sales_by_channel
+    title: Sales by channel
+    chart: bar_horizontal
+    size: [4, 4]
+    spec: { metrics: [net_sales], dimensions: [{ field: sale.channel }] }
+  - id: top_products_profit
+    title: Top products by profit
+    chart: bar_horizontal
+    size: [6, 5]
+    spec:
+      metrics: [gross_profit]
+      dimensions: [{ field: product.name }]
+      orderBy: { by: gross_profit, dir: desc }
+      limit: 10
+  - id: running_low
+    title: Running low
+    chart: table
+    size: [6, 5]
+    spec:
+      metrics: [days_of_cover]
+      dimensions: [{ field: product.name }]
+      having: [{ metric: days_of_cover, op: lt, value: 14 }]
+      orderBy: { by: days_of_cover, dir: asc }
+  - id: top_customers
+    title: Top customers
+    chart: table
+    size: [6, 5]
+    spec:
+      metrics: [net_sales]
+      dimensions: [{ field: customer.name }]
+      orderBy: { by: net_sales, dir: desc }
+      limit: 10
+  - id: margin_by_category
+    title: Profit margin by category
+    chart: bar
+    size: [6, 5]
+    spec: { metrics: [gross_margin_pct], dimensions: [{ field: product.category }] }
+  - id: slow_stock_total
+    title: Money tied up in slow stock
+    chart: kpi
+    size: [3, 2]
+    spec: { metrics: [dead_stock_value] }
+  - id: slow_stock
+    title: Slow-moving stock
+    chart: table
+    size: [6, 4]
+    spec:
+      metrics: [dead_stock_value]
+      dimensions: [{ field: product.name }]
+      having: [{ metric: dead_stock_value, op: gt, value: 0 }]
+      orderBy: { by: dead_stock_value, dir: desc }
+  - id: money_owed
+    title: Money owed to you
+    chart: kpi
+    size: [6, 2]
+    spec: { metrics: [outstanding_receivables, overdue_receivables] }

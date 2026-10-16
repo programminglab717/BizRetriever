@@ -17,6 +17,7 @@ import {
   type PackSynonyms,
 } from './schema';
 import { checkMetrics, packMetricsFileSchema, type PackMetrics } from './metrics';
+import { checkDashboard, packDashboardFileSchema, type PackDashboard } from './dashboard';
 import { checkQuestions, packQuestionsFileSchema, type PackQuestion } from './questions';
 
 export const PACKS_DIR = fileURLToPath(new URL('../packs', import.meta.url));
@@ -29,6 +30,7 @@ export interface LoadedPack {
   knownFormats: KnownFormat[];
   metrics: PackMetrics;
   questions: PackQuestion[];
+  dashboard: PackDashboard;
   primer: string;
 }
 
@@ -67,6 +69,8 @@ export function loadPack(dir: string): LoadedPack {
   if (!metrics.success) problems.push(...issues('metrics.yaml', metrics.error));
   const questions = packQuestionsFileSchema.safeParse(read('questions.yaml'));
   if (!questions.success) problems.push(...issues('questions.yaml', questions.error));
+  const dashboard = packDashboardFileSchema.safeParse(read('dashboard.yaml'));
+  if (!dashboard.success) problems.push(...issues('dashboard.yaml', dashboard.error));
   let primer = '';
   try {
     primer = readFileSync(path.join(dir, 'prompts', 'domain_primer.md'), 'utf8').trim();
@@ -109,8 +113,15 @@ export function loadPack(dir: string): LoadedPack {
     );
   }
 
+  if (metrics.success && dashboard.success) {
+    problems.push(
+      ...checkDashboard(metrics.data, dashboard.data).map((p) => `dashboard.yaml: ${p}`),
+    );
+  }
+
   if (
     problems.length > 0 ||
+    !dashboard.success ||
     !questions.success ||
     !manifest.success ||
     !entities.success ||
@@ -128,6 +139,7 @@ export function loadPack(dir: string): LoadedPack {
     knownFormats: patterns.data.known_formats,
     metrics: metrics.data,
     questions: questions.data.examples,
+    dashboard: dashboard.data,
     primer,
   };
 }

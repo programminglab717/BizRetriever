@@ -16,10 +16,10 @@ export default async function AskPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ c?: string }>;
+  searchParams: Promise<{ c?: string; q?: string }>;
 }) {
   const { slug } = await params;
-  const { c } = await searchParams;
+  const { c, q } = await searchParams;
   const member = await requireWorkspace(slug);
   const g = await getGlossary(member);
   const available = new Set(g.measures.filter((m) => m.available).map((m) => m.key));
@@ -55,7 +55,8 @@ export default async function AskPage({
         slug={slug}
         {...(conversationId && turns.length ? { conversationId } : {})}
         initial={turns.map((t) => ({ question: t.question, answer: answerView(t, options) }))}
-        chips={suggestedQuestions(member, available).map((q) => q.text)}
+        chips={suggestedQuestions(member, available).map((x) => x.text)}
+        {...(q ? { initialQuestion: q.slice(0, 500) } : {})}
         style={{ locale: localeFor(member.settings), currency: member.settings.currency }}
       />
     </div>

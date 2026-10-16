@@ -17,6 +17,11 @@ import type { AnswerContent, AskResult } from './service';
  * numbers for plotting only. Plain JSON, so it can cross from server to client components.
  */
 
+/** Number and date style for a workspace's settings. */
+export function localeFor(settings: { dateOrder: string }): string {
+  return settings.dateOrder === 'DMY' ? 'en-GB' : settings.dateOrder === 'YMD' ? 'en-CA' : 'en-US';
+}
+
 export interface ViewColumn {
   key: string;
   label: string;

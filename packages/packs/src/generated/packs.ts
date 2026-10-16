@@ -3207,6 +3207,307 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
         ]
       }
     ],
+    "dashboard": {
+      "default_range": {
+        "preset": "last_30_days",
+        "compare": true
+      },
+      "tiles": [
+        {
+          "id": "net_sales",
+          "title": "Net sales",
+          "chart": "kpi",
+          "size": [
+            3,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "net_sales"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "gross_profit",
+          "title": "Gross profit",
+          "chart": "kpi",
+          "size": [
+            3,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "gross_profit"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "orders",
+          "title": "Orders",
+          "chart": "kpi",
+          "size": [
+            3,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "order_count"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "average_order_value",
+          "title": "Average order value",
+          "chart": "kpi",
+          "size": [
+            3,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "average_order_value"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "sales_over_time",
+          "title": "Sales over time",
+          "chart": "line",
+          "size": [
+            8,
+            4
+          ],
+          "spec": {
+            "metrics": [
+              "net_sales"
+            ],
+            "dimensions": [
+              {
+                "time": "week"
+              }
+            ],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": true
+        },
+        {
+          "id": "sales_by_channel",
+          "title": "Sales by channel",
+          "chart": "bar_horizontal",
+          "size": [
+            4,
+            4
+          ],
+          "spec": {
+            "metrics": [
+              "net_sales"
+            ],
+            "dimensions": [
+              {
+                "field": "sale.channel"
+              }
+            ],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "top_products_profit",
+          "title": "Top products by profit",
+          "chart": "bar_horizontal",
+          "size": [
+            6,
+            5
+          ],
+          "spec": {
+            "metrics": [
+              "gross_profit"
+            ],
+            "dimensions": [
+              {
+                "field": "product.name"
+              }
+            ],
+            "filters": [],
+            "having": [],
+            "orderBy": {
+              "by": "gross_profit",
+              "dir": "desc"
+            },
+            "limit": 10
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "running_low",
+          "title": "Running low",
+          "chart": "table",
+          "size": [
+            6,
+            5
+          ],
+          "spec": {
+            "metrics": [
+              "days_of_cover"
+            ],
+            "dimensions": [
+              {
+                "field": "product.name"
+              }
+            ],
+            "filters": [],
+            "having": [
+              {
+                "metric": "days_of_cover",
+                "op": "lt",
+                "value": 14
+              }
+            ],
+            "orderBy": {
+              "by": "days_of_cover",
+              "dir": "asc"
+            }
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "top_customers",
+          "title": "Top customers",
+          "chart": "table",
+          "size": [
+            6,
+            5
+          ],
+          "spec": {
+            "metrics": [
+              "net_sales"
+            ],
+            "dimensions": [
+              {
+                "field": "customer.name"
+              }
+            ],
+            "filters": [],
+            "having": [],
+            "orderBy": {
+              "by": "net_sales",
+              "dir": "desc"
+            },
+            "limit": 10
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "margin_by_category",
+          "title": "Profit margin by category",
+          "chart": "bar",
+          "size": [
+            6,
+            5
+          ],
+          "spec": {
+            "metrics": [
+              "gross_margin_pct"
+            ],
+            "dimensions": [
+              {
+                "field": "product.category"
+              }
+            ],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "slow_stock_total",
+          "title": "Money tied up in slow stock",
+          "chart": "kpi",
+          "size": [
+            3,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "dead_stock_value"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "slow_stock",
+          "title": "Slow-moving stock",
+          "chart": "table",
+          "size": [
+            6,
+            4
+          ],
+          "spec": {
+            "metrics": [
+              "dead_stock_value"
+            ],
+            "dimensions": [
+              {
+                "field": "product.name"
+              }
+            ],
+            "filters": [],
+            "having": [
+              {
+                "metric": "dead_stock_value",
+                "op": "gt",
+                "value": 0
+              }
+            ],
+            "orderBy": {
+              "by": "dead_stock_value",
+              "dir": "desc"
+            }
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "money_owed",
+          "title": "Money owed to you",
+          "chart": "kpi",
+          "size": [
+            6,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "outstanding_receivables",
+              "overdue_receivables"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        }
+      ]
+    },
     "primer": "Small retailers and online sellers usually keep these files:\n- Order exports from their website or marketplaces (Shopify, Etsy, Amazon, WooCommerce). These are\n  usually one row per item sold, with the order's number, date and customer repeated on every item row\n  or written only on the first row of each order. In Shopify exports the \"Name\" column is the order\n  number (like \"#1001\"), not a person's name.\n- A till or point-of-sale export from a physical shop: one row per item, often without a customer.\n  Negative quantities usually mean refunds.\n- A hand-kept stock list: one row per product, with code (SKU), name, cost, selling price and how many\n  are in stock. Categories are often written as a heading row above each group of products. \"Cost\" on a\n  stock list is normally the cost per item. Quantities may be written like \"12 pcs\".\n- Supplier orders (purchase orders): one row per product ordered, with the supplier, dates, quantity\n  and cost each. These show when supplier prices change.\n- Wholesale invoices to other shops, often one sheet per month or quarter, with a \"Paid?\" column.\n- An expenses sheet, often with months as columns (Jan, Feb, …) and categories as rows.\nTotals, subtotals, notes and blank rows are common and are not records. The same customer or supplier is\noften spelled in slightly different ways. Dates may be written day-first or month-first in different files."
   }
 };

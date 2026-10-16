@@ -1,15 +1,8 @@
 import type { LLMProvider } from '@bizr/ai';
-import {
-  answer,
-  conversation,
-  dashboard,
-  dashboardTile,
-  getAppDb,
-  type AnswerKind,
-} from '@bizr/db';
+import { answer, conversation, dashboardTile, getAppDb, type AnswerKind } from '@bizr/db';
 import { getPack, type PackQuestion } from '@bizr/packs';
 import { getLogger } from '@bizr/platform';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 
 import { getAiProvider } from '../ai/runtime';
 import { enrichedViewName } from '../change-plan/views';
@@ -38,10 +31,11 @@ import {
   toQuerySpec,
   type ChartType,
   type Interpretation,
-  type QuestionSpec,
 } from './interpretation';
+import { applyDashboardEdit, currentDashboard } from '../dashboard/service';
 import { explainFallbackSql, narrate } from './narrate';
 import { periodLabel } from './time';
+import { localeFor } from './view';
 
 /**
  * Ask (PRODUCT_SPEC §2.1): one question in, one stored answer out. Interprets (rules, then AI),
@@ -94,9 +88,7 @@ export interface AskOptions {
 
 export class AskError extends Error {}
 
-export function localeFor(settings: MemberWorkspace['settings']): string {
-  return settings.dateOrder === 'DMY' ? 'en-GB' : settings.dateOrder === 'YMD' ? 'en-CA' : 'en-US';
-}
+export { localeFor };
 
 /** Ask a question, or pick an option of an earlier clarifying question (`choice`). */
 export async function askQuestion(
@@ -493,26 +485,10 @@ export async function setAnswerFeedback(
   if (updated.length === 0) throw new AskError('That answer isn’t in this business.');
 }
 
-/** The workspace's default dashboard, created on first use. */
-async function defaultDashboard(workspaceId: string): Promise<string> {
-  const db = getAppDb();
-  const [found] = await db
-    .select({ id: dashboard.id })
-    .from(dashboard)
-    .where(and(eq(dashboard.workspaceId, workspaceId), eq(dashboard.isDefault, true)));
-  if (found) return found.id;
-  const [created] = await db
-    .insert(dashboard)
-    .values({ workspaceId, name: 'Dashboard', isDefault: true })
-    .returning({ id: dashboard.id });
-  return created!.id;
-}
-
-/** "Add to dashboard": the answer's spec becomes a tile at the top. Returns the tile id (for Undo). */
+/** "Add to dashboard": the answer's question becomes a tile at the top. Returns the tile id (for Undo). */
 export async function pinAnswer(member: MemberWorkspace, answerId: string): Promise<string> {
   const ws = member.workspace;
-  const db = getAppDb();
-  const [row] = await db
+  const [row] = await getAppDb()
     .select()
     .from(answer)
     .where(and(eq(answer.id, answerId), eq(answer.workspaceId, ws.id)));
@@ -520,40 +496,31 @@ export async function pinAnswer(member: MemberWorkspace, answerId: string): Prom
   if (!row || !i?.success || i.data.kind !== 'query')
     throw new AskError('Only answers with a chart or a number can go on the dashboard.');
   const content = row.content as AnswerContent;
-  const spec: QuestionSpec = i.data.spec;
-  const dashboardId = await defaultDashboard(ws.id);
-  return db.transaction(async (tx) => {
-    await tx
-      .update(dashboardTile)
-      .set({ position: sql`${dashboardTile.position} + 1` })
-      .where(eq(dashboardTile.dashboardId, dashboardId));
-    const [tile] = await tx
-      .insert(dashboardTile)
-      .values({
-        dashboardId,
-        workspaceId: ws.id,
-        title: content.title,
-        spec,
+  const tileId = crypto.randomUUID();
+  await applyDashboardEdit(
+    member,
+    row.userId,
+    [
+      {
+        op: 'add_tile',
+        title: content.title.split(' · ')[0]!.slice(0, 80),
+        spec: i.data.spec,
         chart: content.chart ?? 'table',
-        layout: {
-          x: 0,
-          y: 0,
-          w: content.chart === 'kpi' ? 3 : 6,
-          h: content.chart === 'kpi' ? 2 : 4,
-        },
-        position: 0,
+        position: 'top',
         fixedDates: content.fixedDates ?? false,
         sourceAnswerId: row.id,
-      })
-      .returning({ id: dashboardTile.id });
-    return tile!.id;
-  });
+      },
+    ],
+    { newId: () => tileId },
+  );
+  return tileId;
 }
 
+/** Undo for "Add to dashboard": takes the pinned tile off again. */
 export async function unpinTile(member: MemberWorkspace, tileId: string): Promise<void> {
-  await getAppDb()
-    .delete(dashboardTile)
-    .where(and(eq(dashboardTile.id, tileId), eq(dashboardTile.workspaceId, member.workspace.id)));
+  const { tiles } = await currentDashboard(member);
+  if (tiles.some((t) => t.id === tileId))
+    await applyDashboardEdit(member, null, [{ op: 'remove_tile', tileId }]);
 }
 
 /** Suggestion chips: the pack's examples whose measures this workspace can work out. */

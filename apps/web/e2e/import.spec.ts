@@ -124,5 +124,29 @@ test('an owner imports their messy spreadsheets and gets a data report', async (
   await page.reload();
   await expect(page.getByTestId('answer-card')).toHaveCount(2);
   await page.goto(`${base}/dashboard`);
-  await expect(page.getByTestId('dashboard-tile')).toContainText('Gross profit by product');
+  const tiles = page.getByTestId('dashboard-tile');
+  await expect(tiles.first()).toContainText('Gross profit by product');
+
+  // Dashboard (M5): the pack's tiles were built at import, and follow the date range.
+  await expect(tiles.filter({ hasText: 'Running low' })).toBeVisible();
+  await expect(tiles.filter({ hasText: 'Sales by channel' })).toBeVisible();
+  await expect(page.getByText('Something went wrong')).toHaveCount(0);
+  await page.getByLabel('Date range').selectOption('this_year');
+  await expect(page).toHaveURL(/range=this_year/);
+  await expect(page.getByTestId('range-label')).toContainText(/\d{4}/);
+
+  // Change it by chat: preview, apply, undo.
+  await page.getByLabel('Change this dashboard').fill('Add a chart of sales by city');
+  await page.getByLabel('Change this dashboard').press('Enter');
+  const preview = page.getByTestId('edit-preview');
+  await expect(preview).toContainText('Add “Takings by city”', { timeout: 30_000 });
+  await preview.getByRole('button', { name: 'Apply' }).click();
+  await expect(tiles.first()).toContainText('Takings by city', { timeout: 30_000 });
+  await page.getByRole('status').getByRole('button', { name: 'Undo' }).click();
+  await expect(tiles.filter({ hasText: 'Takings by city' })).toHaveCount(0, { timeout: 30_000 });
+
+  // And by hand: remove a tile from its menu.
+  await page.getByRole('button', { name: 'Options for Top customers' }).click();
+  await page.getByRole('menuitem', { name: 'Remove' }).click();
+  await expect(tiles.filter({ hasText: 'Top customers' })).toHaveCount(0, { timeout: 30_000 });
 });

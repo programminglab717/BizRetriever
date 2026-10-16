@@ -16,6 +16,7 @@ export function renderGeneratedPacks(packs: LoadedPack[]): string {
         knownFormats: p.knownFormats,
         metrics: p.metrics,
         questions: p.questions,
+        dashboard: p.dashboard,
         primer: p.primer,
       },
     ]),

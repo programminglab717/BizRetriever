@@ -24,6 +24,7 @@ export function fixtureCatalog(unavailable: Record<string, string> = {}): AskCat
     'sale.channel': ['online_store', 'etsy', 'in_store', 'wholesale'],
     'expense.category': ['Advertising', 'Rent', 'Packaging', 'Software'],
     'supplier.name': ['Clayworks Ltd', 'Northern Linen'],
+    'customer.city': ['Portland', 'Seattle', 'Austin'],
   };
   return {
     metrics: pack.metrics.metrics.map((m) => ({

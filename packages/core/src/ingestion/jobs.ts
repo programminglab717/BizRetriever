@@ -17,6 +17,7 @@ import { applyChangePlan, loadCatalog } from '../change-plan/apply';
 import { planFromPack } from '../change-plan/from-pack';
 import { withTenantWriter } from '../executor/write';
 import { defineJob } from '../jobs/define';
+import { bumpDataVersion, ensureDefaultDashboard } from '../dashboard/service';
 import { refreshSemanticCatalog } from '../semantic/service';
 import { analyzeTenant } from '../tenancy/provision';
 import { proposeDataModel, refineWithDryRun, reviseDataModel } from './ai-proposal';
@@ -375,6 +376,12 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
           tenantSchema: ctx.workspace.tenantSchema,
           packId: ctx.workspace.packId,
         });
+        // New records: cached dashboard tiles are stale, and new tiles may now be possible.
+        await bumpDataVersion(ctx.workspace.id);
+        await ensureDefaultDashboard(
+          { id: ctx.workspace.id, packId: ctx.workspace.packId },
+          input.userId ?? null,
+        );
         await reportProgress('Writing your data quality report', 85);
         const db = getAppDb();
         await db.transaction(async (tx) => {

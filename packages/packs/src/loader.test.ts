@@ -103,6 +103,7 @@ describe('bundled packs', () => {
       knownFormats: retail.knownFormats,
       metrics: retail.metrics,
       questions: retail.questions,
+      dashboard: retail.dashboard,
       primer: retail.primer,
     });
   });

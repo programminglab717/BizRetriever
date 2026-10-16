@@ -57,6 +57,20 @@
       "when": 1792149068532,
       "tag": "0007_ask_and_tiles",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792153872090,
+      "tag": "0008_dashboards",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792154078371,
+      "tag": "0009_dashboard_default_unique",
+      "breakpoints": true
     }
   ]
 }

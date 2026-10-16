@@ -4,6 +4,7 @@ import {
   explainSql,
   interpretQuestion,
   narrateAnswer,
+  planDashboardEdit,
   proposeDataModel,
   reviseDataModel,
   summarizeProposal,
@@ -65,7 +66,19 @@ describe('prompts', () => {
       assumptions: [marker],
     });
     const e = explainSql.build({ sql: `SELECT '${marker}'`, records: { sales: 'sales' } });
-    for (const built of [a, b, c, d, e]) {
+    const f = planDashboardEdit.build({
+      primer: 'primer',
+      catalog: { measures: [], breakdowns: [] },
+      settings: { today: '2026-10-13', weekStart: 1, fiscalYearStartMonth: 1, currency: 'USD' },
+      unavailable: [],
+      data: {
+        tiles: [{ ref: 't1', title: marker, chart: 'kpi', spec: {}, fixedDates: false }],
+        values: { 'product.name': [marker] },
+        renamed: {},
+      },
+      request: 'remove the sales chart',
+    });
+    for (const built of [a, b, c, d, e, f]) {
       expect(built.cachedContext.join('')).not.toContain(marker);
       const user = built.messages[0]!.content;
       const start = user.indexOf('<workspace_data>');
@@ -83,6 +96,7 @@ describe('prompts', () => {
       interpretQuestion,
       narrateAnswer,
       explainSql,
+      planDashboardEdit,
     ]) {
       expect(p.version).toBe(`${p.task}@v1`);
     }

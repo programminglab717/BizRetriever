@@ -17,7 +17,8 @@
     "./semantic": "./src/semantic/index.ts",
     "./sql-validator": "./src/sql-validator/index.ts",
     "./ask": "./src/ask/index.ts",
-    "./testing": "./src/testing/index.ts"
+    "./testing": "./src/testing/index.ts",
+    "./dashboard": "./src/dashboard/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
