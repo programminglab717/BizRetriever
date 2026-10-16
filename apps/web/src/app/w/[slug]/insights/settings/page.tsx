@@ -16,7 +16,10 @@ export default async function AlertSettingsPage({ params }: { params: Promise<{ 
         description={
           <>
             Choose what we tell you about, and when.{' '}
-            <Link href={`/w/${slug}/insights`} className="text-primary hover:underline">
+            <Link
+              href={`/w/${slug}/insights`}
+              className="text-primary underline underline-offset-4"
+            >
               See all insights
             </Link>
           </>

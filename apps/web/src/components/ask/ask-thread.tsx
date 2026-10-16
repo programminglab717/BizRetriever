@@ -96,7 +96,7 @@ export function AskThread({
 
   const empty = turns.length === 0 && !asking;
   return (
-    <div className="grid gap-6 pb-28">
+    <div className="grid grid-cols-1 gap-6 pb-28">
       {empty && (
         <div className="grid gap-4">
           <p className="text-xl">Ask me anything about your business.</p>
@@ -106,7 +106,7 @@ export function AskThread({
                 <Button
                   key={c}
                   variant="outline"
-                  className="h-auto whitespace-normal py-2 text-left"
+                  className="h-auto max-w-full shrink whitespace-normal py-2 text-left"
                   onClick={() => send(c)}
                 >
                   {c}

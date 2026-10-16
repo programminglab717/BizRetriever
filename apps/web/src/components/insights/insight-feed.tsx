@@ -32,7 +32,7 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 const LEVEL: Record<string, { label: string; className: string }> = {
-  urgent: { label: 'Urgent', className: 'bg-destructive/10 text-destructive' },
+  urgent: { label: 'Urgent', className: 'bg-red-100 text-red-800' },
   warn: { label: 'Worth a look', className: 'bg-amber-100 text-amber-900' },
   info: { label: 'Good to know', className: 'bg-muted text-muted-foreground' },
 };

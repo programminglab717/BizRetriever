@@ -52,7 +52,10 @@ export default async function InsightsPage({
         description={
           <>
             Everything we’ve spotted in your data, most important first. Dismissed ones are hidden.{' '}
-            <Link href={`/w/${slug}/insights/settings`} className="text-primary hover:underline">
+            <Link
+              href={`/w/${slug}/insights/settings`}
+              className="text-primary underline underline-offset-4"
+            >
               Alert settings
             </Link>
           </>
