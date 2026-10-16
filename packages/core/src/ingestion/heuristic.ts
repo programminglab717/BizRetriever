@@ -229,8 +229,14 @@ export function proposeHeuristically(
   const out: ModelProposal = { sources: [], dedupe: [], assumptions: [], questions: [] };
   const spotted: string[] = [];
   const dateOrderConflicts: { sourceId: string; name: string; implied: DateOrder }[] = [];
-  const dedupeCandidates: { entity: string; key: string; variants: string[]; weight: number }[] =
-    [];
+  const dedupeCandidates: {
+    entity: string;
+    key: string;
+    variants: string[];
+    weight: number;
+    /** How often each spelling appears. */
+    counts: Map<string, number>;
+  }[] = [];
   const costColumns: { sourceId: string; name: string; header: string }[] = [];
   const label = (s: ProfiledSource) =>
     s.sheetName === s.fileName ? s.fileName : `${s.fileName} › ${s.sheetName}`;
@@ -555,6 +561,7 @@ export function proposeHeuristically(
               key: d.key,
               variants: d.variants,
               weight: d.variants.reduce((s, v) => s + (counts.get(v) ?? 1), 0),
+              counts,
             });
           }
         }
@@ -682,7 +689,12 @@ export function proposeHeuristically(
     if (seenKeys.has(d.key)) continue;
     seenKeys.add(d.key);
     const variants = [...allVariants.get(d.key)!];
-    const canonicalName = d.variants[0]!;
+    // The spelling used most often is the name to keep ("Bloom & Co", not a one-off "Bloom and Co.").
+    const tally = (v: string) =>
+      dedupeCandidates
+        .filter((x) => x.key === d.key)
+        .reduce((t, x) => t + (x.counts.get(v) ?? 0), 0);
+    const canonicalName = variants.reduce((best, v) => (tally(v) > tally(best) ? v : best));
     clusters.push({
       canonical: canonicalName,
       variants: variants.filter((v) => v !== canonicalName),

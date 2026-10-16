@@ -107,10 +107,17 @@ describe('profiling the demo files', () => {
     const pcs = stock.columns.find((c) => c.header === 'Stock Pcs in stock')!;
     expect(pcs.units).toHaveProperty('pcs');
 
-    const wholesale = profileOf('Wholesale invoices.xlsx', 'Q1 2026');
-    const customer = wholesale.columns.find((c) => c.header === 'Customer')!;
-    const bloom = customer.nearDuplicates.find((d) => d.key === 'bloom and co');
-    expect(bloom?.variants.length).toBeGreaterThanOrEqual(2);
+    // Each quarter's sheet has a few invoices; between them all three spellings turn up.
+    const quarters = workbooks.get('Wholesale invoices.xlsx')!.sheets.map((s) => s.name);
+    const spellings = new Set(
+      quarters.flatMap((q) => {
+        const customer = profileOf('Wholesale invoices.xlsx', q).columns.find(
+          (c) => c.header === 'Customer',
+        )!;
+        return customer.nearDuplicates.find((d) => d.key === 'bloom and co')?.variants ?? [];
+      }),
+    );
+    expect(spellings.size).toBeGreaterThanOrEqual(2);
   });
 
   it('recognises wide month columns in the expenses sheet', () => {

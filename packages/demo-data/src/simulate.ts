@@ -293,7 +293,10 @@ export function simulate(options: SimulateOptions): Simulation {
         minutes: 9 * 60,
         customer: null,
         stockist,
-        stockistSpelling: rng.pick(stockist.spellings),
+        // Mostly the shop's own spelling; the others turn up now and then.
+        stockistSpelling: rng.weighted(stockist.spellings, (sp) =>
+          sp === stockist.spellings[0] ? 3 : 1,
+        ),
         lines,
         status: 'completed',
         discountCode: null,

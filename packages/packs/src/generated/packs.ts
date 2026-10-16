@@ -4650,7 +4650,7 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "id": "sales_change",
           "category": "trends",
           "label": "Big changes in weekly sales",
-          "description": "This week's sales compared with last week's.",
+          "description": "This week's shop and online sales compared with last week's (stockist orders aside).",
           "enabled": true,
           "thresholds": {
             "change": {
@@ -4669,7 +4669,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
                 "net_sales"
               ],
               "dimensions": [],
-              "filters": [],
+              "filters": [
+                {
+                  "field": "sale.channel",
+                  "op": "neq",
+                  "value": "wholesale"
+                }
+              ],
               "period": {
                 "last_days": 7
               },
@@ -4751,7 +4757,7 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
               }
             }
           },
-          "template": "Sales in the last week are {{direction}} {{change}} on the week before ({{this_week}} vs {{last_week}}).",
+          "template": "Shop and online sales in the last week are {{direction}} {{change}} on the week before ({{this_week}} vs {{last_week}}).",
           "action": {
             "label": "See why",
             "ask": "Net sales by product in the last 7 days compared with the 7 days before"
