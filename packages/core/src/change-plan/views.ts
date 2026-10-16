@@ -64,3 +64,43 @@ export function createViewStatements(schema: string, catalog: readonly CatalogEn
   }
   return out;
 }
+
+/** Internal columns never offered to fallback SQL (lineage, hashes, soft-delete marker). */
+export function isInternalColumn(name: string): boolean {
+  return (
+    name === '_row_hash' ||
+    name === '_deleted_at' ||
+    name === '_natural_key' ||
+    name.startsWith('_source_')
+  );
+}
+
+/**
+ * Every relation fallback SQL may read, with the columns it may see: the business tables and their
+ * enriched views. (`_deleted_at` filtering is applied by the validator's shadow copies.)
+ */
+export function queryableRelations(
+  catalog: readonly CatalogEntity[],
+): Map<string, { kind: 'table' | 'view'; columns: string[] }> {
+  const byKey = new Map(catalog.map((e) => [e.key, e]));
+  const out = new Map<string, { kind: 'table' | 'view'; columns: string[] }>();
+  for (const e of catalog) {
+    const own = ownColumns(e).filter((c) => !isInternalColumn(c));
+    out.set(e.tableName, { kind: 'table', columns: own });
+    const links = e.fields.filter(
+      (f) => f.type === 'reference' && f.references && byKey.has(f.references),
+    );
+    const name = enrichedViewName(e.tableName);
+    if (links.length === 0 || !name) continue;
+    const cols = [...own];
+    for (const f of links) {
+      for (const c of ownColumns(byKey.get(f.references!)!)) {
+        if (c.startsWith('_') && c !== '_id') continue;
+        const outName = `${f.key}__${c}`;
+        if (isSafeIdentifier(outName)) cols.push(outName);
+      }
+    }
+    out.set(name, { kind: 'view', columns: cols });
+  }
+  return out;
+}

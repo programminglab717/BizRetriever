@@ -14,7 +14,8 @@
     "./change-plan": "./src/change-plan/index.ts",
     "./narration": "./src/narration/index.ts",
     "./ingestion": "./src/ingestion/index.ts",
-    "./semantic": "./src/semantic/index.ts"
+    "./semantic": "./src/semantic/index.ts",
+    "./sql-validator": "./src/sql-validator/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
@@ -26,12 +27,13 @@
     "@bizr/packs": "workspace:*",
     "@bizr/platform": "workspace:*",
     "drizzle-orm": "^0.45.4",
+    "libpg-query": "17.7.4",
     "pg": "^8.23.1",
     "pg-boss": "^12.37.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/pg": "^8.15.6",
-    "@bizr/demo-data": "workspace:*"
+    "@bizr/demo-data": "workspace:*",
+    "@types/pg": "^8.15.6"
   }
 }

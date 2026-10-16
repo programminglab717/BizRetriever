@@ -31,3 +31,4 @@ export {
   type QueryResult,
   type RenameTarget,
 } from './service';
+export { runFallbackSql, type FallbackResult } from './fallback';
