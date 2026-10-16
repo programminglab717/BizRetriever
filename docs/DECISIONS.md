@@ -758,3 +758,34 @@ Template for new entries:
 - **Consequences:**
   - Answers work fully without AI; the AI only improves wording and understanding.
   - Stored answers read back without re-running; tiles always show current data.
+
+## ADR-042 — Dashboards: pack tiles, edit ops, versions and live tiles
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - The pack's `dashboard.yaml` defines the default dashboard (VERTICAL_PACKS §2.6). Tile 11 ("kpi +
+    table") is two tiles: a number and a list.
+  - `ensureDefaultDashboard` runs after every import (and on first visit). It adds pack tiles the data
+    can now show, never ones already there or removed by the owner (`settings.removedPackTiles`).
+    Tiles whose measures aren't available are left out, and an "Unlock more" card gives the reasons.
+  - Every change, from chat, the tile menu or "Add to dashboard", is a list of typed edit ops
+    (add / remove / update / move). `applyDashboardEdit` checks each one (every question compiles
+    and is available, the tiles exist) and saves the whole dashboard as the next
+    `dashboard_version`. Undo restores the version before, as a new version.
+  - Tiles follow a global date range (presets) and a compare toggle. Comparisons apply to headline
+    numbers. Over-time pack tiles go monthly above 120 days. Tiles with their own dates keep them
+    and show a calendar badge.
+  - Tile results are cached in memory per server instance, keyed by the workspace's `data_version`
+    (bumped by every import), the day, the tile's question and its chart.
+  - On dashboard tiles, blank groups ("Not recorded") are left out with a note; Ask keeps them.
+  - Chat edits (Task G) work like Ask: a rules planner first (add a chart of…, remove, rename, move,
+    show as…, show monthly), then `plan_dashboard_edit@v1`. The AI names tiles by short refs, which
+    code maps back to ids. One repair round. Ambiguous targets get "Which one…?" with tile choices.
+    A preview runs the new or changed tiles, and Apply checks everything again on the server.
+  - Layout is a 12-column CSS grid sized from each tile's width. It can be changed from the tile menu
+    (wider / narrower, move to top / bottom) instead of drag and drop (react-grid-layout was the
+    plan's cuttable item).
+- **Consequences:**
+  - A new workspace lands on a full dashboard with no AI and no setup.
+  - Every dashboard change is reversible and reviewable.
+  - The cache is per instance; on the serverless preview each cold start runs tiles again.

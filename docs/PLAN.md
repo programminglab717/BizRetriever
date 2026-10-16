@@ -363,16 +363,17 @@ date filter.
 
 **Depends on:** M4 (shares spec compiler, charts, pin).
 
-- [ ] ★ Dashboard/tile/version tables; tile = spec + chart + layout
-- [ ] ★ Default dashboard generation from pack `dashboard.yaml`, skipping unavailable tiles + "Unlock more"
+- [x] ★ Dashboard/tile/version tables; tile = spec + chart + layout
+- [x] ★ Default dashboard generation from pack `dashboard.yaml`, skipping unavailable tiles + "Unlock more"
   card
-- [ ] ★ Dashboard page with responsive grid (react-grid-layout), tile states, per-tile caching keyed by
+- [x] ★ Dashboard page with responsive grid (react-grid-layout), tile states, per-tile caching keyed by
   data version
-- [ ] ★ Global date range picker + compare toggle; fixed-date tile badge
-- [ ] ★ Task G `planDashboardEdit` + preview/apply/undo
-- [ ] Drag/resize layout editing (desktop); reorder on mobile **(cuttable)**
-- [ ] Tile ⋮ menu: rename, change chart, remove, "Ask about this"
-- [ ] Dashboard edit eval set (≥ 40 cases)
+- [x] ★ Global date range picker + compare toggle; fixed-date tile badge
+- [x] ★ Task G `planDashboardEdit` + preview/apply/undo
+- [x] Drag/resize layout editing (desktop); reorder on mobile **(cuttable)**: done from the tile
+  menu (wider/narrower, move to top/bottom) rather than drag and drop (ADR-042)
+- [x] Tile ⋮ menu: rename, change chart, remove, "Ask about this"
+- [x] Dashboard edit eval set (≥ 40 cases)
 
 **Acceptance:**
 

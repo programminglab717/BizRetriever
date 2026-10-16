@@ -6,6 +6,7 @@ runs on demand (ADR-027).
 ```
 fixtures/ingest/<case>/   messy input files + expected.yaml
 questions/retail.yaml     question cases with reference specs
+dashboard/retail.yaml     dashboard edit requests with expected edits
 baselines/ingest.json     last accepted scores, per mode (rules / ai)
 baselines/questions.json  the same for questions
 recordings/               AI replay recordings (written in record mode)
@@ -23,6 +24,7 @@ runner/                   the runner (`pnpm eval`)
 | `pnpm eval -- --suite questions` | 185 questions on the demo data, rules only (needs the database) | $0 |
 | `pnpm eval -- --suite questions --demo` | Only the demo-script questions | $0 |
 | `pnpm eval -- --suite questions --ai --limit 40` | 40 questions with the AI | Estimate printed (≤ $0.03 a question); asks before spending more than $1 |
+| `pnpm eval -- --suite dashboard` | 44 dashboard edit requests on the demo dashboard, rules only | $0 |
 | `pnpm eval -- --update-baseline` | Run everything and accept the scores as the new baseline | as above |
 
 A full run fails if any metric drops more than 2 points below its baseline, or if any injection canary
@@ -61,3 +63,13 @@ clarify precision ≥ 80%, and nothing may drop more than 2 points below the bas
 
 **Known limits:** written while building the rules interpreter, so the rules score is optimistic
 (risk R21). The `hard-*` cases and weekday questions are meant for the AI and fail in rules mode.
+
+## Dashboard edit cases
+
+`dashboard/retail.yaml` plans each request against the demo's default dashboard (nothing is saved).
+A case passes when the planned edits match the expected ones: the right tile (by pack tile id), the
+right change, added tiles giving the same numbers as `ref`, and nothing else changed. Requests that
+should ask "which one?" or can't be done are checked too.
+
+**Metrics:** accuracy, unintended-edit rate (must be 0), rules rate.
+`runner/dashboard.int.test.ts` runs it in CI against `baselines/dashboard.json`.

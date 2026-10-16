@@ -2,32 +2,72 @@
 
 ## Current Status
 
-- **Milestone:** M4 (Ask) is **complete on the rules path**; its one open check is the live-AI eval
-  run, which needs the API key (Q20). M5 (Dashboards) is next, once the owner confirms. The owner
-  authorised building through the milestones (ADR-031).
+- **Milestone:** M5 (Dashboards) is **complete on the rules path**. M6 (Data upkeep) is next, once
+  the owner confirms. The owner authorised building through the milestones (ADR-031).
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:**
   - accounts, onboarding, workspaces and settings (M1)
   - import from upload to data report (M2)
   - 28 retail measures, the query compiler and "What we track" (M3)
-  - **Ask**: plain-language questions → rules-first interpretation (AI for the rest), answers with
-    bold facts, charts with a table view, assumptions, "How I calculated this" with the SQL,
-    clarifying questions, follow-ups, 👍/👎 with reasons, and "Add to dashboard" (pinned tiles show
-    live on the Dashboard page)
-  - **SQL fallback** behind a 160+ case adversarial validator, read-only as the tenant reader
-  - `pnpm eval`: 11 ingest cases and **185 question cases** (rules only, $0)
-- **M4 acceptance (rules only, no AI):** 91.9% of questions correct (≥ 85% needed), 100% on the demo
-  script (≥ 95%), clarify precision 100% (≥ 80%), validator suite 100%, no number in any sentence that
-  doesn't come from a fact (by construction and tested), interpretation + query p95 under 0.1 s. With
-  the AI on, latency and accuracy are still to be measured (R22, Q20).
+  - Ask with charts, clarifying questions, follow-ups, feedback and pinning (M4)
+  - **Dashboard**:
+    - the pack's 13 tiles, built at import, with "Unlock more" for what the data can't show
+    - date range and compare toggle
+    - tile menu: rename, change chart, wider / narrower, move, remove, Ask about this
+    - chat edits with a preview, Apply and Undo; every change is a saved version
+  - `pnpm eval`: 11 ingest cases, 185 question cases and **44 dashboard edit cases** (rules only, $0)
+- **M5 acceptance (rules only, no AI):**
+  - a new demo workspace lands on the full dashboard
+  - "Add a chart of sales by city", "remove X" and "show monthly" work by chat with preview and undo
+  - the date filter updates all tiles
+  - dashboard edit eval: 93.2% (≥ 90% needed), with no unintended edits
 - **Waiting on the owner (batched for the end):**
   - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
-  - the Anthropic API key (Q20), for the first AI eval runs
+  - the Anthropic API key (Q20), for the first AI eval runs (questions and dashboard edits)
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-16 — Session 8: M5 Dashboards built
+
+**Completed:**
+
+- **Pack:** `dashboard.yaml` (schema, checks, retail's 13 tiles) next to `questions.yaml`.
+- **Storage:** migrations `0008_dashboards` (`dashboard_version`, dashboard settings, tile pack keys
+  and options, `workspace.data_version`) and `0009` (one default dashboard per workspace).
+- **Core** (`@bizr/core/dashboard`, ADR-042):
+  - the pure model: tiles, edit ops, `applyOps`, `packTilesFor`, `tileSpec` (dates, compare,
+    auto-grain)
+  - the service: generation after every import, edits as versions, undo, saved date range, live
+    tiles with a data-version cache, blank groups left out with a note
+  - Task G: the rules planner and `plan_dashboard_edit@v1`, with checks, one repair and a preview
+- **Web:**
+  - the dashboard page: date picker, compare toggle, Undo, "Change this dashboard" with preview,
+    Apply and Cancel, an "Unlock more" card, a loading skeleton
+  - tiles: a menu, a fixed-date badge and compact headline numbers
+  - Ask's "Add to dashboard" now saves a version; Ask takes `?q=` for "Ask about this"
+- **Evals:** `evals/dashboard/retail.yaml` (44 cases), `--suite dashboard`, a rules-only CI test
+  and a baseline.
+- **Tests:** 610 unit/integration (up from 590) and 16 e2e. The e2e now covers the default dashboard,
+  the date range, a chat edit with preview, apply and undo, and removing a tile from its menu.
+
+**Bugs found and fixed:**
+
+- Sideways bar charts drew their axes but never their bars: the grow-in animation never finished.
+  Charts now draw without animation.
+- Headline numbers in tiles sat in nested cards and the comparison dates wrapped badly. Tiles now
+  use a compact layout.
+- "Not recorded" groups topped dashboard lists ("Running low" showed a 0-day product).
+
+**Blockers:** none for building. The AI paths still need the API key for a live run (Q20).
+
+**Next steps:**
+
+1. When the key arrives: the AI question and dashboard edit evals (`--ai --limit`), with baselines.
+2. On the owner's go-ahead, M6 (Data upkeep): re-uploads with merge, browse and edit records,
+   and changes to what's tracked.
 
 ### 2026-10-16 — Session 7: M4 Ask built
 
