@@ -22,6 +22,12 @@ const money = (c: Cents) => (c / 100).toFixed(2);
 const dollars = (c: Cents) => `$${money(c)}`;
 const n = (c: Cents) => Math.round(c) / 100;
 
+function secondsOf(id: string): number {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) % 9973;
+  return h % 60;
+}
+
 function utcOffset(date: IsoDate): string {
   const m = month(date);
   const d = Number(date.slice(8, 10));
@@ -100,7 +106,9 @@ async function writeOnlineOrders(sim: Simulation, dir: string, rng: Rng): Promis
     const next = webSales[idx + 1];
     sale.lines.forEach((line, i) => {
       const first = i === 0;
-      const created = `${sale.date} ${timeOfDay(sale.minutes)}:${String(rng.int(0, 59)).padStart(2, '0')} ${utcOffset(sale.date)}`;
+      // Seconds come from the order number, so an order exports the same way every time (a later
+      // export of the same orders, as in a re-upload, must match row for row).
+      const created = `${sale.date} ${timeOfDay(sale.minutes)}:${String(secondsOf(sale.number)).padStart(2, '0')} ${utcOffset(sale.date)}`;
       web.addRow([
         sale.number,
         first ? (sale.customer?.email ?? '') : '',
@@ -466,6 +474,16 @@ async function writeExpenses(sim: Simulation, dir: string): Promise<SheetReport>
   report.skipped.totals += 1;
   await wb.xlsx.writeFile(path.join(dir, file));
   return report;
+}
+
+/** Only the online orders workbook (for re-upload demos and tests), with the same noise as `writeFiles`. */
+export async function writeOnlineOrdersFile(
+  sim: Simulation,
+  dir: string,
+  seed: number,
+): Promise<SheetReport[]> {
+  mkdirSync(dir, { recursive: true });
+  return writeOnlineOrders(sim, dir, new Rng(seed ^ 0x5eed));
 }
 
 export async function writeFiles(

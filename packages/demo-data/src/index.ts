@@ -3,7 +3,8 @@ import path from 'node:path';
 
 import { simulate } from './simulate';
 import { buildTruth, type GroundTruth } from './truth';
-import { writeFiles } from './writers';
+import { nextMonthUpdate, type NextMonthTruth } from './next-month';
+import { writeFiles, writeOnlineOrdersFile } from './writers';
 
 export type { GroundTruth } from './truth';
 
@@ -33,4 +34,23 @@ export type { ReturnRecord, Sale, SaleLine, Simulation } from './simulate';
  */
 export function simulateDemo(options: { today: string; seed?: number }) {
   return simulate({ today: options.today, seed: options.seed ?? 42 });
+}
+
+export type { NextMonthTruth } from './next-month';
+
+/**
+ * Writes next month's "Online orders" workbook (the same business, a month later: new orders, a few
+ * cancellations, the oldest orders gone from the export) to `outDir`, for re-upload demos and tests.
+ */
+export async function generateNextMonthUpdate(
+  options: GenerateOptions & { days?: number },
+): Promise<NextMonthTruth> {
+  const seed = options.seed ?? 42;
+  const { sim, truth } = nextMonthUpdate(simulate({ today: options.today, seed }), {
+    seed,
+    ...(options.days ? { days: options.days } : {}),
+  });
+  await writeOnlineOrdersFile(sim, options.outDir, seed);
+  writeFileSync(path.join(options.outDir, 'next_month_truth.json'), JSON.stringify(truth, null, 2));
+  return truth;
 }

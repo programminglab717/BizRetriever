@@ -19,6 +19,9 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { JobQueue } from '../jobs/queue';
 import type { MemberWorkspace } from '../workspaces/service';
 import { answerToCorrection, type Correction } from './corrections';
+import { UndoError } from '../records/edits';
+import type { MergePreview } from '../merge/service';
+import { getMergePreview, ingestMergeJob, ReuploadError, undoReupload } from './reupload';
 import { ingestAnalyzeJob, ingestApplyJob, ingestReviseJob } from './jobs';
 import { latestProposal, type StoredProposal } from './pipeline';
 import type { QuestionEffect } from './proposal';
@@ -82,10 +85,20 @@ export async function startIngestion(input: {
   );
 
   const db = getAppDb();
+  // A business that already has records is updating them: merge, don't load twice (ADR-043).
+  const [previous] = await db
+    .select({ id: ingestionRun.id })
+    .from(ingestionRun)
+    .where(and(eq(ingestionRun.workspaceId, ws.id), eq(ingestionRun.status, 'done')))
+    .limit(1);
   const runId = await db.transaction(async (tx) => {
     const [run] = await tx
       .insert(ingestionRun)
-      .values({ workspaceId: ws.id, kind: 'initial', createdBy: input.userId })
+      .values({
+        workspaceId: ws.id,
+        kind: previous ? 'reupload' : 'initial',
+        createdBy: input.userId,
+      })
       .returning({ id: ingestionRun.id });
     await tx.insert(upload).values(
       stored.map((f, position) => ({
@@ -154,6 +167,8 @@ export interface RunView {
   spotted: string[];
   files: { fileName: string; sizeBytes: number }[];
   report: unknown;
+  /** Re-upload: what the new files would change (while the run is in `merge_review`). */
+  merge: MergePreview | null;
 }
 
 /** Everything the processing, review and report screens poll for. */
@@ -184,6 +199,7 @@ export async function getRunView(member: MemberWorkspace, runId: string): Promis
         : [],
     files,
     report: report?.report ?? null,
+    merge: run.kind === 'reupload' ? ((await getMergePreview(run.id)) ?? null) : null,
   };
 }
 
@@ -296,9 +312,52 @@ export async function approveRun(input: {
   );
 }
 
+/** "Update my data": apply the re-upload with the owner's conflict choices. */
+export async function mergeRun(input: {
+  member: MemberWorkspace;
+  userId: string;
+  runId: string;
+  resolutions: Record<string, 'mine' | 'theirs'>;
+  queue: JobQueue;
+}): Promise<void> {
+  const run = await getRun(input.member, input.runId);
+  if (run.status !== 'merge_review')
+    throw new IngestionRequestError('This update isn’t waiting for you any more.');
+  const proposal = await latestProposal(run.id);
+  if (!proposal) throw new IngestionRequestError('We couldn’t find that import.');
+  await queueJob(input.runId, 'merging', () =>
+    input.queue.enqueue(
+      ingestMergeJob,
+      {
+        runId: input.runId,
+        proposalId: proposal.id,
+        resolutions: input.resolutions,
+        userId: input.userId,
+      },
+      { workspaceId: input.member.workspace.id },
+    ),
+  );
+}
+
+/** "Undo this update". */
+export async function undoRun(
+  member: MemberWorkspace,
+  userId: string,
+  runId: string,
+): Promise<{ edits: number }> {
+  await getRun(member, runId);
+  try {
+    return await undoReupload(runId, userId);
+  } catch (err) {
+    if (err instanceof ReuploadError || err instanceof UndoError)
+      throw new IngestionRequestError(err.message);
+    throw err;
+  }
+}
+
 export async function cancelRun(member: MemberWorkspace, runId: string): Promise<void> {
   const run = await getRun(member, runId);
-  if (run.status !== 'review' && run.status !== 'failed')
+  if (run.status !== 'review' && run.status !== 'failed' && run.status !== 'merge_review')
     throw new IngestionRequestError('This import can’t be cancelled right now.');
   await getAppDb()
     .update(ingestionRun)

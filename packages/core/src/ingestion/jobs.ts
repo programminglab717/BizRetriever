@@ -42,6 +42,8 @@ import { proposalSchema, questionEffectSchema, type ModelProposal } from './prop
 import { buildReview, type ProposalReview } from './review';
 import { proposalFacts, summarizeProposal } from './summary';
 import { validateTemplate } from '../narration';
+import { rememberSources, reuseKnownMappings } from '../merge/service';
+import { ingestMergeJob, previewReupload } from './reupload';
 
 /**
  * Ingestion jobs (ARCHITECTURE §11). Each step is idempotent and re-derives what it needs from the
@@ -151,12 +153,22 @@ export const ingestAnalyzeJob = defineJob<z.infer<typeof runInput>, AnalyzeState
           provider: getAiProvider(),
           workspaceId: ctx.workspace.id,
         });
+        // A re-upload: sheets we've seen before keep the mapping the owner approved (ADR-043).
+        const reused =
+          ctx.run.kind === 'reupload'
+            ? await reuseKnownMappings(ctx.workspace.id, analysis.profiled, out.proposal)
+            : undefined;
         return {
           state: {
             ...state,
-            proposal: out.proposal,
+            proposal: reused?.proposal ?? out.proposal,
             origin: out.origin,
-            spotted: out.spotted,
+            spotted: [
+              ...(reused?.matches ?? []).map(
+                (m) => `This looks like a newer version of “${m.label}”.`,
+              ),
+              ...out.spotted,
+            ],
             ...(out.userNote ? { aiNote: out.userNote } : {}),
           },
         };
@@ -345,6 +357,13 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
       async run({ input, state, reportProgress }) {
         await reportProgress('Bringing in your records', 40);
         const ctx = await loadRunContext(input.runId);
+        if (ctx.run.kind === 'reupload') {
+          // Nothing is written yet: work out what would change and ask the owner (merge preview).
+          await reportProgress('Comparing with your records', 60);
+          await previewReupload(ctx, input.proposalId);
+          await reportProgress('Ready for you to check', 100);
+          return { state };
+        }
         const stored = await getProposal(ctx.run.id, input.proposalId);
         if (!stored) throw new Error('proposal not found');
         const analysis = await analyzeRun(ctx);
@@ -367,6 +386,14 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
             return loadRecords(writer, catalog, result, uploadIds);
           },
           { timezone: ctx.settings.timezone },
+        );
+
+        await rememberSources(
+          ctx.workspace.id,
+          ctx.run.id,
+          stored.proposal,
+          analysis.profiled,
+          (sourceId) => ctx.uploads[Number(/^f(\d+):/.exec(sourceId)?.[1] ?? 0)]!.id,
         );
 
         await reportProgress('Working out what we can measure', 80);
@@ -477,4 +504,9 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
   ],
 });
 
-export const ingestionJobs = [ingestAnalyzeJob, ingestReviseJob, ingestApplyJob] as const;
+export const ingestionJobs = [
+  ingestAnalyzeJob,
+  ingestReviseJob,
+  ingestApplyJob,
+  ingestMergeJob,
+] as const;

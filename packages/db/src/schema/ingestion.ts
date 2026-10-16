@@ -41,6 +41,9 @@ export const ingestionRunStatus = [
   'review',
   'revising',
   'applying',
+  /** Re-upload: the merge preview is ready for the owner. */
+  'merge_review',
+  'merging',
   'done',
   'failed',
   'cancelled',
@@ -67,6 +70,8 @@ export const ingestionRun = app.table(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp('finished_at', { withTimezone: true }),
+    /** A re-upload whose merge was undone ("Undo this update"). */
+    undoneAt: timestamp('undone_at', { withTimezone: true }),
   },
   (t) => [
     index('ingestion_run_workspace_idx').on(t.workspaceId, t.createdAt),
@@ -214,6 +219,49 @@ export const qualityReport = app.table('quality_report', {
     .notNull()
     .references(() => workspace.id, { onDelete: 'cascade' }),
   report: jsonb('report').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * A file the business keeps sending us (ADR-043): its header fingerprint, the mapping that was
+ * approved for it, and the uploads that fed it. A re-upload with the same fingerprint reuses the
+ * mapping, and only records from these uploads can be "missing" from the new file.
+ */
+export const dataSource = app.table(
+  'data_source',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    /** "Online orders 2025-26.xlsx · Website" */
+    label: text('label').notNull(),
+    fileName: text('file_name').notNull(),
+    sheetName: text('sheet_name').notNull(),
+    /** Normalised header names in order. */
+    signature: text('signature').notNull(),
+    /** The approved source mapping (its sourceId is rewritten on reuse). */
+    mapping: jsonb('mapping').notNull(),
+    uploadIds: jsonb('upload_ids').$type<string[]>().notNull().default([]),
+    lastRunId: uuid('last_run_id').references(() => ingestionRun.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('data_source_workspace_idx').on(t.workspaceId),
+    unique('data_source_signature_uq').on(t.workspaceId, t.signature, t.sheetName),
+  ],
+);
+
+/** What a re-upload would change (the merge preview the owner approves). */
+export const mergePreview = app.table('merge_preview', {
+  runId: uuid('run_id')
+    .primaryKey()
+    .references(() => ingestionRun.id, { onDelete: 'cascade' }),
+  workspaceId: uuid('workspace_id')
+    .notNull()
+    .references(() => workspace.id, { onDelete: 'cascade' }),
+  preview: jsonb('preview').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

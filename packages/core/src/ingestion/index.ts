@@ -47,10 +47,13 @@ export {
   getRunView,
   IngestionRequestError,
   listRuns,
+  mergeRun,
   reviseRun,
+  undoRun,
   startIngestion,
   UPLOAD_LIMITS,
   type IncomingFile,
   type ReviewAction,
   type RunView,
 } from './service';
+export { getMergePreview, ingestMergeJob } from './reupload';
