@@ -25,6 +25,54 @@ async function createBusiness(page: Page, businessName: string) {
 }
 
 test.describe('accounts and workspaces', () => {
+  test('an owner invites a member by link; members can’t invite or delete', async ({ browser }) => {
+    const owner = await browser.newContext();
+    const page = await owner.newPage();
+    await signUp(page, 'Avery Owner', uniqueEmail('owner'), 'correct horse battery');
+    await createBusiness(page, `Fernwood Team ${Date.now()}`);
+    const base = page.url().replace(/\/home$/, '');
+    await page.goto(`${base}/settings`);
+    const friend = uniqueEmail('friend');
+    await page.getByLabel('Email of the person to invite').fill(friend);
+    await page.getByRole('button', { name: 'Invite' }).click();
+    await expect(page.getByTestId('invite-sent')).toContainText(`Invitation ready for ${friend}.`);
+    const link = await page.getByLabel('Invitation link').inputValue();
+    await expect(page.getByTestId('member-list')).toContainText(friend);
+
+    // The invited person opens the link, creates an account and joins.
+    const guest = await browser.newContext();
+    const them = await guest.newPage();
+    await them.goto(new URL(link).pathname);
+    await expect(them.getByRole('heading', { name: /^Join Fernwood Team/ })).toBeVisible();
+    await them.getByRole('link', { name: 'Create an account' }).click();
+    await them.getByLabel('Your name').fill('Sam Member');
+    await them.getByLabel('Email').fill(friend);
+    await them.getByLabel('Password').fill('correct horse battery');
+    await them.getByRole('button', { name: 'Create my account' }).click();
+    await expect(them).toHaveURL(/\/invite\//);
+    await them.getByRole('button', { name: 'Join' }).click();
+    await expect(them).toHaveURL(/\/w\/[a-z0-9-]+\/home$/);
+    await them.goto(`${new URL(them.url()).pathname.replace(/\/home$/, '')}/settings`);
+    await expect(them.getByText('Only the owner can invite people.')).toBeVisible();
+    await expect(them.getByRole('button', { name: 'Delete this business forever' })).toHaveCount(0);
+
+    // The link works once.
+    const third = await (await browser.newContext()).newPage();
+    await third.goto(new URL(link).pathname);
+    await expect(third.getByText('This invitation has already been used.')).toBeVisible();
+
+    // The owner sees them and can remove them.
+    await page.reload();
+    const row = page
+      .getByTestId('member-list')
+      .getByRole('listitem')
+      .filter({ hasText: 'Sam Member' });
+    await row.getByRole('button', { name: 'Remove' }).click();
+    await expect(page.getByTestId('member-list')).not.toContainText('Sam Member');
+    await owner.close();
+    await guest.close();
+  });
+
   test('a new owner can sign up, set up a business, use the app and delete it', async ({
     page,
   }) => {

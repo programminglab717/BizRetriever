@@ -72,6 +72,31 @@ export const workspaceMember = app.table(
   ],
 );
 
+/**
+ * An invitation to join a business (M6). Only a hash of the link's token is stored. Pending until
+ * accepted, revoked or expired (7 days).
+ */
+export const workspaceInvite = app.table(
+  'workspace_invite',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    /** Lower case. */
+    email: text('email').notNull(),
+    role: text('role', { enum: memberRoles }).notNull().default('member'),
+    tokenHash: text('token_hash').notNull().unique(),
+    invitedBy: uuid('invited_by').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    acceptedBy: uuid('accepted_by').references(() => user.id, { onDelete: 'set null' }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (t) => [index('workspace_invite_workspace_idx').on(t.workspaceId, t.email)],
+);
+
 export const dateOrders = ['DMY', 'MDY', 'YMD'] as const;
 export type DateOrder = (typeof dateOrders)[number];
 

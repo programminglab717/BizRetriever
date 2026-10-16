@@ -28,7 +28,7 @@ export default async function SignInPage({
         <p className="text-center text-sm text-muted-foreground">
           New here?{' '}
           <Link
-            href="/sign-up"
+            href={next ? `/sign-up?next=${encodeURIComponent(next)}` : '/sign-up'}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             Create a free account

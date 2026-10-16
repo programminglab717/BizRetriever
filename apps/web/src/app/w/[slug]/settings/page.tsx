@@ -1,7 +1,8 @@
-import { COMMON_CURRENCIES } from '@bizr/core/workspaces';
+import { COMMON_CURRENCIES, listMembers } from '@bizr/core/workspaces';
 
 import { BusinessForm } from '@/components/settings/business-form';
 import { DeleteBusiness } from '@/components/settings/delete-business';
+import { Members } from '@/components/settings/members';
 import { PageHeader } from '@/components/shell/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireWorkspace } from '@/lib/session';
@@ -10,7 +11,9 @@ import { deleteBusiness, updateBusiness } from './actions';
 
 export default async function SettingsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { workspace, settings, role } = await requireWorkspace(slug);
+  const member = await requireWorkspace(slug);
+  const { workspace, settings, role } = member;
+  const people = await listMembers(member);
   return (
     <div className="grid gap-6">
       <PageHeader title="Settings" />
@@ -29,6 +32,14 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
             }}
             currencies={COMMON_CURRENCIES}
           />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>People</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Members slug={slug} list={people} isOwner={role === 'owner'} me={member.user.id} />
         </CardContent>
       </Card>
       {role === 'owner' ? (

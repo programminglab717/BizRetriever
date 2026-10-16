@@ -85,6 +85,13 @@
       "when": 1792160962377,
       "tag": "0011_structure_history",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792164315300,
+      "tag": "0012_invites",
+      "breakpoints": true
     }
   ]
 }

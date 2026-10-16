@@ -29,7 +29,7 @@ export default async function SignUpPage({
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link
-            href="/sign-in"
+            href={next ? `/sign-in?next=${encodeURIComponent(next)}` : '/sign-in'}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             Sign in
