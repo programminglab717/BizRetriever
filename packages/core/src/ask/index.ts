@@ -42,3 +42,7 @@ export {
   unpinTile,
 } from './service';
 export type { AnswerContent, AskOptions, AskResult, FeedbackReason } from './service';
+export { answerView, formatValue, kpiViews, tableView } from './view';
+export type { AnswerView, KpiView, TableView, ViewColumn, ViewOptions, ViewRow } from './view';
+export { dashboardTiles } from './tiles';
+export type { TileView } from './tiles';

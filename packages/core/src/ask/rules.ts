@@ -359,10 +359,14 @@ export function interpretWithRules(
   const p = parse(question, catalog);
   const metric = (id: string) => catalog.metrics.find((m) => m.id === id);
   const assumptions: string[] = [];
+  // A follow-up starts like one ("and…", "what about…"), or names only a new breakdown, value or
+  // period ("by product", "last year"). "Who are my best customers?" is a new question.
   const followUp =
     Boolean(previous) &&
     (/^\s*(and|what about|how about|now|only|just|also|same|but)\b/i.test(question) ||
       (p.metrics.length === 0 &&
+        !p.rank &&
+        !p.who &&
         (p.dims.length > 0 || p.values.length > 0 || Boolean(p.time) || Boolean(p.grain))));
 
   // "How many Sage Mugs did I sell?" counts items, not money.

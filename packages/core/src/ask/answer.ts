@@ -288,7 +288,9 @@ export function answerFacts(data: AnswerData, ctx: FactContext): AnswerFacts {
 
   const dir = ctx.spec.orderBy?.dir ?? 'desc';
   const order = dir === 'desc' ? 'highest' : 'lowest';
-  data.rows.slice(0, 3).forEach((row, i) => {
+  // "Who are my best customers?" shouldn't name "Not recorded": rank only rows with every breakdown.
+  const named = data.rows.filter((r) => fieldDims.every((d) => r[d.key] !== null));
+  named.slice(0, 3).forEach((row, i) => {
     const n = i + 1;
     add(
       `top${n}_label`,
@@ -303,8 +305,8 @@ export function answerFacts(data: AnswerData, ctx: FactContext): AnswerFacts {
         valueFact(c.format, row[c.key] ?? null),
       );
   });
-  const last = data.rows.at(-1);
-  if (last && data.rows.length > 3) {
+  const last = named.at(-1);
+  if (last && named.length > 3) {
     add('last_label', 'the last one in the list', text(labelOf(last)));
     add(
       'last_value',

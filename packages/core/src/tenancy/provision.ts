@@ -96,3 +96,21 @@ async function ensureRole(client: pg.PoolClient, name: string): Promise<void> {
     await client.query(`CREATE ROLE ${ident(name)} NOLOGIN`);
   }
 }
+
+/**
+ * Refreshes the planner's statistics for a tenant's tables. Run after every bulk load: without it a
+ * freshly loaded table looks empty to Postgres and joins over it can take seconds instead of
+ * milliseconds. Runs as `bizr_admin`, which owns tenant tables.
+ */
+export async function analyzeTenant(schema: string): Promise<void> {
+  const client = await getPool('admin').connect();
+  try {
+    const { rows } = await client.query<{ tablename: string }>(
+      'SELECT tablename FROM pg_tables WHERE schemaname = $1 ORDER BY tablename',
+      [schema],
+    );
+    for (const r of rows) await client.query(`ANALYZE ${ident(schema)}.${ident(r.tablename)}`);
+  } finally {
+    client.release();
+  }
+}

@@ -111,6 +111,21 @@ describe('answers', () => {
     );
   });
 
+  it('doesn’t name a blank breakdown as the top one', () => {
+    const { text } = say(
+      [
+        { key: 'd0', kind: 'dimension', label: 'Customer', dimension: { field: 'customer.name' } },
+        ...money('net_sales', 'Net sales'),
+      ],
+      [
+        { d0: null, m_net_sales: '900' },
+        { d0: 'Bloom & Co', m_net_sales: '500' },
+      ],
+      spec({ dimensions: [{ field: 'customer.name' }] }),
+    );
+    expect(text).toMatch(/^Bloom & Co had the highest net sales/);
+  });
+
   it('shows channel names, not codes', () => {
     const { text } = say(
       [

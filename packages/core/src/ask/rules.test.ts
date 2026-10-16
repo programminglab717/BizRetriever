@@ -307,6 +307,10 @@ describe('interpretWithRules: follow-ups', () => {
     });
   });
 
+  it('a ranking question isn’t a follow-up', () => {
+    expect(ask('Who are my best customers?', previous).interpretation.kind).toBe('clarify');
+  });
+
   it('a new full question starts fresh', () => {
     expect(spec('how many orders this year', previous)).toEqual({
       metrics: ['order_count'],

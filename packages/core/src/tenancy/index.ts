@@ -1,2 +1,2 @@
 export { newTenantSchemaName, tenantNames, type TenantNames } from './names';
-export { deprovisionTenant, provisionTenant } from './provision';
+export { analyzeTenant, deprovisionTenant, provisionTenant } from './provision';

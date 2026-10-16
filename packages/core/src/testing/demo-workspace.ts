@@ -16,6 +16,7 @@ import { loadRecords } from '../ingestion/load';
 import { materialize } from '../ingestion/materialize';
 import { entitySpecs } from '../ingestion/pipeline';
 import { refreshSemanticCatalog } from '../semantic/service';
+import { analyzeTenant } from '../tenancy/provision';
 import {
   createWorkspace,
   deleteWorkspace,
@@ -92,6 +93,7 @@ export async function loadDemoWorkspace(options: {
         ),
       { timezone },
     );
+    await analyzeTenant(ws.tenantSchema);
     await refreshSemanticCatalog(ws);
     return {
       member,

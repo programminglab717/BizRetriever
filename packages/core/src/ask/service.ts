@@ -41,6 +41,7 @@ import {
   type QuestionSpec,
 } from './interpretation';
 import { explainFallbackSql, narrate } from './narrate';
+import { periodLabel } from './time';
 
 /**
  * Ask (PRODUCT_SPEC §2.1): one question in, one stored answer out. Interprets (rules, then AI),
@@ -70,6 +71,8 @@ export interface AnswerContent {
   fixedDates?: boolean;
   /** Whether the AI wrote the headline (for evals). */
   narration?: 'ai' | 'template';
+  /** The period a comparison was made with ("August 2026"). */
+  comparedWith?: string;
 }
 
 export interface AskResult {
@@ -306,6 +309,7 @@ async function render(
             assumptions,
             details: { sql: result.sql, custom: false, rows: data.totalRows },
             fixedDates: !('preset' in spec.timeRange),
+            ...(result.previousPeriod ? { comparedWith: periodLabel(result.previousPeriod) } : {}),
           },
         };
       } catch (err) {
@@ -561,7 +565,7 @@ export function suggestedQuestions(
   const pack = getPack(member.workspace.packId);
   const ok = pack.questions.filter((q) => q.needs.every((id) => available.has(id)));
   // One from each group first, then the rest.
-  const firsts = [...new Map(ok.map((q) => [q.group, q])).values()];
+  const firsts = ok.filter((q, i) => ok.findIndex((x) => x.group === q.group) === i);
   const rest = ok.filter((q) => !firsts.includes(q));
   return [...firsts, ...rest].slice(0, limit);
 }

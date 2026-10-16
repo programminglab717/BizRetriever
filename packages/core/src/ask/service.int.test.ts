@@ -57,7 +57,7 @@ describe.skipIf(!hasDb)('Ask service (integration)', () => {
     expect(r.content.chart).toBe('kpi');
     expect(r.content.steps!.join(' ')).toMatch(/Net sales:/);
     expect(r.content.details!.sql).toMatch(/^WITH/);
-  });
+  }, 30_000);
 
   it('asks which “best” is meant, then answers the choice', async () => {
     const q = await askQuestion(
@@ -82,7 +82,7 @@ describe.skipIf(!hasDb)('Ask service (integration)', () => {
     expect(a.content.assumptions[0]).toBe('I took it to mean “how much they spend”.');
     expect(a.content.data!.rows.length).toBeGreaterThan(1);
     expect(a.content.chart).toBe('bar_horizontal');
-  });
+  }, 30_000);
 
   it('follows up in the same conversation', async () => {
     const first = await askQuestion(
@@ -124,7 +124,7 @@ describe.skipIf(!hasDb)('Ask service (integration)', () => {
     expect(convo[0]).toMatchObject({ feedback: -1, pinned: true });
     await unpinTile(demo.member, tileId);
     expect((await getConversation(demo.member, r.conversationId))[0]!.pinned).toBe(false);
-  });
+  }, 30_000);
 
   it('refuses conversations and answers from elsewhere', async () => {
     await expect(

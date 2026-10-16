@@ -18,6 +18,7 @@ import { planFromPack } from '../change-plan/from-pack';
 import { withTenantWriter } from '../executor/write';
 import { defineJob } from '../jobs/define';
 import { refreshSemanticCatalog } from '../semantic/service';
+import { analyzeTenant } from '../tenancy/provision';
 import { proposeDataModel, refineWithDryRun, reviseDataModel } from './ai-proposal';
 import { describeChanges } from './changes';
 import { applyCorrections, type Correction } from './corrections';
@@ -368,6 +369,7 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
         );
 
         await reportProgress('Working out what we can measure', 80);
+        await analyzeTenant(ctx.workspace.tenantSchema);
         await refreshSemanticCatalog({
           id: ctx.workspace.id,
           tenantSchema: ctx.workspace.tenantSchema,

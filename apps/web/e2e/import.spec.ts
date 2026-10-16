@@ -89,4 +89,40 @@ test('an owner imports their messy spreadsheets and gets a data report', async (
   await expect(netSales).toContainText('Takings');
   await page.reload();
   await expect(page.getByTestId('measure-net_sales')).toContainText('Takings');
+
+  // Ask (M4): a suggested question, a clarifying one, feedback and pinning. Rules only: no AI in tests.
+  const base = page.url().replace(/\/glossary$/, '');
+  await page.goto(`${base}/ask`);
+  await expect(page.getByText('Ask me anything about your business.')).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Which products made me the most profit last month?' })
+    .click();
+  const card = page.getByTestId('answer-card').last();
+  await expect(card).toContainText('Gross profit by product', { timeout: 30_000 });
+  await expect(card.locator('strong').first()).toBeVisible();
+  await expect(card).toContainText('I took “profit” to mean gross profit');
+  await card.getByRole('button', { name: 'Show as table' }).click();
+  await expect(card.getByRole('table')).toBeVisible();
+  await card.getByText('How I calculated this').click();
+  await expect(card).toContainText('Gross profit: Net sales − cost of goods sold.');
+  await card.getByRole('button', { name: 'Good answer' }).click();
+  await expect(page.getByText('Thanks, that helps us get better.')).toBeVisible();
+  await card.getByRole('button', { name: 'Add to dashboard' }).click();
+  await expect(page.getByText('Added to your dashboard.')).toBeVisible();
+
+  await page.getByLabel('Your question').fill('Who are my best customers?');
+  await page.getByLabel('Your question').press('Enter');
+  const clarify = page.getByTestId('clarify-card');
+  await expect(clarify).toContainText('how much they spend or how often they order', {
+    timeout: 30_000,
+  });
+  await clarify.getByRole('button', { name: 'How much they spend' }).click();
+  await expect(page.getByTestId('answer-card')).toHaveCount(2, { timeout: 30_000 });
+  await expect(page.getByTestId('answer-card').last()).toContainText('by customer');
+
+  // The conversation survives a reload, and the pinned answer is on the dashboard.
+  await page.reload();
+  await expect(page.getByTestId('answer-card')).toHaveCount(2);
+  await page.goto(`${base}/dashboard`);
+  await expect(page.getByTestId('dashboard-tile')).toContainText('Gross profit by product');
 });
