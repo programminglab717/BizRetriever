@@ -178,6 +178,9 @@ class Rejected extends Error {}
 
 type Node = Record<string, unknown>;
 
+/** A string property of an AST node ('' when absent or not a string). */
+const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+
 const names = (list: unknown): string[] =>
   Array.isArray(list)
     ? list.map((n) => {
@@ -212,7 +215,7 @@ function checkNode(
       break;
     }
     case 'CommonTableExpr': {
-      const name = String(node.ctename ?? '').toLowerCase();
+      const name = str(node.ctename).toLowerCase();
       if (scope.relations.has(name)) throw new Rejected(`WITH name ${name} hides a table`);
       if (node.ctematerialized && node.ctematerialized !== 'CTEMaterializeDefault')
         throw new Rejected('materialization hint');
@@ -222,8 +225,8 @@ function checkNode(
       if (node.catalogname) throw new Rejected('catalog-qualified relation');
       // Qualified names (even the tenant's own schema) would bypass the shadow copies below.
       if (node.schemaname)
-        throw new Rejected(`schema-qualified relation ${String(node.schemaname)}`);
-      const rel = String(node.relname ?? '');
+        throw new Rejected(`schema-qualified relation ${str(node.schemaname)}`);
+      const rel = str(node.relname);
       if (ctes.has(rel.toLowerCase())) break;
       if (!scope.relations.has(rel)) throw new Rejected(`unknown relation ${rel}`);
       used.add(rel);
@@ -268,7 +271,7 @@ function checkNode(
     case 'A_Expr': {
       const op = names(node.name);
       if (op.length !== 1) throw new Rejected('qualified operator');
-      const kind = String(node.kind ?? '');
+      const kind = str(node.kind);
       if (['AEXPR_OP', 'AEXPR_OP_ANY', 'AEXPR_OP_ALL'].includes(kind) && !OPERATORS.has(op[0]!))
         throw new Rejected(`operator ${op[0]}`);
       if (kind === 'AEXPR_SIMILAR') throw new Rejected('SIMILAR TO');
@@ -276,7 +279,7 @@ function checkNode(
     }
     case 'SubLink': {
       if (node.subLinkType === 'ARRAY_SUBLINK' || node.subLinkType === 'MULTIEXPR_SUBLINK')
-        throw new Rejected(`${String(node.subLinkType)}`);
+        throw new Rejected(`${str(node.subLinkType)}`);
       break;
     }
   }
@@ -333,7 +336,7 @@ function shadow(scope: SqlScope, rel: string): string {
 export async function validateFallbackSql(sql: string, scope: SqlScope): Promise<SqlValidation> {
   try {
     if (sql.length > LIMITS.maxLength) throw new Rejected('too long');
-    if (/\u0000/.test(sql)) throw new Rejected('NUL character');
+    if (sql.includes(String.fromCharCode(0))) throw new Rejected('NUL character');
     let tree: { stmts?: { stmt: Node; stmt_location?: number; stmt_len?: number }[] };
     try {
       tree = (await parse(sql)) as typeof tree;
