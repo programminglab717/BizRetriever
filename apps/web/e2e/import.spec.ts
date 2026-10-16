@@ -75,4 +75,18 @@ test('an owner imports their messy spreadsheets and gets a data report', async (
   await page.getByRole('link', { name: 'Go to my data' }).click();
   await expect(page.getByRole('heading', { name: 'My data' })).toBeVisible();
   await expect(page.getByText('Brought in', { exact: true })).toBeVisible();
+
+  // What we track: every measure is available on the demo data, and names can be changed.
+  await page.goto(page.url().replace(/\/data$/, '/glossary'));
+  await expect(page.getByRole('heading', { name: 'What we track' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Measures (28)' })).toBeVisible();
+  await expect(page.getByTestId('record-type-sale')).toContainText('5,571 records');
+  await expect(page.getByTestId('record-type-sale')).toContainText('Sales are linked to customers');
+  const netSales = page.getByTestId('measure-net_sales');
+  await netSales.getByRole('button', { name: 'Rename Net sales' }).click();
+  await netSales.getByLabel('New name for Net sales').fill('Takings');
+  await netSales.getByRole('button', { name: 'Save' }).click();
+  await expect(netSales).toContainText('Takings');
+  await page.reload();
+  await expect(page.getByTestId('measure-net_sales')).toContainText('Takings');
 });

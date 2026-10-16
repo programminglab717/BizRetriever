@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  BookOpen,
   Home,
   LayoutDashboard,
   Menu,
@@ -13,7 +14,7 @@ import { usePathname } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 
-type Segment = 'home' | 'ask' | 'dashboard' | 'data' | 'more' | 'settings';
+type Segment = 'home' | 'ask' | 'dashboard' | 'data' | 'more' | 'settings' | 'glossary';
 
 interface NavItem {
   segment: Segment;
@@ -33,7 +34,7 @@ function useActiveSegment(slug: string): string | undefined {
   const pathname = usePathname();
   const rest = pathname.slice(`/w/${slug}/`.length);
   const segment = rest.split('/')[0];
-  return segment === 'settings' ? 'more' : segment;
+  return segment;
 }
 
 /** Left sidebar, shown from the `md` breakpoint up. */
@@ -41,7 +42,11 @@ export function SidebarNav({ slug }: { slug: string }) {
   const active = useActiveSegment(slug);
   return (
     <nav aria-label="Main" className="grid gap-1">
-      {[...ITEMS, { ...MORE, label: 'Settings', segment: 'settings' as const }].map((item) => {
+      {[
+        ...ITEMS,
+        { label: 'What we track', segment: 'glossary' as const, icon: BookOpen },
+        { ...MORE, label: 'Settings', segment: 'settings' as const },
+      ].map((item) => {
         const isActive =
           active === item.segment || (item.segment === 'settings' && active === 'more');
         return (
@@ -65,7 +70,8 @@ export function SidebarNav({ slug }: { slug: string }) {
 
 /** Bottom tab bar for phones (below `md`). */
 export function BottomNav({ slug }: { slug: string }) {
-  const active = useActiveSegment(slug);
+  const segment = useActiveSegment(slug);
+  const active = segment === 'settings' || segment === 'glossary' ? 'more' : segment;
   return (
     <nav
       aria-label="Main"

@@ -2661,7 +2661,7 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
         {
           "id": "overdue_receivables",
           "label": "Overdue money owed",
-          "description": "Money owed to you on sales past their payment due date. Sales without a due date count as due thirty days after the sale.",
+          "description": "Money owed to you on sales past their payment due date.",
           "format": "money",
           "good_direction": "down",
           "ir": {
