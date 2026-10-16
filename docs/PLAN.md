@@ -393,12 +393,12 @@ records by chat, structural changes by chat with versioning and rollback.
 
 **Re-upload:**
 
-- [ ] Data-source fingerprinting + match confirmation
-- [ ] Merge/diff engine (`packages/core/merge`), **test-first**:
+- [x] Data-source fingerprinting + match confirmation
+- [x] Merge/diff engine (`packages/core/merge`), **test-first**:
   - new / changed / unchanged / missing / conflicts
   - never auto-delete
   - `record_edit` for undo
-- [ ] Re-upload UI: change preview, conflict resolution, apply, undo
+- [x] Re-upload UI: change preview, conflict resolution, apply, undo
 
 **Records:**
 
