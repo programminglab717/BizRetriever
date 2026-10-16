@@ -22,7 +22,8 @@
     "./merge": "./src/merge/index.ts",
     "./records": "./src/records/index.ts",
     "./structure": "./src/structure/index.ts",
-    "./insights": "./src/insights/index.ts"
+    "./insights": "./src/insights/index.ts",
+    "./demo": "./src/demo/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
@@ -30,6 +31,7 @@
   "dependencies": {
     "@bizr/ai": "workspace:*",
     "@bizr/db": "workspace:*",
+    "@bizr/demo-data": "workspace:*",
     "@bizr/ingest": "workspace:*",
     "@bizr/packs": "workspace:*",
     "@bizr/platform": "workspace:*",
@@ -40,7 +42,6 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@bizr/demo-data": "workspace:*",
     "@types/pg": "^8.15.6"
   }
 }

@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
+import { BusinessesSection } from '@/components/demo/businesses-section';
 import { PageHeader } from '@/components/shell/page-header';
 import { SignOutButton } from '@/components/shell/sign-out-button';
 import { requireWorkspace } from '@/lib/session';
@@ -46,6 +47,7 @@ export default async function MorePage({ params }: { params: Promise<{ slug: str
           </Link>
         </li>
       </ul>
+      <BusinessesSection userId={user.id} currentSlug={slug} />
       <div className="grid gap-1 text-sm">
         <p className="text-muted-foreground">Signed in as {user.email}</p>
         <SignOutButton className="justify-self-start px-0" />

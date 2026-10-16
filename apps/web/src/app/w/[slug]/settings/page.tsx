@@ -3,6 +3,7 @@ import { COMMON_CURRENCIES, listMembers } from '@bizr/core/workspaces';
 import { BusinessForm } from '@/components/settings/business-form';
 import { DeleteBusiness } from '@/components/settings/delete-business';
 import { Members } from '@/components/settings/members';
+import { BusinessesSection } from '@/components/demo/businesses-section';
 import { PageHeader } from '@/components/shell/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireWorkspace } from '@/lib/session';
@@ -42,6 +43,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
           <Members slug={slug} list={people} isOwner={role === 'owner'} me={member.user.id} />
         </CardContent>
       </Card>
+      {/* On phones this lives on More. */}
+      <div className="hidden md:block">
+        <BusinessesSection userId={member.user.id} currentSlug={slug} />
+      </div>
       {role === 'owner' ? (
         <Card className="border-destructive/40">
           <CardHeader>

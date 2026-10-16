@@ -3,6 +3,7 @@ import { listPacks } from '@bizr/packs';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { TryDemoButton } from '@/components/demo/try-demo-button';
 import { OnboardingForm, type IndustryOption } from '@/components/onboarding/onboarding-form';
 import { requireUser } from '@/lib/session';
 
@@ -49,6 +50,19 @@ export default async function OnboardingPage() {
           </h1>
           <p className="text-muted-foreground">This helps us read your files correctly.</p>
         </header>
+        <section
+          aria-label="Try the demo shop"
+          className="grid gap-3 rounded-lg border border-dashed p-4 text-sm"
+        >
+          <p>
+            <span className="font-medium">Just looking?</span>{' '}
+            <span className="text-muted-foreground">
+              Try it with Fernwood Home & Gift, a demo gift shop with a year of messy spreadsheets.
+              You’ll see exactly what happens with your own files.
+            </span>
+          </p>
+          <TryDemoButton />
+        </section>
         <OnboardingForm
           action={createBusiness}
           industries={industries}
