@@ -64,6 +64,8 @@ export default defineConfig([
       'evals/runner/cli.ts',
       'evals/runner/questions-cli.ts',
       'evals/runner/dashboard-cli.ts',
+      'evals/runner/chat-cli.ts',
+      'apps/worker/src/cli/snapshot-gc.ts',
     ],
     rules: { 'no-console': 'off' },
   },

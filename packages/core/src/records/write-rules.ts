@@ -167,6 +167,12 @@ function allowedValue(e: CatalogEntity, text: string): { field: FieldDef; value:
 function valueFor(f: FieldDef, raw: string): string {
   const s = clean(raw).replace(/^["“”']|["“”']$/g, '');
   if (['money', 'decimal', 'integer'].includes(f.type)) return amount(s);
+  if (f.type === 'boolean')
+    return /^(?:yes|y|true|1|on)$/i.test(s)
+      ? 'true'
+      : /^(?:no|n|false|0|off)$/i.test(s)
+        ? 'false'
+        : s;
   if (f.allowedValues?.length) {
     const v = words(s).join('_');
     return f.allowedValues.find((a) => words(a.replace(/_/g, ' ')).join('_') === v) ?? s;
@@ -196,12 +202,14 @@ function saleDraft(
   const sale = catalog.find((e) => e.key === 'sale');
   const line = catalog.find((e) => e.key === 'sale_line');
   if (!sale || !line) return null;
-  const m =
-    /^(?:add|record|log|enter|put in)\s+(?:a\s+|an\s+)?(?:new\s+)?(?:sale|order)\b(?:\s+of\b)?[:,-]?\s*(.+)$/i.exec(
+  // "Add a sale: …", "New order: …", "Record a wholesale sale of …", "I sold …".
+  const verb =
+    /^(?:add|record|log|enter|put in|new)\s+(?:a\s+|an\s+)?(?:new\s+)?(?<kind>(?:wholesale|online|website|etsy|amazon|ebay)\s+)?(?:sale|order)\b(?:\s+of\b)?[:,-]?\s*(?<body>.+)$/i.exec(
       text,
-    ) ?? /^(?:i\s+|we\s+)?(?:just\s+)?sold\s+(.+)$/i.exec(text);
-  if (!m) return null;
-  let body = ` ${m[1]!} `;
+    ) ?? /^(?:i\s+|we\s+)?(?:just\s+)?sold\s+(?<body>.+)$/i.exec(text);
+  if (!verb?.groups?.body) return null;
+  const kind = verb.groups.kind?.trim().toLowerCase();
+  let body = ` ${verb.groups.body} ${kind === 'wholesale' ? 'wholesale' : kind ? `on ${kind}` : ''} `;
   const values: Record<string, string> = {};
   const { date, rest } = takeDate(body, ctx.today);
   body = rest;
@@ -213,16 +221,19 @@ function saleDraft(
       break;
     }
   let price: string | null = null;
+  // A price says so: "$12", "at 12", "12 each" (but "for 2 mugs" is a quantity).
   const pm =
-    /\s(?:at|for|@)\s*[$£€]?\s*(\d+(?:[.,]\d{1,2})?)\s*(?:each|apiece|a piece|per item|per unit|ea)?(?=\s|$)/i.exec(
+    /\s(?:at|for|@)\s*(?:[$£€]\s*(\d+(?:[.,]\d{1,2})?)(?:\s*(?:each|apiece|a piece|per item|per unit|ea)\b)?|(\d+(?:[.,]\d{1,2})?)\s*(?:each|apiece|a piece|per item|per unit|ea)\b)(?=\s|$)/i.exec(
       body,
-    );
+    ) ?? /\s(?:at|@)\s*(\d+(?:[.,]\d{1,2})?)(?=\s|$)/i.exec(body);
   if (pm) {
-    price = pm[1]!.replace(',', '.');
+    price = (pm[1] ?? pm[2]!).replace(',', '.');
     body = body.replace(pm[0], ' ');
   }
+  body = body.replace(/^\s*(?:for|of|with)\s+/i, ' ');
   const mentions: Record<string, string> = {};
-  const cm = /\s(?:to|for)\s+(.+?)\s*$/i.exec(body);
+  // "to Bloom & Co" (not "for 2 mugs").
+  const cm = /\s(?:to|for)\s+(?!\d|an?\s)(.+?)\s*$/i.exec(body);
   if (cm) {
     mentions.customer = clean(cm[1]!);
     body = body.slice(0, cm.index);

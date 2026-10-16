@@ -1,5 +1,5 @@
 /**
- * `pnpm eval [--suite ingest|questions|dashboard|all] [--case NAME] [--limit N] [--demo] [--ai] [--yes]
+ * `pnpm eval [--suite ingest|questions|dashboard|records|changes|all] [--case NAME] [--limit N] [--demo] [--ai] [--yes]
  * [--update-baseline]`
  *
  * Without `--ai` the suite runs the rule-based proposer only: free and offline. With `--ai` it calls
@@ -39,9 +39,13 @@ const { values } = parseArgs({
 });
 
 const suite = values.suite ?? 'all';
-if (!['ingest', 'questions', 'dashboard', 'all'].includes(suite)) {
-  console.error('--suite is ingest, questions, dashboard or all');
+if (!['ingest', 'questions', 'dashboard', 'records', 'changes', 'all'].includes(suite)) {
+  console.error('--suite is ingest, questions, dashboard, records, changes or all');
   process.exit(1);
+}
+if (suite === 'records' || suite === 'changes') {
+  const { runChatCli } = await import('./chat-cli');
+  process.exit(await runChatCli(suite, values));
 }
 if (suite === 'dashboard') {
   const { runDashboardCli } = await import('./dashboard-cli');
@@ -139,5 +143,10 @@ if (suite === 'all' && !values.case) {
   console.log('\n--- Dashboard edits ---');
   const { runDashboardCli } = await import('./dashboard-cli');
   code = Math.max(code, await runDashboardCli(values));
+  const { runChatCli } = await import('./chat-cli');
+  for (const s of ['records', 'changes'] as const) {
+    console.log(`\n--- ${s === 'records' ? 'Record writes' : 'Change plans'} ---`);
+    code = Math.max(code, await runChatCli(s, values));
+  }
 }
 process.exit(code);

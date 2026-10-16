@@ -1,0 +1,284 @@
+# Record write evals (AI_DESIGN Task H) on the Fernwood demo business (today = 2026-10-13).
+# `values` are details expected on the main record; `links` the linked record's name ("new:" when it
+# should be created); `lines` the items of a sale; `target` the record an update changes. Anything
+# written that isn't expected counts as unintended.
+
+# --- Sales --------------------------------------------------------------------------------------
+- id: sale-spec-example
+  request: 'Add a sale: 5 Sage mugs to Bloom & Co today'
+  expect: plan
+  operation: insert
+  entity: sale
+  values: { sale_date: '2026-10-13', status: completed }
+  links: { customer: Bloom & Co }
+  lines: [{ product: Sage Stoneware Mug, quantity: 5, unit_price: 18 }]
+  total: 90
+- id: sale-sold-two-items-etsy
+  request: I sold 2 Glass Carafe and 1 Wedding Card on Etsy yesterday
+  expect: plan
+  operation: insert
+  entity: sale
+  values: { sale_date: '2026-10-12', channel: etsy }
+  lines: [{ product: Glass Carafe, quantity: 2 }, { product: Wedding Card, quantity: 1 }]
+- id: sale-price-each-in-shop
+  request: record a sale of 3 x Linen Napkin Set at $15 each in the shop
+  expect: plan
+  operation: insert
+  entity: sale
+  values: { channel: in_store }
+  lines: [{ product: Linen Napkin Set, quantity: 3, unit_price: 15 }]
+  total: 45
+- id: sale-one-item-a
+  request: Add a sale of a Glass Carafe to Harbor Home
+  expect: plan
+  operation: insert
+  entity: sale
+  links: { customer: Harbor Home }
+  lines: [{ product: Glass Carafe, quantity: 1, unit_price: 34 }]
+- id: sale-new-customer
+  request: Sold 4 Wine Glass Pair to Rowan & Finch on October 10
+  expect: plan
+  operation: insert
+  entity: sale
+  values: { sale_date: '2026-10-10' }
+  links: { customer: 'new:Rowan & Finch' }
+  lines: [{ product: Wine Glass Pair, quantity: 4 }]
+- id: sale-website
+  request: log an order on the website for 2 Enamel Camp Mug
+  expect: plan
+  operation: insert
+  entity: sale
+  values: { channel: online_store }
+  lines: [{ product: Enamel Camp Mug, quantity: 2, unit_price: 14 }]
+- id: sale-amazon-date
+  request: 'New order: 6 Waffle Hand Towel via Amazon on 2026-10-01'
+  expect: plan
+  operation: insert
+  entity: sale
+  values: { sale_date: '2026-10-01', channel: amazon }
+  lines: [{ product: Waffle Hand Towel, quantity: 6 }]
+- id: sale-plural-name
+  request: I just sold 3 olive wood board smalls to Maple & Moss
+  expect: plan
+  operation: insert
+  entity: sale
+  links: { customer: Maple & Moss }
+  lines: [{ product: Olive Wood Board Small, quantity: 3 }]
+- id: sale-three-lines
+  request: 'Add a sale: 1 Glass Carafe, 2 Wedding Card and 1 Loose Leaf Tea Tin to The Little Pantry'
+  expect: plan
+  operation: insert
+  entity: sale
+  links: { customer: The Little Pantry }
+  lines:
+    - { product: Glass Carafe, quantity: 1 }
+    - { product: Wedding Card, quantity: 2 }
+    - { product: Loose Leaf Tea Tin, quantity: 1 }
+- id: sale-ambiguous-product
+  request: 'Add a sale: 2 olive wood boards to Bloom & Co'
+  expect: clarify
+  note: Small and Large both match.
+- id: sale-ambiguous-tumbler
+  request: I sold a ribbed tumbler set on etsy
+  expect: clarify
+- id: sale-unknown-product
+  request: 'Add a sale: 3 Moon Rocks to Bloom & Co'
+  expect: none
+- id: sale-instagram
+  request: Sold 2 Speckled Café Mug through Instagram today
+  expect: plan
+  operation: insert
+  entity: sale
+  values: { channel: social, sale_date: '2026-10-13' }
+  lines: [{ product: Speckled Café Mug, quantity: 2 }]
+- id: sale-wholesale-price
+  request: record a wholesale sale of 24 Sage Stoneware Mug for $9 each to North Star Mercantile
+  expect: plan
+  operation: insert
+  entity: sale
+  values: { channel: wholesale }
+  links: { customer: North Star Mercantile }
+  lines: [{ product: Sage Stoneware Mug, quantity: 24, unit_price: 9 }]
+  total: 216
+
+# --- New records --------------------------------------------------------------------------------
+- id: product-new
+  request: 'Add a product: Linen Apron, price $28, cost $11, category Linens'
+  expect: plan
+  operation: insert
+  entity: product
+  values: { name: Linen Apron, unit_price: 28, unit_cost: 11, category: Linens }
+- id: product-new-supplier
+  request: 'New product: Stoneware Teapot, price $45, supplier Hearth & Kiln Ceramics'
+  expect: plan
+  operation: insert
+  entity: product
+  values: { name: Stoneware Teapot, unit_price: 45 }
+  links: { supplier: Hearth & Kiln Ceramics }
+- id: product-new-code
+  request: 'Create a product called Oak Coaster Set, code FW-OAK-001, price 16'
+  expect: plan
+  operation: insert
+  entity: product
+  values: { name: Oak Coaster Set, sku: FW-OAK-001, unit_price: 16 }
+- id: customer-new-city
+  request: New customer called Juniper Goods in Austin
+  expect: plan
+  operation: insert
+  entity: customer
+  values: { name: Juniper Goods, city: Austin }
+- id: customer-new-email
+  request: 'Add a customer: Pine & Pebble, email hello@pineandpebble.example'
+  expect: plan
+  operation: insert
+  entity: customer
+  values: { name: Pine & Pebble, email: hello@pineandpebble.example }
+- id: customer-new-wholesale
+  request: 'Add a customer: Elm Street Goods, type of customer wholesale, days to pay 30'
+  expect: plan
+  operation: insert
+  entity: customer
+  values: { name: Elm Street Goods, customer_type: wholesale, payment_terms_days: 30 }
+- id: supplier-new
+  request: 'Add a supplier: Fernhill Pottery, days to deliver 14'
+  expect: plan
+  operation: insert
+  entity: supplier
+  values: { name: Fernhill Pottery, lead_time_days: 14 }
+- id: expense-postage
+  request: 'Add an expense: $45 for postage today'
+  expect: plan
+  operation: insert
+  entity: expense
+  values: { amount: 45, description: postage, expense_date: '2026-10-13' }
+- id: expense-rent
+  request: 'Record an expense of $1200 for October rent on October 1'
+  expect: plan
+  operation: insert
+  entity: expense
+  values: { amount: 1200, expense_date: '2026-10-01' }
+- id: expense-category
+  request: 'Log an expense: $62.50, category Packaging, paid to BoxCo'
+  expect: plan
+  operation: insert
+  entity: expense
+  values: { amount: 62.5, category: Packaging, vendor: BoxCo }
+- id: location-new
+  request: 'Add a sales place: Riverside Market'
+  expect: plan
+  operation: insert
+  entity: location
+  values: { name: Riverside Market }
+
+# --- Changes ------------------------------------------------------------------------------------
+- id: update-price
+  request: Change the price of Sage Stoneware Mug to $20
+  expect: plan
+  operation: update
+  entity: product
+  target: Sage Stoneware Mug
+  values: { unit_price: 20 }
+- id: update-cost
+  request: Set the cost of Glass Carafe to $13.50
+  expect: plan
+  operation: update
+  entity: product
+  target: Glass Carafe
+  values: { unit_cost: 13.5 }
+- id: update-category
+  request: Change the category of Wedding Card to Stationery
+  expect: plan
+  operation: update
+  entity: product
+  target: Wedding Card
+  values: { category: Stationery }
+- id: update-customer-city
+  request: "Set Bloom & Co's city to Portland"
+  expect: plan
+  operation: update
+  entity: customer
+  target: Bloom & Co
+  values: { city: Portland }
+- id: update-terms
+  request: Change the payment terms for Harbor Home to 45
+  expect: plan
+  operation: update
+  entity: customer
+  target: Harbor Home
+  values: { payment_terms_days: 45 }
+- id: update-supplier-link
+  request: Change the supplier of Glass Carafe to Hearth & Kiln Ceramics
+  expect: plan
+  operation: update
+  entity: product
+  target: Glass Carafe
+  links: { supplier: Hearth & Kiln Ceramics }
+- id: update-reorder
+  request: Set the reorder point for Enamel Camp Mug to 12
+  expect: plan
+  operation: update
+  entity: product
+  target: Enamel Camp Mug
+  values: { reorder_point: 12 }
+- id: mark-refunded
+  request: Mark order 1043 as refunded
+  expect: plan
+  operation: update
+  entity: sale
+  target: '#1043'
+  values: { status: refunded }
+- id: mark-cancelled
+  request: 'Mark order #1050 as cancelled'
+  expect: plan
+  operation: update
+  entity: sale
+  target: '#1050'
+  values: { status: cancelled }
+- id: order-was-paid
+  request: Order 1060 was paid
+  expect: plan
+  operation: update
+  entity: sale
+  target: '#1060'
+  values: { payment_status: paid }
+- id: order-is-pending
+  request: Order 1061 is pending
+  expect: plan
+  operation: update
+  entity: sale
+  target: '#1061'
+  values: { status: pending }
+- id: update-supplier-lead
+  request: Set the days to deliver for Wick & Wax Co to 10
+  expect: plan
+  operation: update
+  entity: supplier
+  target: Wick & Wax Co
+  values: { lead_time_days: 10 }
+- id: update-still-selling
+  request: Set still selling for Advent Candle to no
+  expect: plan
+  operation: update
+  entity: product
+  target: Advent Candle
+  values: { is_active: false }
+- id: update-unknown-record
+  request: Change the price of Golden Spoon to $5
+  expect: none
+- id: update-bad-value
+  request: Change the price of Sage Stoneware Mug to lots
+  expect: none
+- id: update-ambiguous
+  request: Change the price of olive wood board to $30
+  expect: clarify
+
+# --- Not record writes --------------------------------------------------------------------------
+- id: not-a-question
+  request: How much did I sell last month?
+  expect: none
+- id: not-a-structure-change
+  request: Rename sales to orders
+  expect: none
+- id: not-gibberish
+  request: blue
+  expect: none

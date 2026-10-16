@@ -1,0 +1,165 @@
+# Change plan evals (AI_DESIGN Task I) on the Fernwood demo business. `ops` are matched in order on
+# the keys given. `destructive` is what the plan must say. A plan that removes data for a request that
+# didn't ask for a removal fails, and counts as an unintended removal (must stay at zero).
+
+# --- Additive -----------------------------------------------------------------------------------
+- id: add-salesperson
+  request: I also want to track which salesperson made each sale
+  expect: plan
+  destructive: false
+  ops: [{ op: add_field, entity: sale, field: { key: salesperson, type: text } }]
+- id: add-gift-wrap
+  request: Add a gift wrap (yes/no) to sales
+  expect: plan
+  destructive: false
+  ops: [{ op: add_field, entity: sale, field: { label: Gift wrap, type: boolean } }]
+- id: add-delivery-date
+  request: Track the delivery date for each sale
+  expect: plan
+  destructive: false
+  ops: [{ op: add_field, entity: sale, field: { key: delivery_date, type: date } }]
+- id: add-packing-fee
+  request: Add a packing fee to supplier orders
+  expect: plan
+  destructive: false
+  ops: [{ op: add_field, entity: purchase, field: { type: money } }]
+- id: add-weight
+  request: Add a weight to products as a number
+  expect: plan
+  destructive: false
+  ops: [{ op: add_field, entity: product, field: { key: weight, type: decimal } }]
+- id: add-birthday
+  request: Keep track of the birthday of each customer
+  expect: plan
+  destructive: false
+  ops: [{ op: add_field, entity: customer, field: { key: birthday, type: date } }]
+- id: add-link-location
+  request: Track which location packed each sale item
+  expect: plan
+  destructive: false
+  ops: [{ op: add_field, entity: sale_line, field: { type: reference, references: location } }]
+- id: add-notes
+  request: Add notes to customers
+  expect: plan
+  destructive: false
+  ops: [{ op: add_field, entity: customer, field: { key: notes, type: text } }]
+- id: add-discount-rate
+  request: Add a discount rate to customers
+  expect: plan
+  destructive: false
+  ops: [{ op: add_field, entity: customer, field: { type: percent } }]
+- id: start-salespeople
+  request: Start tracking salespeople
+  expect: plan
+  destructive: false
+  ops: [{ op: create_entity, key: salesperson }]
+- id: start-markets
+  request: I want to keep track of my markets
+  expect: plan
+  destructive: false
+  ops: [{ op: create_entity, key: market }]
+- id: already-tracked
+  request: Start tracking products
+  expect: clarify
+- id: already-has-detail
+  request: Add a category to products
+  expect: clarify
+
+# --- Renames ------------------------------------------------------------------------------------
+- id: rename-entity
+  request: Rename sales to orders
+  expect: plan
+  destructive: false
+  ops: [{ op: rename_entity, entity: sale, label: { singular: Order, plural: Orders } }]
+- id: rename-field
+  request: Rename selling price on products to RRP
+  expect: plan
+  destructive: false
+  ops: [{ op: rename_field, entity: product, field: unit_price, label: RRP }]
+- id: rename-field-call
+  request: Call cost per item “Unit cost”
+  expect: plan
+  destructive: false
+  ops: [{ op: rename_field, entity: product, field: unit_cost, label: Unit cost }]
+- id: rename-suppliers
+  request: Rename suppliers to makers
+  expect: plan
+  destructive: false
+  ops: [{ op: rename_entity, entity: supplier, label: { plural: Makers } }]
+
+# --- Kinds and allowed values -------------------------------------------------------------------
+- id: kind-whole-number
+  request: Make reorder point a whole number
+  expect: plan
+  destructive: true
+  note: Rounding could change values, so it snapshots first.
+  ops: [{ op: change_field_type, entity: product, field: reorder_point, type: integer }]
+- id: kind-to-text
+  request: Change the barcode on products to text
+  expect: none
+  note: Barcode is already text; the owner is told so.
+- id: kind-date-time
+  request: Payment due on sales should be a date and time
+  expect: plan
+  destructive: false
+  ops: [{ op: change_field_type, entity: sale, field: due_date, type: datetime }]
+- id: kind-lossy
+  request: Make the product code a whole number
+  expect: plan
+  destructive: true
+  ops: [{ op: change_field_type, entity: product, field: sku, type: integer }]
+- id: allow-on-hold
+  request: Add “on hold” as a status for sales
+  expect: plan
+  destructive: false
+  ops: [{ op: add_allowed_values, entity: sale, field: status, values: [on_hold] }]
+- id: allow-market
+  request: Add 'market' as an option for sold through
+  expect: plan
+  destructive: false
+  ops: [{ op: add_allowed_values, entity: sale, field: channel, values: [market] }]
+- id: stop-offering
+  request: Stop offering “ebay” as an option for sold through
+  expect: plan
+  destructive: false
+  ops: [{ op: remove_allowed_values, entity: sale, field: channel, values: [ebay] }]
+
+# --- Removals -----------------------------------------------------------------------------------
+- id: remove-brand
+  request: Remove brand from products
+  expect: plan
+  destructive: true
+  ops: [{ op: remove_field, entity: product, field: brand }]
+- id: remove-barcode
+  request: Stop tracking barcode on products
+  expect: plan
+  destructive: true
+  ops: [{ op: remove_field, entity: product, field: barcode }]
+- id: remove-key-detail
+  request: Stop tracking variant on products
+  expect: none
+  note: Variant tells products apart (natural key); the owner is told why.
+- id: remove-entity
+  request: Stop tracking expenses
+  expect: plan
+  destructive: true
+  ops: [{ op: remove_entity, entity: expense }]
+- id: remove-ambiguous
+  request: Remove the discount
+  expect: clarify
+- id: unlink
+  request: Unlink products from suppliers
+  expect: plan
+  destructive: true
+  ops: [{ op: remove_relationship, entity: product, field: supplier }]
+- id: remove-unknown
+  request: Remove the moon from products
+  expect: none
+
+# --- Not structure changes ----------------------------------------------------------------------
+- id: not-a-question
+  request: What sold best last month?
+  expect: none
+- id: not-a-record-write
+  request: 'Add a sale: 5 Sage mugs to Bloom & Co today'
+  expect: none

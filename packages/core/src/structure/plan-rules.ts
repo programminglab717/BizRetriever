@@ -1,14 +1,17 @@
 import type { CatalogEntity } from '../change-plan/compile';
 import type { ChangeOp, ChangePlan, FieldDef } from '../change-plan/schema';
-import { words } from '../records/lookup';
+import { normalizeLoose } from '@bizr/ingest';
+
 import { entityByWord, fieldByWords } from '../records/write-rules';
+import { kindName } from './describe';
 
 /**
  * Task I, rules first: the usual ways owners ask to change what they track. Pure. Unclear requests
  * get a question; anything else goes to the AI.
  */
 
-export type ChangeDraft = { plan: ChangePlan } | { clarify: string };
+/** A plan, a question, or a plain reason it can't be done. */
+export type ChangeDraft = { plan: ChangePlan } | { clarify: string } | { refuse: string };
 
 const KINDS: [RegExp, FieldDef['type']][] = [
   [/\b(?:date and time|time and date|datetime|timestamp)\b/i, 'datetime'],
@@ -47,7 +50,9 @@ const clean = (s: string) =>
 const NOISE = /\s+(?:detail|details|field|column|info|information|option)$/i;
 const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const keyOf = (s: string) =>
-  words(s)
+  normalizeLoose(s)
+    .split(' ')
+    .filter(Boolean)
     .join('_')
     .replace(/_(id|ref)$/, '_$1x')
     .replace(/^(\d)/, 'n_$1')
@@ -120,7 +125,7 @@ export function planChangeWithRules(
   // Allowed values: "Add 'on hold' as a status", "Allow market for sold through on sales".
   if (
     (m =
-      /^(?:add|allow)\s+["“']?(.+?)["”']?\s+as\s+(?:a\s+|an\s+)?(?:new\s+|another\s+)?(?:option\s+for\s+|choice\s+for\s+)?(.+?)(?:\s+(?:on|for)\s+(.+))?$/i.exec(
+      /^(?:add|allow)\s+["“']?((?:(?!\s(?:to|on|for)\s).)+?)["”']?\s+as\s+(?:a\s+|an\s+)?(?:new\s+|another\s+)?(?:option\s+for\s+|choice\s+for\s+)?(.+?)(?:\s+(?:on|for)\s+(.+))?$/i.exec(
         text,
       ))
   ) {
@@ -202,6 +207,8 @@ export function planChangeWithRules(
     const hit = findField(catalog, m[1]!, m[2]);
     if (!hit || !kind) return null;
     if ('clarify' in hit) return hit;
+    if (hit.field.type === kind)
+      return { refuse: `“${hit.field.label}” is already ${kindName(kind)}.` };
     return plan({
       op: 'change_field_type',
       entity: hit.entity.key,
@@ -224,6 +231,13 @@ export function planChangeWithRules(
     const hit = findField(catalog, m[1]!, m[2]);
     if (!hit) return null;
     if ('clarify' in hit) return hit;
+    const plural = hit.entity.label.plural.toLowerCase();
+    if (hit.entity.naturalKeys.some((k) => k.includes(hit.field.key)))
+      return {
+        refuse: `“${hit.field.label}” is used to tell ${plural} apart, so it can’t be removed.`,
+      };
+    if (hit.entity.timeField === hit.field.key)
+      return { refuse: `“${hit.field.label}” dates your ${plural}, so it can’t be removed.` };
     return plan({ op: 'remove_field', entity: hit.entity.key, field: hit.field.key });
   }
 
@@ -239,7 +253,15 @@ export function planChangeWithRules(
         text,
       ))
   ) {
-    const e = entityByWord(catalog, clean(m[2]!));
+    // "… to products as a number": the kind comes last.
+    let onto = clean(m[2]!);
+    let forced: FieldDef['type'] | undefined;
+    const tail = /^(.+?)\s+as\s+(.+)$/i.exec(onto);
+    if (tail && explicitKind(tail[2]!)) {
+      onto = clean(tail[1]!);
+      forced = explicitKind(tail[2]!);
+    }
+    const e = entityByWord(catalog, onto);
     if (!e) return null;
     let name = clean(m[1]!).replace(NOISE, '');
     const paren = /^(.+?)\s*\((.+)\)$/.exec(name);
@@ -253,6 +275,7 @@ export function planChangeWithRules(
       name = clean(as[1]!);
       type = explicitKind(as[2]!)!;
     }
+    if (forced) type = forced;
     if (!name || fieldByWords(e, name))
       return fieldByWords(e, name)
         ? { clarify: `${e.label.plural} already have “${fieldByWords(e, name)!.label}”.` }

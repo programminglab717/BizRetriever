@@ -74,8 +74,11 @@ export async function planStructureChange(
   const catalog = await loadCatalog(member.workspace.id);
   const draft = planChangeWithRules(text, catalog);
   if (draft && 'clarify' in draft) return { kind: 'clarify', question: draft.clarify };
+  if (draft && 'refuse' in draft) return { kind: 'none', message: draft.refuse };
   let plan: ChangePlan | null =
-    draft && problemsOf(member, catalog, draft.plan, text).length === 0 ? draft.plan : null;
+    draft && 'plan' in draft && problemsOf(member, catalog, draft.plan, text).length === 0
+      ? draft.plan
+      : null;
   let origin: 'rules' | 'ai' = 'rules';
   let explanation: string | null = null;
   if (!plan) {
