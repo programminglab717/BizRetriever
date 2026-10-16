@@ -2,25 +2,22 @@
 
 ## Current Status
 
-- **Milestone:** M5 (Dashboards) is **complete on the rules path**. M6 (Data upkeep) is next, once
-  the owner confirms. The owner authorised building through the milestones (ADR-031).
+- **Milestone:** M6 (Data upkeep) is **in progress** (the owner confirmed M6). Done so far:
+  re-upload with merge preview, conflicts and undo, and the records browser. Still to do:
+  structural changes, record writes and changes by chat (Tasks H and I), and member invites.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:**
   - accounts, onboarding, workspaces and settings (M1)
   - import from upload to data report (M2)
   - 28 retail measures, the query compiler and "What we track" (M3)
   - Ask with charts, clarifying questions, follow-ups, feedback and pinning (M4)
-  - **Dashboard**:
-    - the pack's 13 tiles, built at import, with "Unlock more" for what the data can't show
-    - date range and compare toggle
-    - tile menu: rename, change chart, wider / narrower, move, remove, Ask about this
-    - chat edits with a preview, Apply and Undo; every change is a saved version
-  - `pnpm eval`: 11 ingest cases, 185 question cases and **44 dashboard edit cases** (rules only, $0)
-- **M5 acceptance (rules only, no AI):**
-  - a new demo workspace lands on the full dashboard
-  - "Add a chart of sales by city", "remove X" and "show monthly" work by chat with preview and undo
-  - the date filter updates all tiles
-  - dashboard edit eval: 93.2% (≥ 90% needed), with no unintended edits
+  - the dashboard: pack tiles, date range, tile menu, chat edits with preview and undo (M5)
+  - **re-upload**: newer files are recognised; "Here's what would change"; keep yours or take the
+    file's; "Update my data"; "Undo this update"
+  - **My data**: record types with counts, a grid with search, filter chips, sorting and inline
+    edits with Undo, a side panel (details, links, where it came from, history), delete and
+    "Recently deleted"; a card list on phones
+  - `pnpm eval`: 11 ingest, 185 question and 44 dashboard edit cases (rules only, $0)
 - **Waiting on the owner (batched for the end):**
   - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
   - the Anthropic API key (Q20), for the first AI eval runs (questions and dashboard edits)
@@ -29,6 +26,41 @@
 ---
 
 ## Session log
+
+### 2026-10-16 — Session 9: M6 Data upkeep, part 1 (re-upload and records)
+
+**Completed:**
+
+- **Merge engine** (`@bizr/core/merge`, ADR-043): the pure diff (new / changed / unchanged /
+  missing / conflicts / repeated keys), `mergeWrites` (inserts and updates only), and the service
+  (source signatures, reused mappings, scoped "missing", link resolution on insert).
+- **Edit log** (`@bizr/core/records/edits`): the tenant `_record_edit` table, `logEdits` and
+  `undoBatch`.
+- **Re-upload pipeline:** migration `0010_reupload` (`data_source`, `merge_preview`, run statuses
+  `merge_review` / `merging`, `undone_at`). The `ingest.merge` job, the merge preview,
+  `mergeRun` and `undoRun`.
+- **Re-upload UI:** "This looks like a newer version of …" on review, "Here's what would change"
+  with examples, the missing list and conflict choices, then the update report with "Undo this
+  update".
+- **Records** (`@bizr/core/records`): list types, browse (search, filters, sort, paging),
+  open (links, lineage, history), type-checked edits, soft delete, restore and undo.
+- **Records UI:** record-type cards on My data, a virtualised grid with sticky header and first
+  column, type-aware editors, the side panel, "Recently deleted", and phone cards.
+- **Demo data:** `pnpm demo:generate --next-month DIR` writes next month's website export and its
+  truth file.
+- **Tests:** 634 unit/integration (up from 610), including the re-upload and records integration
+  suites, and 22 e2e (re-upload and records journeys, desktop and mobile).
+
+**Bugs found and fixed:**
+
+- The merge preview counted every order as changed: stored date-times (UTC) were compared as text
+  with the file's local-offset strings. They are now compared as instants.
+- `pnpm eval` (all suites) crashed after the question suite: `getAppDb()` kept a client on a pool
+  that had been closed. It now rebuilds when the pool changes.
+- The review screen never showed what the analysis had spotted; it now lists it.
+
+**Next steps:** structural changes (remaining compiler ops, impact, snapshots, change history);
+Tasks H and I by chat with their eval sets; member invites and roles; then M6 docs and acceptance.
 
 ### 2026-10-16 — Session 8: M5 Dashboards built
 

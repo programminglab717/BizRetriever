@@ -789,3 +789,43 @@ Template for new entries:
   - A new workspace lands on a full dashboard with no AI and no setup.
   - Every dashboard change is reversible and reviewable.
   - The cache is per instance; on the serverless preview each cold start runs tiles again.
+
+## ADR-043 — Re-upload merge, the record edit log, and editing records
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - **Recognising files.** Every imported sheet is remembered as an `app.data_source`, keyed by its
+    header signature (normalised headers) and sheet name, with the mapping the owner approved. A
+    workspace that already has data starts a `reupload` run. Sheets seen before reuse their approved
+    mapping, and the review says "This looks like a newer version of …".
+  - **Merge preview.** After review, the run stops in `merge_review` with a stored preview. The
+    pure engine (`@bizr/core/merge`, `diffRecords`) sorts every record into new, changed, unchanged,
+    missing and conflicts. Records match by natural key, or by content when they have no key.
+    Values are compared by meaning: numbers without trailing zeros, date-times as instants (a
+    date-time without an offset is read in the workspace's time zone, by Postgres, as the loader
+    did).
+  - **Never delete, never blank.** "Update my data" only inserts and updates. Records missing from
+    the new file are listed and kept. "Missing" only covers records from the same source. A blank
+    cell never overwrites a value.
+  - **Conflicts.** A field changed in the app (grid or chat) since the record was last updated by an
+    import is a conflict. The owner chooses "Keep yours" or "Take the file's"; unanswered conflicts
+    keep theirs.
+  - **The edit log.** Every app write to tenant records is logged in the tenant's own
+    `_record_edit` table: insert, update, delete or restore, before and after (by column), origin
+    (`grid` / `chat` / `reupload`), user, and batch. It is written in the same transaction as the
+    change. A merge is one batch (its run id). Undo replays a batch backwards. It refuses when a
+    later, not-undone edit touched the same records. The table is not in the semantic catalog, so
+    questions and the SQL fallback can't read it.
+  - **Editing records.** My data reads as the tenant reader role and writes as the writer role (no
+    DELETE grant): delete is soft (`_deleted_at`), with "Recently deleted" for 30 days. Typed values
+    are checked by `parseEditValue` (plain-language errors). Links are chosen from a search and
+    stored as id plus display text. Each edit returns an undo handle. Undoing a file update happens
+    from the import's page, not the toast. Every write bumps `data_version`, so cached tiles
+    refresh.
+  - The grid is our own table, virtualised with `@tanstack/react-virtual` (MIT, free). Server-side
+    sort, search and filters made TanStack Table unnecessary.
+- **Consequences:**
+  - A whole update, or any single edit, can be undone exactly. Nothing an owner did afterwards is
+    silently lost.
+  - The writer role can update `_record_edit` (undo sets `undone_at`). It is an audit aid, not a
+    tamper-proof log; `app.audit_event` records each merge and undo.

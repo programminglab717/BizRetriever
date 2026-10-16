@@ -402,9 +402,9 @@ records by chat, structural changes by chat with versioning and rollback.
 
 **Records:**
 
-- [ ] Records browser: virtualised grid (TanStack Table), filters, sort, search, inline type-aware edit,
+- [x] Records browser: virtualised grid (TanStack Table), filters, sort, search, inline type-aware edit,
   record side panel with lineage and history, soft delete + "Recently deleted"
-- [ ] Mobile card list for records
+- [x] Mobile card list for records
 - [ ] Task H `planRecordWrite` + confirmation card + writer-role execution + undo **(cuttable for the
   first demo)**
 
