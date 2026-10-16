@@ -1,0 +1,29 @@
+# Example questions (VERTICAL_PACKS §2.8). Shown as suggestion chips in Ask when the measures they
+# need are available.
+examples:
+  - { group: Sales, text: How much did I sell last month?, needs: [net_sales] }
+  - { group: Sales, text: Which channel is growing fastest?, needs: [net_sales] }
+  - { group: Sales, text: Show sales by week this year., needs: [net_sales] }
+  - { group: Sales, text: What were my best days of the week?, needs: [net_sales] }
+  - {
+      group: Products,
+      text: Which products made me the most profit last month?,
+      needs: [gross_profit],
+    }
+  - { group: Products, text: What's not selling?, needs: [dead_stock_value] }
+  - { group: Products, text: Which products have the best margins?, needs: [gross_margin_pct] }
+  - { group: Products, text: What's my best seller on Etsy?, needs: [net_sales] }
+  - { group: Stock, text: What's about to run out?, needs: [days_of_cover] }
+  - { group: Stock, text: How much money is tied up in stock?, needs: [stock_value] }
+  - { group: Stock, text: What should I reorder this week?, needs: [days_of_cover] }
+  - { group: Customers, text: Who are my top customers?, needs: [net_sales] }
+  - { group: Customers, text: Which customers stopped ordering?, needs: [lapsed_customers] }
+  - { group: Customers, text: How many new customers did I get this month?, needs: [new_customers] }
+  - { group: Customers, text: What share of customers come back?, needs: [repeat_customer_rate] }
+  - { group: Money, text: What did I spend on ads this year?, needs: [expenses_total] }
+  - {
+      group: Money,
+      text: What's my profit after expenses this quarter?,
+      needs: [net_profit_estimate],
+    }
+  - { group: Money, text: Who owes me money?, needs: [outstanding_receivables] }

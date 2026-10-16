@@ -28,3 +28,17 @@ export {
 export type { AnswerColumn, AnswerData, AnswerFacts, Cell, FactContext } from './answer';
 export { explainFallbackSql, narrate, narrationProblems } from './narrate';
 export type { Narration, SqlExplanation } from './narrate';
+export {
+  askQuestion,
+  AskError,
+  FEEDBACK_REASONS,
+  getConversation,
+  localeFor,
+  pinAnswer,
+  recentConversations,
+  setAnswerFeedback,
+  STORED_ROWS,
+  suggestedQuestions,
+  unpinTile,
+} from './service';
+export type { AnswerContent, AskOptions, AskResult, FeedbackReason } from './service';

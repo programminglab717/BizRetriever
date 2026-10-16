@@ -47,3 +47,4 @@ export {
   type RowExpr,
   type Window,
 } from './metrics';
+export { packQuestionSchema, type PackQuestion } from './questions';

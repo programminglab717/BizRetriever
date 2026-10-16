@@ -144,7 +144,8 @@ export interface AnswerFacts {
 }
 
 export interface FactContext extends DisplayContext {
-  spec: QuestionSpec;
+  /** Only the sort matters for facts ("highest first"). */
+  spec: Pick<QuestionSpec, 'orderBy'>;
   period?: Period;
   previousPeriod?: Period;
 }
@@ -443,7 +444,7 @@ const OPS: Record<string, string> = {
 /** Plain-language steps for "How I calculated this", written by code from the spec. */
 export function explainSpec(
   spec: QuestionSpec,
-  ctx: FactContext & {
+  ctx: Omit<FactContext, 'spec'> & {
     metrics: { id: string; label: string; description: string; snapshot: boolean }[];
     assumptions: readonly string[];
   },
@@ -493,7 +494,7 @@ export function explainSpec(
 /** The chart for a result's shape (AI_DESIGN §5). A preference is used only when it fits. */
 export function chooseChart(
   data: AnswerData,
-  spec: QuestionSpec,
+  spec: Pick<QuestionSpec, 'having'>,
   preference?: ChartType,
 ): ChartType {
   const dims = data.columns.filter((c) => c.kind === 'dimension');

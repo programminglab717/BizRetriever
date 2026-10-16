@@ -147,6 +147,8 @@ export function compileContext(member: MemberWorkspace, now = new Date()): Compi
 }
 
 export interface QueryResult {
+  /** The SQL that ran (shown under "Details"). */
+  sql: string;
   columns: ResultColumn[];
   rows: Record<string, unknown>[];
   truncated: boolean;
@@ -174,6 +176,7 @@ export async function runQuery(
     timeoutMs: 15_000,
   });
   return {
+    sql: q.sql,
     columns: q.columns,
     rows: r.rows,
     truncated: r.truncated,

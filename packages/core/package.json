@@ -16,7 +16,8 @@
     "./ingestion": "./src/ingestion/index.ts",
     "./semantic": "./src/semantic/index.ts",
     "./sql-validator": "./src/sql-validator/index.ts",
-    "./ask": "./src/ask/index.ts"
+    "./ask": "./src/ask/index.ts",
+    "./testing": "./src/testing/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

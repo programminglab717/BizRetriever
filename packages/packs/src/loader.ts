@@ -17,6 +17,7 @@ import {
   type PackSynonyms,
 } from './schema';
 import { checkMetrics, packMetricsFileSchema, type PackMetrics } from './metrics';
+import { checkQuestions, packQuestionsFileSchema, type PackQuestion } from './questions';
 
 export const PACKS_DIR = fileURLToPath(new URL('../packs', import.meta.url));
 
@@ -27,6 +28,7 @@ export interface LoadedPack {
   synonyms: PackSynonyms;
   knownFormats: KnownFormat[];
   metrics: PackMetrics;
+  questions: PackQuestion[];
   primer: string;
 }
 
@@ -63,6 +65,8 @@ export function loadPack(dir: string): LoadedPack {
   if (!patterns.success) problems.push(...issues('patterns.yaml', patterns.error));
   const metrics = packMetricsFileSchema.safeParse(read('metrics.yaml'));
   if (!metrics.success) problems.push(...issues('metrics.yaml', metrics.error));
+  const questions = packQuestionsFileSchema.safeParse(read('questions.yaml'));
+  if (!questions.success) problems.push(...issues('questions.yaml', questions.error));
   let primer = '';
   try {
     primer = readFileSync(path.join(dir, 'prompts', 'domain_primer.md'), 'utf8').trim();
@@ -99,8 +103,15 @@ export function loadPack(dir: string): LoadedPack {
     );
   }
 
+  if (metrics.success && questions.success) {
+    problems.push(
+      ...checkQuestions(metrics.data, questions.data.examples).map((p) => `questions.yaml: ${p}`),
+    );
+  }
+
   if (
     problems.length > 0 ||
+    !questions.success ||
     !manifest.success ||
     !entities.success ||
     !synonyms.success ||
@@ -116,6 +127,7 @@ export function loadPack(dir: string): LoadedPack {
     synonyms: synonyms.data,
     knownFormats: patterns.data.known_formats,
     metrics: metrics.data,
+    questions: questions.data.examples,
     primer,
   };
 }
