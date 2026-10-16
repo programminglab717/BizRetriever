@@ -234,7 +234,15 @@ export const packMetricSchema = z
 export type PackMetric = z.infer<typeof packMetricSchema>;
 
 export const packDimensionSchema = z
-  .object({ field: fieldRef, label: z.string().min(1), synonyms: z.array(z.string()).default([]) })
+  .object({
+    field: fieldRef,
+    label: z.string().min(1),
+    synonyms: z.array(z.string()).default([]),
+    /** How answers count it: ["product", "products"]. */
+    noun: z.tuple([z.string().min(1), z.string().min(1)]).optional(),
+    /** Display names for coded values: { online_store: Website }. */
+    value_labels: z.record(z.string(), z.string().min(1)).default({}),
+  })
   .strict();
 export type PackDimension = z.infer<typeof packDimensionSchema>;
 

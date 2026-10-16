@@ -16,3 +16,15 @@ export { interpretWithRules, normalizeQuestion } from './rules';
 export type { RulesResult } from './rules';
 export { periodLabel, resolvePreset, timePresets } from './time';
 export type { Calendar, Period, TimePreset } from './time';
+export {
+  answerFacts,
+  chooseChart,
+  displayValue,
+  explainSpec,
+  templateAnswer,
+  timeLabel,
+  toAnswerData,
+} from './answer';
+export type { AnswerColumn, AnswerData, AnswerFacts, Cell, FactContext } from './answer';
+export { explainFallbackSql, narrate, narrationProblems } from './narrate';
+export type { Narration, SqlExplanation } from './narrate';

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  explainSql,
   interpretQuestion,
+  narrateAnswer,
   proposeDataModel,
   reviseDataModel,
   summarizeProposal,
@@ -55,7 +57,15 @@ describe('prompts', () => {
       },
       question: 'how much did I sell',
     });
-    for (const built of [a, b, c]) {
+    const d = narrateAnswer.build({
+      question: marker,
+      shape: 'total',
+      measures: [marker],
+      facts: [{ name: 'net_sales', meaning: 'net sales in total' }],
+      assumptions: [marker],
+    });
+    const e = explainSql.build({ sql: `SELECT '${marker}'`, records: { sales: 'sales' } });
+    for (const built of [a, b, c, d, e]) {
       expect(built.cachedContext.join('')).not.toContain(marker);
       const user = built.messages[0]!.content;
       const start = user.indexOf('<workspace_data>');
@@ -66,7 +76,14 @@ describe('prompts', () => {
   });
 
   it('versions every prompt', () => {
-    for (const p of [proposeDataModel, reviseDataModel, summarizeProposal, interpretQuestion]) {
+    for (const p of [
+      proposeDataModel,
+      reviseDataModel,
+      summarizeProposal,
+      interpretQuestion,
+      narrateAnswer,
+      explainSql,
+    ]) {
       expect(p.version).toBe(`${p.task}@v1`);
     }
   });

@@ -33,21 +33,53 @@ filters:
     - { field: sale.payment_status, op: in, value: [unpaid, partial] }
 
 dimensions:
-  - { field: product.name, label: Product, synonyms: [item, product, products, items] }
-  - { field: product.category, label: Category, synonyms: [category, type, department] }
-  - { field: product.brand, label: Brand, synonyms: [brand] }
-  - { field: customer.name, label: Customer, synonyms: [customer, buyer, client, stockist] }
-  - { field: customer.customer_type, label: Type of customer, synonyms: [customer type] }
-  - { field: customer.city, label: City, synonyms: [city, town] }
-  - { field: customer.region, label: State or region, synonyms: [state, region, county] }
-  - {
-      field: sale.channel,
-      label: Sold through,
-      synonyms: [channel, platform, marketplace, where sold],
-    }
-  - { field: location.name, label: Sales place, synonyms: [shop, store, location] }
-  - { field: supplier.name, label: Supplier, synonyms: [supplier, vendor, maker] }
-  - { field: expense.category, label: Expense type, synonyms: [expense category, cost type] }
+  - field: product.name
+    label: Product
+    synonyms: [item, product, products, items]
+    noun: [product, products]
+  - field: product.category
+    label: Category
+    synonyms: [category, type, department]
+    noun: [category, categories]
+  - { field: product.brand, label: Brand, synonyms: [brand], noun: [brand, brands] }
+  - field: customer.name
+    label: Customer
+    synonyms: [customer, buyer, client, stockist]
+    noun: [customer, customers]
+  - field: customer.customer_type
+    label: Type of customer
+    synonyms: [customer type]
+    noun: [type of customer, types of customer]
+  - { field: customer.city, label: City, synonyms: [city, town], noun: [city, cities] }
+  - field: customer.region
+    label: State or region
+    synonyms: [state, region, county]
+    noun: [area, areas]
+  - field: sale.channel
+    label: Sold through
+    synonyms: [channel, platform, marketplace, where sold]
+    noun: [channel, channels]
+    value_labels:
+      online_store: Website
+      etsy: Etsy
+      amazon: Amazon
+      ebay: eBay
+      social: Social media
+      in_store: In person
+      wholesale: Wholesale
+      other: Other
+  - field: location.name
+    label: Sales place
+    synonyms: [shop, store, location]
+    noun: [place, places]
+  - field: supplier.name
+    label: Supplier
+    synonyms: [supplier, vendor, maker]
+    noun: [supplier, suppliers]
+  - field: expense.category
+    label: Expense type
+    synonyms: [expense category, cost type]
+    noun: [expense type, expense types]
 
 metrics:
   - id: gross_sales

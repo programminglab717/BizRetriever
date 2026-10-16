@@ -1744,7 +1744,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "product",
             "products",
             "items"
-          ]
+          ],
+          "noun": [
+            "product",
+            "products"
+          ],
+          "value_labels": {}
         },
         {
           "field": "product.category",
@@ -1753,14 +1758,24 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "category",
             "type",
             "department"
-          ]
+          ],
+          "noun": [
+            "category",
+            "categories"
+          ],
+          "value_labels": {}
         },
         {
           "field": "product.brand",
           "label": "Brand",
           "synonyms": [
             "brand"
-          ]
+          ],
+          "noun": [
+            "brand",
+            "brands"
+          ],
+          "value_labels": {}
         },
         {
           "field": "customer.name",
@@ -1770,14 +1785,24 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "buyer",
             "client",
             "stockist"
-          ]
+          ],
+          "noun": [
+            "customer",
+            "customers"
+          ],
+          "value_labels": {}
         },
         {
           "field": "customer.customer_type",
           "label": "Type of customer",
           "synonyms": [
             "customer type"
-          ]
+          ],
+          "noun": [
+            "type of customer",
+            "types of customer"
+          ],
+          "value_labels": {}
         },
         {
           "field": "customer.city",
@@ -1785,7 +1810,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "synonyms": [
             "city",
             "town"
-          ]
+          ],
+          "noun": [
+            "city",
+            "cities"
+          ],
+          "value_labels": {}
         },
         {
           "field": "customer.region",
@@ -1794,7 +1824,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "state",
             "region",
             "county"
-          ]
+          ],
+          "noun": [
+            "area",
+            "areas"
+          ],
+          "value_labels": {}
         },
         {
           "field": "sale.channel",
@@ -1804,7 +1839,21 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "platform",
             "marketplace",
             "where sold"
-          ]
+          ],
+          "noun": [
+            "channel",
+            "channels"
+          ],
+          "value_labels": {
+            "online_store": "Website",
+            "etsy": "Etsy",
+            "amazon": "Amazon",
+            "ebay": "eBay",
+            "social": "Social media",
+            "in_store": "In person",
+            "wholesale": "Wholesale",
+            "other": "Other"
+          }
         },
         {
           "field": "location.name",
@@ -1813,7 +1862,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "shop",
             "store",
             "location"
-          ]
+          ],
+          "noun": [
+            "place",
+            "places"
+          ],
+          "value_labels": {}
         },
         {
           "field": "supplier.name",
@@ -1822,7 +1876,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "supplier",
             "vendor",
             "maker"
-          ]
+          ],
+          "noun": [
+            "supplier",
+            "suppliers"
+          ],
+          "value_labels": {}
         },
         {
           "field": "expense.category",
@@ -1830,7 +1889,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "synonyms": [
             "expense category",
             "cost type"
-          ]
+          ],
+          "noun": [
+            "expense type",
+            "expense types"
+          ],
+          "value_labels": {}
         }
       ],
       "join_paths": [],

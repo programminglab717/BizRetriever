@@ -45,6 +45,8 @@ export function fixtureCatalog(unavailable: Record<string, string> = {}): AskCat
         synonyms: d.synonyms,
         values: values[d.field] ?? [],
         valueSynonyms: pack.synonyms.values[d.field] ?? {},
+        valueLabels: d.value_labels,
+        noun: d.noun ?? ['result', 'results'],
       })),
     calendar: { today: '2026-10-13', weekStart: 1, fiscalYearStartMonth: 1 },
     currency: 'GBP',

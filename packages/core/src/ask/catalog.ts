@@ -31,6 +31,10 @@ export interface AskCatalog {
     values: string[];
     /** Canonical value → words owners use for it (from the pack), e.g. online_store → website. */
     valueSynonyms: Record<string, string[]>;
+    /** Display names for coded values (from the pack), e.g. online_store → Website. */
+    valueLabels: Record<string, string>;
+    /** How answers count it: ["product", "products"]. */
+    noun: [string, string];
   }[];
   calendar: Calendar;
   currency: string;
@@ -84,6 +88,8 @@ export async function loadAskContext(member: MemberWorkspace): Promise<AskContex
           synonyms: d.synonyms,
           values: byRef.get(d.field) ?? [],
           valueSynonyms: pack.synonyms.values[d.field] ?? {},
+          valueLabels: d.value_labels,
+          noun: d.noun ?? ['result', 'results'],
         })),
       calendar: {
         today: ctx.today,
