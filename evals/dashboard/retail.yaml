@@ -1,0 +1,230 @@
+# Dashboard edit evals (AI_DESIGN Task G) on the demo's default dashboard (pack tiles, see
+# packages/packs/packs/retail/dashboard.yaml). `tile` names a pack tile by its id. Added tiles are
+# compared by result with `ref`; any other edit counts as unintended.
+
+# --- Add ----------------------------------------------------------------------------------------
+- id: add-sales-by-city
+  request: Add a chart of sales by city
+  expect: plan
+  ops: [{ op: add_tile, ref: { metrics: [net_sales], dimensions: [{ field: customer.city }] } }]
+- id: add-orders-by-channel
+  request: add orders by channel
+  expect: plan
+  ops: [{ op: add_tile, ref: { metrics: [order_count], dimensions: [{ field: sale.channel }] } }]
+- id: add-monthly-profit-line
+  request: Add a line chart of profit by month
+  expect: plan
+  ops:
+    [{ op: add_tile, chart: line, ref: { metrics: [gross_profit], dimensions: [{ time: month }] } }]
+- id: add-top5-products-table
+  request: add a table of the top 5 products by revenue
+  expect: plan
+  ops:
+    - op: add_tile
+      chart: table
+      ref:
+        {
+          metrics: [net_sales],
+          dimensions: [{ field: product.name }],
+          orderBy: { by: net_sales, dir: desc },
+          limit: 5,
+        }
+- id: add-new-customers-number
+  request: Add a number for new customers
+  expect: plan
+  ops: [{ op: add_tile, ref: { metrics: [new_customers] } }]
+- id: add-returns
+  request: add a tile for return rate by category
+  expect: plan
+  ops:
+    [{ op: add_tile, ref: { metrics: [return_rate], dimensions: [{ field: product.category }] } }]
+- id: add-etsy-sales
+  request: add Etsy sales to the dashboard
+  expect: plan
+  ops:
+    [
+      {
+        op: add_tile,
+        ref: { metrics: [net_sales], filters: [{ field: sale.channel, op: eq, values: [etsy] }] },
+      },
+    ]
+- id: add-expenses-by-type
+  request: add a chart of expenses by type
+  expect: plan
+  ops:
+    [
+      {
+        op: add_tile,
+        ref: { metrics: [expenses_total], dimensions: [{ field: expense.category }] },
+      },
+    ]
+- id: add-stock-value-by-category
+  request: Add stock value by category
+  expect: plan
+  ops:
+    [{ op: add_tile, ref: { metrics: [stock_value], dimensions: [{ field: product.category }] } }]
+- id: add-supplier-spend
+  request: add a chart of spend with each supplier
+  expect: plan
+  ops:
+    [{ op: add_tile, ref: { metrics: [supplier_spend], dimensions: [{ field: supplier.name }] } }]
+- id: add-candle-sales-weekly
+  request: add candle sales by week
+  expect: plan
+  ops:
+    - op: add_tile
+      ref:
+        {
+          metrics: [net_sales],
+          dimensions: [{ time: week }],
+          filters: [{ field: product.category, op: eq, values: [Candles] }],
+        }
+- id: add-march-fixed
+  request: add sales in March
+  expect: plan
+  ops:
+    [
+      {
+        op: add_tile,
+        ref: { metrics: [net_sales], timeRange: { from: '2026-03-01', to: '2026-04-01' } },
+      },
+    ]
+- id: add-gross-margin
+  request: Please add my gross margin
+  expect: plan
+  ops: [{ op: add_tile, ref: { metrics: [gross_margin_pct] } }]
+- id: add-units-by-product
+  request: add a chart of units sold by product
+  expect: plan
+  ops: [{ op: add_tile, ref: { metrics: [units_sold], dimensions: [{ field: product.name }] } }]
+
+# --- Remove -------------------------------------------------------------------------------------
+- id: remove-top-customers
+  request: Remove the top customers table
+  expect: plan
+  ops: [{ op: remove_tile, tile: top_customers }]
+- id: remove-margin
+  request: delete the margin chart
+  expect: plan
+  ops: [{ op: remove_tile, tile: margin_by_category }]
+- id: remove-channel
+  request: get rid of sales by channel
+  expect: plan
+  ops: [{ op: remove_tile, tile: sales_by_channel }]
+- id: remove-aov
+  request: hide average order value
+  expect: plan
+  ops: [{ op: remove_tile, tile: average_order_value }]
+- id: remove-running-low
+  request: remove running low
+  expect: plan
+  ops: [{ op: remove_tile, tile: running_low }]
+- id: remove-owed
+  request: take off the money owed tile
+  expect: plan
+  ops: [{ op: remove_tile, tile: money_owed }]
+- id: remove-slow-stock-list
+  request: remove the slow stock list
+  expect: plan
+  ops: [{ op: remove_tile, tile: slow_stock }]
+- id: remove-orders
+  request: Remove orders from the dashboard
+  expect: plan
+  ops: [{ op: remove_tile, tile: orders }]
+- id: remove-ambiguous-profit
+  request: remove the profit chart
+  expect: clarify
+- id: remove-unknown
+  request: remove the weather chart
+  expect: none
+
+# --- Rename, move, chart, grain -----------------------------------------------------------------
+- id: rename-orders
+  request: Rename orders to Number of orders
+  expect: plan
+  ops: [{ op: update_tile, tile: orders, title: Number of orders }]
+- id: rename-net-sales
+  request: rename net sales to "Takings"
+  expect: plan
+  ops: [{ op: update_tile, tile: net_sales, title: Takings }]
+- id: rename-running-low
+  request: call running low Reorder soon
+  expect: plan
+  ops: [{ op: update_tile, tile: running_low, title: Reorder soon }]
+- id: move-running-low-top
+  request: move running low to the top
+  expect: plan
+  ops: [{ op: move_tile, tile: running_low, position: top }]
+- id: move-owed-top
+  request: put money owed at the top
+  expect: plan
+  ops: [{ op: move_tile, tile: money_owed, position: top }]
+- id: move-net-sales-bottom
+  request: move net sales to the bottom
+  expect: plan
+  ops: [{ op: move_tile, tile: net_sales, position: bottom }]
+- id: chart-customers-bar
+  request: show top customers as a bar chart
+  expect: plan
+  ops: [{ op: update_tile, tile: top_customers, chart: bar_horizontal }]
+- id: chart-channel-table
+  request: show sales by channel as a table
+  expect: plan
+  ops: [{ op: update_tile, tile: sales_by_channel, chart: table }]
+- id: chart-pie
+  request: make sales by channel a pie chart
+  expect: plan
+  note: No pie charts; a bar chart instead.
+  ops: [{ op: update_tile, tile: sales_by_channel, chart: bar_horizontal }]
+- id: chart-margin-table
+  request: turn the margin chart into a table
+  expect: plan
+  ops: [{ op: update_tile, tile: margin_by_category, chart: table }]
+- id: grain-monthly
+  request: show sales monthly instead of weekly
+  expect: plan
+  ops: [{ op: update_tile, tile: sales_over_time, grain: month }]
+- id: grain-daily
+  request: make sales over time daily
+  expect: plan
+  ops: [{ op: update_tile, tile: sales_over_time, grain: day }]
+- id: grain-it-weekly
+  request: switch it to weekly
+  expect: plan
+  ops: [{ op: update_tile, tile: sales_over_time, grain: week }]
+
+# --- Not edits, or not possible ---------------------------------------------------------------
+- id: none-question
+  request: show me sales by month
+  expect: none
+  note: A question for Ask, not a change.
+- id: none-vague
+  request: make the dashboard prettier
+  expect: none
+- id: none-nonsense
+  request: asdf qwerty
+  expect: none
+- id: none-add-unknown
+  request: add something nice
+  expect: none
+
+# --- Harder wording (mostly for the AI) ---------------------------------------------------------
+- id: hard-swap
+  request: I don't need the slow-moving stock list any more
+  expect: plan
+  ops: [{ op: remove_tile, tile: slow_stock }]
+- id: hard-add-wholesale
+  request: Could I see how much each wholesale customer has spent?
+  expect: plan
+  ops:
+    - op: add_tile
+      ref:
+        {
+          metrics: [net_sales],
+          dimensions: [{ field: customer.name }],
+          filters: [{ field: sale.channel, op: eq, values: [wholesale] }],
+        }
+- id: hard-bigger
+  request: make the sales over time chart bigger
+  expect: plan
+  ops: [{ op: update_tile, tile: sales_over_time, size: true }]

@@ -121,7 +121,7 @@ export async function evalEnv(member: MemberWorkspace): Promise<EvalEnv> {
   return { member, ctx, compile };
 }
 
-async function runSpec(env: EvalEnv, spec: QuestionSpec): Promise<AnswerData> {
+export async function runSpec(env: EvalEnv, spec: QuestionSpec): Promise<AnswerData> {
   const ws = env.member.workspace;
   const q = compileQuery(env.ctx.model, toQuerySpec(spec, env.ctx.catalog.calendar), env.compile);
   const r = await executeTenantQuery({

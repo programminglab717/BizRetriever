@@ -63,6 +63,7 @@ export default defineConfig([
       'scripts/**',
       'evals/runner/cli.ts',
       'evals/runner/questions-cli.ts',
+      'evals/runner/dashboard-cli.ts',
     ],
     rules: { 'no-console': 'off' },
   },

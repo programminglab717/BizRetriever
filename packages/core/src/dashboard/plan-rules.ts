@@ -143,6 +143,24 @@ export function planWithRules(
   }
 
   // Rename: keep the owner's own spelling of the new name.
+  // "call running low Reorder soon": the new name is whatever follows a tile's title.
+  if (/^call\s/.test(lower) && !/\s(?:to|as)\s/.test(lower)) {
+    const rest = r.slice(5).trim();
+    const t = [...tiles]
+      .sort((a, b) => b.title.length - a.title.length)
+      .find((x) => rest.toLowerCase().startsWith(`${x.title.toLowerCase()} `));
+    const name = t
+      ? rest
+          .slice(t.title.length)
+          .trim()
+          .replace(/^"(.*)"$/, '$1')
+      : '';
+    if (t && name)
+      return plan(
+        [{ op: 'update_tile', tileId: t.id, title: name }],
+        `Rename “${t.title}” to “${name}”`,
+      );
+  }
   m = /^(?:rename|call)\s+(.+?)\s+(?:to|as)\s+"?(.+?)"?$/.exec(lower);
   if (m) {
     const t = target(m[1]!, tiles, ctx, 'rename');
@@ -199,7 +217,7 @@ export function planWithRules(
 
   // Chart type: "show top customers as a bar chart".
   m =
-    /^(?:show|make|display|turn|change|switch)\s+(.+?)\s+(?:as|into|to|in)\s+(?:a\s+|an\s+)?(table|list|line(?: chart| graph)?|bar(?: chart| graph)?|stacked bars?(?: chart)?|number|kpi|pie(?: chart)?|chart|graph)$/.exec(
+    /^(?:show|make|display|turn|change|switch)\s+(.+?)\s+(?:(?:as|into|to|in)\s+)?(?:a\s+|an\s+)?(table|list|line(?: chart| graph)?|bar(?: chart| graph)?|stacked bars?(?: chart)?|number|kpi|pie(?: chart)?|chart|graph)$/.exec(
       lower,
     );
   if (m) {

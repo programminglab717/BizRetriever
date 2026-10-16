@@ -1,5 +1,5 @@
 /**
- * `pnpm eval [--suite ingest|questions|all] [--case NAME] [--limit N] [--demo] [--ai] [--yes]
+ * `pnpm eval [--suite ingest|questions|dashboard|all] [--case NAME] [--limit N] [--demo] [--ai] [--yes]
  * [--update-baseline]`
  *
  * Without `--ai` the suite runs the rule-based proposer only: free and offline. With `--ai` it calls
@@ -39,9 +39,13 @@ const { values } = parseArgs({
 });
 
 const suite = values.suite ?? 'all';
-if (!['ingest', 'questions', 'all'].includes(suite)) {
-  console.error('--suite is ingest, questions or all');
+if (!['ingest', 'questions', 'dashboard', 'all'].includes(suite)) {
+  console.error('--suite is ingest, questions, dashboard or all');
   process.exit(1);
+}
+if (suite === 'dashboard') {
+  const { runDashboardCli } = await import('./dashboard-cli');
+  process.exit(await runDashboardCli(values));
 }
 if (suite === 'questions') {
   const { runQuestionsCli } = await import('./questions-cli');
@@ -132,5 +136,8 @@ if (suite === 'all' && !values.case) {
   console.log('\n--- Questions ---');
   const { runQuestionsCli } = await import('./questions-cli');
   code = Math.max(code, await runQuestionsCli(values));
+  console.log('\n--- Dashboard edits ---');
+  const { runDashboardCli } = await import('./dashboard-cli');
+  code = Math.max(code, await runDashboardCli(values));
 }
 process.exit(code);

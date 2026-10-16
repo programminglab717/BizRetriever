@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "cases": 44,
+    "accuracy": 0.932,
+    "unintendedRate": 0,
+    "rulesRate": 0.795
+  }
+}

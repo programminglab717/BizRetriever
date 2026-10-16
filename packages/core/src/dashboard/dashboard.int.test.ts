@@ -3,11 +3,13 @@ import { getPack } from '@bizr/packs';
 import { databaseAvailable } from '@bizr/platform/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { FakeProvider } from '../ask/fixtures';
 import { pinAnswer, askQuestion, unpinTile } from '../ask/service';
 import { resolvePreset } from '../ask/time';
 import { runQuery } from '../semantic/service';
 import { loadDemoWorkspace, type DemoWorkspace } from '../testing/demo-workspace';
 import { DashboardEditError } from './model';
+import { planDashboardEdit } from './plan';
 import {
   applyDashboardEdit,
   currentDashboard,
@@ -138,5 +140,42 @@ describe.skipIf(!hasDb)('default dashboard (integration)', () => {
     expect(view.tiles[0]!.datesLabel).toMatch(/^March /);
     await unpinTile(demo.member, tileId);
     expect((await currentDashboard(demo.member)).tiles.some((t) => t.id === tileId)).toBe(false);
+  }, 60_000);
+
+  it('plans by rules with a preview, and hands harder requests to the AI', async () => {
+    const byRules = await planDashboardEdit(demo.member, 'Add a chart of sales by city', {
+      provider: null,
+    });
+    expect(byRules).toMatchObject({
+      kind: 'plan',
+      origin: 'rules',
+      changes: ['Add “Net sales by city”'],
+    });
+    if (byRules.kind === 'plan') expect(byRules.preview[0]!.table!.rows.length).toBeGreaterThan(1);
+
+    const { tiles } = await currentDashboard(demo.member);
+    const over = tiles.findIndex((t) => t.packKey === 'sales_over_time');
+    const provider = new FakeProvider({
+      plan_dashboard_edit: [
+        { ops: [{ op: 'update_tile', tileId: 't99', size: [12, 4] }], summary: '' },
+        {
+          ops: [{ op: 'update_tile', tileId: `t${over + 1}`, size: [12, 4] }],
+          summary: 'Make it wider.',
+        },
+      ],
+    });
+    const byAi = await planDashboardEdit(demo.member, 'make the sales over time chart bigger', {
+      provider,
+    });
+    expect(byAi).toMatchObject({
+      kind: 'plan',
+      origin: 'ai',
+      ops: [{ op: 'update_tile', tileId: tiles[over]!.id, size: [12, 4] }],
+    });
+    // The repair round was told what was wrong; tiles' titles travel only inside the data block.
+    expect(provider.calls[1]!.messages[0]!.content).toContain(
+      'names a tile that isn’t on the dashboard',
+    );
+    expect(provider.calls[0]!.system).not.toContain('Sales over time');
   }, 60_000);
 });
