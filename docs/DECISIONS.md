@@ -829,3 +829,82 @@ Template for new entries:
     silently lost.
   - The writer role can update `_record_edit` (undo sets `undone_at`). It is an audit aid, not a
     tamper-proof log; `app.audit_event` records each merge and undo.
+
+## ADR-044 — Structural changes: more ops, impact from the data, snapshots and an undo stack
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - New change-plan ops:
+    - `rename_entity`, `rename_field`, `add_allowed_values` and `remove_allowed_values` change only the catalog.
+    - `change_field_type` converts in place with `USING` expressions that never fail half way. `pg_input_is_valid` decides what can be read; anything unreadable becomes blank.
+    - `remove_relationship` drops the link and keeps the linked record's name as text.
+  - Conversions are classed as lossless (e.g. whole number → number, anything → text, date → date and time) or lossy (anything that can blank, round or truncate). Lossy ones are destructive. They are refused on required details and on the detail that dates the records.
+  - The compiler returns, per plan:
+    - `destructive`
+    - an `inverse` plan when one exists
+    - `snapshotTables`: the existing tables a destructive op changes
+  - Removing a detail used in a natural key, or the time field, is refused with a plain reason.
+  - **Snapshots (ADR-023):**
+    - Before a destructive change, `applyChangePlan` copies the affected tables to `t_x_snap.<table>__v<N>` in the same transaction, and records the copy in `app.snapshot`, kept 30 days.
+    - `snapshot.gc` drops expired copies. It is registered and can be queued (`pnpm --filter @bizr/worker run snapshot:gc`). The daily schedule arrives with M7's platform cron.
+  - **Impact** (`analyzeChange`) is counted from the tenant data as the reader role:
+    - records affected
+    - values that won't convert
+    - measures that would stop working: availability compared before and after, by name in this workspace
+    - dashboard charts that use them
+  - **Confirmation:** destructive changes need the removed item's name typed.
+  - **Undo:** only the latest change can be undone, and never the set-up from files (imports are undone from their own page).
+    - `compileRollback` replays exact inverses where they exist, and restores from the snapshot for what was removed or rewritten.
+    - Restores cover details, whole record types (same ids, sequence moved on), links and values.
+    - The undo is itself a new migration (`undoes_version`) and snapshots anything it removes.
+    - Before undoing, the owner is told exactly what data entered since would be affected, and must confirm.
+  - Every migration stores the catalog before it (`catalog_before`) and who made it.
+- **Consequences:**
+  - Every op has an integration test: apply, check, undo, check that the data is the same.
+  - Measures defined by the owner (`add_metric`) stay out: metric definitions live only in pack `metrics.yaml` (CLAUDE.md). Renaming a measure is done in "What we track".
+  - Text → date and time conversion reads the text in the admin session's time zone (UTC). It is rare and only offered with a snapshot.
+
+## ADR-045 — Adding and changing by chat (Tasks H and I), and Ask's hand-off
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - **Planning order.** Both tasks run rules first, then the AI: `plan_record_write@v1` and `plan_change@v1`, at standard tier with low effort.
+  - **Rules.** They read the common phrasings:
+    - sales with items, quantities, prices, customers, dates and channels
+    - new products, customers, suppliers, places and expenses
+    - one-detail updates and status changes
+    - new details (with the kind guessed from the words, or "as a number"), new record types, renames, kinds, allowed values, removals and unlinking
+  - **Name lookups.** Records named in a request are found by a loose word match (`lookup.ts`).
+    - One match is used.
+    - Several matches get "Which … do you mean?" with the choices.
+    - None makes a new customer, supplier or place, always shown on the card as new. It never creates a product.
+  - **The AI's limits.** The AI sees only records whose names appear in the request (inside the data block), and may use only those ids. One repair round per task.
+  - **Never remove unasked.** Code rejects any plan that removes data unless the request asked to remove, unlink or change something.
+  - **Cards.** Code renders every card from the checked plan:
+    - values (parsed by the field type)
+    - defaults it looked up and states as assumptions: today, completed, the product's selling price and cost
+    - totals it computed
+    - before → after for updates
+    - the impact summary for changes
+  - **Writes.** Record writes run as the tenant writer in one logged batch (origin `chat`), so the toast's Undo removes them again. Structure changes go through `makeStructuralChange` (ADR-044).
+  - **Where it lives.** One box on My data, "Add or change something", routes by the rules and then by wording. Ask checks the same rules first: a change request gets "That sounds like a change to your data" with a link that pre-fills the box (`?do=`), instead of an answer to a different question.
+- **Consequences:**
+  - The eval sets score the rules alone on every CI run, with nothing unintended allowed:
+    - record writes: 44 cases, 100%
+    - change plans: 33 cases, 100%
+  - The rules were tuned on these cases, so the AI runs (Q20) should add unseen phrasings.
+
+## ADR-046 — Member invites and roles
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - Owners invite by email from Settings → People. The link:
+    - carries 32 random bytes; only their SHA-256 is stored in `app.workspace_invite`
+    - works once, for the invited address only, for 7 days
+    - is replaced by a newer invite to the same address
+  - Zero-cost rule: the email is sent only when `RESEND_API_KEY` is set, and logged otherwise. The owner always gets the link to copy and share another way.
+  - The invite page shows the business and who invited, then leads through sign-up or sign-in (`?next=`) to "Join". Accepting needs the signed-in email to match the invitation.
+  - Roles stay `owner` and `member`. Members can do everything except inviting, removing people and deleting the business (PRODUCT_SPEC §5). That includes changing records and what's tracked: every change is undoable and logged with who made it. The checks are in core (`NotAllowedError`), not only the UI.
+- **Consequences:**
+  - Removing a member deletes only the membership; their account and their logged edits stay.
+  - Finer roles (view-only, no structural changes) can be added later without changing invites (Q21).

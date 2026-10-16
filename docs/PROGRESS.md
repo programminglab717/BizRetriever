@@ -2,32 +2,41 @@
 
 ## Current Status
 
-- **Milestone:** M6 (Data upkeep) is **in progress** (the owner confirmed M6). Done so far:
-  re-upload with merge preview, conflicts and undo, and the records browser. Still to do:
-  structural changes, record writes and changes by chat (Tasks H and I), and member invites.
+- **Milestone:** M6 (Data upkeep) is **complete on the rules path**; every acceptance criterion is met, with no AI. M7 (Insights) is next, once the owner confirms.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:**
-  - accounts, onboarding, workspaces and settings (M1)
-  - import from upload to data report (M2)
+  - accounts, onboarding, workspaces and settings (M1), now with **People**: invite by link, remove; owner-only invites and deletion
+  - import from upload to data report (M2), and **re-upload**:
+    - newer files are recognised
+    - "Here's what would change", then keep yours or take the file's
+    - "Update my data" and "Undo this update"
   - 28 retail measures, the query compiler and "What we track" (M3)
-  - Ask with charts, clarifying questions, follow-ups, feedback and pinning (M4)
+  - Ask with charts, clarifying questions, follow-ups, feedback and pinning (M4). It now hands change requests over to My data.
   - the dashboard: pack tiles, date range, tile menu, chat edits with preview and undo (M5)
-  - **re-upload**: newer files are recognised; "Here's what would change"; keep yours or take the
-    file's; "Update my data"; "Undo this update"
-  - **My data**: record types with counts, a grid with search, filter chips, sorting and inline
-    edits with Undo, a side panel (details, links, where it came from, history), delete and
-    "Recently deleted"; a card list on phones
-  - `pnpm eval`: 11 ingest, 185 question and 44 dashboard edit cases (rules only, $0)
+  - **My data:**
+    - record types with counts
+    - a grid with search, filters, sorting and inline edits with Undo
+    - a side panel (details, links, where it came from, history), delete and "Recently deleted"
+    - phone cards
+    - **"Add or change something"** by chat: record cards, and change cards with impact and typed confirmation
+  - **Change history:** structural changes and file updates, with Undo
+  - `pnpm eval`: ingest 11, questions 185, dashboard edits 44, **record writes 44**, **change plans 33** (rules only, $0)
+- **M6 acceptance (rules only, no AI):**
+  - The demo's next-month file shows the right diff (new, cancelled, missing kept), merges and undoes (`reupload.int.test.ts`, e2e).
+  - No code path deletes rows missing from a new file. Merges only insert and update; record deletes are soft.
+  - Every structural op is versioned and undone in an integration test (`structure.int.test.ts`).
+  - Destructive changes always snapshot first, in the same transaction.
 - **Waiting on the owner (batched for the end):**
   - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
-  - the Anthropic API key (Q20), for the first AI eval runs (questions and dashboard edits)
+  - the Anthropic API key (Q20), for the first AI eval runs
+  - confirmation to start M7
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
 
-### 2026-10-16 — Session 9: M6 Data upkeep, part 1 (re-upload and records)
+### 2026-10-16 — Session 9: M6 Data upkeep built
 
 **Completed:**
 
@@ -59,8 +68,28 @@
   that had been closed. It now rebuilds when the pool changes.
 - The review screen never showed what the analysis had spotted; it now lists it.
 
-**Next steps:** structural changes (remaining compiler ops, impact, snapshots, change history);
-Tasks H and I by chat with their eval sets; member invites and roles; then M6 docs and acceptance.
+- **Structural changes** (ADR-044):
+  - new ops: renames, kinds, allowed values and unlinking
+  - snapshots before destructive changes (`app.snapshot`, migration `0011`)
+  - impact counted from the data, including measures and charts that would stop working
+  - an undo stack restoring from inverses or snapshots
+  - `snapshot.gc`
+- **Change history page** with Undo, and a warning when data entered since would be lost.
+- **By chat** (ADR-045):
+  - Task H (record writes) and Task I (change plans): rules, lookups with "Which … do you mean?", cards built by code, then `plan_record_write@v1` and `plan_change@v1`
+  - the My data box
+  - Ask's hand-off
+  - eval suites `records` (44) and `changes` (33), with CI tests and baselines
+- **People** (ADR-046): invite by link (migration `0012`), the invite page, owner-only checks in core.
+- **Tests:** 676 unit/integration and 20 e2e journeys (desktop and mobile), all green.
+
+**More bugs found and fixed:**
+
+- Text → whole number conversions were described as "rounded" when the values actually become blank.
+- Removing a detail that tells records apart now says why instead of "couldn't work out".
+- Ask answered "Rename sales to orders" as a sales question; it now recognises change requests.
+
+**Next steps:** owner review of M6; then M7 (Insights), whose daily platform cron also runs `snapshot.gc`. With the API key (Q20): AI eval runs for all five suites.
 
 ### 2026-10-16 — Session 8: M5 Dashboards built
 

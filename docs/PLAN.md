@@ -405,7 +405,7 @@ records by chat, structural changes by chat with versioning and rollback.
 - [x] Records browser: virtualised grid (TanStack Table), filters, sort, search, inline type-aware edit,
   record side panel with lineage and history, soft delete + "Recently deleted"
 - [x] Mobile card list for records
-- [ ] Task H `planRecordWrite` + confirmation card + writer-role execution + undo **(cuttable for the
+- [x] Task H `planRecordWrite` + confirmation card + writer-role execution + undo **(cuttable for the
   first demo)**
 
 **Structural changes:**
@@ -414,17 +414,17 @@ records by chat, structural changes by chat with versioning and rollback.
   remove_relationship, add_allowed_values, metrics); impact analysis; inverse plans; lossy-rollback
   detection
 - [x] Snapshots (ADR-023) + `snapshot.gc` job
-- [ ] Task I `planChange` + change plan card + typed confirmation for destructive changes **(cuttable for
+- [x] Task I `planChange` + change plan card + typed confirmation for destructive changes **(cuttable for
   the first demo)**
 - [x] Change history page with undo
 
 **Members:**
 
-- [ ] Member invites (email link), member role enforcement
+- [x] Member invites (email link), member role enforcement
 
 **Evals:**
 
-- [ ] Eval sets: record writes (≥ 40), change plans (≥ 30)
+- [x] Eval sets: record writes (≥ 40), change plans (≥ 30)
 
 **Acceptance:**
 
