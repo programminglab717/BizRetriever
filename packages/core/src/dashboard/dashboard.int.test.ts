@@ -54,8 +54,11 @@ describe.skipIf(!hasDb)('default dashboard (integration)', () => {
     expect(kpi.text).toBe(shown);
     expect(kpi.change).toBeDefined();
     // "Running low" lists only products with under 14 days left.
-    const low = view.tiles.find((t) => t.packKey === 'running_low')!.table!;
-    expect(low.rows.every((r) => (r.cells[1]!.value ?? 0) < 14)).toBe(true);
+    const low = view.tiles.find((t) => t.packKey === 'running_low')!;
+    expect(low.table!.rows.every((r) => (r.cells[1]!.value ?? 0) < 14)).toBe(true);
+    // Unmatched till items (no product) are left out, and the tile says so.
+    expect(low.table!.rows.some((r) => r.label === 'Not recorded')).toBe(false);
+    expect(low.note).toBe('Leaves out records with no product.');
   }, 60_000);
 
   it('follows the date range: monthly over a year, no comparison when it’s off', async () => {

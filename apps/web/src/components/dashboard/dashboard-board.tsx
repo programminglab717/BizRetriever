@@ -141,7 +141,7 @@ export function DashboardBoard({
       )}
 
       <div
-        className={`grid gap-4 md:grid-cols-12 ${pending ? 'opacity-70' : ''}`}
+        className={`grid items-start gap-4 md:grid-cols-12 ${pending ? 'opacity-70' : ''}`}
         aria-busy={pending}
       >
         {view.tiles.map((t, i) => (

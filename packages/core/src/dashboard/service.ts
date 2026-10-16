@@ -11,7 +11,7 @@ import { getPack } from '@bizr/packs';
 import { getLogger } from '@bizr/platform';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 
-import { chooseChart, fittingCharts, toAnswerData } from '../ask/answer';
+import { chooseChart, fittingCharts, toAnswerData, type AnswerData } from '../ask/answer';
 import { loadAskContext, type AskContext } from '../ask/catalog';
 import { check } from '../ask/interpret';
 import { periodOf, toQuerySpec, type ChartType, type QuestionSpec } from '../ask/interpretation';
@@ -298,6 +298,8 @@ export interface TileView {
   /** "Sep 2026" when the tile keeps its own dates. */
   datesLabel?: string;
   comparedWith?: string;
+  /** "Leaves out records with no customer." when blank groups were dropped. */
+  note?: string;
   /** Charts that can show this tile (for "change chart"). */
   charts?: ChartType[];
   table?: TableView;
@@ -337,6 +339,29 @@ function remember(key: string, view: NonNullable<ReturnType<typeof cached>>) {
 /** For tests. */
 export function clearTileCache(): void {
   cache.clear();
+}
+
+/**
+ * On a dashboard, a "Not recorded" group (till sales with no customer, items that didn't match a
+ * product) crowds out the real ones, so tiles leave it out and say so. Ask keeps it.
+ */
+function withoutBlankGroups(
+  data: AnswerData,
+  pack: ReturnType<typeof getPack>,
+): { data: AnswerData; note?: string } {
+  const fields = data.columns.filter((c) => c.kind === 'dimension' && c.field);
+  if (fields.length === 0) return { data };
+  const kept = data.rows.filter((r) => fields.every((c) => r[c.key] !== null));
+  const dropped = data.rows.length - kept.length;
+  if (dropped === 0) return { data };
+  const nouns = fields.map((c) => {
+    const d = pack.metrics.dimensions.find((x) => x.field === c.field);
+    return d?.noun?.[0] ?? d?.label.toLowerCase() ?? 'detail';
+  });
+  return {
+    data: { ...data, rows: kept, totalRows: Math.max(kept.length, data.totalRows - dropped) },
+    note: `Leaves out records with no ${nouns.join(' or ')}.`,
+  };
 }
 
 /** The dates the dashboard shows: the request, else the owner's last choice, else the pack's. */
@@ -403,7 +428,7 @@ export async function renderTiles(
       if (hit) return { ...base, ...hit };
       try {
         const r = await runQuery(member, toQuerySpec(spec, cal), 'dashboard', model);
-        const data = toAnswerData(r);
+        const { data, note } = withoutBlankGroups(toAnswerData(r), pack);
         const own = t.fixedDates ? periodOf(spec.timeRange, cal) : undefined;
         const view = {
           chart: chooseChart(data, spec, t.chart),
@@ -411,6 +436,7 @@ export async function renderTiles(
           table: tableView(data, options),
           kpis: kpiViews(data, options),
           ...(t.fixedDates ? { datesLabel: periodLabel(own) } : {}),
+          ...(note ? { note } : {}),
           ...(r.previousPeriod ? { comparedWith: periodLabel(r.previousPeriod) } : {}),
         };
         remember(key, view);

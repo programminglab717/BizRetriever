@@ -199,6 +199,8 @@ export function DashboardTile({
           <p className="text-sm text-muted-foreground">Nothing in this period.</p>
         ) : tile.chart === 'kpi' && tile.kpis?.length ? (
           <KpiCards
+            compact
+            title={tile.title}
             kpis={tile.kpis}
             {...(tile.comparedWith ? { comparedWith: tile.comparedWith } : {})}
           />
@@ -206,6 +208,9 @@ export function DashboardTile({
           <AnswerTable table={tile.table!} caption={tile.title} />
         ) : (
           <AnswerChart chart={tile.chart} table={tile.table!} title={tile.title} style={style} />
+        )}
+        {tile.note && !tile.error && (
+          <p className="mt-2 text-xs text-muted-foreground">{tile.note}</p>
         )}
       </CardContent>
     </Card>

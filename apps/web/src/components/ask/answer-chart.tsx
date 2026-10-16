@@ -87,21 +87,45 @@ function ExactTooltip({
   );
 }
 
-export function KpiCards({ kpis, comparedWith }: { kpis: KpiView[]; comparedWith?: string }) {
+/**
+ * Headline numbers. `compact` is for dashboard tiles: no inner cards, the label only when it says
+ * more than the tile title, and the comparison dates in a tooltip.
+ */
+export function KpiCards({
+  kpis,
+  comparedWith,
+  compact,
+  title,
+}: {
+  kpis: KpiView[];
+  comparedWith?: string;
+  compact?: boolean;
+  title?: string;
+}) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div
+      className={cn(
+        'grid gap-3',
+        compact ? 'grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]' : 'sm:grid-cols-2',
+      )}
+    >
       {kpis.map((k) => (
-        <div key={k.label} className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">{k.label}</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">{k.text}</p>
+        <div key={k.label} className={cn('min-w-0', !compact && 'rounded-lg border p-4')}>
+          {!(compact && kpis.length === 1 && k.label.toLowerCase() === title?.toLowerCase()) && (
+            <p className="text-sm text-muted-foreground">{k.label}</p>
+          )}
+          <p className={cn('mt-1 font-semibold tabular-nums', compact ? 'text-2xl' : 'text-3xl')}>
+            {k.text}
+          </p>
           {k.change && (
             <p
               className={cn(
-                'mt-1 flex items-center gap-1 text-sm',
+                'mt-1 flex flex-wrap items-center gap-1 text-sm',
                 k.change.good === true && 'text-emerald-700',
                 k.change.good === false && 'text-destructive',
                 k.change.good === undefined && 'text-muted-foreground',
               )}
+              {...(compact && comparedWith ? { title: `Compared with ${comparedWith}` } : {})}
             >
               {k.change.direction === 'up' ? (
                 <ArrowUp className="size-4" aria-label="Up" />
@@ -111,7 +135,11 @@ export function KpiCards({ kpis, comparedWith }: { kpis: KpiView[]; comparedWith
                 <Minus className="size-4" aria-hidden />
               )}
               {k.change.text}
-              {comparedWith && <span className="text-muted-foreground"> vs {comparedWith}</span>}
+              {comparedWith && (
+                <span className="text-muted-foreground">
+                  {compact ? 'vs the period before' : `vs ${comparedWith}`}
+                </span>
+              )}
             </p>
           )}
         </div>
@@ -210,6 +238,7 @@ export function AnswerChart({
               {metrics.length > 1 && <Legend />}
               {metrics.map((m, i) => (
                 <Line
+                  isAnimationActive={false}
                   key={m.key}
                   dataKey={m.key}
                   name={m.label}
@@ -228,7 +257,14 @@ export function AnswerChart({
               <Tooltip content={<ExactTooltip />} />
               <Legend />
               {stack.groups.map((g, i) => (
-                <Bar key={g} dataKey={g} name={g} stackId="a" fill={COLORS[i % COLORS.length]} />
+                <Bar
+                  isAnimationActive={false}
+                  key={g}
+                  dataKey={g}
+                  name={g}
+                  stackId="a"
+                  fill={COLORS[i % COLORS.length]}
+                />
               ))}
             </BarChart>
           ) : chart === 'bar_horizontal' ? (
@@ -237,7 +273,13 @@ export function AnswerChart({
               <XAxis type="number" tickFormatter={tick} tick={{ fontSize: 12 }} />
               <YAxis type="category" dataKey="label" width={140} tick={{ fontSize: 12 }} />
               <Tooltip content={<ExactTooltip />} />
-              <Bar dataKey={first.key} name={first.label} fill={COLORS[0]} radius={[0, 4, 4, 0]} />
+              <Bar
+                isAnimationActive={false}
+                dataKey={first.key}
+                name={first.label}
+                fill={COLORS[0]}
+                radius={[0, 4, 4, 0]}
+              />
             </BarChart>
           ) : (
             <BarChart {...common}>
@@ -247,6 +289,7 @@ export function AnswerChart({
               <Tooltip content={<ExactTooltip />} />
               {metrics.map((m, i) => (
                 <Bar
+                  isAnimationActive={false}
                   key={m.key}
                   dataKey={m.key}
                   name={m.label}
