@@ -79,7 +79,7 @@ docs/             all planning documentation
 | Generate demo dataset (M2) | `pnpm demo:generate` |
 | Eval suite, rules only (free) | `pnpm eval` (one suite: `pnpm eval -- --suite ingest\|questions\|dashboard\|records\|changes`) |
 | Drop expired snapshots | `pnpm --filter @bizr/worker run snapshot:gc` (daily via M7's cron) |
-| Demo re-upload file (M6) | `pnpm demo:generate -- --next-month <dir>` |
+| Demo re-upload file (M6) | `pnpm demo:generate --next-month <dir>` |
 | AI eval suite (costs money; asks before > $1) | `pnpm eval -- --ai --limit N` |
 | Local demo machine (M8) | `pnpm demo:up` |
 
