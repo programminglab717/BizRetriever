@@ -52,6 +52,7 @@ dimensions:
 metrics:
   - id: gross_sales
     label: Sales before discounts
+    synonyms: ['gross sales', 'sales before discounts', 'full price sales']
     description: Price × quantity for every item on completed sales, before discounts.
     format: money
     ir:
@@ -61,6 +62,7 @@ metrics:
 
   - id: discounts
     label: Discounts given
+    synonyms: ['discounts', 'discount', 'money off', 'promotions']
     description: Discounts on completed sales, from item discounts and order discounts.
     format: money
     good_direction: down
@@ -80,6 +82,7 @@ metrics:
 
   - id: refunds
     label: Refunds
+    synonyms: ['refunds', 'refunded', 'money back']
     description: Money refunded on returns, by the date of the return.
     format: money
     good_direction: down
@@ -89,6 +92,26 @@ metrics:
 
   - id: net_sales
     label: Net sales
+    synonyms:
+      [
+        'sales',
+        'revenue',
+        'takings',
+        'turnover',
+        'income',
+        'sold',
+        'sell',
+        'selling',
+        'sell the most',
+        'best seller',
+        'best sellers',
+        'bestseller',
+        'bestsellers',
+        'net sales',
+        'money in',
+        'make money',
+        'earned',
+      ]
     description: >-
       Money from completed sales after discounts and refunds. Excludes tax and shipping charged.
       Refunds count on the day of the return.
@@ -103,6 +126,16 @@ metrics:
 
   - id: units_sold
     label: Items sold
+    synonyms:
+      [
+        'items sold',
+        'units sold',
+        'units',
+        'how many items',
+        'how many did i sell',
+        'quantity sold',
+        'pieces sold',
+      ]
     description: Number of items sold on completed sales, minus items returned.
     format: number
     ir:
@@ -112,6 +145,8 @@ metrics:
 
   - id: order_count
     label: Orders
+    synonyms:
+      ['orders', 'number of orders', 'how many orders', 'order count', 'transactions', 'purchases']
     description: Number of completed orders.
     format: number
     ir:
@@ -120,6 +155,15 @@ metrics:
 
   - id: average_order_value
     label: Average order value
+    synonyms:
+      [
+        'average order value',
+        'average order',
+        'aov',
+        'average basket',
+        'basket size',
+        'average sale',
+      ]
     description: Net sales ÷ orders.
     format: money
     ir:
@@ -127,6 +171,7 @@ metrics:
 
   - id: items_per_order
     label: Items per order
+    synonyms: ['items per order', 'units per order', 'basket items']
     description: Items sold ÷ orders.
     format: number
     ir:
@@ -134,6 +179,7 @@ metrics:
 
   - id: cogs
     label: Cost of goods sold
+    synonyms: ['cost of goods sold', 'cost of goods', 'cogs', 'cost of sales', 'product costs']
     description: >-
       Items sold × their cost (the cost at the time of sale if known, otherwise the product’s current
       cost), minus the cost of items returned.
@@ -151,6 +197,8 @@ metrics:
 
   - id: gross_profit
     label: Gross profit
+    synonyms:
+      ['profit', 'profits', 'gross profit', 'most profit', 'profitable', 'made me', 'earn the most']
     description: Net sales − cost of goods sold.
     format: money
     ir:
@@ -159,6 +207,7 @@ metrics:
 
   - id: gross_margin_pct
     label: Profit margin
+    synonyms: ['margin', 'margins', 'profit margin', 'gross margin', 'markup']
     description: Gross profit ÷ net sales.
     format: percent
     ir:
@@ -167,6 +216,9 @@ metrics:
 
   - id: customer_count
     label: Customers who bought
+    default_time: this_month
+    synonyms:
+      ['number of customers', 'how many customers', 'customer count', 'how many people bought']
     description: Different customers with a completed sale in the period.
     format: number
     ir:
@@ -177,6 +229,8 @@ metrics:
 
   - id: new_customers
     label: New customers
+    default_time: this_month
+    synonyms: ['new customers', 'new buyers', 'first time customers', 'first-time customers']
     description: Customers whose first-ever completed order was in the period.
     format: number
     ir:
@@ -194,6 +248,9 @@ metrics:
 
   - id: repeat_customer_rate
     label: Returning customers
+    default_time: this_year
+    synonyms:
+      ['returning customers', 'repeat customers', 'come back', 'came back', 'repeat rate', 'loyal']
     description: Share of customers who bought in the period and had ordered before it.
     format: percent
     ir:
@@ -216,6 +273,8 @@ metrics:
 
   - id: customer_revenue
     label: Customer spend
+    synonyms:
+      ['spend per customer', 'customer spend', 'average customer spend', 'revenue per customer']
     description: Net sales ÷ customers who bought.
     format: money
     ir:
@@ -223,6 +282,16 @@ metrics:
 
   - id: lapsed_customers
     label: Customers who stopped ordering
+    synonyms:
+      [
+        'stopped ordering',
+        'stopped buying',
+        'lapsed',
+        'lost customers',
+        'haven’t ordered',
+        "haven't ordered",
+        'drifting away',
+      ]
     description: >-
       Customers with at least three past orders whose time since their last order is more than twice
       their usual gap between orders, and more than thirty days.
@@ -279,6 +348,8 @@ metrics:
 
   - id: stock_on_hand
     label: Items in stock
+    synonyms:
+      ['stock', 'in stock', 'inventory', 'stock levels', 'how many do i have', 'stock on hand']
     description: How many items you have, from your latest stock count of each product.
     format: number
     snapshot: true
@@ -293,6 +364,8 @@ metrics:
 
   - id: stock_value
     label: Stock value (at cost)
+    synonyms:
+      ['stock value', 'value of stock', 'tied up in stock', 'inventory value', 'worth of stock']
     description: Items in stock × what each costs you.
     format: money
     snapshot: true
@@ -305,6 +378,7 @@ metrics:
 
   - id: daily_sales_rate
     label: Average items sold per day
+    synonyms: ['sold per day', 'daily sales rate', 'sales per day', 'items per day']
     description: Items sold in the last 28 days ÷ 28.
     format: number
     snapshot: true
@@ -315,6 +389,17 @@ metrics:
 
   - id: days_of_cover
     label: Days of stock left
+    synonyms:
+      [
+        'run out',
+        'running out',
+        'days of stock',
+        'days of cover',
+        'reorder',
+        'restock',
+        'sell out',
+        'about to run out',
+      ]
     description: Items in stock ÷ average items sold per day.
     format: days
     snapshot: true
@@ -324,6 +409,17 @@ metrics:
 
   - id: dead_stock_value
     label: Money tied up in unsold stock
+    synonyms:
+      [
+        'not selling',
+        'dead stock',
+        'unsold stock',
+        "isn't selling",
+        'not sold',
+        'slow moving',
+        'slow-moving',
+        'sitting on the shelf',
+      ]
     description: Stock value (at cost) of products you have in stock but haven’t sold in 90 days.
     format: money
     good_direction: down
@@ -351,6 +447,7 @@ metrics:
 
   - id: sell_through_rate
     label: Sell-through
+    synonyms: ['sell through', 'sell-through', 'sell through rate']
     description: Items sold ÷ (items sold + items in stock).
     format: percent
     ir:
@@ -360,6 +457,9 @@ metrics:
 
   - id: return_rate
     label: Return rate
+    default_time: last_90_days
+    synonyms:
+      ['return rate', 'returned', 'returns rate', 'how often do things come back', 'returns']
     description: Items returned ÷ items sold.
     format: percent
     good_direction: down
@@ -371,6 +471,19 @@ metrics:
 
   - id: expenses_total
     label: Expenses
+    synonyms:
+      [
+        'expenses',
+        'spend on',
+        'spent on',
+        'overheads',
+        'running costs',
+        'bills',
+        'ads',
+        'advertising',
+        'rent',
+        'wages',
+      ]
     description: Everything you recorded as an expense.
     format: money
     good_direction: down
@@ -380,6 +493,7 @@ metrics:
 
   - id: net_profit_estimate
     label: Profit after expenses (estimate)
+    synonyms: ['profit after expenses', 'net profit', 'bottom line', 'real profit', 'after costs']
     description: Gross profit − expenses. An estimate, because it leaves out anything not recorded.
     format: money
     ir:
@@ -388,6 +502,8 @@ metrics:
 
   - id: outstanding_receivables
     label: Money owed to you
+    synonyms:
+      ['owes me', 'owe me', 'owed', 'owing', 'unpaid', 'money owed', 'outstanding', 'receivables']
     description: Sales marked unpaid or part paid, minus payments received for them.
     format: money
     good_direction: down
@@ -406,6 +522,7 @@ metrics:
 
   - id: overdue_receivables
     label: Overdue money owed
+    synonyms: ['overdue', 'late payments', 'paid late', 'past due', 'late paying']
     description: >-
       Money owed to you on sales past their payment due date.
     format: money
@@ -440,6 +557,14 @@ metrics:
 
   - id: supplier_spend
     label: Spent with suppliers
+    synonyms:
+      [
+        'spent with suppliers',
+        'supplier spend',
+        'spend with suppliers',
+        'bought from suppliers',
+        'supplier orders total',
+      ]
     description: Total of your supplier orders, by the date you ordered.
     format: money
     good_direction: neutral

@@ -18,7 +18,7 @@ export {
   type QuerySpecInput,
   type TimeGrain,
 } from './query-spec';
-export { fieldsWithData } from './data';
+export { fieldsWithData, topValues } from './data';
 export {
   compileContext,
   getGlossary,

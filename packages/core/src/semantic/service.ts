@@ -8,7 +8,7 @@ import { executeTenantQuery } from '../executor/execute';
 import type { MemberWorkspace } from '../workspaces/service';
 import { AvailabilityResolver } from './availability';
 import { compileQuery, type CompiledQuery, type ResultColumn } from './compile';
-import { fieldsWithData } from './data';
+import { fieldsWithData, topValues } from './data';
 import { buildModel, type CompileContext, type SemanticModel } from './model';
 import type { QuerySpecInput } from './query-spec';
 
@@ -47,6 +47,11 @@ export async function refreshSemanticCatalog(
     catalog,
   );
   const model = buildModel(catalog, pack, present);
+  const values = await topValues(
+    { workspaceId: ws.id, tenantSchema: ws.tenantSchema },
+    catalog,
+    pack.metrics.dimensions.map((d) => d.field).filter((f) => present.has(f)),
+  );
   const resolver = new AvailabilityResolver(model);
   const db = getAppDb();
   let available = 0;
@@ -59,7 +64,15 @@ export async function refreshSemanticCatalog(
         .where(eq(entity.id, e.id));
       const fields = catalog.find((c) => c.key === e.key)?.fields ?? [];
       const withData = fields.filter((f) => present.has(`${e.key}.${f.key}`)).map((f) => f.key);
-      await tx.update(field).set({ hasData: false }).where(eq(field.entityId, e.id));
+      await tx.update(field).set({ hasData: false, topValues: [] }).where(eq(field.entityId, e.id));
+      for (const [ref, list] of values) {
+        const [entityKey, fieldKey] = ref.split('.');
+        if (entityKey !== e.key) continue;
+        await tx
+          .update(field)
+          .set({ topValues: list })
+          .where(and(eq(field.entityId, e.id), eq(field.key, fieldKey!)));
+      }
       if (withData.length)
         await tx
           .update(field)

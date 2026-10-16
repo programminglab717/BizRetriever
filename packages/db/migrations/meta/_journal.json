@@ -43,6 +43,13 @@
       "when": 1792144698089,
       "tag": "0005_semantic_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792147334919,
+      "tag": "0006_field_top_values",
+      "breakpoints": true
     }
   ]
 }

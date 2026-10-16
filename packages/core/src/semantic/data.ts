@@ -37,3 +37,34 @@ export async function fieldsWithData(
   }
   return { present, counts };
 }
+
+/**
+ * The most common values of the pack's text breakdowns (channels, categories, product names…),
+ * for recognising them in questions. Values come from the owner's data: treat them as untrusted.
+ */
+export async function topValues(
+  tenant: TenantRef,
+  catalog: readonly CatalogEntity[],
+  dimensionFields: readonly string[],
+  limit = 200,
+): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>();
+  for (const ref of dimensionFields) {
+    const [entityKey, fieldKey] = ref.split('.') as [string, string];
+    const e = catalog.find((x) => x.key === entityKey);
+    const f = e?.fields.find((x) => x.key === fieldKey);
+    if (!e || !f || f.type !== 'text') continue;
+    const col = ident(f.key);
+    const r = await executeTenantQuery({
+      tenant,
+      sql: `SELECT ${col} AS "v" FROM ${ident(e.tableName)} WHERE "_deleted_at" IS NULL AND ${col} IS NOT NULL GROUP BY ${col} ORDER BY count(*) DESC, ${col} LIMIT ${Math.trunc(limit)}`,
+      origin: 'system',
+      path: 'system',
+    });
+    out.set(
+      ref,
+      r.rows.map((row) => String(row.v)).filter((v) => v.length <= 120),
+    );
+  }
+  return out;
+}

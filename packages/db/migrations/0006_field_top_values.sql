@@ -1,0 +1,1 @@
+ALTER TABLE "app"."field" ADD COLUMN "top_values" jsonb DEFAULT '[]'::jsonb NOT NULL;

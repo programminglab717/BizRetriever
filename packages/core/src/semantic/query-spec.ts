@@ -39,6 +39,19 @@ export const querySpecSchema = z
     /** `to` is exclusive. Omitted: everything up to and including today. */
     period: z.object({ from: isoDate, to: isoDate }).strict().optional(),
     compare: z.enum(['previous_period', 'previous_year']).optional(),
+    /** Keep only rows whose metric meets these (e.g. unsold stock value > 0). */
+    having: z
+      .array(
+        z
+          .object({
+            metric: z.string().regex(/^[a-z][a-z0-9_]*$/),
+            op: z.enum(['eq', 'neq', 'gt', 'gte', 'lt', 'lte']),
+            value: z.number(),
+          })
+          .strict(),
+      )
+      .max(3)
+      .default([]),
     sort: z
       .object({
         /** A metric id, or `d0`, `d1`… for a dimension. */

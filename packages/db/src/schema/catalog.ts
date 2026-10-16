@@ -75,6 +75,11 @@ export const field = app.table(
     position: integer('position').notNull(),
     /** True when at least one record has a value (refreshed after each import; drives availability). */
     hasData: boolean('has_data').notNull().default(false),
+    /** Most common values of breakdown details (channels, categories, product names), for questions. */
+    topValues: jsonb('top_values')
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique('field_entity_key_uq').on(t.entityId, t.key)],

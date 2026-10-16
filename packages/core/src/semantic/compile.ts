@@ -766,6 +766,16 @@ export function compileQuery(
     select = `SELECT * FROM "cur"`;
   }
 
+  // Row filters on metric values, and the total row count before any limit ("top 15 of 212").
+  const having = spec.having.map((h) => {
+    if (!metrics.some((m) => m.id === h.metric))
+      throw new SemanticError(`having on ${h.metric} not in metrics`, 'We can’t filter by that.');
+    const op = { eq: '=', neq: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=' }[h.op];
+    return `r.${ident(`m_${h.metric}`)} ${op} ${c.params.add(h.value, 'numeric')}`;
+  });
+  if (having.length || dimKeys.length)
+    select = `SELECT r.*${dimKeys.length ? ', count(*) OVER () AS "__total"' : ''} FROM (${select}) r${having.length ? ` WHERE ${having.join(' AND ')}` : ''}`;
+
   // Order: chosen sort, else over time ascending, else the first metric, largest first.
   const timeIndex = spec.dimensions.findIndex((d) => 'time' in d);
   let order: string | undefined;

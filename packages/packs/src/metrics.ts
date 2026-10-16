@@ -212,6 +212,19 @@ export const packMetricSchema = z
     requires_any: z.array(fieldRef).optional(),
     /** Plain-language call to action when the metric can't be shown yet. */
     unavailable_hint: z.string().optional(),
+    /** Time range used when a question doesn't name one (default: all time). */
+    default_time: z
+      .enum([
+        'this_month',
+        'last_month',
+        'this_quarter',
+        'this_year',
+        'last_30_days',
+        'last_90_days',
+      ])
+      .optional(),
+    /** Words owners use for this measure ("takings", "revenue"), for question answering. */
+    synonyms: z.array(z.string().min(1)).default([]),
     /** Stated to the owner whenever the metric is used. */
     assumptions: z.array(z.string()).default([]),
     /** Shown as a snapshot ("as of your latest count") rather than over a period. */

@@ -1857,6 +1857,11 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Add the price of each item sold to see sales before discounts.",
+          "synonyms": [
+            "gross sales",
+            "sales before discounts",
+            "full price sales"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -1906,6 +1911,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "sale.discount_total"
           ],
           "unavailable_hint": "Include the discount column from your sales export to see discounts.",
+          "synonyms": [
+            "discounts",
+            "discount",
+            "money off",
+            "promotions"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -1921,6 +1932,11 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             }
           },
           "unavailable_hint": "Upload your returns or refunds to see refunds.",
+          "synonyms": [
+            "refunds",
+            "refunded",
+            "money back"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -1953,6 +1969,25 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Upload your sales with the amount of each item to see net sales.",
+          "synonyms": [
+            "sales",
+            "revenue",
+            "takings",
+            "turnover",
+            "income",
+            "sold",
+            "sell",
+            "selling",
+            "sell the most",
+            "best seller",
+            "best sellers",
+            "bestseller",
+            "bestsellers",
+            "net sales",
+            "money in",
+            "make money",
+            "earned"
+          ],
           "assumptions": [
             "Order discounts are shared across the order’s items in proportion to their price."
           ],
@@ -1988,6 +2023,15 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
               }
             ]
           },
+          "synonyms": [
+            "items sold",
+            "units sold",
+            "units",
+            "how many items",
+            "how many did i sell",
+            "quantity sold",
+            "pieces sold"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2005,6 +2049,14 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
               "completed"
             ]
           },
+          "synonyms": [
+            "orders",
+            "number of orders",
+            "how many orders",
+            "order count",
+            "transactions",
+            "purchases"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2024,6 +2076,14 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
               }
             ]
           },
+          "synonyms": [
+            "average order value",
+            "average order",
+            "aov",
+            "average basket",
+            "basket size",
+            "average sale"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2043,6 +2103,11 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
               }
             ]
           },
+          "synonyms": [
+            "items per order",
+            "units per order",
+            "basket items"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2084,6 +2149,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Add what each product costs you (for example in your stock list) to see profit.",
+          "synonyms": [
+            "cost of goods sold",
+            "cost of goods",
+            "cogs",
+            "cost of sales",
+            "product costs"
+          ],
           "assumptions": [
             "Where we don’t know what an item cost when it was sold, we use its current cost."
           ],
@@ -2106,6 +2178,15 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Add what each product costs you (for example in your stock list) to see profit.",
+          "synonyms": [
+            "profit",
+            "profits",
+            "gross profit",
+            "most profit",
+            "profitable",
+            "made me",
+            "earn the most"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2126,6 +2207,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Add what each product costs you (for example in your stock list) to see your margin.",
+          "synonyms": [
+            "margin",
+            "margins",
+            "profit margin",
+            "gross margin",
+            "markup"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2145,6 +2233,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "from": "sale_line"
           },
           "unavailable_hint": "Include customer names or emails in your sales to see customers.",
+          "default_time": "this_month",
+          "synonyms": [
+            "number of customers",
+            "how many customers",
+            "customer count",
+            "how many people bought"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2177,6 +2272,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Include customer names or emails in your sales to see new customers.",
+          "default_time": "this_month",
+          "synonyms": [
+            "new customers",
+            "new buyers",
+            "first time customers",
+            "first-time customers"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2228,6 +2330,15 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Include customer names or emails in your sales to see returning customers.",
+          "default_time": "this_year",
+          "synonyms": [
+            "returning customers",
+            "repeat customers",
+            "come back",
+            "came back",
+            "repeat rate",
+            "loyal"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2247,6 +2358,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
               }
             ]
           },
+          "synonyms": [
+            "spend per customer",
+            "customer spend",
+            "average customer spend",
+            "revenue per customer"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2368,6 +2485,15 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Include customer names or emails in your sales to see who stopped ordering.",
+          "synonyms": [
+            "stopped ordering",
+            "stopped buying",
+            "lapsed",
+            "lost customers",
+            "haven’t ordered",
+            "haven't ordered",
+            "drifting away"
+          ],
           "assumptions": [],
           "snapshot": true
         },
@@ -2386,6 +2512,14 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "window": "all"
           },
           "unavailable_hint": "Upload a stock list with how many of each product you have.",
+          "synonyms": [
+            "stock",
+            "in stock",
+            "inventory",
+            "stock levels",
+            "how many do i have",
+            "stock on hand"
+          ],
           "assumptions": [
             "Stock is as of your latest count; sales since then aren’t taken off yet."
           ],
@@ -2414,6 +2548,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             }
           },
           "unavailable_hint": "Upload a stock list with how many you have and what each product costs.",
+          "synonyms": [
+            "stock value",
+            "value of stock",
+            "tied up in stock",
+            "inventory value",
+            "worth of stock"
+          ],
           "assumptions": [],
           "snapshot": true
         },
@@ -2441,6 +2582,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
               }
             ]
           },
+          "synonyms": [
+            "sold per day",
+            "daily sales rate",
+            "sales per day",
+            "items per day"
+          ],
           "assumptions": [],
           "snapshot": true
         },
@@ -2461,6 +2608,16 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Upload a stock list and your sales to see how many days of stock you have left.",
+          "synonyms": [
+            "run out",
+            "running out",
+            "days of stock",
+            "days of cover",
+            "reorder",
+            "restock",
+            "sell out",
+            "about to run out"
+          ],
           "assumptions": [],
           "snapshot": true
         },
@@ -2518,6 +2675,16 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Upload a stock list with costs and your sales to see unsold stock.",
+          "synonyms": [
+            "not selling",
+            "dead stock",
+            "unsold stock",
+            "isn't selling",
+            "not sold",
+            "slow moving",
+            "slow-moving",
+            "sitting on the shelf"
+          ],
           "assumptions": [],
           "snapshot": true
         },
@@ -2544,6 +2711,11 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
               }
             ]
           },
+          "synonyms": [
+            "sell through",
+            "sell-through",
+            "sell through rate"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2571,6 +2743,14 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Upload your returns with how many items came back to see your return rate.",
+          "default_time": "last_90_days",
+          "synonyms": [
+            "return rate",
+            "returned",
+            "returns rate",
+            "how often do things come back",
+            "returns"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2586,6 +2766,18 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             }
           },
           "unavailable_hint": "Upload your expenses to see your costs of running the business.",
+          "synonyms": [
+            "expenses",
+            "spend on",
+            "spent on",
+            "overheads",
+            "running costs",
+            "bills",
+            "ads",
+            "advertising",
+            "rent",
+            "wages"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2606,6 +2798,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Add product costs and upload your expenses to see profit after expenses.",
+          "synonyms": [
+            "profit after expenses",
+            "net profit",
+            "bottom line",
+            "real profit",
+            "after costs"
+          ],
           "assumptions": [],
           "snapshot": false
         },
@@ -2653,6 +2852,16 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Include a “Paid?” column on your invoices to see money owed to you.",
+          "synonyms": [
+            "owes me",
+            "owe me",
+            "owed",
+            "owing",
+            "unpaid",
+            "money owed",
+            "outstanding",
+            "receivables"
+          ],
           "assumptions": [
             "Without payment records, part-paid invoices are counted as fully owed."
           ],
@@ -2749,6 +2958,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             ]
           },
           "unavailable_hint": "Include due dates and a “Paid?” column on your invoices to see overdue payments.",
+          "synonyms": [
+            "overdue",
+            "late payments",
+            "paid late",
+            "past due",
+            "late paying"
+          ],
           "assumptions": [
             "Without payment records, part-paid invoices are counted as fully owed.",
             "Sales without a due date count as due thirty days after the sale."
@@ -2767,6 +2983,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             }
           },
           "unavailable_hint": "Upload your supplier orders to see what you spend with suppliers.",
+          "synonyms": [
+            "spent with suppliers",
+            "supplier spend",
+            "spend with suppliers",
+            "bought from suppliers",
+            "supplier orders total"
+          ],
           "assumptions": [],
           "snapshot": false
         }
