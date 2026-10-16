@@ -392,14 +392,14 @@ last 30 days, compared with the previous 30 days.
 |---|---|---|---|---|
 | `stockout_risk` | stock | Products with days_of_cover below threshold and daily_sales_rate > 0 | warn < 14 days, urgent < 7 | "**{{product}}** will run out in about {{days}} days at the current sales rate ({{rate}} a day). You have {{on_hand}} left." |
 | `dead_stock` | stock | Products with stock but no sales in N days | 90 days, value > {{min_value}} | "{{count}} products haven't sold in 90 days. They're holding {{value}} of your money, led by **{{top_product}}**." |
-| `customer_slipping` | customers | Repeat customers whose last 60 days spend is ≥ X% below their prior 6-month average, or who are overdue by their usual gap | drop ≥ 50%, ≥ 3 prior orders | "**{{customer}}**'s orders dropped {{drop_pct}} compared with their usual. Their last order was {{days_since}} days ago." |
+| `customer_slipping` | customers | Repeat customers whose last 60 days spend is ≥ X% below their prior 6-month average, or who are overdue by their usual gap | drop ≥ 50%, ≥ 3 prior orders, usual spend ≥ $200 per 60 days (ADR-047) | "**{{customer}}**'s orders dropped {{drop_pct}} compared with their usual. Their last order was {{days_since}} days ago." |
 | `margin_squeeze` | profit | Products whose latest supplier cost rose ≥ X% while selling price didn't | ≥ 10% | "The cost of **{{product}}** went up {{cost_change}} but your price hasn't changed. Your margin fell from {{old_margin}} to {{new_margin}}." |
 | `return_spike` | products | Products with return rate ≥ X and ≥ N returns in last 60 days | ≥ 10%, ≥ 5 returns | "**{{product}}** is being returned a lot: {{return_rate}} of sales in the last 60 days. Top reason: {{top_reason}}." |
-| `rising_star` | products | Products whose last-28-day sales are ≥ X% above the prior 28 days | ≥ 50%, min 10 units | "**{{product}}** is taking off: sales are up {{change}} in the last 4 weeks." |
+| `rising_star` | products | Products whose last-28-day sales are ≥ X% above the prior 28 days | ≥ 50%, min 25 units, wholesale orders excluded (ADR-047) | "**{{product}}** is taking off: sales are up {{change}} in the last 4 weeks." |
 | `sales_change` | trends | Week-over-week or month-over-month net sales change beyond threshold | ±25% | "Sales this week are {{direction}} {{change}} compared with last week ({{this_week}} vs {{last_week}})." |
 | `channel_shift` | trends | A channel's share of sales changed by ≥ X points vs prior 90 days | ≥ 10 pts | "**{{channel}}** now brings in {{share}} of your sales, up from {{prev_share}}." |
 | `overdue_payments` | cash | Customers with overdue receivables | > 0 days overdue, ≥ min amount | "{{count}} customers owe you {{amount}} that's overdue. The largest is **{{customer}}** ({{customer_amount}}, {{days}} days late)." |
-| `reorder_suggestion` | stock | Pairs with stockout_risk: suggests a quantity covering lead time + 30 days | supplier lead_time or 14 days | "Consider reordering about {{qty}} of **{{product}}** from {{supplier}} to cover the next {{days}} days." |
+| `reorder_suggestion` | stock | Pairs with stockout_risk: suggests a quantity covering lead time + 30 days | supplier lead_time or 14 days; shown as the stock-out card's context line (ADR-047) | "Consider reordering about {{qty}} of **{{product}}** from {{supplier}} to cover the next {{days}} days." |
 
 **Severity score:** `impact (money at stake, normalised) × urgency (time to impact) × confidence`. The top 5
 are shown on Home. Everything is visible under "All insights".

@@ -908,3 +908,80 @@ Template for new entries:
 - **Consequences:**
   - Removing a member deletes only the membership; their account and their logged edits stay.
   - Finer roles (view-only, no structural changes) can be added later without changing invites (Q21).
+
+## ADR-047 — Insight rules: a typed pack format and a pure evaluator
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - **Rules live in the pack** (`packs/retail/insights.yaml`, schema in `@bizr/packs` `insights.ts`). Each rule:
+    - asks one or more questions: query specs with dates relative to today (`last_days`, `days_ago`, `to_date`). Today itself isn't included, because its sales aren't all in yet.
+    - decides with small typed expressions over the answers: arithmetic, `pct_change`, `share`, `total`, and `last`/`prior` for date series
+    - fills a trusted template. Every number is a `{{fact}}`, `{{n|one|many}}` picks a word, and `**…**` marks bold.
+  - **Checks across files** (`checkInsights`, run by `packs:validate` and CI) reject:
+    - unknown measures, questions, breakdowns, facts and thresholds
+    - `__prev` without a comparison
+    - summary-only facts in per-row rules
+    - digits outside placeholders in templates and context lines
+  - **The engine is industry-agnostic and pure** (`@bizr/core/insights` `evaluate.ts`, `render.ts`): rule + rows + thresholds go in, candidates with typed facts come out.
+    - Rows with a blank key (unlinked, unnamed) are skipped.
+    - A candidate with any missing fact is dropped, never shown with a hole.
+  - **Arithmetic:** ratios and comparisons use doubles. Money facts read straight from a result, or summed over rows, keep Postgres's exact decimal string (`exact`), and are formatted from it.
+  - **Severity score** = level weight (urgent 100, warn 10, info 1) × (1 + log10(1 + impact)), where impact is money or units at stake. Urgency always comes first; money orders within a level.
+  - **Identity:** the fingerprint is rule + key (lower-cased) + any words a rule chose ("up"/"down").
+  - **Retail rules differ from VERTICAL_PACKS §2.7 where the demo showed noise:**
+    - `customer_slipping` also needs a usual spend of $200 per two months, so small occasional buyers aren't "regulars"
+    - `rising_star` leaves out wholesale orders (one stockist order isn't a trend) and needs 25 units, not 10
+    - the reorder suggestion is the stock-out card's context line, not a separate card
+- **Consequences:**
+  - A new vertical writes rules in YAML with no engine change.
+  - The LLM never decides whether something is an insight (AI_DESIGN §7).
+
+## ADR-048 — Insight storage, lifecycle and triggers
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - **Tables:**
+    - `app.insight`: one row per fingerprint, with facts, rendered headline/context segments, action, status (`new`/`seen`/`dismissed`/`resolved`), feedback and timestamps
+    - `app.insight_setting`: per-rule toggle and thresholds, clamped to the pack's range
+    - `app.insight_run`: what ran or was skipped and why, history days, and the data version the run used
+    - `app.digest`: one per workspace per week
+  - **Lifecycle** (one transaction per run, under an advisory lock per workspace):
+    - Found again: refreshed.
+    - Not found by a rule that ran, was switched off or can't run: `resolved`. A rule that failed leaves its insights alone.
+    - Dismissed: stays hidden while it holds, unless it gets more serious than when dismissed.
+    - Resolved and back within the rule's `cooldown_days`: shown again without the "New" badge.
+  - **Triggers:**
+    - `ingest.apply` and `ingest.merge` end with an insights step that never fails the job.
+    - Record edits, chat writes, structural changes and their undos queue `insights.run`. Debouncing is a coalesce rather than a delay: at most one waiting run per workspace. A delayed job would never be due in inline (serverless) mode until the next drain.
+    - Home queues a run when there was none, or when the data version or the business's day moved on since the last one.
+  - **Daily:** `scheduleDailyJobs` queues `insights.daily` (every active workspace, checkpointed per workspace) and `snapshot.gc` at most once per UTC day. It is called by the drain cron (`?maintenance=1`) and hourly by the worker.
+  - **Digest:** the weekly digest (`digest.weekly` in ARCHITECTURE) is written by the first insight run of each week, rather than by its own job. It covers the last full week against the one before, the top 3 new insights and one suggested question.
+- **Consequences:**
+  - Insights follow every data change in both job modes with no extra infrastructure ($0).
+  - A run is about ten small read-only queries through the executor (origin `insight`, logged in `app.query_runs`).
+
+## ADR-049 — Task J: optional rewording of insights
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - `phrase_insights@v1` (fast tier, low effort) runs once per run, for up to ten newly created insights.
+  - The AI sees only the pack sentence, the rule's topic and what kind of value each placeholder holds. No values from the owner's files are sent.
+  - **Checks:** a rewording must keep exactly the same placeholders, and have no digits, advice or "why", markup, exclamation marks or jargon, in at most two sentences. Code puts the pack's bold back.
+  - **Storage:** an accepted rewording is kept (`phrased_template`, `phrased_by`) and refilled with fresh facts on later runs, with no new call.
+  - Any AI trouble keeps the pack sentence, which is also what shows until the API key arrives.
+- **Consequences:**
+  - Cost is bounded to one fast call per run that finds something new.
+  - Tests use fake providers; the faithfulness eval waits for the key (Q20).
+
+## ADR-050 — Insight correctness: knowable truth and a control business
+
+- **Status:** Accepted (2026-10-16)
+- **Decision:**
+  - **Control business:** the demo generator gains `stories: false`, the same business with no planted stories. M7's acceptance test loads both through the normal import path. On the demo it checks every story's numbers against `ground_truth.json`; on the control it checks there are no urgent alerts and none of the story rules fire.
+  - **Knowable truth:** where the ground truth used something the files can't show, it gains a figure computed from what the files do show, with its definition next to it:
+    - return rate counting returns on the day they came back
+    - overdue money with part-paid invoices counted in full (files carry a "Paid?" flag but no amount paid)
+    - channel shares after refunds, where till refunds have no channel
+  - **Demo data:** with stories on, the generator's output is unchanged, so earlier tests keep their numbers.
+- **Consequences:**
+  - The acceptance test (`insights.int.test.ts`) fails if any story is missed, mis-numbered, or the control raises an urgent alert.

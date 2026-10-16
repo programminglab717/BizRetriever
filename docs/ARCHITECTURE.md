@@ -510,7 +510,7 @@ pg-boss runs in the same Postgres instance (schema `pgboss`). It needs no extra 
 
 - the progress-polling UI, while a user is waiting on an import/merge/change
 - `after()` at the end of the request that enqueued the job
-- a daily platform cron, for `insights.run` (catch-up), `digest.weekly` and `snapshot.gc`
+- a daily platform cron, for `insights.daily` (catch-up, which also writes the weekly digests) and `snapshot.gc` (ADR-048)
 
 **Consequence: every job is a sequence of resumable, checkpointed steps.** Examples: parse sheet *n*;
 profile; AI proposal; dry run; load entity *k* in batches of 5,000 rows. Each step:
@@ -528,8 +528,8 @@ The worker simply runs steps back to back. The same handler code is used in both
 | `ingest.apply` | user approval | change plan → load → quality report → semantic layer → dashboard → insights |
 | `merge.diff` / `merge.apply` | re-upload / approval | diff preview, then merge |
 | `change.apply` / `change.rollback` | user confirmation | structural changes |
-| `insights.run` | after any data change; daily cron | insight rules per workspace |
-| `digest.weekly` | weekly cron (workspace timezone) | in-app digest |
+| `insights.run` | after any data change (one waiting run per workspace) | insight rules per workspace; the first run of a week writes its digest (ADR-048) |
+| `insights.daily` | daily cron (drain `?maintenance=1`, or the worker's hourly check) | `insights.run` for every active workspace, checkpointed per workspace |
 | `snapshot.gc` | daily cron | expire old snapshots (default retention 30 days) |
 
 **Rules for every job:**

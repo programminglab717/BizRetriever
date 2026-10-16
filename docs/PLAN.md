@@ -442,15 +442,15 @@ records by chat, structural changes by chat with versioning and rollback.
 
 **Depends on:** M3. It can run in parallel with M4–M5 once M3 is done.
 
-- [ ] Insight rule engine: compile pack rules (spec or trusted templates with placeholders), execute,
+- [x] Insight rule engine: compile pack rules (spec or trusted templates with placeholders), execute,
   facts, severity, fingerprint/cooldown/dismissal
-- [ ] Retail pack `insights.yaml`: all rules in VERTICAL_PACKS §2.7, with thresholds
-- [ ] Task J `phraseInsights` (optional phrasing) with placeholder validation
-- [ ] Triggers: after apply/merge/record writes (debounced), daily cron
-- [ ] Home screen: KPI strip, insight feed (top 5), "Ask anything" box, empty/not-enough-history states
-- [ ] All insights page; dismiss / not useful; alert settings page (toggles + thresholds)
-- [ ] Weekly digest card (in-app)
-- [ ] Insight correctness tests against the generator's planted stories
+- [x] Retail pack `insights.yaml`: all rules in VERTICAL_PACKS §2.7, with thresholds
+- [x] Task J `phraseInsights` (optional phrasing) with placeholder validation
+- [x] Triggers: after apply/merge/record writes (debounced), daily cron
+- [x] Home screen: KPI strip, insight feed (top 5), "Ask anything" box, empty/not-enough-history states
+- [x] All insights page; dismiss / not useful; alert settings page (toggles + thresholds)
+- [x] Weekly digest card (in-app)
+- [x] Insight correctness tests against the generator's planted stories
 
 **Acceptance:**
 

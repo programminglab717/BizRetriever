@@ -2,39 +2,82 @@
 
 ## Current Status
 
-- **Milestone:** M6 (Data upkeep) is **complete on the rules path**; every acceptance criterion is met, with no AI. M7 (Insights) is next, once the owner confirms.
+- **Milestone:** M7 (Insights) is **complete on the rules path**. Every acceptance criterion is met with no AI. M8 (Demo readiness) is next, once the owner confirms.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:**
-  - accounts, onboarding, workspaces and settings (M1), now with **People**: invite by link, remove; owner-only invites and deletion
-  - import from upload to data report (M2), and **re-upload**:
-    - newer files are recognised
-    - "Here's what would change", then keep yours or take the file's
-    - "Update my data" and "Undo this update"
-  - 28 retail measures, the query compiler and "What we track" (M3)
-  - Ask with charts, clarifying questions, follow-ups, feedback and pinning (M4). It now hands change requests over to My data.
-  - the dashboard: pack tiles, date range, tile menu, chat edits with preview and undo (M5)
-  - **My data:**
-    - record types with counts
-    - a grid with search, filters, sorting and inline edits with Undo
-    - a side panel (details, links, where it came from, history), delete and "Recently deleted"
-    - phone cards
-    - **"Add or change something"** by chat: record cards, and change cards with impact and typed confirmation
-  - **Change history:** structural changes and file updates, with Undo
-  - `pnpm eval`: ingest 11, questions 185, dashboard edits 44, **record writes 44**, **change plans 33** (rules only, $0)
-- **M6 acceptance (rules only, no AI):**
-  - The demo's next-month file shows the right diff (new, cancelled, missing kept), merges and undoes (`reupload.int.test.ts`, e2e).
-  - No code path deletes rows missing from a new file. Merges only insert and update; record deletes are soft.
-  - Every structural op is versioned and undone in an integration test (`structure.int.test.ts`).
-  - Destructive changes always snapshot first, in the same transaction.
+  - accounts, onboarding, workspaces, settings and People (M1, M6)
+  - import, re-upload with merge preview and undo (M2, M6). Short names on the till ("Sage Mug") now link to their product.
+  - 32 retail measures, the query compiler and "What we track" (M3)
+  - Ask (M4), the dashboard (M5), My data with records, chat changes and Change history (M6)
+  - **Home:**
+    - key numbers for the last 30 days
+    - an "Ask anything" box
+    - the weekly digest card
+    - the top five insights, each with its action and ⋮ menu (Dismiss, Not useful, Change alert settings)
+    - empty and not-enough-history states
+  - **All insights** (topic filters) and **Alert settings** (toggles and thresholds in plain words)
+  - **Insight runs:**
+    - at the end of every import and merge
+    - after record edits and structural changes (one waiting run per business)
+    - when Home sees the data or the day moved on
+    - daily via the drain cron or the worker, with `snapshot.gc`
+  - `pnpm eval`: ingest 11/11, questions 0.919 (unchanged), dashboard edits 44, record writes 44, change plans 33 (rules only, $0)
+- **M7 acceptance (rules only, no AI), from `insights.int.test.ts`:** every planted story is found with the ground truth's numbers.
+  - stock-out risk (urgent): Sage Stoneware Mug, 116 sold in 28 days, 25 left, about 6 days
+  - declining customer: Bloom & Co, $663 vs a usual $1,975, down 66.4%, last order 41 days ago
+  - dead stock: 7 products, $2,707.10, led by Christmas Spice Candle
+  - margin squeeze: Linen Napkin Set, $8.40 → $10.25 (+22%), margin 58% → 48.8%
+  - return spike: Glass Carafe, 10 of 46 (21.7%) by return date, "Arrived broken"
+  - channel shift: Etsy 23.5% vs 11.4%, after refunds
+  - overdue payments: 2 customers, $1,470.00 as invoiced, North Star Mercantile $1,098.00, 50 days late
+  - The control business (no stories) raises no urgent alert, and none of those seven rules fire.
 - **Waiting on the owner (batched for the end):**
   - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
-  - the Anthropic API key (Q20), for the first AI eval runs
-  - confirmation to start M7
+  - the Anthropic API key (Q20), for the first AI eval runs. Task J's rewording also waits on it; the pack's sentences show until then.
+  - confirmation to start M8
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-16 — Session 10: M7 Insights built
+
+**Completed:**
+
+- **Pack format** (`@bizr/packs` `insights.ts`, ADR-047). This adds:
+  - `insights.yaml` with nine rules
+  - four new measures: items returned, supplier cost per item, days since last order, days overdue
+  - cross-file checks
+- **Close-name linking** in imports: "Sage Mug" → Sage Stoneware Mug when every word matches exactly one record. This closes most of R20.
+- **Engine** (`@bizr/core/insights`):
+  - pure `evaluate.ts` and `render.ts`
+  - `runInsights` through the executor (origin `insight`)
+  - the lifecycle (ADR-048)
+  - migrations `0013_insights` and `0014_insight_phrasing`
+- **Jobs and triggers:**
+  - `insights.run` and `insights.daily`
+  - the insights step at the end of `ingest.apply` and `ingest.merge`
+  - `requestInsightRun` from web actions
+  - `scheduleDailyJobs` from the drain cron and the worker
+- **Weekly digest** (`digest.ts`), written by the first run of each week.
+- **Task J** `phrase_insights@v1` (ADR-049): checked rewording, kept and refilled. The pack sentences show without AI.
+- **UI:** Home (key numbers, Ask box, digest, feed), All insights, Alert settings, and nav and More links. The Change history link on More is fixed. Mobile layout checked by screenshot (no sideways scrolling).
+- **Demo data:** `stories: false` control business, plus knowable truth figures (ADR-050).
+- **Tests:**
+  - 704 unit/integration, including the M7 acceptance test and lifecycle checks
+  - 22 e2e: the import journey now covers the feed, dismiss, the Ask hand-off, alert settings and topic filters
+- **Docs:** ADR-047 to ADR-050; PLAN M7 ticked; OPEN_QUESTIONS Q22, Q23, R29, R30 (R20 and R26 updated); ARCHITECTURE jobs table; VERTICAL_PACKS §2.7 thresholds.
+
+**In progress:** nothing.
+
+**Blockers:** none. The AI paths wait on the key (Q20).
+
+**Next steps (after the owner confirms M8):**
+
+1. M8 demo readiness: `pnpm demo:up`, a seeded demo business with insights already generated, the demo script run-through, and the free-preview platform cron for `?maintenance=1`.
+2. When the key arrives: the AI evals (Q20) and a Task J faithfulness sample.
+
 
 ### 2026-10-16 — Session 9: M6 Data upkeep built
 
