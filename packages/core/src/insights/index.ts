@@ -43,3 +43,4 @@ export {
   scheduleDailyJobs,
   type InsightTrigger,
 } from './jobs';
+export { homeKpis, type HomeKpis } from './home';

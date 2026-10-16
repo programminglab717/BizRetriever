@@ -2,6 +2,7 @@
 
 import {
   BookOpen,
+  Bell,
   Home,
   LayoutDashboard,
   Menu,
@@ -14,7 +15,8 @@ import { usePathname } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 
-type Segment = 'home' | 'ask' | 'dashboard' | 'data' | 'more' | 'settings' | 'glossary';
+type Segment =
+  'home' | 'ask' | 'dashboard' | 'data' | 'more' | 'settings' | 'glossary' | 'insights';
 
 interface NavItem {
   segment: Segment;
@@ -44,6 +46,7 @@ export function SidebarNav({ slug }: { slug: string }) {
     <nav aria-label="Main" className="grid gap-1">
       {[
         ...ITEMS,
+        { label: 'Insights', segment: 'insights' as const, icon: Bell },
         { label: 'What we track', segment: 'glossary' as const, icon: BookOpen },
         { ...MORE, label: 'Settings', segment: 'settings' as const },
       ].map((item) => {

@@ -166,7 +166,23 @@ export async function currentDigest(
     .from(digest)
     .where(and(eq(digest.workspaceId, target.workspace.id), eq(digest.weekOf, week)));
   if (!row || row.dismissedAt) return null;
-  return { id: row.id, content: row.content as DigestContent };
+  const content = row.content as DigestContent;
+  // What the owner dismissed since stays out of the summary too.
+  const ids = content.insights.map((i) => i.id);
+  const hidden = new Set(
+    ids.length
+      ? (
+          await getAppDb()
+            .select({ id: insight.id })
+            .from(insight)
+            .where(and(inArray(insight.id, ids), eq(insight.status, 'dismissed')))
+        ).map((r) => r.id)
+      : [],
+  );
+  return {
+    id: row.id,
+    content: { ...content, insights: content.insights.filter((i) => !hidden.has(i.id)) },
+  };
 }
 
 export async function dismissDigest(target: InsightTarget, id: string): Promise<void> {

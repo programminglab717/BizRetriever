@@ -59,7 +59,7 @@ export interface InsightOverview {
   lastRun: LastRun | null;
   /** No run yet, the data changed since, or a new day began: a run should be queued. */
   stale: boolean;
-  /** Trend checks still waiting for more sales history. */
+  /** Under about four weeks of sales: trend checks are still waiting. */
   waitingForHistory: boolean;
 }
 
@@ -103,9 +103,8 @@ export async function getInsights(
   const run = await lastInsightRun(member);
   const today = compileContext(member, options.now).today;
   const stale = !run || run.dataVersion < member.workspace.dataVersion || run.today < today;
-  const waitingForHistory = (run?.rules ?? []).some(
-    (r) => r.status === 'skipped' && (r.reason ?? '').includes('history'),
-  );
+  // Trends need about four weeks of sales (PRODUCT_SPEC Journey 5).
+  const waitingForHistory = !!run && (run.historyDays ?? 0) < 28;
   if (!run) return { insights, lastRun: null, stale, waitingForHistory };
   const { dataVersion: _, ...lastRun } = run;
   return { insights, lastRun, stale, waitingForHistory };

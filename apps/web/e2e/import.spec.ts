@@ -149,4 +149,44 @@ test('an owner imports their messy spreadsheets and gets a data report', async (
   await page.getByRole('button', { name: 'Options for Top customers' }).click();
   await page.getByRole('menuitem', { name: 'Remove' }).click();
   await expect(tiles.filter({ hasText: 'Top customers' })).toHaveCount(0, { timeout: 30_000 });
+
+  // Insights (M7): Home shows key numbers, the Ask box and what needs attention. The checks ran
+  // at the end of the import (inline jobs), so give them a moment.
+  await page.goto(`${base}/home`);
+  const feed = page.getByRole('list', { name: 'Insights' });
+  await expect(async () => {
+    await page.reload();
+    await expect(feed).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 90_000 });
+  await expect(page.getByRole('region', { name: 'Key numbers' })).toContainText('Takings');
+  // Dead stock stays true whatever today's date: holiday candles don't sell after January.
+  const dead = feed.getByRole('listitem').filter({ hasText: 'sold in 90 days' });
+  await expect(dead).toBeVisible();
+  await expect(dead.locator('strong').first()).toBeVisible();
+  await dead.getByRole('button', { name: 'More options' }).click();
+  await dead.getByRole('menuitem', { name: 'Dismiss' }).click();
+  await expect(feed.getByRole('listitem').filter({ hasText: 'sold in 90 days' })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('sold in 90 days')).toHaveCount(0);
+
+  // The Ask box hands the question over.
+  await page.getByLabel('Ask anything about your business').fill('Net sales by channel');
+  await page.getByRole('button', { name: 'Ask', exact: true }).click();
+  await expect(page).toHaveURL(/\/ask\?q=Net\+sales\+by\+channel/);
+
+  // Alert settings: thresholds in plain words, saved per alert.
+  await page.goto(`${base}/insights/settings`);
+  const stock = page.locator('#stockout_risk');
+  await expect(stock).toContainText('Warn me when stock will run out within');
+  await stock.getByRole('spinbutton').first().fill('21');
+  await stock.getByRole('button', { name: 'Save' }).click();
+  await expect(stock.getByRole('status')).toContainText('Saved');
+  await page.reload();
+  await expect(page.locator('#stockout_risk').getByRole('spinbutton').first()).toHaveValue('21');
+
+  // All insights, filtered by topic.
+  await page.goto(`${base}/insights`);
+  await page.getByRole('link', { name: 'Stock', exact: true }).click();
+  await expect(page).toHaveURL(/category=stock/);
+  await expect(page.getByRole('heading', { name: 'All insights' })).toBeVisible();
 });

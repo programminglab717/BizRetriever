@@ -1,10 +1,17 @@
 import { listRuns } from '@bizr/core/ingestion';
+import { currentDigest, getInsights, homeKpis } from '@bizr/core/insights';
+import { localeFor } from '@bizr/core/ask';
 import type { Route } from 'next';
 import Link from 'next/link';
 
+import { KpiCards } from '@/components/ask/answer-chart';
+import { DigestCard } from '@/components/insights/digest-card';
+import { InsightFeed } from '@/components/insights/insight-feed';
 import { PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { queueInsights } from '@/lib/insights';
 import { requireWorkspace } from '@/lib/session';
 
 export default async function HomePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -12,68 +19,131 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
   const member = await requireWorkspace(slug);
   const [latest] = await listRuns(member, 1);
   const inProgress =
-    latest && ['analyzing', 'review', 'revising', 'applying'].includes(latest.status)
+    latest &&
+    ['analyzing', 'review', 'revising', 'applying', 'merge_review', 'merging'].includes(
+      latest.status,
+    )
       ? latest
       : undefined;
+  const hasData = member.workspace.dataVersion > 0;
+  const header = (
+    <PageHeader
+      title={`Welcome, ${member.user.name.split(' ')[0]}`}
+      description={member.workspace.name}
+    />
+  );
+  const progressCard = inProgress && (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {inProgress.status === 'review' || inProgress.status === 'merge_review'
+            ? 'Your files are ready to check'
+            : 'We’re working on your files'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Button asChild size="lg">
+          <Link href={`/w/${slug}/data/import/${inProgress.id}` as Route}>Continue</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  if (!hasData)
+    return (
+      <div className="grid grid-cols-1 gap-6">
+        {header}
+        {progressCard || (
+          <Card>
+            <CardHeader>
+              <CardTitle>Let’s bring in your data</CardTitle>
+              <CardDescription>
+                Your sales, stock lists, supplier orders and expenses. Excel or CSV, messy is fine.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <ol className="grid gap-2 text-sm text-muted-foreground">
+                <li>1. Upload the spreadsheets you already have.</li>
+                <li>
+                  2. We work out what’s in them and check anything we’re unsure about with you.
+                </li>
+                <li>3. You get answers, a dashboard and alerts about your business.</li>
+              </ol>
+              <div>
+                <Button asChild size="lg">
+                  <Link href={`/w/${slug}/data/import`}>Upload files</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+
+  const overview = await getInsights(member, { limit: 5 });
+  // The data changed or a new day began since the last check: look again (one run per business).
+  if (overview.stale) await queueInsights(member.workspace.id, 'home');
+  const [kpis, digest] = await Promise.all([homeKpis(member), currentDigest(member)]);
+  const locale = localeFor(member.settings);
+  const weekLabel = digest
+    ? `Week of ${new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${digest.content.period.from}T00:00:00Z`))}`
+    : '';
+
   return (
-    <div className="grid gap-6">
-      <PageHeader
-        title={`Welcome, ${member.user.name.split(' ')[0]}`}
-        description={member.workspace.name}
-      />
-      {inProgress ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {inProgress.status === 'review'
-                ? 'Your files are ready to check'
-                : 'We’re working on your files'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button asChild size="lg">
-              <Link href={`/w/${slug}/data/import/${inProgress.id}` as Route}>Continue</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : latest?.status === 'done' ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Your data is in</CardTitle>
-            <CardDescription>
-              Your dashboard, questions and alerts arrive in the next updates.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            <Button asChild variant="outline">
-              <Link href={`/w/${slug}/data/import/${latest.id}` as Route}>
-                See your data report
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Let’s bring in your data</CardTitle>
-            <CardDescription>
-              Your sales, stock lists, supplier orders and expenses. Excel or CSV, messy is fine.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <ol className="grid gap-2 text-sm text-muted-foreground">
-              <li>1. Upload the spreadsheets you already have.</li>
-              <li>2. We work out what’s in them and check anything we’re unsure about with you.</li>
-              <li>3. You get answers, a dashboard and alerts about your business.</li>
-            </ol>
-            <div>
-              <Button asChild size="lg">
-                <Link href={`/w/${slug}/data/import`}>Upload files</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="grid grid-cols-1 gap-6">
+      {header}
+      {progressCard}
+      {kpis.kpis.length > 0 && (
+        <section aria-label="Key numbers" className="grid gap-2">
+          <h2 className="text-sm font-medium text-muted-foreground">Last 30 days</h2>
+          <KpiCards
+            kpis={kpis.kpis}
+            compact
+            {...(kpis.comparedWith ? { comparedWith: kpis.comparedWith } : {})}
+          />
+        </section>
       )}
+      <form action={`/w/${slug}/ask`} className="flex gap-2" role="search">
+        <Input
+          name="q"
+          placeholder="Ask anything about your business"
+          aria-label="Ask anything about your business"
+          maxLength={500}
+          className="h-11"
+        />
+        <Button type="submit" size="lg">
+          Ask
+        </Button>
+      </form>
+      {digest && (
+        <DigestCard slug={slug} id={digest.id} content={digest.content} weekLabel={weekLabel} />
+      )}
+      <section className="grid gap-3" aria-labelledby="attention">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="attention" className="text-lg font-semibold">
+            Needs your attention
+          </h2>
+          <Link href={`/w/${slug}/insights`} className="text-sm text-primary hover:underline">
+            See all insights
+          </Link>
+        </div>
+        {!overview.lastRun ? (
+          <p className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
+            We’re looking through your data for anything that needs your attention. This takes a
+            moment.
+          </p>
+        ) : (
+          <InsightFeed
+            slug={slug}
+            insights={overview.insights.map(({ firstSeenAt: _f, lastSeenAt: _l, ...i }) => i)}
+          />
+        )}
+        {overview.waitingForHistory && (
+          <p className="text-sm text-muted-foreground">
+            We need about 4 weeks of sales to spot trends. We’ll start as soon as we can.
+          </p>
+        )}
+      </section>
     </div>
   );
 }
