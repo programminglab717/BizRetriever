@@ -224,8 +224,7 @@ function checkNode(
     case 'RangeVar': {
       if (node.catalogname) throw new Rejected('catalog-qualified relation');
       // Qualified names (even the tenant's own schema) would bypass the shadow copies below.
-      if (node.schemaname)
-        throw new Rejected(`schema-qualified relation ${str(node.schemaname)}`);
+      if (node.schemaname) throw new Rejected(`schema-qualified relation ${str(node.schemaname)}`);
       const rel = str(node.relname);
       if (ctes.has(rel.toLowerCase())) break;
       if (!scope.relations.has(rel)) throw new Rejected(`unknown relation ${rel}`);
