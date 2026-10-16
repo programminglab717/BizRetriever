@@ -4,6 +4,7 @@ import { FileUp, History } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
 
+import { DataChat } from '@/components/data/data-chat';
 import { PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,8 +25,16 @@ const STATUS: Record<string, string> = {
 const count = new Intl.NumberFormat('en-US');
 const when = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
-export default async function DataPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function DataPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ do?: string | string[] }>;
+}) {
   const { slug } = await params;
+  const asked = (await searchParams).do;
+  const prefill = (Array.isArray(asked) ? asked[0] : asked)?.slice(0, 400) ?? '';
   const member = await requireWorkspace(slug);
   const [runs, types] = await Promise.all([listRuns(member, 10), listRecordTypes(member)]);
   const shown = types.filter((t) => t.count > 0 || t.deleted > 0);
@@ -46,6 +55,7 @@ export default async function DataPage({ params }: { params: Promise<{ slug: str
           </Button>
         </div>
       </div>
+      {shown.length > 0 ? <DataChat slug={slug} initial={prefill} /> : null}
       {shown.length > 0 ? (
         <section className="grid gap-3" aria-labelledby="records-heading">
           <h2 id="records-heading" className="font-medium">

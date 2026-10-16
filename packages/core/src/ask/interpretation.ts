@@ -111,7 +111,8 @@ export const interpretationSchema = z.discriminatedUnion('kind', [
   z
     .object({
       kind: z.literal('unanswerable'),
-      reason: z.enum(['missing_data', 'out_of_scope', 'unclear']),
+      /** `change_request`: an ask to add or change data, not a question (set by code, M6). */
+      reason: z.enum(['missing_data', 'out_of_scope', 'unclear', 'change_request']),
       missing: z.array(z.string().max(80)).max(5),
       message: z.string().min(1).max(300),
     })

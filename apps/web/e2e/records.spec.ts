@@ -108,4 +108,47 @@ test('an owner browses, edits, deletes and restores their records', async ({ pag
   await expect(page.getByText('Nothing was deleted in the last 30 days.')).toBeVisible();
   await page.getByRole('link', { name: 'Back to products' }).click();
   await expect(page.getByTestId('records-count')).toContainText('95 products');
+
+  // By chat (PRODUCT_SPEC §4.3): a sale, confirmed from a card computed by code, then undone.
+  await page.goto(`${base}/data`);
+  const box = page.getByLabel('What would you like to add or change?');
+  await box.fill('Add a sale: 5 Sage Stoneware Mug to Bloom & Co today');
+  await box.press('Enter');
+  const card = page.getByTestId('record-card');
+  await expect(card).toContainText('New sale', { timeout: 30_000 });
+  await expect(card).toContainText('5 × Sage Stoneware Mug at $18.00');
+  await expect(card).toContainText('$90.00');
+  await expect(card).toContainText('What I assumed');
+  await card.getByRole('button', { name: 'Add it' }).click();
+  await expect(page.getByRole('status')).toContainText('Added the new sale.');
+  await page.getByRole('status').getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByRole('status')).toHaveCount(0);
+
+  // A change to what's tracked that removes data: typed confirmation, then undo from the history.
+  await box.fill('Remove brand from products');
+  await box.press('Enter');
+  const change = page.getByTestId('change-card');
+  await expect(change).toContainText('Remove “Brand” from products', { timeout: 30_000 });
+  await expect(change).toContainText('This removes data');
+  const make = change.getByRole('button', { name: 'Make this change' });
+  await expect(make).toBeDisabled();
+  await change.getByLabel('Type Brand to confirm').fill('brand');
+  await make.click();
+  await expect(page.getByRole('status')).toContainText('It’s in your change history.', {
+    timeout: 30_000,
+  });
+  await page.getByRole('link', { name: 'Change history' }).click();
+  const history = page.getByTestId('change-history');
+  await expect(history).toContainText('Remove “Brand” from products');
+  await history.getByRole('button', { name: 'Undo' }).click();
+  await expect(history).toContainText('Undid change', { timeout: 30_000 });
+
+  // Ask hands changes over to My data.
+  await page.goto(`${base}/ask`);
+  await page.getByLabel('Your question').fill('Rename sales to orders');
+  await page.getByLabel('Your question').press('Enter');
+  await page.getByTestId('handoff-card').getByRole('link', { name: 'Do it in My data' }).click();
+  await expect(page.getByLabel('What would you like to add or change?')).toHaveValue(
+    'Rename sales to orders',
+  );
 });

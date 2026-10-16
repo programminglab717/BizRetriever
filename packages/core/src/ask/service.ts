@@ -4,6 +4,9 @@ import { getPack, type PackQuestion } from '@bizr/packs';
 import { getLogger } from '@bizr/platform';
 import { and, asc, desc, eq } from 'drizzle-orm';
 
+import type { CatalogEntity } from '../change-plan/compile';
+import { draftWithRules } from '../records/write-rules';
+import { planChangeWithRules } from '../structure/plan-rules';
 import { getAiProvider } from '../ai/runtime';
 import { enrichedViewName } from '../change-plan/views';
 import { QueryExecutionError } from '../executor/execute';
@@ -45,6 +48,17 @@ import { localeFor } from './view';
 
 export const STORED_ROWS = 200;
 const HISTORY = 6;
+/** Read by the same rules My data uses for adding and changing things. */
+function isChangeRequest(
+  question: string,
+  entities: readonly CatalogEntity[],
+  today: string,
+): boolean {
+  if (draftWithRules(question, entities, { today })) return true;
+  const change = planChangeWithRules(question, entities);
+  return Boolean(change && !('clarify' in change && /already track/.test(change.clarify)));
+}
+
 const log = () => getLogger('ask');
 
 /** What the Ask screen shows for one answer. Written by code; every number comes from `data`. */
@@ -128,6 +142,15 @@ export async function askQuestion(
     const picked = await chosenOption(conv.id, input.choice);
     interpretation = picked.interpretation;
     asked = picked.label;
+    origin = 'rules';
+  } else if (isChangeRequest(question, ctx.model.entities, ctx.catalog.calendar.today)) {
+    // "Add a sale…", "Rename sales to orders": done in My data, not answered (M6).
+    interpretation = {
+      kind: 'unanswerable',
+      reason: 'change_request',
+      missing: [],
+      message: 'That sounds like a change to your data, not a question.',
+    };
     origin = 'rules';
   } else {
     const out = await interpret({

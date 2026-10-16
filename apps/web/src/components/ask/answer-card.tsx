@@ -2,6 +2,7 @@
 
 import type { AnswerView } from '@bizr/core/ask';
 import { ChevronDown, Pin, ThumbsDown, ThumbsUp } from 'lucide-react';
+import type { Route } from 'next';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 
@@ -38,6 +39,7 @@ function Headline({ answer }: { answer: AnswerView }) {
 }
 
 /** One answer: headline, chart or table, assumptions, "How I calculated this" and actions. */
+
 export function AnswerCard({
   slug,
   answer,
@@ -105,6 +107,22 @@ export function AnswerCard({
                 {label}
               </Button>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+
+  if (answer.kind === 'unanswerable' && answer.unanswerable?.reason === 'change_request')
+    return (
+      <Card data-testid="handoff-card">
+        <CardContent className="grid gap-4 pt-6">
+          <p className="text-lg">{answer.unanswerable.message}</p>
+          <div>
+            <Button asChild>
+              <Link href={`/w/${slug}/data?do=${encodeURIComponent(answer.question)}` as Route}>
+                Do it in My data
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
