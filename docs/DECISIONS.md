@@ -705,3 +705,32 @@ Template for new entries:
 - **Consequences:**
   - Query-time model loading reads only the control plane.
   - Availability is as fresh as the last import or change.
+
+## ADR-040 — Question interpretation: rules first, then the AI, always checked by code
+
+- **Status:** Accepted (2026-10-16)
+- **Context:** Most owner questions are short and use the pack's own words ("sales last month",
+  "top products by profit"). Sending all of them to the AI costs money (ADR-026/027) and adds latency;
+  sending none limits what owners can ask.
+- **Decision:**
+  - A rule-based interpreter (`@bizr/core/ask`) reads measure and breakdown words from the pack, the
+    owner's own values (channels, categories, product and customer names, from `field.top_values`)
+    and time phrases. It reports whether it understood every word. When it did, its answer is used
+    with no AI call.
+  - Otherwise Task D (`interpret_question@v1`) runs on the standard tier. Values, renamed labels,
+    readable relations and the conversation travel inside `<workspace_data>`; the pack catalog is
+    cached. The answer has the same typed form as the rules' answer: query / clarify / sql /
+    unanswerable.
+  - Every answer, from rules or AI, is checked by code: ids exist, owner spelling of values is
+    restored (an unknown value is an error when the value list is complete), the spec compiles, SQL
+    passes the validator, unavailable measures become a "missing data" answer, assumptions with
+    digits or jargon are dropped. One repair round with the problems, then one try on the strong tier.
+  - Never two clarifications in a row: the second becomes the first option with an assumption.
+  - If the AI can't help (no key, over budget, still invalid), the rules' best guess is used and the
+    words it skipped are named in an assumption; with no guess, the owner is asked to rephrase.
+  - Time ranges are presets resolved by code in the workspace calendar (`ask/time.ts`); answer titles
+    are written by code from the spec.
+- **Consequences:**
+  - The common questions cost nothing and answer instantly; the AI handles the long tail.
+  - The rules can be wrong while "confident": the question eval set (M4) measures both paths, and
+    any rule miss becomes a test.

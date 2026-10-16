@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { proposeDataModel, reviseDataModel, summarizeProposal, workspaceDataBlock } from './active';
+import {
+  interpretQuestion,
+  proposeDataModel,
+  reviseDataModel,
+  summarizeProposal,
+  workspaceDataBlock,
+} from './active';
 
 const catalog = { entities: [], headerSynonyms: {}, knownFormats: [] };
 const settings = { currency: 'USD', dateOrder: 'MDY' as const, today: '2026-10-13' };
@@ -35,7 +41,21 @@ describe('prompts', () => {
       problems: [marker],
       locked: [marker],
     });
-    for (const built of [a, b]) {
+    const c = interpretQuestion.build({
+      primer: 'primer',
+      catalog: { measures: [], breakdowns: [] },
+      settings: { today: '2026-10-13', weekStart: 1, fiscalYearStartMonth: 1, currency: 'USD' },
+      unavailable: [],
+      data: {
+        values: { 'product.name': [marker] },
+        renamed: { net_sales: marker },
+        relations: { [marker]: [marker] },
+        conversation: [{ question: marker, meaning: marker }],
+        problems: [marker],
+      },
+      question: 'how much did I sell',
+    });
+    for (const built of [a, b, c]) {
       expect(built.cachedContext.join('')).not.toContain(marker);
       const user = built.messages[0]!.content;
       const start = user.indexOf('<workspace_data>');
@@ -46,7 +66,7 @@ describe('prompts', () => {
   });
 
   it('versions every prompt', () => {
-    for (const p of [proposeDataModel, reviseDataModel, summarizeProposal]) {
+    for (const p of [proposeDataModel, reviseDataModel, summarizeProposal, interpretQuestion]) {
       expect(p.version).toBe(`${p.task}@v1`);
     }
   });

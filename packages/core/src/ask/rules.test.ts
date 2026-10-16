@@ -1,53 +1,9 @@
-import { getPack } from '@bizr/packs';
 import { describe, expect, it } from 'vitest';
 
-import type { AskCatalog } from './catalog';
+import { fixtureCatalog as fixture } from './fixtures';
 import type { Interpretation, QuestionSpec } from './interpretation';
 import { questionSpecSchema } from './interpretation';
 import { interpretWithRules } from './rules';
-
-const pack = getPack('retail');
-
-/** The Fernwood demo workspace, as `loadAskContext` would describe it. */
-function fixture(unavailable: Record<string, string> = {}): AskCatalog {
-  const values: Record<string, string[]> = {
-    'product.name': [
-      'Sage Stoneware Mug',
-      'Linen Napkin Set',
-      'Beeswax Candle',
-      'Oak Serving Board',
-    ],
-    'product.category': ['Mugs', 'Table Linen', 'Candles', 'Kitchen'],
-    'customer.name': ['Bloom & Co', 'Jane Smith', 'The Corner Shop'],
-    'sale.channel': ['online_store', 'etsy', 'in_store', 'wholesale'],
-    'expense.category': ['Advertising', 'Rent', 'Packaging', 'Software'],
-    'supplier.name': ['Clayworks Ltd', 'Northern Linen'],
-  };
-  return {
-    metrics: pack.metrics.metrics.map((m) => ({
-      id: m.id,
-      label: m.label,
-      description: m.description,
-      format: m.format,
-      snapshot: m.snapshot,
-      available: !(m.id in unavailable),
-      ...(unavailable[m.id] ? { reason: unavailable[m.id] } : {}),
-      synonyms: [...m.synonyms, m.label.toLowerCase()],
-      ...(m.default_time ? { defaultTime: m.default_time } : {}),
-    })),
-    dimensions: pack.metrics.dimensions
-      .filter((d) => d.field in values)
-      .map((d) => ({
-        field: d.field,
-        label: d.label,
-        synonyms: d.synonyms,
-        values: values[d.field] ?? [],
-        valueSynonyms: pack.synonyms.values[d.field] ?? {},
-      })),
-    calendar: { today: '2026-10-13', weekStart: 1, fiscalYearStartMonth: 1 },
-    currency: 'GBP',
-  };
-}
 
 const catalog = fixture();
 

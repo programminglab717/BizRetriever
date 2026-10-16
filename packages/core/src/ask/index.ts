@@ -10,6 +10,8 @@ export {
   toQuerySpec,
 } from './interpretation';
 export type { ChartType, Interpretation, QuestionSpec, TimeRange } from './interpretation';
+export { check as checkInterpretation, interpret, UNCLEAR_MESSAGE } from './interpret';
+export type { InterpretInput, InterpretOrigin, InterpretOutcome, Turn } from './interpret';
 export { interpretWithRules, normalizeQuestion } from './rules';
 export type { RulesResult } from './rules';
 export { periodLabel, resolvePreset, timePresets } from './time';
