@@ -410,13 +410,13 @@ records by chat, structural changes by chat with versioning and rollback.
 
 **Structural changes:**
 
-- [ ] Change-plan compiler: remaining ops (change_field_type, remove_field, remove_entity,
+- [x] Change-plan compiler: remaining ops (change_field_type, remove_field, remove_entity,
   remove_relationship, add_allowed_values, metrics); impact analysis; inverse plans; lossy-rollback
   detection
-- [ ] Snapshots (ADR-023) + `snapshot.gc` job
+- [x] Snapshots (ADR-023) + `snapshot.gc` job
 - [ ] Task I `planChange` + change plan card + typed confirmation for destructive changes **(cuttable for
   the first demo)**
-- [ ] Change history page with undo
+- [x] Change history page with undo
 
 **Members:**
 

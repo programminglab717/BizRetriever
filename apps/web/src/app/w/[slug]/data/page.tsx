@@ -1,6 +1,6 @@
 import { listRuns } from '@bizr/core/ingestion';
 import { listRecordTypes } from '@bizr/core/records';
-import { FileUp } from 'lucide-react';
+import { FileUp, History } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
 
@@ -33,11 +33,18 @@ export default async function DataPage({ params }: { params: Promise<{ slug: str
     <div className="grid gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <PageHeader title="My data" />
-        <Button asChild>
-          <Link href={`/w/${slug}/data/import`}>
-            <FileUp /> Add or update files
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href={`/w/${slug}/history`}>
+              <History /> Change history
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href={`/w/${slug}/data/import`}>
+              <FileUp /> Add or update files
+            </Link>
+          </Button>
+        </div>
       </div>
       {shown.length > 0 ? (
         <section className="grid gap-3" aria-labelledby="records-heading">
