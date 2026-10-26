@@ -2,7 +2,7 @@ import { getAppDb, jobRun, type AppDb, type JobRunError } from '@bizr/db';
 import { getLogger, withLogContext } from '@bizr/platform';
 import { and, eq, sql } from 'drizzle-orm';
 
-import type { JobRegistry } from './define';
+import type { JobEnqueuer, JobRegistry } from './define';
 
 export type AdvanceStatus = 'succeeded' | 'failed' | 'yielded' | 'skipped';
 
@@ -16,7 +16,12 @@ export interface AdvanceOptions {
   budgetMs: number;
   db?: AppDb;
   now?: () => number;
+  /** How steps queue follow-up jobs; the queue passes its own. */
+  enqueue?: JobEnqueuer;
 }
+
+const noQueue: JobEnqueuer = () =>
+  Promise.reject(new Error('This job step needs a job queue to queue another job'));
 
 const DEFAULT_FAILURE_MESSAGE =
   'Something went wrong while working on this. Your data is safe. Please try again.';
@@ -78,6 +83,7 @@ export async function advanceRun(
           state,
           deadline: started + options.budgetMs,
           log: log.child({ step: step.name }),
+          enqueue: options.enqueue ?? noQueue,
           reportProgress: async (stage, pct) => {
             await db
               .update(jobRun)

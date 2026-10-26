@@ -3,6 +3,7 @@ export {
   JobRegistry,
   type AnyJobDefinition,
   type JobDefinition,
+  type JobEnqueuer,
   type JobStep,
   type StepContext,
   type StepOutcome,
@@ -11,6 +12,7 @@ export { JobQueue, type DrainSummary, type JobQueueOptions } from './queue';
 export { advanceRun, type AdvanceResult, type AdvanceStatus } from './runner';
 export { noopJob } from './system-jobs';
 
+import { connectionsDailyJob, connectionSyncJob } from '../connections/jobs';
 import { ingestionJobs } from '../ingestion/jobs';
 import { insightsDailyJob, insightsRunJob } from '../insights/jobs';
 import { snapshotGcJob } from '../structure/gc';
@@ -25,5 +27,7 @@ export function createDefaultRegistry(): JobRegistry {
     snapshotGcJob,
     insightsRunJob,
     insightsDailyJob,
+    connectionSyncJob,
+    connectionsDailyJob,
   ]);
 }

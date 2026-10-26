@@ -3,6 +3,7 @@ import { getLogger } from '@bizr/platform';
 import { and, eq, gt, gte, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { connectionsDailyJob } from '../connections/jobs';
 import { defineJob, type JobStep } from '../jobs/define';
 import type { JobQueue } from '../jobs/queue';
 import { snapshotGcJob } from '../structure/gc';
@@ -127,7 +128,8 @@ export async function requestInsightRun(
 }
 
 /**
- * The daily jobs (ARCHITECTURE §jobs): insight catch-up plus digests, and expired-backup clean-up.
+ * The daily jobs (ARCHITECTURE §jobs): insight catch-up plus digests, expired-backup clean-up, and
+ * checking linked sources.
  * Safe to call many times a day: each is queued at most once per UTC day.
  */
 export async function scheduleDailyJobs(queue: JobQueue, now = new Date()): Promise<string[]> {
@@ -140,7 +142,11 @@ export async function scheduleDailyJobs(queue: JobQueue, now = new Date()): Prom
         .from(jobRun)
         .where(
           and(
-            inArray(jobRun.jobName, [insightsDailyJob.name, snapshotGcJob.name]),
+            inArray(jobRun.jobName, [
+              insightsDailyJob.name,
+              snapshotGcJob.name,
+              connectionsDailyJob.name,
+            ]),
             gte(jobRun.createdAt, startOfDay),
           ),
         )
@@ -154,6 +160,11 @@ export async function scheduleDailyJobs(queue: JobQueue, now = new Date()): Prom
   if (!already.has(snapshotGcJob.name)) {
     await queue.enqueue(snapshotGcJob, {});
     queued.push(snapshotGcJob.name);
+  }
+  // Linked sources first thing, so the day's insights see their changes (ADR-058).
+  if (!already.has(connectionsDailyJob.name)) {
+    await queue.enqueue(connectionsDailyJob, { date });
+    queued.push(connectionsDailyJob.name);
   }
   return queued;
 }

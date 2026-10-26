@@ -25,7 +25,8 @@
     "./insights": "./src/insights/index.ts",
     "./demo": "./src/demo/index.ts",
     "./admin": "./src/admin/index.ts",
-    "./export": "./src/export/index.ts"
+    "./export": "./src/export/index.ts",
+    "./connections": "./src/connections/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

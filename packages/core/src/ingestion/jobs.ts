@@ -44,6 +44,7 @@ import { buildReview, type ProposalReview } from './review';
 import { proposalFacts, summarizeProposal } from './summary';
 import { validateTemplate } from '../narration';
 import { rememberSources, reuseKnownMappings } from '../merge/service';
+import { continueLinkedMerge, continueLinkedReview } from './linked';
 import { ingestMergeJob, previewReupload } from './reupload';
 
 /**
@@ -219,6 +220,15 @@ export const ingestAnalyzeJob = defineJob<z.infer<typeof runInput>, AnalyzeState
         });
         await reportProgress('Ready for you to check', 100);
         return { state: { ...state, proposal: undefined } };
+      },
+    },
+    {
+      // From a linked source: carry on by itself when nothing needs a person (ADR-058).
+      name: 'continue',
+      async run({ input, state, enqueue }) {
+        if (state.failed) return { state };
+        await continueLinkedReview(input.runId, enqueue, ingestApplyJob);
+        return { state };
       },
     },
   ],
@@ -502,6 +512,14 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
           });
         });
         await reportProgress('Done', 100);
+        return { state };
+      },
+    },
+    {
+      // A linked source's update with nothing to settle is applied without asking (ADR-058).
+      name: 'continue',
+      async run({ input, state, enqueue }) {
+        await continueLinkedMerge(input.runId, enqueue, ingestMergeJob);
         return { state };
       },
     },

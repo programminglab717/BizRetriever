@@ -70,7 +70,9 @@ export async function startIngestion(input: {
   member: MemberWorkspace;
   userId: string;
   files: readonly IncomingFile[];
-  queue: JobQueue;
+  queue: Pick<JobQueue, 'enqueue'>;
+  /** Brought in from a linked source (M10). */
+  connectionId?: string;
 }): Promise<{ runId: string }> {
   checkFiles(input.files);
   const ws = input.member.workspace;
@@ -98,6 +100,7 @@ export async function startIngestion(input: {
         workspaceId: ws.id,
         kind: previous ? 'reupload' : 'initial',
         createdBy: input.userId,
+        connectionId: input.connectionId ?? null,
       })
       .returning({ id: ingestionRun.id });
     await tx.insert(upload).values(
@@ -123,7 +126,7 @@ export async function startIngestion(input: {
   return { runId };
 }
 
-async function queueJob(
+export async function queueJob(
   runId: string,
   status: IngestionRun['status'],
   enqueue: () => Promise<string>,

@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   check,
   customType,
   index,
@@ -10,6 +11,7 @@ import {
   timestamp,
   unique,
   uuid,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 
 import { user } from './auth';
@@ -50,6 +52,51 @@ export const ingestionRunStatus = [
 ] as const;
 export type IngestionRunStatus = (typeof ingestionRunStatus)[number];
 
+export const connectionKinds = ['google_sheet', 'shopify'] as const;
+export type ConnectionKind = (typeof connectionKinds)[number];
+export const connectionStatus = ['active', 'paused', 'needs_attention', 'disconnected'] as const;
+export type ConnectionStatus = (typeof connectionStatus)[number];
+
+/**
+ * A linked source (M10, ADR-058): a Google Sheet or a Shopify store a business brings data in from.
+ * Each sync is an ordinary import (`ingestion_run.connection_id`). `externalId` is the sheet id or the
+ * shop's myshopify domain; `secret` (Shopify's access token) is encrypted with CONNECTOR_SECRET.
+ */
+export const connection = app.table(
+  'connection',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: connectionKinds }).notNull(),
+    externalId: text('external_id').notNull(),
+    name: text('name').notNull(),
+    config: jsonb('config').$type<Record<string, unknown>>().notNull().default({}),
+    secret: text('secret'),
+    status: text('status', { enum: connectionStatus }).notNull().default('active'),
+    /** Bring changes in without asking when nothing needs a person. */
+    autoUpdate: boolean('auto_update').notNull().default(true),
+    /** Fingerprint of what the last sync fetched: the same again means nothing changed. */
+    lastFingerprint: text('last_fingerprint'),
+    lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
+    lastChangedAt: timestamp('last_changed_at', { withTimezone: true }),
+    lastRunId: uuid('last_run_id').references((): AnyPgColumn => ingestionRun.id, {
+      onDelete: 'set null',
+    }),
+    /** Safe to show ("This sheet isn't shared any more"). */
+    lastError: text('last_error'),
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('connection_external_unique').on(t.workspaceId, t.kind, t.externalId),
+    statusCheck('connection_kind_check', 'kind', connectionKinds),
+    statusCheck('connection_status_check', 'status', connectionStatus),
+  ],
+);
+
 /** One import: a set of uploaded files taken from analysis through review to loaded records. */
 export const ingestionRun = app.table(
   'ingestion_run',
@@ -72,6 +119,10 @@ export const ingestionRun = app.table(
     finishedAt: timestamp('finished_at', { withTimezone: true }),
     /** A re-upload whose merge was undone ("Undo this update"). */
     undoneAt: timestamp('undone_at', { withTimezone: true }),
+    /** Brought in from a linked source rather than uploaded by a person. */
+    connectionId: uuid('connection_id').references((): AnyPgColumn => connection.id, {
+      onDelete: 'set null',
+    }),
   },
   (t) => [
     index('ingestion_run_workspace_idx').on(t.workspaceId, t.createdAt),

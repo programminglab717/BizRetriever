@@ -549,11 +549,44 @@ records by chat, structural changes by chat with versioning and rollback.
 
 ---
 
+## M10 — Connected sources ($0)
+
+**Goal:** owners stop re-uploading files by hand. A shop links a Google Sheet or its Shopify store once.
+After that, BizRetriever brings in changes by itself and asks only when a person is needed. The owner
+said on 2026-10-26 to keep going after M9; connectors are the roadmap's first row.
+
+**Depends on:** M6 (re-upload and merge) and M9.
+
+- [ ] Connections: a linked source per business, a sync job (fetch, skip if unchanged, import through
+  the normal pipeline), automatic update when nothing needs a person, otherwise a "needs a look"
+  notice. Daily sync, "Update now", pause and unlink.
+- [ ] Google Sheets by share link (no account or key): safe fetching (fixed Google hosts only, size
+  limit, clear messages for private or deleted sheets)
+- [ ] Shopify: connect a store through Shopify's sign-in (a Dev Dashboard app, free), with the access
+  token encrypted at rest. Products, stock, customers and orders come in as tables through the same
+  pipeline; webhooks for uninstall and privacy requests. Off without app keys.
+- [ ] UI: "Link a Google Sheet" and "Connect Shopify" on the import page; linked sources on My data
+  with their last update and status
+- [ ] Tests (fixtures only, no network), e2e, docs, runbook for creating the Shopify app
+
+**Acceptance:**
+
+- A linked sheet that changes is brought in automatically when every sheet is recognised and nothing
+  conflicts with the owner's own edits; otherwise the owner is asked, exactly as for a re-upload.
+  Unchanged sources do nothing.
+- Nothing is ever fetched from an address a user typed: only from Google's and the shop's own
+  Shopify addresses, built by our code.
+- Shopify tokens are encrypted; uninstalling the app or a privacy request is honoured. Without app
+  keys, the Shopify option is hidden.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |
 |---|---|
-| Connectors | Shopify (API), Google Sheets, Square/Lightspeed/Clover POS, WooCommerce, Amazon Seller Central, Etsy API, QuickBooks/Xero |
+| Connectors | Square/Lightspeed/Clover POS, WooCommerce, Amazon Seller Central, Etsy API, QuickBooks/Xero |
 | Channels | WhatsApp questions and alerts (email digests and alerts: done in M9) |
 | Product | Multilingual UI and questions; multi-currency; forecasting (seasonality-aware); goals/targets; scheduled reports; PDF export of answers (CSV/Excel: done in M9) |
 | Collaboration | Granular roles and permissions; comments on insights |

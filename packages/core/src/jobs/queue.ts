@@ -159,6 +159,7 @@ export class JobQueue {
       const result = await advanceRun(this.#registry, job.data.runId, {
         budgetMs,
         db: this.#db,
+        enqueue: (definition, input, options) => this.enqueue(definition, input, options),
       });
       if (result.status === 'yielded') {
         await this.#boss.send(job.name, { runId: job.data.runId } satisfies QueuePayload);

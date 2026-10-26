@@ -22,7 +22,18 @@ export interface StepContext<I, S> {
   log: Logger;
   /** Persists user-visible progress immediately (shown on processing screens). */
   reportProgress: (stage: string, pct: number) => Promise<void>;
+  /**
+   * Queues another job (a connected source's import handing on to the next stage). A step may run
+   * twice, so guard against queuing twice (check the state the queued job will change).
+   */
+  enqueue: JobEnqueuer;
 }
+
+export type JobEnqueuer = <I2, S2>(
+  definition: JobDefinition<I2, S2>,
+  input: I2,
+  options?: { workspaceId?: string },
+) => Promise<string>;
 
 export interface StepOutcome<S> {
   state: S;
