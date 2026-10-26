@@ -1116,3 +1116,25 @@ Template for new entries:
   - No new service, and no cost.
   - Large shops beyond 100,000 records of one kind get the first 100,000. The About tab says so.
   - A streaming export can come later if anyone needs more.
+
+## ADR-057 — Emailing the weekly summary and urgent alerts
+
+- **Status:** Accepted (2026-10-26). M9.
+- **Context:** Proactive insights only help if the owner sees them. Most owners won't open the app every day.
+- **Decision:**
+  - **What is sent:** after every insight run (import, re-upload, edit, settings change and the daily check), `sendInsightEmails` sends:
+    - **the weekly summary,** once per person per week: the Home digest's numbers, top insights and a question to try
+    - **urgent alerts,** once per person per insight, for urgent insights first seen in the last 24 hours. Several at once share one email; turning emails on later never sends old alerts.
+  - **Who gets them:** active members whose email address is confirmed, not addresses someone else typed in. Demo shops send nothing.
+  - **Choices:** each person chooses per business in Alert settings → "Emails to you". Both are on until turned off; no row means the defaults (`app.email_preference`).
+  - **Unsubscribe:** every email has a one-click unsubscribe link, signed with an HMAC of business, person and kind, so it needs no sign-in. It is also sent in `List-Unsubscribe` and `List-Unsubscribe-Post` headers (RFC 8058). Opening the link shows a confirm button, so a mail scanner's visit changes nothing; a mail app's one-click POST takes effect at once.
+  - **Exactly once:** each email is recorded in `app.email_delivery` before it goes, keyed by (business, person, kind, week or insight). A repeated run never sends twice. A failed send is marked failed, not retried: these are notices, not receipts.
+  - **Content:**
+    - Numbers come from the digest, which code formatted from an executed query (rule 5).
+    - Insight text comes from uploaded data, so it is HTML-escaped.
+    - Each email has a plain-text and an HTML part.
+  - **Sending:** through Resend (free tier) via `sendEmail` in `@bizr/platform`, shared with sign-up, reset and invite emails. Without `RESEND_API_KEY` emails are only logged (ADR-026). Tests capture them with `setEmailTransport` and never touch the network.
+- **Consequences:**
+  - No new service and no cost. Resend Free allows 3,000 emails a month and 100 a day, which covers early customers.
+  - A verified sending domain is needed before real customers. It is already on the production runbook.
+  - A failed email is visible in `email_delivery`; `/admin` can show it later.

@@ -44,3 +44,16 @@ export {
   type InsightTrigger,
 } from './jobs';
 export { homeKpis, type HomeKpis } from './home';
+export {
+  checkUnsubscribe,
+  getEmailPreferences,
+  saveEmailPreferences,
+  sendInsightEmails,
+  unsubscribe,
+  unsubscribeUrl,
+  urgentAlertEmail,
+  weekLabel,
+  weeklySummaryEmail,
+  type EmailPreferences,
+  type EmailRunSummary,
+} from './email';

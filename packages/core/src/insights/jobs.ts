@@ -1,11 +1,14 @@
 import { getAppDb, jobRun, workspace } from '@bizr/db';
+import { getLogger } from '@bizr/platform';
 import { and, eq, gt, gte, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { defineJob, type JobStep } from '../jobs/define';
 import type { JobQueue } from '../jobs/queue';
 import { snapshotGcJob } from '../structure/gc';
-import { loadInsightTarget, runInsights } from './service';
+
+import { sendInsightEmails } from './email';
+import { loadInsightTarget, runInsights, type InsightTarget } from './service';
 
 /**
  * `insights.run`: the rules for one workspace, after a data change. `insights.daily`: every active
@@ -24,6 +27,17 @@ export const insightTriggers = [
 ] as const;
 export type InsightTrigger = (typeof insightTriggers)[number];
 
+/** Runs the rules, then sends what's due by email. An email problem never fails the run. */
+async function runAndEmail(target: InsightTarget, trigger: InsightTrigger) {
+  const summary = await runInsights(target, { trigger });
+  try {
+    await sendInsightEmails(target);
+  } catch (err) {
+    getLogger('insight-email').error({ err, workspaceId: target.workspace.id }, 'emails failed');
+  }
+  return summary;
+}
+
 const runInput = z.object({ workspaceId: z.uuid(), trigger: z.enum(insightTriggers) }).strict();
 
 export const insightsRunJob = defineJob<z.infer<typeof runInput>, { created?: number }>({
@@ -37,7 +51,7 @@ export const insightsRunJob = defineJob<z.infer<typeof runInput>, { created?: nu
       async run({ input }) {
         const target = await loadInsightTarget(input.workspaceId);
         if (!target || target.workspace.status !== 'active') return { state: {} };
-        const summary = await runInsights(target, { trigger: input.trigger });
+        const summary = await runAndEmail(target, input.trigger);
         return { state: { created: summary.created } };
       },
     },
@@ -75,7 +89,7 @@ export const insightsDailyJob = defineJob<{ date: string }, DailyState>({
           const id = remaining.shift()!;
           try {
             const target = await loadInsightTarget(id);
-            if (target) await runInsights(target, { trigger: 'daily' });
+            if (target) await runAndEmail(target, 'daily');
           } catch (err) {
             // One business's trouble mustn't stop everyone else's check.
             log.error({ err, workspaceId: id }, 'daily insights failed for a workspace');
@@ -155,7 +169,7 @@ export function refreshInsightsStep<I, S>(trigger: InsightTrigger): JobStep<I, S
       if (!workspaceId) return { state };
       try {
         const target = await loadInsightTarget(workspaceId);
-        if (target) await runInsights(target, { trigger });
+        if (target) await runAndEmail(target, trigger);
       } catch (err) {
         log.error({ err, workspaceId }, 'insights after a data change failed');
       }

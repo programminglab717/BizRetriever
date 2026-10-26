@@ -156,3 +156,55 @@ export const digest = app.table(
   },
   (t) => [unique('digest_week_unique').on(t.workspaceId, t.weekOf)],
 );
+
+export const emailKinds = ['weekly_summary', 'urgent_alert'] as const;
+export type EmailKind = (typeof emailKinds)[number];
+
+/**
+ * Which emails a person gets from one business (M9, ADR-057). No row means the defaults: both on.
+ * Every email links to a one-click unsubscribe that turns its kind off here.
+ */
+export const emailPreference = app.table(
+  'email_preference',
+  {
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    weeklySummary: boolean('weekly_summary').notNull().default(true),
+    urgentAlerts: boolean('urgent_alerts').notNull().default(true),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.workspaceId, t.userId] })],
+);
+
+/**
+ * Each email sent, or about to be: written before sending, so a re-run never sends the same
+ * summary (key: its week) or alert (key: the insight) twice.
+ */
+export const emailDelivery = app.table(
+  'email_delivery',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    kind: text('kind', { enum: emailKinds }).notNull(),
+    key: text('key').notNull(),
+    status: text('status', { enum: ['sending', 'sent', 'logged', 'failed'] })
+      .notNull()
+      .default('sending'),
+    error: text('error'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+  },
+  (t) => [
+    unique('email_delivery_unique').on(t.workspaceId, t.userId, t.kind, t.key),
+    check('email_delivery_kind_check', inList(t.kind.name, emailKinds)),
+  ],
+);

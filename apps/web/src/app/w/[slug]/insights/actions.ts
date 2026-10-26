@@ -6,6 +6,7 @@ import {
   InsightError,
   markInsightsSeen,
   saveAlertSetting,
+  saveEmailPreferences,
 } from '@bizr/core/insights';
 import { getLogger } from '@bizr/platform';
 import { revalidatePath } from 'next/cache';
@@ -71,5 +72,23 @@ export async function saveAlert(slug: string, input: unknown): Promise<Result> {
     await saveAlertSetting(member, member.user.id, ruleId, setting);
     await queueInsights(member.workspace.id, 'settings');
     revalidatePath(`/w/${slug}/insights/settings`);
+  });
+}
+
+const emailPrefsSchema = z
+  .object({ weeklySummary: z.boolean(), urgentAlerts: z.boolean() })
+  .partial()
+  .strict();
+
+/** Which insight emails the signed-in person gets from this business. */
+export async function saveEmailPrefs(
+  slug: string,
+  prefs: { weeklySummary?: boolean; urgentAlerts?: boolean },
+): Promise<Result> {
+  const member = await requireWorkspace(slug);
+  const parsed = emailPrefsSchema.safeParse(prefs);
+  if (!parsed.success) return { ok: false, error: 'This page is out of date.' };
+  return guard(slug, 'email', async () => {
+    await saveEmailPreferences(member.workspace.id, member.user.id, parsed.data);
   });
 }
