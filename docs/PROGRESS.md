@@ -2,45 +2,61 @@
 
 ## Current Status
 
-- **Milestone:** M9 (Ready for a first real customer, $0) is **built and checked automatically**. It needs the owner's confirmation. M8's two person-only items are still open:
-  - the two timed presenter rehearsals and the backup screen recording (Q24)
-  - the optional free hosted preview (Q19). It is ready apart from the accounts: `docs/RUNBOOK_PREVIEW.md`, `pnpm preview:check`.
+- **Milestone:** M10 (Connected sources, $0) is **built and checked automatically**. It needs the owner's confirmation, and the Shopify live check needs a free Shopify account (Q26). M9 was confirmed on 2026-10-26.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M9:**
-  - **Per-business database logins (ADR-055):** with `TENANT_LOGIN_SECRET` set, each business's statements run under its own login, which can become only that business's roles. Backfill and rotation: `pnpm --filter @bizr/worker run tenant-logins`.
-  - **Downloads (ADR-056):** every answer and dashboard tile as Excel or CSV, and "Download all my data" on My data (one tab per kind of record). Each file has an "About this file" tab with the question, dates and assumptions. Money stays exact; CSV text is guarded against formulas.
-  - **Emails (ADR-057):** the weekly summary and new urgent alerts, to confirmed members only. Each person chooses in Alert settings → "Emails to you", and every email has a one-click unsubscribe. Each email goes at most once. Without `RESEND_API_KEY` they are only logged.
-- **Also today:** Next.js 16.4.3 (security), `pnpm audit` in CI, managed-Postgres setup (ADR-054).
-- **Tests:** 730 unit/integration pass; 31 e2e pass (desktop + mobile; 3 desktop-only skipped on mobile). CI green through 29c7ad0; later pushes are running.
-- **Performance** (production build, demo shop, M8):
-
-  | Measure | Result | Target |
-  |---|---|---|
-  | Home LCP | p50 about 200 ms | ≤ 2 s |
-  | Ask | p95 under 300 ms | ≤ 6 s |
-  | Dashboard tiles | p95 154 ms | ≤ 1.5 s |
-
-- **Evals (rules only, $0):**
-
-  | Suite | Result |
-  |---|---|
-  | Ingest | 11/11 |
-  | Questions | 0.919 (demo subset 1.0) |
-  | Dashboard edits | 0.932 |
-  | Record writes | 1.0 |
-  | Change plans | 1.0 |
-
+- **New in M10:**
+  - **Link a Google Sheet** (import page): paste a share link. The first import is checked like an upload. After that, the sheet is checked daily and on "Update now", and changes come in by themselves when nothing needs a person (ADR-058). Unchanged sheets do nothing.
+  - **Connect a Shopify store** (import page, only when the app's keys are set): Shopify's sign-in, read-only access, tokens encrypted at rest and refreshed. Products, customers and orders come in as one workbook through the same import. Removing the app disconnects the store; privacy requests are listed on `/admin` (ADR-059, `docs/RUNBOOK_SHOPIFY.md`).
+  - **My data → "Kept up to date from":** each source's state, Update now, Pause, "bring in changes by itself", and Stop updating (records stay). Home says when a source needs a look.
+  - `/admin` also shows linked sources, failed emails and Shopify privacy requests.
+- **Tests:** 757 unit/integration pass; 35 e2e pass (desktop + mobile; 3 desktop-only skipped on mobile). The e2e upload step now chooses files again if the page wasn't interactive yet (a race seen once under load).
+- **Not reachable from here:** Google and shopify.dev are blocked by this environment's network. Every connector test plays recorded answers back; live checks are listed for the owner.
+- **Performance and evals:** unchanged from M8 (see the M8 entry).
 - **Waiting on the owner:**
-  - confirm M9
-  - presenter rehearsals and the backup recording (Q24)
-  - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
-  - the Anthropic API key (Q20)
-  - before real customers' emails: a Resend account and a verified sending domain (Q25)
+  - confirm M10
+  - Shopify: a free Partner account, a Dev Dashboard app and a development store for the live check (Q26)
+  - a live check of a link-shared Google Sheet (no account needed: paste a link on the running app)
+  - still open: presenter rehearsals (Q24), the Anthropic API key (Q20), Google OAuth, the email account and domain (Q25)
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-26 — Session 14: M10 built (Google Sheets by link, Shopify)
+
+**Completed:**
+
+- **Connections core** (ADR-058):
+  - Migration 0016: `connection`, `ingestion_run.connection_id`.
+  - `@bizr/core/connections`: a safe fetcher (built addresses only, allowed https hosts including redirects, size and time limits, replaceable in tests), a cell-content fingerprint, and the sync service.
+  - Jobs: `connections.sync` and `connections.daily` (queued by the daily schedule).
+  - Job steps can queue jobs (`StepContext.enqueue`).
+  - Linked imports continue by themselves through new `continue` steps in `ingest.analyze` and `ingest.apply`, under the rules in ADR-058 (never the first import).
+- **Google Sheets by share link:** link parsing (doc and published links), the whole workbook as Excel, and clear messages for a private, deleted or unreachable sheet.
+- **Shopify** (ADR-059):
+  - install with an encrypted state cookie
+  - callback checks (HMAC, state, shop, person, membership)
+  - expiring offline tokens, AES-256-GCM at rest, refreshed and stored before use
+  - Admin GraphQL with throttling waited out
+  - Products, Customers and Orders tabs; orders changed since a day before the last check (the first time, a year, capped)
+  - HMAC-checked webhooks for uninstall and privacy requests
+  - `docs/RUNBOOK_SHOPIFY.md`
+- **UI:** "Link a Google Sheet" and "Connect your Shopify store" on the import page; "Kept up to date from" on My data; Home notices; `/admin` sections.
+- **Tests:**
+  - unit: links, fetcher, question rule, Shopify OAuth, signatures, sealing, store reading
+  - integration: a linked sheet's first import, unchanged, automatic update, waiting, sharing removed, owner left; Shopify install refusals, install, first import, automatic update with token refresh, uninstall
+  - e2e: `sources.spec.ts`
+  - full suite: 757 unit/integration, 35 e2e
+
+**In progress:** nothing.
+
+**Blockers:** none for building. Live checks need Google and Shopify reachable, and a Shopify account (Q26).
+
+**Next steps:**
+
+1. Owner: confirm M10. Try a link-shared Google Sheet on the running app. For Shopify, create the free app and development store (RUNBOOK_SHOPIFY §1 and §3).
+2. After confirmation: the next roadmap row as the owner prioritises. The default is POS (Square) through the same connection framework, or private Google Sheets through Google sign-in.
 
 ### 2026-10-26 — Session 13: M9 built (business logins, downloads, emails)
 

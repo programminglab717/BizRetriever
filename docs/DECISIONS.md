@@ -1138,3 +1138,66 @@ Template for new entries:
   - No new service and no cost. Resend Free allows 3,000 emails a month and 100 a day, which covers early customers.
   - A verified sending domain is needed before real customers. It is already on the production runbook.
   - A failed email is visible in `email_delivery`; `/admin` can show it later.
+
+## ADR-058 — Linked sources: imports that update themselves
+
+- **Status:** Accepted (2026-10-26). M10.
+- **Context:** Owners keep their data in a Google Sheet or a shop platform and change it every day. Re-uploading by hand is the chore the product is meant to remove (PRODUCT_SPEC: connectors).
+- **Decision:**
+  - **A connection is a source of files.** Each check fetches the source as an ordinary workbook and runs it through the same import as an upload: analysis, mapping, merge preview, apply, undo. There is no second pipeline and no new way to write tenant data. `app.connection` holds the source; `ingestion_run.connection_id` marks the imports it caused.
+  - **Unchanged means nothing happens.** A check compares a hash of the cells (not the bytes, which change with every export) with the last one.
+  - **When it carries on by itself:** `ingest.analyze` and `ingest.apply` got a last `continue` step. A linked import goes on alone only when all of these hold:
+    - it is not the source's first import (the owner sees that one through, both steps)
+    - automatic updates are on and the source is active
+    - every sheet with something to bring in is one we recognise (same headers and name, approved mapping reused)
+    - every open question only adjusts a recognised sheet's own mapping (for example its date order); a question about grouping names still waits
+    - the comparison has no conflict with a value the owner changed by hand
+
+    Otherwise the import waits, exactly like an upload, and My data and Home say it needs a look.
+  - **Checks:**
+    - daily (`connections.daily`, before the day's insights) and on "Update now" (`connections.sync`)
+    - at most one check a minute per source, and none while one of its imports is unfinished
+    - a check runs as the person who linked the source, only while they are still a member
+  - **Job steps can queue jobs** (`StepContext.enqueue`), so a check started in a drain or the worker hands on to the import jobs.
+  - **Fetching is never open-ended:**
+    - only from addresses our code builds from a parsed id
+    - only https, only to allowed hosts (redirects included)
+    - capped at 25 MB, with a time limit
+    - tests replace the transport (`setConnectorFetch`)
+  - **Google Sheets** are fetched by share link: "Anyone with the link can view" or published. That needs no account, key or cost. The whole workbook comes as Excel from `docs.google.com/spreadsheets/d/<id>/export?format=xlsx`, following redirects only to `*.googleusercontent.com`. A sign-in page or a 403 means the sheet isn't shared, and the message says how to fix it.
+- **Consequences:**
+  - Any future connector only has to produce a workbook.
+  - Unlinking keeps the records and the history.
+  - Private Google Sheets (signing in with Google) need Google's sign-in and a consent screen. That is on the roadmap.
+
+## ADR-059 — Shopify through a Dev Dashboard app
+
+- **Status:** Accepted (2026-10-26). M10.
+- **Context:**
+  - Since 1 January 2026, merchants can't create custom apps in the Shopify admin.
+  - New apps live in Shopify's Dev Dashboard (free) and are installed through Shopify's sign-in.
+  - Public apps created since 1 April 2026 must use expiring offline tokens: 60 minutes, with a refresh token that lasts 90 days and rotates on every use.
+- **Decision:**
+  - **Install:**
+    - "Connect Shopify" takes the store's address. Only `<name>.myshopify.com` is accepted.
+    - It sends the owner to `https://<shop>/admin/oauth/authorize`, read scopes only: products, inventory, orders, customers.
+    - It sets a random state in an encrypted cookie that lasts 10 minutes and holds who asked and for which business.
+  - **Callback** (`/api/connect/shopify/callback`):
+    - checks Shopify's HMAC, the state, the shop, the signed-in person and their membership
+    - swaps the code for an expiring offline token (`expiring=1`)
+    - stores it AES-256-GCM encrypted under `CONNECTOR_SECRET`
+    - queues the first check
+  - **Tokens:** a token within 5 minutes of expiry is refreshed, and the new pair is stored before it is used.
+  - **What is read:**
+    - Admin GraphQL, version from `SHOPIFY_API_VERSION` (default `2026-07`), with throttling waited out
+    - one workbook: Products (one row per variant, with cost and stock), Customers, and Orders (one row per item sold, UTC times)
+    - orders changed since a day before the last check; the first time, the last 365 days, capped at 20,000 orders. The merge keeps orders it doesn't see again, so nothing is lost.
+  - **Webhooks** (`/api/connect/shopify/webhooks`, HMAC-checked):
+    - `app/uninstalled` and `shop/redact` disconnect the store and forget the token; the records stay
+    - `customers/data_request` and `customers/redact` are recorded with Shopify's ids only and listed on `/admin` for the team to act on within 30 days
+  - **Off by default:** without `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET` and `CONNECTOR_SECRET`, the option is hidden and the routes answer 404.
+- **Consequences:**
+  - $0: a Dev Dashboard app and a development store are free.
+  - **Built and tested against recorded answers only.** The queries follow Shopify's documented API, but they haven't been run against a real store, and shopify.dev isn't reachable from the build environment. A first live check on a development store is the owner's step (Q26).
+  - Orders older than 60 days need Shopify's `read_all_orders` access, and customer names and emails need protected-customer-data access. Both are requested in the app's settings (`docs/RUNBOOK_SHOPIFY.md`).
+  - Bulk exports, for very large stores, are on the roadmap.

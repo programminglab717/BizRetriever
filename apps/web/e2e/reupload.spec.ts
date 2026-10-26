@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { expect, test } from '@playwright/test';
 
+import { chooseFiles } from './upload';
+
 /**
  * M6 journey (PRODUCT_SPEC Journey 4): an owner who already brought their files in uploads next
  * month's website export → it's recognised → "Here's what would change" → update → undo.
@@ -48,7 +50,7 @@ test('an owner uploads a newer export, sees what changes, updates and undoes', a
 
   // First import.
   await page.goto(`${base}/data/import`);
-  await page.getByTestId('file-input').setInputFiles(files);
+  await chooseFiles(page, files);
   await page.getByRole('button', { name: 'Make sense of my data' }).click();
   await page.getByRole('button', { name: 'Looks good, set it up' }).click({ timeout: 120_000 });
   await expect(page.getByRole('heading', { name: 'Your data is ready' })).toBeVisible({
@@ -58,7 +60,7 @@ test('an owner uploads a newer export, sees what changes, updates and undoes', a
   // Next month's export.
   await page.goto(`${base}/data`);
   await page.getByRole('link', { name: 'Add or update files' }).click();
-  await page.getByTestId('file-input').setInputFiles([nextFile]);
+  await chooseFiles(page, [nextFile]);
   await page.getByRole('button', { name: 'Make sense of my data' }).click();
   await expect(page.getByText('This looks like a newer version of').first()).toBeVisible({
     timeout: 120_000,

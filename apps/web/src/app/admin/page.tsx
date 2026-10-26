@@ -158,6 +158,28 @@ export default async function AdminPage() {
         />
       </Section>
 
+      <Section title="Linked sources and emails">
+        <Table
+          head={['Kind', 'State', 'Count']}
+          rows={o.sources.map((r) => [r.kind, r.status, r.count])}
+        />
+        <p className="text-sm text-muted-foreground">
+          Emails that failed in the last 7 days: {o.emailFailures}
+        </p>
+      </Section>
+
+      <Section title="Shopify privacy requests (act within 30 days)">
+        <Table
+          head={['When', 'Business', 'Store', 'Request']}
+          rows={o.privacy.map((r) => [
+            r.at.toISOString().slice(0, 16).replace('T', ' '),
+            r.workspace,
+            r.shop,
+            r.topic,
+          ])}
+        />
+      </Section>
+
       <Section title="Eval baselines (rules only)">
         <Table
           head={['Suite', 'Results']}

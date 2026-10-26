@@ -43,6 +43,11 @@ export interface AdminOverview {
     maxMs: number | null;
   }[];
   jobs: { job: string; runs: number; failed: number }[];
+  /** Shopify privacy requests to act on within 30 days (RUNBOOK_SHOPIFY.md). */
+  privacy: { workspace: string; topic: string; shop: string; at: Date }[];
+  /** Linked sources by kind and state; emails that failed this week. */
+  sources: { kind: string; status: string; count: number }[];
+  emailFailures: number;
   baselines: { suite: string; metrics: Record<string, number> }[];
   sinceDays: number;
 }
@@ -119,7 +124,35 @@ export async function adminOverview(options: { sinceDays?: number } = {}): Promi
     FROM app.job_run WHERE created_at >= ${week}
     GROUP BY job_name ORDER BY job_name`);
 
+  const privacy = await rows<{
+    workspace: string | null;
+    action: string;
+    shop: string | null;
+    at: Date;
+  }>(sql`
+    SELECT w.name AS workspace, e.action, e.details->>'shop' AS shop, e.created_at AS at
+    FROM app.audit_event e LEFT JOIN app.workspace w ON w.id = e.workspace_id
+    WHERE e.action IN ('shopify.customers.data_request', 'shopify.customers.redact', 'shopify.shop.redact')
+      AND e.created_at >= ${since}
+    ORDER BY e.created_at DESC LIMIT 50`);
+
+  const sources = await rows<{ kind: string; status: string; count: string }>(sql`
+    SELECT kind, status, count(*)::text AS count FROM app.connection
+    GROUP BY kind, status ORDER BY kind, status`);
+
+  const [emails] = await rows<{ failed: string }>(sql`
+    SELECT count(*)::text AS failed FROM app.email_delivery
+    WHERE status = 'failed' AND created_at >= ${week}`);
+
   return {
+    privacy: privacy.map((r) => ({
+      workspace: r.workspace ?? '(deleted business)',
+      topic: r.action.replace(/^shopify\./, '').replace('.', '/'),
+      shop: r.shop ?? '',
+      at: r.at,
+    })),
+    sources: sources.map((r) => ({ kind: r.kind, status: r.status, count: Number(r.count) })),
+    emailFailures: Number(emails?.failed ?? 0),
     spend: {
       todayUsd: spend?.today ?? '0',
       monthUsd: spend?.month ?? '0',

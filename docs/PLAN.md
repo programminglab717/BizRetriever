@@ -557,17 +557,18 @@ said on 2026-10-26 to keep going after M9; connectors are the roadmap's first ro
 
 **Depends on:** M6 (re-upload and merge) and M9.
 
-- [ ] Connections: a linked source per business, a sync job (fetch, skip if unchanged, import through
+- [x] Connections: a linked source per business, a sync job (fetch, skip if unchanged, import through
   the normal pipeline), automatic update when nothing needs a person, otherwise a "needs a look"
   notice. Daily sync, "Update now", pause and unlink.
-- [ ] Google Sheets by share link (no account or key): safe fetching (fixed Google hosts only, size
+- [x] Google Sheets by share link (no account or key): safe fetching (fixed Google hosts only, size
   limit, clear messages for private or deleted sheets)
-- [ ] Shopify: connect a store through Shopify's sign-in (a Dev Dashboard app, free), with the access
+- [x] Shopify: connect a store through Shopify's sign-in (a Dev Dashboard app, free), with the access
   token encrypted at rest. Products, stock, customers and orders come in as tables through the same
-  pipeline; webhooks for uninstall and privacy requests. Off without app keys.
-- [ ] UI: "Link a Google Sheet" and "Connect Shopify" on the import page; linked sources on My data
+  pipeline; webhooks for uninstall and privacy requests. Off without app keys. (Live check on a
+  development store: owner, Q26.)
+- [x] UI: "Link a Google Sheet" and "Connect Shopify" on the import page; linked sources on My data
   with their last update and status
-- [ ] Tests (fixtures only, no network), e2e, docs, runbook for creating the Shopify app
+- [x] Tests (fixtures only, no network), e2e, docs, runbook for creating the Shopify app
 
 **Acceptance:**
 

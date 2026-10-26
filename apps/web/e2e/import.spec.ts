@@ -39,10 +39,15 @@ test('an owner imports their messy spreadsheets and gets a data report', async (
   // Upload.
   await page.getByRole('link', { name: 'Upload files' }).click();
   await expect(page.getByRole('heading', { name: 'Bring in your files' })).toBeVisible();
-  await page
-    .getByTestId('file-input')
-    .setInputFiles([...files, path.join(repoRoot, 'package.json')]);
-  await expect(page.getByText('We can read Excel (.xlsx) and CSV files.')).toBeVisible();
+  // Chosen again if the page wasn't interactive yet (see ./upload.ts).
+  await expect(async () => {
+    await page
+      .getByTestId('file-input')
+      .setInputFiles([...files, path.join(repoRoot, 'package.json')]);
+    await expect(page.getByText('We can read Excel (.xlsx) and CSV files.')).toBeVisible({
+      timeout: 2_000,
+    });
+  }).toPass({ timeout: 60_000 });
   await page.getByRole('button', { name: 'Remove package.json' }).click();
   await page.getByRole('button', { name: 'Make sense of my data' }).click();
 

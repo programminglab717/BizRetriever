@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { chooseFiles } from './upload';
+
 /**
  * M8 rehearsal (DEMO_SCRIPT §2), with no AI: "Try the demo shop" → live import → Home insights →
  * Ask → dashboard edit → next month's file → start again. Each scene's time is recorded as an
@@ -137,7 +139,7 @@ test('the investor demo runs end to end, in time, without AI', async ({ page }, 
   // Keeping up to date: next month's export merges safely.
   await page.goto(`${base}/data`);
   await page.getByRole('link', { name: 'Add or update files' }).click();
-  await page.getByTestId('file-input').setInputFiles([nextFile]);
+  await chooseFiles(page, [nextFile]);
   await page.getByRole('button', { name: 'Make sense of my data' }).click();
   await page
     .getByRole('button', { name: 'Looks good, compare with my data' })

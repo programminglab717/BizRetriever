@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { expect, test } from '@playwright/test';
 
+import { chooseFiles } from './upload';
+
 /**
  * M6 journey (PRODUCT_SPEC §4.2): My data → a record type → search, change a detail inline (with
  * a type check and Undo), open a record, delete it and restore it from "Recently deleted".
@@ -40,7 +42,7 @@ test('an owner browses, edits, deletes and restores their records', async ({ pag
   const base = page.url().replace(/\/home$/, '');
 
   await page.goto(`${base}/data/import`);
-  await page.getByTestId('file-input').setInputFiles(files);
+  await chooseFiles(page, files);
   await page.getByRole('button', { name: 'Make sense of my data' }).click();
   await page.getByRole('button', { name: 'Looks good, set it up' }).click({ timeout: 120_000 });
   await expect(page.getByRole('heading', { name: 'Your data is ready' })).toBeVisible({

@@ -50,6 +50,8 @@ locally (Stage 0), on a free preview (Stage 1) and in paid production (Stage 2).
    - `RESEND_API_KEY`, `EMAIL_FROM` (step 6), `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
      (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
    - `ADMIN_EMAILS` (the founders only)
+   - `CONNECTOR_SECRET` (`openssl rand -hex 32`; encrypts linked sources' tokens, ADR-058), and the
+     Shopify app's `SHOPIFY_CLIENT_ID` / `SHOPIFY_CLIENT_SECRET` (`docs/RUNBOOK_SHOPIFY.md`)
 3. `JOB_RUNNER=worker` once the worker (step 3) is running. Until then, keep `inline` and the daily
    cron.
 

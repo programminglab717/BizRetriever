@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { expect, test, type Download } from '@playwright/test';
 
+import { chooseFiles } from './upload';
+
 /**
  * M9 downloads (ADR-056): an answer as CSV and Excel, a dashboard tile, and "Download all my data".
  * Files are checked as the browser saved them.
@@ -49,7 +51,7 @@ test('an owner downloads an answer, a tile and all their data', async ({ page },
   const base = page.url().replace(/\/home$/, '');
 
   await page.goto(`${base}/data/import`);
-  await page.getByTestId('file-input').setInputFiles(files);
+  await chooseFiles(page, files);
   await page.getByRole('button', { name: 'Make sense of my data' }).click();
   await page.getByRole('button', { name: 'Looks good, set it up' }).click({ timeout: 120_000 });
   await expect(page.getByRole('heading', { name: 'Your data is ready' })).toBeVisible({
