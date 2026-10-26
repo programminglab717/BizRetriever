@@ -16,6 +16,20 @@ export const packManifestSchema = z
       .strict(),
     requires_core: z.string().min(1),
     primary_time_entity: z.string().regex(/^[a-z0-9_]+$/),
+    /** Planning ahead (M11, ADR-060): measures owners can set goals for and see estimated. */
+    planning: z
+      .object({
+        goals: z
+          .array(z.string().regex(/^[a-z][a-z0-9_]*$/))
+          .max(10)
+          .default([]),
+        forecasts: z
+          .array(z.string().regex(/^[a-z][a-z0-9_]*$/))
+          .max(10)
+          .default([]),
+      })
+      .strict()
+      .default({ goals: [], forecasts: [] }),
   })
   .strict();
 

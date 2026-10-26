@@ -14,7 +14,19 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
         "date_order": "MDY"
       },
       "requires_core": ">=0.1.0",
-      "primary_time_entity": "sale"
+      "primary_time_entity": "sale",
+      "planning": {
+        "goals": [
+          "net_sales",
+          "order_count",
+          "gross_profit"
+        ],
+        "forecasts": [
+          "net_sales",
+          "order_count",
+          "units_sold"
+        ]
+      }
     },
     "entities": [
       {

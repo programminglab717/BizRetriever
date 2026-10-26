@@ -10,3 +10,7 @@ locale_defaults:
   date_order: MDY
 requires_core: '>=0.1.0'
 primary_time_entity: sale
+# Planning ahead (M11): measures owners can set a monthly goal for, and see estimated ahead.
+planning:
+  goals: [net_sales, order_count, gross_profit]
+  forecasts: [net_sales, order_count, units_sold]

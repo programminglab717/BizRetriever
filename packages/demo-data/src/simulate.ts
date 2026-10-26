@@ -121,13 +121,15 @@ export interface SimulateOptions {
    * late payers. Insight tests use it as the control business that must raise no urgent alerts.
    */
   stories?: boolean;
+  /** Days of trading before today (default 365). Longer histories are for forecast back-tests. */
+  historyDays?: number;
 }
 
 export function simulate(options: SimulateOptions): Simulation {
   const rng = new Rng(options.seed);
   const stories = options.stories ?? true;
   const today = options.today;
-  const start = addDays(today, -365);
+  const start = addDays(today, -(options.historyDays ?? 365));
   const products = buildProducts(rng);
   const customers = buildOnlineCustomers(rng, 620);
   const byName = new Map(products.map((p) => [p.name, p]));

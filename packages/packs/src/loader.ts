@@ -111,6 +111,20 @@ export function loadPack(dir: string): LoadedPack {
     );
   }
 
+  if (manifest.success && metrics.success) {
+    const { goals, forecasts } = manifest.data.planning;
+    for (const [list, ids] of [
+      ['goals', goals],
+      ['forecasts', forecasts],
+    ] as const)
+      for (const m of ids) {
+        const def = metrics.data.metrics.find((x) => x.id === m);
+        if (!def) problems.push(`pack.yaml planning.${list}: unknown measure "${m}"`);
+        else if (def.snapshot || def.format === 'percent')
+          problems.push(`pack.yaml planning.${list}: "${m}" doesn't add up over days`);
+      }
+  }
+
   if (metrics.success && questions.success) {
     problems.push(
       ...checkQuestions(metrics.data, questions.data.examples).map((p) => `questions.yaml: ${p}`),

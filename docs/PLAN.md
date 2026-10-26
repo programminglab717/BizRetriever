@@ -583,6 +583,39 @@ said on 2026-10-26 to keep going after M9; connectors are the roadmap's first ro
 
 ---
 
+## M11 — Planning ahead ($0)
+
+**Goal:** answer "what's coming?" as well as "what happened?". The owner sees an honest estimate of
+the next weeks' sales that knows the usual season, sets a monthly goal and sees whether they're on
+pace, and gets one list of what to reorder and how much. The owner said "keep going" on 2026-10-26
+after M10; forecasting and goals are the next roadmap rows that need no accounts.
+
+**Depends on:** M3 (metrics), M7 (insights), M9 (downloads, emails).
+
+- [ ] Forecast engine (pure, test-first): daily history → daily estimates from the business's own
+  year (month-of-year and weekday patterns, current level from recent weeks), with a range from how
+  wrong the same method was on past weeks; plain fallback with less than a year of history. Every
+  estimate says what it assumed.
+- [ ] Demo data: an option for two years of history, and a back-test on it (forecast November from 1
+  November using only earlier data, compare with what was sold)
+- [ ] Goals: a monthly goal per business for a pack measure (net sales, orders, gross profit); Home
+  shows progress and where the month is heading; the weekly email says it too
+- [ ] Reorder list: every product that needs ordering, with a quantity that covers the supplier's
+  lead time plus 30 days including the usual season, grouped by supplier, downloadable
+- [ ] Pack settings for which measures can have goals and estimates; copy, e2e, docs
+
+**Acceptance:**
+
+- On the two-year demo shop, the November sales estimate made on 1 November is within 15% of what
+  was sold, and closer than the plain run-rate. A shop with three months of history gets a plain
+  estimate that says it doesn't know the season yet.
+- Estimates are always labelled as estimates, with a range and what they assumed. They are computed
+  by code from executed queries, never by the AI.
+- Goal progress and projections match the numbers the app shows elsewhere for the same dates.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |
