@@ -54,6 +54,9 @@ export default async function ReorderPage({ params }: { params: Promise<{ slug: 
               {list.seasonNote
                 ? `${noteText(list.seasonNote, localeFor(member.settings))} The amounts allow for it.`
                 : 'Amounts are at your recent rate.'}{' '}
+              {list.perProductSeasons
+                ? 'Each product’s own season from last year is allowed for too. '
+                : ''}
               Lead time is 14 days where none is recorded.
             </span>
             <DownloadLinks href={`/api/w/${slug}/plan/reorder/download`} />
@@ -90,6 +93,11 @@ export default async function ReorderPage({ params }: { params: Promise<{ slug: 
                           {l.soon && (
                             <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
                               May run out first
+                            </span>
+                          )}
+                          {l.seasonal && l.lastYear !== null && (
+                            <span className="mt-0.5 block text-xs text-muted-foreground">
+                              Seasonal: sold {n.format(l.lastYear)} in these weeks last year
                             </span>
                           )}
                         </th>

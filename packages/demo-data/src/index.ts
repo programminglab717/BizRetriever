@@ -15,12 +15,19 @@ export interface GenerateOptions {
   outDir: string;
   /** False writes the control business: same shape, no planted stories. */
   stories?: boolean;
+  /** Days of trading before today (default 365); longer for forecast back-tests. */
+  historyDays?: number;
 }
 
 /** Writes the messy demo files and `ground_truth.json` to `outDir`. */
 export async function generateDemoDataset(options: GenerateOptions): Promise<GroundTruth> {
   const seed = options.seed ?? 42;
-  const sim = simulate({ today: options.today, seed, stories: options.stories ?? true });
+  const sim = simulate({
+    today: options.today,
+    seed,
+    stories: options.stories ?? true,
+    ...(options.historyDays ? { historyDays: options.historyDays } : {}),
+  });
   const files = await writeFiles(sim, options.outDir, seed);
   const truth = buildTruth(sim, files, seed);
   writeFileSync(path.join(options.outDir, 'ground_truth.json'), JSON.stringify(truth, null, 2));

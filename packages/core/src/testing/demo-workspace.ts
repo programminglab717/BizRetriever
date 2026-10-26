@@ -43,6 +43,8 @@ export async function loadDemoWorkspace(options: {
   name?: string;
   /** False loads the control business (no planted stories). */
   stories?: boolean;
+  /** Days of trading before today (default 365). */
+  historyDays?: number;
 }): Promise<DemoWorkspace> {
   const seed = options.seed ?? 42;
   const timezone = options.timezone ?? 'America/New_York';
@@ -54,6 +56,7 @@ export async function loadDemoWorkspace(options: {
       seed,
       outDir: dir,
       stories: options.stories ?? true,
+      ...(options.historyDays ? { historyDays: options.historyDays } : {}),
     });
     const files = readdirSync(dir)
       .filter((f) => f !== 'ground_truth.json')
@@ -108,7 +111,12 @@ export async function loadDemoWorkspace(options: {
     return {
       member,
       ownerId,
-      sim: simulateDemo({ today: options.today, seed, stories: options.stories ?? true }),
+      sim: simulateDemo({
+        today: options.today,
+        seed,
+        stories: options.stories ?? true,
+        ...(options.historyDays ? { historyDays: options.historyDays } : {}),
+      }),
       async dispose() {
         await deleteWorkspace(member, ownerId);
         await getAppDb().delete(user).where(eq(user.id, ownerId));

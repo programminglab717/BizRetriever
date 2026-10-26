@@ -3287,20 +3287,6 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
         ]
       },
       {
-        "text": "How much will I sell next month?",
-        "group": "Ahead",
-        "needs": [
-          "net_sales"
-        ]
-      },
-      {
-        "text": "Am I on track for my goal?",
-        "group": "Ahead",
-        "needs": [
-          "net_sales"
-        ]
-      },
-      {
         "text": "Which products made me the most profit last month?",
         "group": "Products",
         "needs": [
@@ -3396,6 +3382,20 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
         "group": "Money",
         "needs": [
           "outstanding_receivables"
+        ]
+      },
+      {
+        "text": "How much will I sell next month?",
+        "group": "Ahead",
+        "needs": [
+          "net_sales"
+        ]
+      },
+      {
+        "text": "Am I on track for my goal?",
+        "group": "Ahead",
+        "needs": [
+          "net_sales"
         ]
       }
     ],

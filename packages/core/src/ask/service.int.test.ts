@@ -147,7 +147,7 @@ describe.skipIf(!hasDb)('Ask service (integration)', () => {
       'Products',
       'Stock',
       'Customers',
-      'Sales',
+      'Ahead',
       'Sales',
     ]);
   });

@@ -5,8 +5,6 @@ examples:
   - { group: Sales, text: Which channel is growing fastest?, needs: [net_sales] }
   - { group: Sales, text: Show sales by week this year., needs: [net_sales] }
   - { group: Sales, text: What were my best days of the week?, needs: [net_sales] }
-  - { group: Ahead, text: How much will I sell next month?, needs: [net_sales] }
-  - { group: Ahead, text: Am I on track for my goal?, needs: [net_sales] }
   - {
       group: Products,
       text: Which products made me the most profit last month?,
@@ -29,3 +27,5 @@ examples:
       needs: [net_profit_estimate],
     }
   - { group: Money, text: Who owes me money?, needs: [outstanding_receivables] }
+  - { group: Ahead, text: How much will I sell next month?, needs: [net_sales] }
+  - { group: Ahead, text: Am I on track for my goal?, needs: [net_sales] }

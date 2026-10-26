@@ -285,6 +285,11 @@ async function reorderAnswer(member: MemberWorkspace): Promise<RenderedEstimate>
         ...(list.seasonNote
           ? [`${noteText(list.seasonNote, localeFor(member.settings))} The amounts allow for it.`]
           : []),
+        ...(list.perProductSeasons
+          ? [
+              'Each product’s own season from last year is allowed for, so seasonal stock shows up before its season.',
+            ]
+          : []),
         'The full list, by supplier and with downloads, is on Plan ahead → What to reorder.',
       ],
     },
