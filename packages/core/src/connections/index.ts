@@ -7,7 +7,6 @@ export {
   getConnection,
   linkGoogleSheet,
   listConnections,
-  registerFetcher,
   startConnection,
   syncConnection,
   unlinkConnection,
@@ -17,3 +16,17 @@ export {
   type SyncOutcome,
 } from './service';
 export { exportUrl, fetchSheet, parseSheetLink, titleFrom, type SheetRef } from './sheets';
+export { connectorSecretsEnabled } from './secret';
+export {
+  isShopDomain,
+  normalizeShop,
+  shopifyEnabled,
+  verifyWebhook as verifyShopifyWebhook,
+} from './shopify/oauth';
+export {
+  beginShopifyInstall,
+  completeShopifyInstall,
+  handleShopifyWebhook,
+  SHOPIFY_STATE_COOKIE,
+  ShopifyConnectError,
+} from './shopify/service';

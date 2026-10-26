@@ -32,10 +32,10 @@ export default async function DataPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ do?: string | string[] }>;
+  searchParams: Promise<{ do?: string | string[]; connected?: string }>;
 }) {
   const { slug } = await params;
-  const asked = (await searchParams).do;
+  const { do: asked, connected } = await searchParams;
   const prefill = (Array.isArray(asked) ? asked[0] : asked)?.slice(0, 400) ?? '';
   const member = await requireWorkspace(slug);
   const [runs, types, connections] = await Promise.all([
@@ -74,6 +74,12 @@ export default async function DataPage({
         </div>
       </div>
       {shown.length > 0 ? <DataChat slug={slug} initial={prefill} /> : null}
+      {connected === 'shopify' && (
+        <p role="status" className="rounded-md border bg-muted px-4 py-3 text-sm">
+          Your Shopify store is connected. We’re reading it now; in a minute you’ll be able to check
+          what we found, the same way as for a file.
+        </p>
+      )}
       <LinkedSources slug={slug} sources={sources} />
       {shown.length > 0 ? (
         <section className="grid gap-3" aria-labelledby="records-heading">

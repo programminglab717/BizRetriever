@@ -65,6 +65,15 @@ export const envSchema = z
     // The demo machine's sign-in (`pnpm demo:up`). Without a password, a new one is made and shown.
     DEMO_EMAIL: z.email().default('demo@fernwood.test'),
     DEMO_PASSWORD: z.string().min(10).optional(),
+    // Linked sources (ADR-058). Encrypts stored access tokens (Shopify); needed to connect a store.
+    CONNECTOR_SECRET: z.string().min(32).optional(),
+    // Shopify (ADR-059): a free Dev Dashboard app's credentials. Unset: "Connect Shopify" is hidden.
+    SHOPIFY_CLIENT_ID: z.string().min(1).optional(),
+    SHOPIFY_CLIENT_SECRET: z.string().min(1).optional(),
+    SHOPIFY_API_VERSION: z
+      .string()
+      .regex(/^\d{4}-\d{2}$/)
+      .default('2026-07'),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && !env.BETTER_AUTH_SECRET) {

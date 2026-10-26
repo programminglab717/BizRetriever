@@ -1,3 +1,6 @@
+import { shopifyEnabled } from '@bizr/core/connections';
+
+import { ConnectShopifyForm } from '@/components/import/connect-shopify-form';
 import { LinkSheetForm } from '@/components/import/link-sheet-form';
 import { UploadForm } from '@/components/import/upload-form';
 import { PageHeader } from '@/components/shell/page-header';
@@ -10,9 +13,16 @@ const HELPFUL = [
   ['Expenses', 'rent, postage, packaging and so on'],
 ] as const;
 
-export default async function ImportPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ImportPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ shopify?: string }>;
+}) {
   const { slug } = await params;
   await requireWorkspace(slug);
+  const { shopify } = await searchParams;
   return (
     <div className="grid gap-6">
       <PageHeader
@@ -21,6 +31,7 @@ export default async function ImportPage({ params }: { params: Promise<{ slug: s
       />
       <UploadForm slug={slug} />
       <LinkSheetForm slug={slug} />
+      {shopifyEnabled() && <ConnectShopifyForm slug={slug} badShop={shopify === 'bad_shop'} />}
       <section className="grid gap-2 text-sm">
         <h2 className="font-medium">Helpful files to include</h2>
         <ul className="grid gap-1 text-muted-foreground">

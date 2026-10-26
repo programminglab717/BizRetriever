@@ -20,10 +20,28 @@ test('a link that isn’t a Google Sheet is explained, not fetched', async ({ pa
   const base = page.url().replace(/\/home$/, '');
 
   await page.goto(`${base}/data/import`);
+  // Without Shopify app keys the option isn't offered at all.
+  await expect(page.getByRole('button', { name: 'Connect Shopify' })).toHaveCount(0);
   const link = page.getByLabel('Google Sheets link');
   await link.fill('https://example.com/my-sheet');
   await page.getByRole('button', { name: 'Link this sheet' }).click();
   await expect(page.getByText('That doesn’t look like a Google Sheets link')).toBeVisible();
   await page.goto(`${base}/data`);
   await expect(page.getByTestId('linked-source')).toHaveCount(0);
+});
+
+test('Shopify’s routes are closed without app keys, and unsigned webhooks are refused', async ({
+  request,
+}) => {
+  expect(
+    (await request.get('/api/connect/shopify/callback?code=x&shop=a.myshopify.com')).status(),
+  ).toBe(404);
+  expect(
+    (
+      await request.post('/api/connect/shopify/webhooks', {
+        data: '{}',
+        headers: { 'x-shopify-topic': 'app/uninstalled' },
+      })
+    ).status(),
+  ).toBe(404);
 });

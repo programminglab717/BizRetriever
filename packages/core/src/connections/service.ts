@@ -16,6 +16,7 @@ import { getMemberWorkspace, type MemberWorkspace } from '../workspaces/service'
 import { SourceError } from './fetch';
 import { contentFingerprint } from './fingerprint';
 import { externalIdOf, fetchSheet, parseSheetLink, refOf } from './sheets';
+import { fetchStore } from './shopify/store';
 
 /**
  * Linked sources (M10, ADR-058). Linking fetches once and starts an ordinary import, which the owner
@@ -38,30 +39,21 @@ const MIN_CHECK_INTERVAL_MS = 60_000;
 export interface Fetched {
   name: string;
   files: IncomingFile[];
+  /** Kept on the connection once this fetch is used (Shopify: where orders were read from). */
+  config?: Record<string, unknown>;
 }
 
-/** What a connection holds now. Shopify is added by `registerFetcher` (see `shopify/`). */
-const fetchers = new Map<ConnectionKind, (c: Connection) => Promise<Fetched>>([
-  [
-    'google_sheet',
-    async (c) => {
-      const sheet = await fetchSheet(refOf(c.externalId));
-      return { name: sheet.title, files: [sheet.file] };
-    },
-  ],
-]);
+/** What a connection holds now. */
+const fetchers: Record<ConnectionKind, (c: Connection, now: Date) => Promise<Fetched>> = {
+  google_sheet: async (c) => {
+    const sheet = await fetchSheet(refOf(c.externalId));
+    return { name: sheet.title, files: [sheet.file] };
+  },
+  shopify: (c, now) => fetchStore(c, now),
+};
 
-export function registerFetcher(
-  kind: ConnectionKind,
-  fetcher: (c: Connection) => Promise<Fetched>,
-): void {
-  fetchers.set(kind, fetcher);
-}
-
-async function fetchConnection(c: Connection): Promise<Fetched> {
-  const f = fetchers.get(c.kind);
-  if (!f) throw new SourceError('This kind of source isn’t available here.', 'needs_attention');
-  return f(c);
+function fetchConnection(c: Connection, now = new Date()): Promise<Fetched> {
+  return fetchers[c.kind](c, now);
 }
 
 function friendly(err: unknown): string {
@@ -180,6 +172,7 @@ export async function startConnection(input: {
       lastChangedAt: new Date(),
       lastError: null,
       status: 'active',
+      config: { ...c.config, ...fetched.config },
       updatedAt: new Date(),
     })
     .where(eq(connection.id, c.id));
@@ -251,7 +244,7 @@ export async function syncConnection(
   }
   let fetched: Fetched;
   try {
-    fetched = await fetchConnection(c);
+    fetched = await fetchConnection(c, now);
   } catch (err) {
     await markProblem(c, err);
     return 'problem';
@@ -260,7 +253,12 @@ export async function syncConnection(
   if (fingerprint === c.lastFingerprint) {
     await db
       .update(connection)
-      .set({ lastError: null, status: 'active', updatedAt: new Date() })
+      .set({
+        lastError: null,
+        status: 'active',
+        config: { ...c.config, ...fetched.config },
+        updatedAt: new Date(),
+      })
       .where(eq(connection.id, c.id));
     return 'unchanged';
   }
@@ -281,6 +279,7 @@ export async function syncConnection(
         lastError: null,
         status: 'active',
         name: fetched.name.slice(0, 120) || c.name,
+        config: { ...c.config, ...fetched.config },
         updatedAt: new Date(),
       })
       .where(eq(connection.id, c.id));
