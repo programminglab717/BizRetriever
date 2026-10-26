@@ -158,7 +158,14 @@ export function AnswerCard({
     <Card data-testid="answer-card">
       <CardContent className="grid gap-5 pt-6">
         <div className="grid gap-1">
-          <p className="text-sm text-muted-foreground">{answer.title}</p>
+          <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {answer.title}
+            {answer.kind === 'estimate' && (
+              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-900">
+                Estimate
+              </span>
+            )}
+          </p>
           <Headline answer={answer} />
         </div>
 

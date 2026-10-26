@@ -37,6 +37,9 @@ import {
 } from './interpretation';
 import { applyDashboardEdit, currentDashboard } from '../dashboard/service';
 import { explainFallbackSql, narrate } from './narrate';
+import { planningMetrics } from '../planning/service';
+import { estimateRequestWithRules } from './estimate';
+import { renderEstimate } from './estimate-answer';
 import { periodLabel } from './time';
 import { localeFor } from './view';
 
@@ -133,6 +136,35 @@ export async function askQuestion(
   const ctx = await loadAskContext(member);
   const provider = options.provider === undefined ? getAiProvider() : options.provider;
   const aiMode = options.aiMode ?? 'auto';
+
+  // About what's ahead (M12): answered by the planning engine, never by the AI (ADR-061).
+  const ahead =
+    !input.choice && !isChangeRequest(question, ctx.model.entities, ctx.catalog.calendar.today)
+      ? estimateRequestWithRules(question, ctx.catalog, planningMetrics(ws.packId))
+      : null;
+  if (ahead) {
+    const r = await renderEstimate(member, ctx, ahead);
+    const [row] = await db
+      .insert(answer)
+      .values({
+        conversationId: conv.id,
+        workspaceId: ws.id,
+        userId,
+        question,
+        kind: r.kind,
+        origin: 'rules',
+        interpretation: { kind: 'estimate', request: ahead },
+        content: r.content,
+        latencyMs: Date.now() - started,
+        aiCalls: 0,
+      })
+      .returning();
+    await db
+      .update(conversation)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversation.id, conv.id));
+    return toResult(row!, false);
+  }
 
   let interpretation: Interpretation;
   let origin: InterpretOrigin;

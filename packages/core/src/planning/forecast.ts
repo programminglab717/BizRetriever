@@ -30,6 +30,8 @@ export type ForecastNote =
 
 export interface Forecast {
   method: 'seasonal' | 'recent';
+  /** Which way it was worked out: last year's same weeks, the year's pattern, or recent weeks. */
+  basis: 'last_year' | 'year_pattern' | 'recent';
   historyDays: number;
   days: { date: string; estimate: number }[];
   total: number;
@@ -70,6 +72,7 @@ function dense(history: readonly DayValue[], from: string): DayValue[] {
 
 interface Core {
   method: Forecast['method'];
+  basis: Forecast['basis'];
   days: { date: string; estimate: number }[];
   notes: ForecastNote[];
 }
@@ -105,7 +108,7 @@ function lastYear(days: readonly DayValue[], from: string, horizon: number): Cor
   for (const d of out) counts.set(monthOf(d.date), (counts.get(monthOf(d.date)) ?? 0) + 1);
   const main = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]![0];
   if (Math.abs(change) >= 0.05) notes.push({ kind: 'season', month: main, change });
-  return { method: 'seasonal', days: out, notes };
+  return { method: 'seasonal', basis: 'last_year', days: out, notes };
 }
 
 function core(days: readonly DayValue[], from: string, horizon: number): Core | null {
@@ -173,7 +176,12 @@ function core(days: readonly DayValue[], from: string, horizon: number): Core | 
   const busiest = weekdayFactor.reduce((best, f, w) => (f > weekdayFactor[best]! ? w : best), 0);
   if (weekdayFactor[busiest]! - 1 >= 0.1)
     notes.push({ kind: 'weekdays', busiest, change: weekdayFactor[busiest]! - 1 });
-  return { method: seasonal ? 'seasonal' : 'recent', days: out, notes };
+  return {
+    method: seasonal ? 'seasonal' : 'recent',
+    basis: seasonal ? 'year_pattern' : 'recent',
+    days: out,
+    notes,
+  };
 }
 
 /** How far the method was off on the last few 4-week periods (their totals). */
@@ -205,6 +213,7 @@ export function forecastDaily(
   const error = clamp(pastError(days, options.days) ?? 0.25, 0.05, 0.6);
   return {
     method: result.method,
+    basis: result.basis,
     historyDays: days.length,
     days: result.days,
     total,

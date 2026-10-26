@@ -33,7 +33,15 @@ export const conversation = app.table(
   (t) => [index('conversation_workspace_idx').on(t.workspaceId, t.updatedAt)],
 );
 
-export const answerKinds = ['query', 'clarify', 'sql', 'unanswerable', 'error'] as const;
+// `estimate` (M12): an answer about what's ahead, from the planning engine (ADR-061).
+export const answerKinds = [
+  'query',
+  'clarify',
+  'sql',
+  'unanswerable',
+  'error',
+  'estimate',
+] as const;
 export type AnswerKind = (typeof answerKinds)[number];
 
 /**
