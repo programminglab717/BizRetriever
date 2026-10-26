@@ -83,13 +83,15 @@ locally (Stage 0), on a free preview (Stage 1) and in paid production (Stage 2).
 
 1. Point the domain at the web host; HTTPS on.
 2. Verify the sending domain in Resend (SPF, DKIM, DMARC). Test the sign-up verification, password
-   reset and invite emails.
+   reset and invite emails, a weekly summary and an urgent alert, and both unsubscribe paths (the
+   link's button and a mail app's one-click unsubscribe, ADR-057).
 3. Google sign-in: follow `docs/RUNBOOK_GOOGLE_OAUTH.md` with the production redirect URL.
 
 ## 7. Go-live checks
 
 - [ ] Sign up, onboarding, "Try the demo shop", a real import, Ask, dashboard, insights, invite a
-  member, re-upload, undo, delete the business. All on a phone too.
+  member, re-upload, undo, downloads (an answer, a tile, all my data), delete the business. All on a
+  phone too.
 - [ ] `pnpm perf <slug>` against production: Home LCP ≤ 2 s, Ask p95 ≤ 6 s (PLAN M8).
 - [ ] `/admin` shows AI calls as live (not replayed) and within the caps.
 - [ ] A test business is deleted and its tenant schema and roles are gone.

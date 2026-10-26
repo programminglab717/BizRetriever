@@ -68,8 +68,9 @@ need an account, or terms to accept, and are the owner's to do or approve.
      (ADR-055). With it, the preview is as well isolated as production would be.
    - `STORAGE_DRIVER=postgres` (serverless disks don't keep files)
    - `AI_REPLAY_MODE=replay`, or a key plus `off` and the caps if AI is on
-   - `ADMIN_EMAILS`, and `RESEND_API_KEY` / `EMAIL_FROM` if invite and reset emails should be sent
-     (Resend Free); without them, emails go to the log and invite links are shown to copy
+   - `ADMIN_EMAILS`, and `RESEND_API_KEY` / `EMAIL_FROM` if emails should be sent (Resend Free):
+     invites, resets, weekly summaries and urgent alerts. Demo shops never email. Without them,
+     emails go to the log and invite links are shown to copy
 3. Check the host's function time limit on the day. Keep `JOB_STEP_BUDGET_MS` (default 45 s) under it.
    The drain route asks for up to 60 s.
 4. Deploy.

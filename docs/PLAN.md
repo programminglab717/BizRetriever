@@ -532,10 +532,10 @@ records by chat, structural changes by chat with versioning and rollback.
 
 - [x] Per-business database logins (ADR-055): own login per business, derived passwords, backfill
   and rotation command, isolation tests in both modes, CI with logins on
-- [ ] Download any answer or dashboard tile as a spreadsheet (CSV / Excel), and "Download all my
-  data" (every record type as a sheet)
-- [ ] Email the weekly summary and new urgent alerts (Resend free tier; off without a key), with
-  per-person settings and one-click unsubscribe
+- [x] Download any answer or dashboard tile as a spreadsheet (CSV / Excel), and "Download all my
+  data" (every record type as a sheet) (ADR-056)
+- [x] Email the weekly summary and new urgent alerts (Resend free tier; off without a key), with
+  per-person settings and one-click unsubscribe (ADR-057)
 
 **Acceptance:**
 
@@ -554,11 +554,11 @@ records by chat, structural changes by chat with versioning and rollback.
 | Area | Item |
 |---|---|
 | Connectors | Shopify (API), Google Sheets, Square/Lightspeed/Clover POS, WooCommerce, Amazon Seller Central, Etsy API, QuickBooks/Xero |
-| Channels | Email digests and alerts; WhatsApp questions and alerts |
-| Product | Multilingual UI and questions; multi-currency; forecasting (seasonality-aware); goals/targets; scheduled reports; CSV/PDF export of answers |
+| Channels | WhatsApp questions and alerts (email digests and alerts: done in M9) |
+| Product | Multilingual UI and questions; multi-currency; forecasting (seasonality-aware); goals/targets; scheduled reports; PDF export of answers (CSV/Excel: done in M9) |
 | Collaboration | Granular roles and permissions; comments on insights |
 | Platform | Public API and MCP server exposing the semantic layer to other apps and agents; webhooks |
 | Packs | Wholesale/distribution, restaurants/food service, services/agencies, health & beauty salons |
 | Business | Billing and plans (usage-based AI cost informs pricing); onboarding concierge |
 | Production upgrade (after revenue) | Execute the Stage 2 runbook: paid web plan, dedicated worker (`JOB_RUNNER=worker`), S3/R2 storage + migration of blobs, Sentry, custom domain, backups/PITR |
-| Hardening | Per-tenant login roles (ADR-005 option 3); tenant sharding across databases; SOC 2 readiness; data residency (EU) |
+| Hardening | Tenant sharding across databases; SOC 2 readiness; data residency (EU) |

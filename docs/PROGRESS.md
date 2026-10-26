@@ -2,25 +2,17 @@
 
 ## Current Status
 
-- **Milestone:** M8 (Demo readiness) is **built and checked automatically**. Two items need a person:
+- **Milestone:** M9 (Ready for a first real customer, $0) is **built and checked automatically**. It needs the owner's confirmation. M8's two person-only items are still open:
   - the two timed presenter rehearsals and the backup screen recording (Q24)
-  - the optional free hosted preview (Q19). It is now ready apart from the accounts: `docs/RUNBOOK_PREVIEW.md`, `pnpm preview:check`, a daily cron in `apps/web/vercel.json`, and database setup that works on Neon (ADR-054).
-- **Security:**
-  - Next.js upgraded 16.4.0 → 16.4.3 (two critical advisories)
-  - CI now fails on high or critical advisories
-  - On managed Postgres the executor itself refuses statements that change their session (ADR-054)
+  - the optional free hosted preview (Q19). It is ready apart from the accounts: `docs/RUNBOOK_PREVIEW.md`, `pnpm preview:check`.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **What runs today:** everything from M1–M7, plus:
-  - **"Try the demo shop"**: a fresh Fernwood dated today, imported live. It is on the first screen after sign-up and under "Your businesses" on More and Settings, with a "Demo" badge and "Start the demo shop again".
-  - **`pnpm demo:up`**: the presenter's laptop in one command. It sets up Postgres and the database, the demo sign-in, tab A (empty) and tab B (ready), today's files in `demo-files/`, and web plus worker with AI replay-only, and prints the day's numbers.
-  - **`/admin`** (`ADMIN_EMAILS` only): AI spend vs caps and per business, AI failures and latency, query latency, job failures, eval baselines.
-  - Friendly not-found and error pages, loading skeletons, a favicon.
-- **M8 acceptance:**
-  - **Rehearsals:** the automated rehearsal ran twice in a row with zero errors (38.5 s and 33.1 s of machine time). The script's spoken timings add up to under 7 minutes. Presenter runs are pending (Q24).
-  - **AI blocked:** the demo works with the AI provider unreachable. The whole path runs on rules, and the e2e server runs replay-only with no key.
-  - **Spend:** $0 infrastructure; $0 AI (`/admin` shows no live AI calls).
-  - **Earlier milestones:** all acceptance criteria still hold. 707 unit/integration tests pass, 26 e2e (desktop + mobile; two desktop-only).
-- **Performance** (production build, demo shop):
+- **New in M9:**
+  - **Per-business database logins (ADR-055):** with `TENANT_LOGIN_SECRET` set, each business's statements run under its own login, which can become only that business's roles. Backfill and rotation: `pnpm --filter @bizr/worker run tenant-logins`.
+  - **Downloads (ADR-056):** every answer and dashboard tile as Excel or CSV, and "Download all my data" on My data (one tab per kind of record). Each file has an "About this file" tab with the question, dates and assumptions. Money stays exact; CSV text is guarded against formulas.
+  - **Emails (ADR-057):** the weekly summary and new urgent alerts, to confirmed members only. Each person chooses in Alert settings → "Emails to you", and every email has a one-click unsubscribe. Each email goes at most once. Without `RESEND_API_KEY` they are only logged.
+- **Also today:** Next.js 16.4.3 (security), `pnpm audit` in CI, managed-Postgres setup (ADR-054).
+- **Tests:** 730 unit/integration pass; 31 e2e pass (desktop + mobile; 3 desktop-only skipped on mobile). CI green through 29c7ad0; later pushes are running.
+- **Performance** (production build, demo shop, M8):
 
   | Measure | Result | Target |
   |---|---|---|
@@ -39,14 +31,48 @@
   | Change plans | 1.0 |
 
 - **Waiting on the owner:**
+  - confirm M9
   - presenter rehearsals and the backup recording (Q24)
   - the Google OAuth client (`docs/RUNBOOK_GOOGLE_OAUTH.md`)
-  - the Anthropic API key (Q20), for the AI evals and the demo's replay recordings
+  - the Anthropic API key (Q20)
+  - before real customers' emails: a Resend account and a verified sending domain (Q25)
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-26 — Session 13: M9 built (business logins, downloads, emails)
+
+**Completed:**
+
+- **Per-business database logins** (ADR-055, commit 29c7ad0). Tested on a database without a superuser; CI runs with them on.
+- **Downloads** (ADR-056):
+  - `@bizr/core/export`: sheet builders, a CSV writer (BOM, RFC 4180 quoting, formula guard) and an Excel writer (exceljs, already used by imports): bold frozen header, money and percent formats, real dates, an "About this file" tab.
+  - Answers export the rows the owner saw. Tiles run for the dashboard's dates. "Download all my data" reads each record type in batches by id (up to 100,000 each), shows linked records by name and coded values by label, and is logged as `data.downloaded`.
+  - Routes under `/api/w/<slug>/…/download`, each checking membership. Links on the answer card, the tile menu and My data.
+  - Fixed `shiftDecimal` for shifts past the last digit.
+- **Emails** (ADR-057):
+  - `sendEmail` moved to `@bizr/platform` (HTML, headers, a test transport) and is shared with the auth and invite emails.
+  - Migration 0015: `email_preference` and `email_delivery`.
+  - `sendInsightEmails` runs after every insight run in all three job paths and never fails the run.
+  - Signed one-click unsubscribe: `/api/email/unsubscribe` (RFC 8058 POST) and a confirm page at `/email/unsubscribe`.
+  - "Emails to you" in Alert settings.
+- **Tests:**
+  - new unit tests (writers, email content, signatures)
+  - integration tests on the demo business (exact values in files; once-only sending, confirmed members only, unsubscribe, demo shops silent)
+  - e2e `downloads.spec.ts` and `emails.spec.ts`
+  - full suite: 730 unit/integration, 31 e2e
+
+**In progress:** nothing.
+
+**Blockers:** none for building. Real emails need a Resend account and a verified domain (Q25).
+
+**Next steps:**
+
+1. Owner: confirm M9; the M8 rehearsals (Q24); the API key (Q20).
+2. Before a first real customer: Resend account plus sending domain (Q25), and `TENANT_LOGIN_SECRET` wherever it is hosted.
+3. After confirmation: the roadmap in PLAN, as the owner prioritises (connectors first is the default).
 
 ### 2026-10-26 — Session 12: M8's free hosted preview made ready; security fixes
 
