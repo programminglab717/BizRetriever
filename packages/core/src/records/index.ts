@@ -1,6 +1,7 @@
 export { EDIT_TABLE, ensureEditLog, logEdits, undoBatch, UndoError } from './edits';
 export type { EditOp, EditOrigin, LoggedEdit } from './edits';
 export {
+  allRecords,
   browseRecords,
   DELETED_DAYS,
   deleteRecords,

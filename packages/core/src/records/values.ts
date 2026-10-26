@@ -97,7 +97,7 @@ function isRealDate(s: string): boolean {
 }
 
 /** Moves the decimal point (exactly, on the digits): shiftDecimal("15", -2) = "0.15". */
-function shiftDecimal(s: string, by: number): string {
+export function shiftDecimal(s: string, by: number): string {
   const negative = s.startsWith('-');
   const [int = '', frac = ''] = s.replace('-', '').split('.');
   let digits = int + frac;
@@ -106,9 +106,9 @@ function shiftDecimal(s: string, by: number): string {
     digits = '0'.repeat(1 - point) + digits;
     point = 1;
   }
-  const out = `${digits.slice(0, point)}.${digits.slice(point)}`
-    .replace(/\.?0+$/, '')
-    .replace(/^0+(?=\d)/, '');
+  digits = digits.padEnd(point, '0');
+  const tail = digits.slice(point).replace(/0+$/, '');
+  const out = `${digits.slice(0, point).replace(/^0+(?=\d)/, '')}${tail ? `.${tail}` : ''}`;
   return `${negative ? '-' : ''}${out}`;
 }
 

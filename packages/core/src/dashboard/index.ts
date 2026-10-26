@@ -21,6 +21,7 @@ export {
   editProblems,
   ensureDefaultDashboard,
   saveDashboardRange,
+  tileData,
   undoDashboardEdit,
 } from './service';
 export type { DashboardView, EditResult, TileView } from './service';

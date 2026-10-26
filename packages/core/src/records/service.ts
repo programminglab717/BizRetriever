@@ -299,6 +299,50 @@ export async function browseRecords(
   };
 }
 
+const EXPORT_BATCH = 1_000;
+
+/**
+ * Every live record of one type, oldest first, up to `max` (for "Download all my data"). Reads in
+ * batches by id, so a big shop doesn't page with ever-larger offsets.
+ */
+export async function allRecords(
+  member: MemberWorkspace,
+  entity: string,
+  max = 100_000,
+): Promise<{ entity: EntityMeta; rows: RecordRow[]; total: number }> {
+  const { catalog, e } = await catalogEntity(member, entity);
+  const s = selectFor(catalog, e);
+  const base = baseParams(member, e);
+  const after = `$${base.length + 1}`;
+  const rows: RecordRow[] = [];
+  let last = '0';
+  while (rows.length < max) {
+    const batch = await read(
+      member,
+      `SELECT ${s.select} FROM ${s.from} WHERE b."_deleted_at" IS NULL AND b."_id" > ${after}::bigint ORDER BY b."_id" LIMIT ${EXPORT_BATCH}`,
+      [...base, last],
+      EXPORT_BATCH,
+    );
+    rows.push(...batch.map((r) => toRow(e, r)));
+    if (batch.length < EXPORT_BATCH) break;
+    last = rows.at(-1)!.id;
+  }
+  const kept = rows.slice(0, max);
+  const total =
+    rows.length < max
+      ? kept.length
+      : Number(
+          (
+            await read(
+              member,
+              `SELECT count(*) AS n FROM ${ident(e.tableName)} WHERE "_deleted_at" IS NULL`,
+              [],
+            )
+          )[0]?.n ?? kept.length,
+        );
+  return { entity: metaOf(e, valueLabelsOf(member)), rows: kept, total };
+}
+
 /** For linking a record: "Bloom" → matching customers. */
 export async function searchRecords(
   member: MemberWorkspace,

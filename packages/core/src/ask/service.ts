@@ -476,6 +476,19 @@ export async function getConversation(
   return rows.map((r) => toResult(r, pinned.has(r.id)));
 }
 
+/** One stored answer of this business, or null. */
+export async function getAnswer(
+  member: MemberWorkspace,
+  answerId: string,
+): Promise<AskResult | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(answerId)) return null;
+  const [row] = await getAppDb()
+    .select()
+    .from(answer)
+    .where(and(eq(answer.id, answerId), eq(answer.workspaceId, member.workspace.id)));
+  return row ? toResult(row, false) : null;
+}
+
 export async function recentConversations(member: MemberWorkspace, limit = 10) {
   return getAppDb()
     .select({ id: conversation.id, title: conversation.title, updatedAt: conversation.updatedAt })

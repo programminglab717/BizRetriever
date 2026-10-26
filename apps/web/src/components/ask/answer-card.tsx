@@ -1,7 +1,7 @@
 'use client';
 
 import type { AnswerView } from '@bizr/core/ask';
-import { ChevronDown, Pin, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ChevronDown, Download, Pin, ThumbsDown, ThumbsUp } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
@@ -239,6 +239,7 @@ export function AnswerCard({
           <Button variant="ghost" size="sm" onClick={onFollowUp}>
             Ask a follow-up
           </Button>
+          {answer.table && <DownloadLinks href={`/api/w/${slug}/answers/${answer.id}/download`} />}
           <span className="ml-auto flex items-center gap-1">
             <Button
               variant="ghost"
@@ -286,5 +287,30 @@ export function AnswerCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/** "Download: Excel · CSV" for an answer or a tile. Plain links, so the browser saves the file. */
+export function DownloadLinks({ href }: { href: string }) {
+  return (
+    <span className="flex items-center gap-1 text-sm text-muted-foreground">
+      <Download className="size-4" aria-hidden />
+      <span>Download:</span>
+      <a
+        className="rounded px-1 font-medium text-foreground underline-offset-4 hover:underline"
+        href={`${href}?format=xlsx`}
+        download
+      >
+        Excel
+      </a>
+      <span aria-hidden>·</span>
+      <a
+        className="rounded px-1 font-medium text-foreground underline-offset-4 hover:underline"
+        href={`${href}?format=csv`}
+        download
+      >
+        CSV
+      </a>
+    </span>
   );
 }

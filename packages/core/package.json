@@ -24,7 +24,8 @@
     "./structure": "./src/structure/index.ts",
     "./insights": "./src/insights/index.ts",
     "./demo": "./src/demo/index.ts",
-    "./admin": "./src/admin/index.ts"
+    "./admin": "./src/admin/index.ts",
+    "./export": "./src/export/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
@@ -37,6 +38,7 @@
     "@bizr/packs": "workspace:*",
     "@bizr/platform": "workspace:*",
     "drizzle-orm": "^0.45.4",
+    "exceljs": "^4.4.0",
     "libpg-query": "17.7.4",
     "pg": "^8.23.1",
     "pg-boss": "^12.37.1",

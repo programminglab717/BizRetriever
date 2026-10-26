@@ -1,6 +1,6 @@
 import { listRuns } from '@bizr/core/ingestion';
 import { listRecordTypes } from '@bizr/core/records';
-import { FileUp, History } from 'lucide-react';
+import { Download, FileUp, History } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
 
@@ -48,6 +48,13 @@ export default async function DataPage({
               <History /> Change history
             </Link>
           </Button>
+          {shown.length > 0 && (
+            <Button asChild variant="outline">
+              <a href={`/api/w/${slug}/data/download`} download data-testid="download-all">
+                <Download /> Download all my data
+              </a>
+            </Button>
+          )}
           <Button asChild>
             <Link href={`/w/${slug}/data/import`}>
               <FileUp /> Add or update files

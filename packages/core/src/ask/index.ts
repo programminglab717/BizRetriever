@@ -33,6 +33,7 @@ export {
   askQuestion,
   AskError,
   FEEDBACK_REASONS,
+  getAnswer,
   getConversation,
   localeFor,
   pinAnswer,

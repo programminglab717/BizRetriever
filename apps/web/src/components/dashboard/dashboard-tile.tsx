@@ -37,6 +37,7 @@ export function DashboardTile({
   last,
   busy,
   onEdit,
+  rangeQuery = '',
 }: {
   slug: string;
   tile: TileView;
@@ -45,6 +46,8 @@ export function DashboardTile({
   last: boolean;
   busy: boolean;
   onEdit: (op: EditOp) => void;
+  /** The dashboard's dates, so a download matches what's shown ("&range=…&compare=1"). */
+  rangeQuery?: string;
 }) {
   const [menu, setMenu] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -177,6 +180,28 @@ export function DashboardTile({
                 >
                   Follow dashboard dates
                 </MenuItem>
+              )}
+              {!tile.error && !empty && (
+                <>
+                  <a
+                    role="menuitem"
+                    className="rounded px-3 py-2 hover:bg-accent"
+                    href={`/api/w/${slug}/dashboard/tiles/${tile.id}/download?format=xlsx${rangeQuery}`}
+                    download
+                    onClick={() => setMenu(false)}
+                  >
+                    Download for Excel
+                  </a>
+                  <a
+                    role="menuitem"
+                    className="rounded px-3 py-2 hover:bg-accent"
+                    href={`/api/w/${slug}/dashboard/tiles/${tile.id}/download?format=csv${rangeQuery}`}
+                    download
+                    onClick={() => setMenu(false)}
+                  >
+                    Download as CSV
+                  </a>
+                </>
               )}
               <Link
                 role="menuitem"

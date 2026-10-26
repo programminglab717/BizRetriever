@@ -452,6 +452,46 @@ export async function renderTiles(
   );
 }
 
+/**
+ * One tile's numbers for the dashboard's dates, as data (for downloads). Null when the tile isn't on
+ * this business's dashboard.
+ */
+export async function tileData(
+  member: MemberWorkspace,
+  tileId: string,
+  requested?: DashboardRange,
+): Promise<{
+  title: string;
+  data: AnswerData;
+  datesLabel: string;
+  comparedWith?: string;
+  note?: string;
+} | null> {
+  const ws = member.workspace;
+  const db = getAppDb();
+  const row = await defaultDashboardRow(db, ws.id);
+  const tile = (await loadSnapshot(db, row)).tiles.find((t) => t.id === tileId);
+  if (!tile) return null;
+  const range = await rangeFor(row, ws.packId, requested);
+  const cc = compileContext(member);
+  const cal = {
+    today: cc.today,
+    weekStart: cc.weekStart,
+    fiscalYearStartMonth: cc.fiscalYearStartMonth,
+  };
+  const model = await loadSemanticModel(ws);
+  const spec = tileSpec(tile, range, cal, (id) => model.metrics.get(id)?.snapshot ?? false);
+  const r = await runQuery(member, toQuerySpec(spec, cal), 'dashboard', model);
+  const { data, note } = withoutBlankGroups(toAnswerData(r), getPack(ws.packId));
+  return {
+    title: tile.title,
+    data,
+    datesLabel: periodLabel(periodOf(spec.timeRange, cal)),
+    ...(r.previousPeriod ? { comparedWith: periodLabel(r.previousPeriod) } : {}),
+    ...(note ? { note } : {}),
+  };
+}
+
 export async function dashboardView(
   member: MemberWorkspace,
   requested?: DashboardRange,

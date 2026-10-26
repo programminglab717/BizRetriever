@@ -154,6 +154,11 @@ export function DashboardBoard({
             last={i === view.tiles.length - 1}
             busy={pending}
             onEdit={(op) => edit([op])}
+            rangeQuery={
+              'preset' in view.range.range
+                ? `&range=${view.range.range.preset}&compare=${view.range.compare ? 1 : 0}`
+                : ''
+            }
           />
         ))}
       </div>

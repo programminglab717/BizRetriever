@@ -1092,3 +1092,27 @@ Template for new entries:
   - **Tested on both kinds of database.** The isolation suite connects as one business's login and fails to reach another business, or even its own data without becoming its reader. It also checks a missing login is remade. On a Neon-like database (no superuser), the full suite (709) passes with logins on, and `preview:check` reports the stronger state.
   - CI runs with logins on, as production will. A run with them off keeps the fallback covered.
   - `TENANT_LOGIN_SECRET` is now required before real customers' data, wherever we host.
+
+## ADR-056 — Downloads: answers, tiles and all records
+
+- **Status:** Accepted (2026-10-26). M9.
+- **Context:** Owners need their numbers in a spreadsheet (for an accountant, a supplier, a bank) and a way to take all their data with them. Every number must still come from an executed query, and cell text came from uploaded files, so it is untrusted.
+- **Decision:**
+  - **What can be downloaded:**
+    - **An answer:** CSV or Excel, from the answer card ("Download: Excel · CSV"). It holds the rows the owner saw, as stored with the answer (up to 200). It does not re-run the question, which could pick up newer data or different dates. When the answer had more rows, the About tab says so.
+    - **A dashboard tile:** CSV or Excel, from the tile's menu, run for the dashboard's dates.
+    - **All my data:** one Excel workbook from My data, with one tab per kind of record (up to 100,000 records each, read in batches by id). Linked records show by name and coded values by their label. It is logged as `data.downloaded`.
+  - **Values, not text:**
+    - Money stays exact in CSV, as Postgres's decimal string.
+    - Percents are written as percent numbers in CSV, with "(%)" in the header, and as fractions with a percent format in Excel.
+    - Dates are real dates in Excel.
+    - Money headers name the currency, for example "Net sales (USD)". Excel stores every number as a double, which keeps cents exactly at any realistic size.
+  - **Formula injection:** in CSV, text starting with `= + - @`, a tab or a carriage return gets a leading `'`. Excel files store text as text and need no guard.
+  - **About this file:** each Excel file has this tab: the question, dates, comparison, assumptions (rule 6), what was left out, and when it was made.
+  - **Code:**
+    - `@bizr/core/export` builds the sheets and uses `exceljs`, already a dependency of the ingest package.
+    - Route handlers: `/api/w/<slug>/answers/<id>/download`, `/dashboard/tiles/<id>/download` and `/data/download`. Each checks session and membership (`workspaceForApi`) and answers 404 otherwise.
+- **Consequences:**
+  - No new service, and no cost.
+  - Large shops beyond 100,000 records of one kind get the first 100,000. The About tab says so.
+  - A streaming export can come later if anyone needs more.
