@@ -2,11 +2,13 @@ import { listConnections } from '@bizr/core/connections';
 import { listRuns } from '@bizr/core/ingestion';
 import { currentDigest, getInsights, homeKpis } from '@bizr/core/insights';
 import { localeFor } from '@bizr/core/ask';
+import { goalProgress } from '@bizr/core/planning';
 import type { Route } from 'next';
 import Link from 'next/link';
 
 import { KpiCards } from '@/components/ask/answer-chart';
 import { DigestCard } from '@/components/insights/digest-card';
+import { GoalProgressView } from '@/components/plan/goal-progress';
 import { InsightFeed } from '@/components/insights/insight-feed';
 import { PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
@@ -103,7 +105,11 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
   const overview = await getInsights(member, { limit: 5 });
   // The data changed or a new day began since the last check: look again (one run per business).
   if (overview.stale) await queueInsights(member.workspace.id, 'home');
-  const [kpis, digest] = await Promise.all([homeKpis(member), currentDigest(member)]);
+  const [kpis, digest, goals] = await Promise.all([
+    homeKpis(member),
+    currentDigest(member),
+    goalProgress(member),
+  ]);
   const locale = localeFor(member.settings);
   const weekLabel = digest
     ? `Week of ${new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${digest.content.period.from}T00:00:00Z`))}`
@@ -122,6 +128,28 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
             compact
             {...(kpis.comparedWith ? { comparedWith: kpis.comparedWith } : {})}
           />
+        </section>
+      )}
+      {goals.length > 0 && (
+        <section aria-labelledby="goals-heading" className="grid gap-4 rounded-xl border p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="goals-heading" className="font-semibold">
+              This month’s goals
+            </h2>
+            <Link
+              href={`/w/${slug}/plan` as Route}
+              className="text-sm text-primary hover:underline"
+            >
+              Plan ahead
+            </Link>
+          </div>
+          {goals.map((g) => (
+            <GoalProgressView
+              key={g.metric.id}
+              goal={g}
+              style={{ locale, currency: member.settings.currency }}
+            />
+          ))}
         </section>
       )}
       <form action={`/w/${slug}/ask`} className="flex gap-2" role="search">

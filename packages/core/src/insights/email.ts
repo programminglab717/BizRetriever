@@ -12,6 +12,9 @@ import {
 import { getEnv, getLogger, sendEmail, type Email } from '@bizr/platform';
 import { and, asc, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 
+import { localeFor } from '../ask/view';
+import { goalProgress } from '../planning/goals';
+import { goalLines } from '../planning/text';
 import { currentDigest, type DigestContent } from './digest';
 import type { InsightTarget } from './service';
 
@@ -205,7 +208,13 @@ const button = (href: string, label: string) =>
   `<p><a href="${escapeHtml(href)}" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:8px">${escapeHtml(label)}</a></p>`;
 
 /** The weekly summary: last week's numbers against the week before, top insights, a question. */
-export function weeklySummaryEmail(to: string, digest: DigestContent, ctx: EmailContext): Email {
+export function weeklySummaryEmail(
+  to: string,
+  digest: DigestContent,
+  ctx: EmailContext,
+  /** "Net sales: October 2026 so far: …", worked out by code (planning/text.ts). */
+  goals: readonly string[] = [],
+): Email {
   const week = weekLabel(digest.period);
   const kpiLine = (k: DigestContent['kpis'][number]) =>
     `${k.label}: ${k.value}${k.change ? ` (${k.change} on the week before)` : ''}`;
@@ -222,6 +231,13 @@ export function weeklySummaryEmail(to: string, digest: DigestContent, ctx: Email
             `<li><strong>${escapeHtml(k.label)}: ${escapeHtml(k.value)}</strong>${k.change ? ` (${escapeHtml(k.change)} on the week before)` : ''}</li>`,
         )
         .join('')}</ul>`,
+    );
+  }
+  if (goals.length) {
+    text.push('', 'Your goals:', ...goals.map((g) => `• ${g}`));
+    html.push(
+      '<p style="margin-bottom:4px">Your goals:</p>',
+      `<ul style="padding-left:20px;margin-top:0">${goals.map((g) => `<li>${escapeHtml(g)}</li>`).join('')}</ul>`,
     );
   }
   if (digest.insights.length) {
@@ -368,6 +384,22 @@ async function deliver(
   }
 }
 
+/** This month's goals as sentences for the summary. A problem here never stops the email. */
+async function goalText(target: InsightTarget, now: Date): Promise<string[]> {
+  try {
+    const style = { locale: localeFor(target.settings), currency: target.settings.currency };
+    // Goals belong to the business, not to a person: read them as its owner would see them.
+    const progress = await goalProgress({ ...target, role: 'owner' }, { now });
+    return progress.map((g) => {
+      const l = goalLines(g, style);
+      return [`${g.metric.label}: ${l.soFar}`, l.heading].filter(Boolean).join(' ');
+    });
+  } catch (err) {
+    log().warn({ err, workspaceId: target.workspace.id }, 'goals left out of the summary');
+    return [];
+  }
+}
+
 export interface EmailRunSummary {
   weeklySummaries: number;
   urgentAlerts: number;
@@ -409,6 +441,7 @@ export async function sendInsightEmails(
     )
     .orderBy(desc(insight.score));
   const digest = await currentDigest(target, { now });
+  const goals = digest ? await goalText(target, now) : [];
 
   for (const p of people) {
     if (p.prefs.urgentAlerts && urgent.length) {
@@ -441,7 +474,7 @@ export async function sendInsightEmails(
           p.userId,
           'weekly_summary',
           fresh,
-          weeklySummaryEmail(p.email, digest.content, ctxFor(p, 'weekly_summary')),
+          weeklySummaryEmail(p.email, digest.content, ctxFor(p, 'weekly_summary'), goals),
         ))
       )
         summary.weeklySummaries += 1;

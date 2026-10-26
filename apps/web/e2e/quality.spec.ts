@@ -12,6 +12,8 @@ const PAGES = [
   'dashboard',
   'insights',
   'insights/settings',
+  'plan',
+  'plan/reorder',
   'data',
   'data/product',
   'glossary',

@@ -3,6 +3,7 @@
 import {
   BookOpen,
   Bell,
+  CalendarRange,
   Home,
   LayoutDashboard,
   Menu,
@@ -16,7 +17,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 type Segment =
-  'home' | 'ask' | 'dashboard' | 'data' | 'more' | 'settings' | 'glossary' | 'insights';
+  'home' | 'ask' | 'dashboard' | 'data' | 'more' | 'settings' | 'glossary' | 'insights' | 'plan';
 
 interface NavItem {
   segment: Segment;
@@ -47,6 +48,7 @@ export function SidebarNav({ slug }: { slug: string }) {
       {[
         ...ITEMS,
         { label: 'Insights', segment: 'insights' as const, icon: Bell },
+        { label: 'Plan ahead', segment: 'plan' as const, icon: CalendarRange },
         { label: 'What we track', segment: 'glossary' as const, icon: BookOpen },
         { ...MORE, label: 'Settings', segment: 'settings' as const },
       ].map((item) => {
@@ -74,7 +76,8 @@ export function SidebarNav({ slug }: { slug: string }) {
 /** Bottom tab bar for phones (below `md`). */
 export function BottomNav({ slug }: { slug: string }) {
   const segment = useActiveSegment(slug);
-  const active = segment === 'settings' || segment === 'glossary' ? 'more' : segment;
+  const active =
+    segment === 'settings' || segment === 'glossary' || segment === 'plan' ? 'more' : segment;
   return (
     <nav
       aria-label="Main"

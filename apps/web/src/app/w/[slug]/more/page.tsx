@@ -26,6 +26,12 @@ export default async function MorePage({ params }: { params: Promise<{ slug: str
           </Link>
         </li>
         <li>
+          <Link href={`/w/${slug}/plan`} className="flex items-center justify-between p-4">
+            <span>Plan ahead</span>
+            <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+          </Link>
+        </li>
+        <li>
           <Link href={`/w/${slug}/insights`} className="flex items-center justify-between p-4">
             <span>All insights</span>
             <ChevronRight className="size-4 text-muted-foreground" aria-hidden />

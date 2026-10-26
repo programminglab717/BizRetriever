@@ -208,3 +208,23 @@ export const emailDelivery = app.table(
     check('email_delivery_kind_check', inList(t.kind.name, emailKinds)),
   ],
 );
+
+/**
+ * A standing monthly goal for one of the pack's planning measures (M11, ADR-060): "net sales of
+ * 12,000 a month". `target` is an exact decimal string, like money everywhere else.
+ */
+export const goal = app.table(
+  'goal',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    metricKey: text('metric_key').notNull(),
+    target: text('target').notNull(),
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique('goal_metric_unique').on(t.workspaceId, t.metricKey)],
+);
