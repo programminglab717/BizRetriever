@@ -1,12 +1,13 @@
 {
   "rules": {
-    "cases": 185,
-    "accuracy": 0.919,
+    "cases": 211,
+    "accuracy": 0.929,
     "executionAccuracy": 0.912,
+    "estimateAccuracy": 1,
     "demoAccuracy": 1,
     "clarifyPrecision": 1,
     "clarifyRecall": 1,
-    "rulesRate": 0.811,
-    "p95LatencyMs": 99
+    "rulesRate": 0.834,
+    "p95LatencyMs": 75
   }
 }

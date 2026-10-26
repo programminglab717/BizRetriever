@@ -616,6 +616,40 @@ after M10; forecasting and goals are the next roadmap rows that need no accounts
 
 ---
 
+## M12 — Asking about what's ahead ($0)
+
+**Goal:** owners can ask about the future the way they ask about the past. "How much will I sell next
+month?", "Am I on track for my goal?" and "What should I reorder?" get an answer in Ask from the M11
+planning engine. The reorder list also knows each product's own season, so Christmas stock is
+suggested in October even though it isn't selling yet. The owner said "let's continue" on 2026-10-26
+after M11.
+
+**Depends on:** M4 (Ask), M11.
+
+- [ ] Ask: forward-looking questions recognised by rules before interpretation (the AI's answer
+  schema is unchanged): estimates for a planning measure and period (next week, next month, the
+  next N days or weeks, a named coming month, the rest of this month), goal progress, and what to
+  reorder. Answers in the Ask card, with "how I worked it out" and assumptions; downloadable; never
+  pinned as a dashboard tile (an estimate isn't a record)
+- [ ] A clear answer for measures that can't be estimated ("I can estimate sales, orders and items
+  sold")
+- [ ] Reorder list: each product's own season from last year's same weeks, so seasonal products
+  that aren't selling now appear before their season
+- [ ] Question eval: forward-looking questions added and scored; pack example questions
+- [ ] Tests, e2e, docs
+
+**Acceptance:**
+
+- The forward-looking questions in the eval are recognised (≥ 90%), and none of the existing
+  historical questions are taken for estimates.
+- On the demo shop with two years of trading, a reorder list made in mid-October includes the
+  Christmas products, with quantities in line with what they sold the year before.
+- Estimate answers show their range and assumptions, and every number comes from the engine or an
+  executed query, never from the AI.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |

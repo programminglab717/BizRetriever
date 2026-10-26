@@ -116,14 +116,9 @@
     }
 - id: ex-reorder
   q: What should I reorder this week?
-  expect: query
-  ref:
-    {
-      metrics: [days_of_cover],
-      dimensions: [{ field: product.name }],
-      orderBy: { by: days_of_cover, dir: asc },
-      limit: 10,
-    }
+  expect: estimate
+  estimate: { kind: reorder }
+  note: Answered with the reorder list since M12 (ADR-061).
 - id: ex-top-customers
   q: Who are my top customers?
   expect: clarify
@@ -1229,3 +1224,109 @@
   expect: query
   note: Weekdays aren't in the spec; this needs the SQL fallback.
   ref: { metrics: [net_sales], dimensions: [{ time: day }] }
+
+# --- What's ahead (M12, ADR-061): recognised by rules before interpretation -------------------
+- id: ahead-next-month
+  q: How much will I sell next month?
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-11-01', to: '2026-12-01' }
+- id: ahead-next-week
+  q: What will my sales be next week?
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-10-19', to: '2026-10-26' }
+- id: ahead-orders-4-weeks
+  q: Forecast orders for the next 4 weeks
+  expect: estimate
+  estimate: { kind: forecast, metric: order_count, from: '2026-10-13', to: '2026-11-10' }
+- id: ahead-items-30-days
+  q: How many items will I sell in the next 30 days?
+  expect: estimate
+  estimate: { kind: forecast, metric: units_sold, from: '2026-10-13', to: '2026-11-12' }
+- id: ahead-rest-of-month
+  q: What will sales be for the rest of the month?
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-10-13', to: '2026-11-01' }
+- id: ahead-this-month
+  q: How much will I sell this month?
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-10-01', to: '2026-11-01' }
+- id: ahead-december
+  q: How much will I sell in December?
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-12-01', to: '2027-01-01' }
+- id: ahead-revenue-next-month
+  q: Expected revenue next month
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-11-01', to: '2026-12-01' }
+- id: ahead-orders-expect
+  q: How many orders should I expect next week?
+  expect: estimate
+  estimate: { kind: forecast, metric: order_count, from: '2026-10-19', to: '2026-10-26' }
+- id: ahead-predict
+  q: Predict my sales
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-10-13', to: '2026-11-12' }
+- id: ahead-coming-month
+  q: Sales forecast for the coming month
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-10-13', to: '2026-11-12' }
+- id: ahead-takings-next-week
+  q: What are my takings going to be next week?
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-10-19', to: '2026-10-26' }
+- id: ahead-november
+  q: What sales can I expect in November?
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-11-01', to: '2026-12-01' }
+- id: ahead-units-next-month
+  q: How many units will I sell next month?
+  expect: estimate
+  estimate: { kind: forecast, metric: units_sold, from: '2026-11-01', to: '2026-12-01' }
+- id: ahead-orders-next-2-months
+  q: How many orders will I get in the next 2 months?
+  expect: estimate
+  estimate: { kind: forecast, metric: order_count, from: '2026-10-13', to: '2026-12-13' }
+- id: ahead-tomorrow
+  q: What will I sell tomorrow?
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-10-14', to: '2026-10-15' }
+- id: ahead-goal-on-track
+  q: Am I on track for my goal?
+  expect: estimate
+  estimate: { kind: goal, metric: null }
+- id: ahead-goal-sales-target
+  q: Will I hit my sales target this month?
+  expect: estimate
+  estimate: { kind: goal, metric: net_sales }
+- id: ahead-goal-orders
+  q: Am I going to reach my order goal?
+  expect: estimate
+  estimate: { kind: goal, metric: order_count }
+- id: ahead-goals-progress
+  q: How are my goals going?
+  expect: estimate
+  estimate: { kind: goal, metric: null }
+- id: ahead-reorder
+  q: What should I reorder?
+  expect: estimate
+  estimate: { kind: reorder }
+- id: ahead-restock
+  q: Which products should I restock?
+  expect: estimate
+  estimate: { kind: reorder }
+- id: ahead-need-to-order
+  q: What do I need to order this week?
+  expect: estimate
+  estimate: { kind: reorder }
+- id: ahead-margin
+  q: Will my margin go up next month?
+  expect: estimate
+  estimate: { kind: not_estimable, metric: gross_margin_pct }
+- id: ahead-aov
+  q: What will my average order value be next month?
+  expect: estimate
+  estimate: { kind: not_estimable, metric: average_order_value }
+- id: ahead-stock-next-week
+  q: How much stock will I have next week?
+  expect: estimate
+  estimate: { kind: not_estimable, metric: stock_on_hand }

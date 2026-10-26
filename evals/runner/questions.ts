@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import type { LLMProvider } from '@bizr/ai';
 import {
+  estimateRequestWithRules,
   interpret,
   loadAskContext,
   questionSpecSchema,
@@ -15,6 +16,7 @@ import {
   type Turn,
 } from '@bizr/core/ask';
 import { executeTenantQuery } from '@bizr/core/executor';
+import { planningMetrics } from '@bizr/core/planning';
 import { compileQuery, runFallbackSql, type CompileContext } from '@bizr/core/semantic';
 import type { MemberWorkspace } from '@bizr/core/workspaces';
 import { getPack } from '@bizr/packs';
@@ -36,7 +38,17 @@ const caseSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/),
     q: z.string().min(2),
-    expect: z.enum(['query', 'clarify', 'unanswerable']),
+    expect: z.enum(['query', 'clarify', 'unanswerable', 'estimate']),
+    /** For `estimate` (M12): what the rules should recognise. Omitted parts aren't checked. */
+    estimate: z
+      .object({
+        kind: z.enum(['forecast', 'goal', 'reorder', 'not_estimable']),
+        metric: z.string().nullable().optional(),
+        from: z.iso.date().optional(),
+        to: z.iso.date().optional(),
+      })
+      .strict()
+      .optional(),
     /** Part of the investor demo script (must be ≥ 95%). */
     demo: z.boolean().default(false),
     /** The id of the question asked just before, in the same conversation. */
@@ -45,7 +57,10 @@ const caseSchema = z
     note: z.string().optional(),
   })
   .strict()
-  .refine((c) => c.expect !== 'query' || c.ref, { message: 'query cases need a ref' });
+  .refine((c) => c.expect !== 'query' || c.ref, { message: 'query cases need a ref' })
+  .refine((c) => c.expect !== 'estimate' || c.estimate, {
+    message: 'estimate cases need an estimate',
+  });
 export type QuestionCase = z.infer<typeof caseSchema>;
 
 export function loadQuestionCases(file = QUESTIONS_FILE): QuestionCase[] {
@@ -74,7 +89,7 @@ export interface QuestionResult {
   id: string;
   q: string;
   expect: QuestionCase['expect'];
-  got: Interpretation['kind'];
+  got: Interpretation['kind'] | 'estimate';
   origin: string;
   demo: boolean;
   passed: boolean;
@@ -89,6 +104,8 @@ export interface QuestionScores {
   accuracy: number;
   /** Share of query cases with the right numbers. */
   executionAccuracy: number;
+  /** Share of forward-looking questions recognised as such, with the right measure and dates. */
+  estimateAccuracy: number;
   demoAccuracy: number;
   /** Of the clarifying questions asked, how many were expected. */
   clarifyPrecision: number;
@@ -209,9 +226,41 @@ export async function runQuestionCase(
   c: QuestionCase,
   history: Turn[],
   options: { provider: LLMProvider | null; ai: boolean },
-): Promise<{ result: QuestionResult; interpretation: Interpretation }> {
+): Promise<{ result: QuestionResult; interpretation: Interpretation | null }> {
   const started = Date.now();
   const ws = env.member.workspace;
+  // As Ask does: questions about what's ahead are recognised first (ADR-061).
+  const est = estimateRequestWithRules(c.q, env.ctx.catalog, planningMetrics(ws.packId));
+  if (est) {
+    const want = c.estimate;
+    const period = est.kind === 'forecast' ? est.period : undefined;
+    const metric = 'metric' in est ? est.metric : undefined;
+    const failure =
+      c.expect !== 'estimate'
+        ? `answered "estimate", expected "${c.expect}"`
+        : want!.kind !== est.kind
+          ? `recognised "${est.kind}", expected "${want!.kind}"`
+          : want!.metric !== undefined && want!.metric !== metric
+            ? `measure ${String(metric)}, expected ${String(want!.metric)}`
+            : (want!.from && want!.from !== period?.from) || (want!.to && want!.to !== period?.to)
+              ? `dates ${period?.from}–${period?.to}, expected ${want!.from}–${want!.to}`
+              : undefined;
+    return {
+      interpretation: null,
+      result: {
+        id: c.id,
+        q: c.q,
+        expect: c.expect,
+        got: 'estimate',
+        origin: 'rules',
+        demo: c.demo,
+        passed: !failure,
+        ...(failure ? { failure } : {}),
+        aiCalls: 0,
+        latencyMs: Date.now() - started,
+      },
+    };
+  }
   const out = await interpret({
     question: c.q,
     catalog: env.ctx.catalog,
@@ -240,6 +289,7 @@ export async function runQuestionCase(
       failure = run.ok ? 'answered with custom SQL (not compared)' : `SQL refused: ${run.reason}`;
     } else failure = `answered "${i.kind}", expected an answer`;
   } else if (i.kind !== c.expect) failure = `answered "${i.kind}", expected "${c.expect}"`;
+  // (An `estimate` case that reached here wasn't recognised as one: the line above reports it.)
 
   return {
     interpretation: i,
@@ -273,16 +323,15 @@ export async function runQuestionSuite(
       let turn = meanings.get(id);
       if (!turn) {
         const prev = all.find((x) => x.id === id)!;
-        turn = {
-          question: prev.q,
-          interpretation: (await runQuestionCase(env, prev, [], options)).interpretation,
-        };
+        const interpretation = (await runQuestionCase(env, prev, [], options)).interpretation;
+        if (!interpretation) continue;
+        turn = { question: prev.q, interpretation };
         meanings.set(id, turn);
       }
       history.unshift(turn);
     }
     const { result, interpretation } = await runQuestionCase(env, c, history, options);
-    meanings.set(c.id, { question: c.q, interpretation });
+    if (interpretation) meanings.set(c.id, { question: c.q, interpretation });
     results.push(result);
     options.onResult?.(result);
   }
@@ -301,6 +350,7 @@ export function scoreQuestions(results: QuestionResult[]): QuestionScores {
     cases: results.length,
     accuracy: rate(results),
     executionAccuracy: rate(results.filter((r) => r.expect === 'query')),
+    estimateAccuracy: rate(results.filter((r) => r.expect === 'estimate')),
     demoAccuracy: rate(results.filter((r) => r.demo)),
     clarifyPrecision: asked.length
       ? round(asked.filter((r) => r.expect === 'clarify').length / asked.length)
