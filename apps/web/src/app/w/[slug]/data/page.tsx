@@ -1,3 +1,4 @@
+import { listConnections } from '@bizr/core/connections';
 import { listRuns } from '@bizr/core/ingestion';
 import { listRecordTypes } from '@bizr/core/records';
 import { Download, FileUp, History } from 'lucide-react';
@@ -5,6 +6,7 @@ import type { Route } from 'next';
 import Link from 'next/link';
 
 import { DataChat } from '@/components/data/data-chat';
+import { LinkedSources } from '@/components/data/linked-sources';
 import { PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +38,16 @@ export default async function DataPage({
   const asked = (await searchParams).do;
   const prefill = (Array.isArray(asked) ? asked[0] : asked)?.slice(0, 400) ?? '';
   const member = await requireWorkspace(slug);
-  const [runs, types] = await Promise.all([listRuns(member, 10), listRecordTypes(member)]);
+  const [runs, types, connections] = await Promise.all([
+    listRuns(member, 10),
+    listRecordTypes(member),
+    listConnections(member),
+  ]);
+  const sources = connections.map((c) => ({
+    ...c,
+    lastCheckedAt: c.lastCheckedAt?.toISOString() ?? null,
+    lastChangedAt: c.lastChangedAt?.toISOString() ?? null,
+  }));
   const shown = types.filter((t) => t.count > 0 || t.deleted > 0);
   return (
     <div className="grid gap-6">
@@ -63,6 +74,7 @@ export default async function DataPage({
         </div>
       </div>
       {shown.length > 0 ? <DataChat slug={slug} initial={prefill} /> : null}
+      <LinkedSources slug={slug} sources={sources} />
       {shown.length > 0 ? (
         <section className="grid gap-3" aria-labelledby="records-heading">
           <h2 id="records-heading" className="font-medium">

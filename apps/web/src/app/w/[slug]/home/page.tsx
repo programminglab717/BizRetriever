@@ -1,3 +1,4 @@
+import { listConnections } from '@bizr/core/connections';
 import { listRuns } from '@bizr/core/ingestion';
 import { currentDigest, getInsights, homeKpis } from '@bizr/core/insights';
 import { localeFor } from '@bizr/core/ask';
@@ -17,14 +18,18 @@ import { requireWorkspace } from '@/lib/session';
 export default async function HomePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const member = await requireWorkspace(slug);
-  const [latest] = await listRuns(member, 1);
+  const [[latest], sources] = await Promise.all([listRuns(member, 1), listConnections(member)]);
+  const waiting = latest && ['review', 'merge_review'].includes(latest.status);
+  // A linked source updating by itself isn't news; one waiting for the owner is.
   const inProgress =
     latest &&
     ['analyzing', 'review', 'revising', 'applying', 'merge_review', 'merging'].includes(
       latest.status,
-    )
+    ) &&
+    (waiting || !latest.connectionId)
       ? latest
       : undefined;
+  const troubled = sources.filter((c) => c.status === 'needs_attention' && c.lastError);
   const hasData = member.workspace.dataVersion > 0;
   const header = (
     <PageHeader
@@ -32,13 +37,28 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       description={member.workspace.name}
     />
   );
+  const sourceCards = troubled.map((c) => (
+    <Card key={c.id} data-testid="source-problem">
+      <CardHeader>
+        <CardTitle>We couldn’t update from “{c.name}”</CardTitle>
+        <CardDescription>{c.lastError}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button asChild variant="outline">
+          <Link href={`/w/${slug}/data`}>See my data</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  ));
   const progressCard = inProgress && (
     <Card>
       <CardHeader>
         <CardTitle>
-          {inProgress.status === 'review' || inProgress.status === 'merge_review'
-            ? 'Your files are ready to check'
-            : 'We’re working on your files'}
+          {inProgress.connectionId && waiting
+            ? 'Your linked data has changes to check'
+            : waiting
+              ? 'Your files are ready to check'
+              : 'We’re working on your files'}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -93,6 +113,7 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
     <div className="grid grid-cols-1 gap-6">
       {header}
       {progressCard}
+      {sourceCards}
       {kpis.kpis.length > 0 && (
         <section aria-label="Key numbers" className="grid gap-2">
           <h2 className="text-sm font-medium text-muted-foreground">Last 30 days</h2>

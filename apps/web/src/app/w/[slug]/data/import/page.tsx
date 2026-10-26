@@ -1,3 +1,4 @@
+import { LinkSheetForm } from '@/components/import/link-sheet-form';
 import { UploadForm } from '@/components/import/upload-form';
 import { PageHeader } from '@/components/shell/page-header';
 import { requireWorkspace } from '@/lib/session';
@@ -19,6 +20,7 @@ export default async function ImportPage({ params }: { params: Promise<{ slug: s
         description="Upload the spreadsheets you already have. We’ll work out what’s in them and check anything we’re unsure about with you. Newer versions of files you brought in before are recognised, and you’ll see what changes before anything is updated."
       />
       <UploadForm slug={slug} />
+      <LinkSheetForm slug={slug} />
       <section className="grid gap-2 text-sm">
         <h2 className="font-medium">Helpful files to include</h2>
         <ul className="grid gap-1 text-muted-foreground">
