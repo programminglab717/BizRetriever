@@ -700,6 +700,9 @@ export function proposeHeuristically(
       variants: variants.filter((v) => v !== canonicalName),
     });
   }
+  // Ask about the name written the most different ways first (the likeliest to confuse); the sort
+  // is stable, so ties keep the order by how often the names appear.
+  clusters.sort((x, y) => y.variants.length - x.variants.length);
   if (clusters.length > 0) {
     out.dedupe.push({ entity: 'customer', clusters });
     const top = clusters[0]!;

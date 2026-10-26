@@ -9,7 +9,8 @@
     "enqueue:noop": "tsx src/cli/enqueue-noop.ts",
     "snapshot:gc": "tsx src/cli/snapshot-gc.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "demo:up": "tsx src/cli/demo-up.ts"
+    "demo:up": "tsx src/cli/demo-up.ts",
+    "preview:check": "tsx src/cli/preview-check.ts"
   },
   "dependencies": {
     "@bizr/core": "workspace:*",

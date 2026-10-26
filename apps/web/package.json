@@ -26,7 +26,7 @@
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.57.0",
-    "next": "16.4.0",
+    "next": "16.4.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "recharts": "^3.10.1",
@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10.2",
-    "@next/env": "16.4.0",
+    "@next/env": "16.4.3",
     "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/react": "^19.3.0",

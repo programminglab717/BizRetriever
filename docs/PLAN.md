@@ -505,6 +505,9 @@ records by chat, structural changes by chat with versioning and rollback.
   demo workspace, and switches AI to replay mode
 - [ ] *(Optional, $0)* Stage 1 free hosted preview: Vercel Hobby (or equivalent) + Neon Free + inline
   jobs + Postgres storage + daily cron. Re-verify free-tier limits and terms first (OPEN_QUESTIONS Q19).
+  Ready apart from the accounts (2026-10-26): `apps/web/vercel.json`, `pnpm preview:check`,
+  `docs/RUNBOOK_PREVIEW.md`, managed-Postgres setup (ADR-054). Account creation and terms are the
+  owner's (Q19).
 - [x] Production upgrade runbook written (`docs/RUNBOOK_PRODUCTION.md`): the Stage 2 switch (paid web
   plan, dedicated worker, R2, Sentry, custom domain). **Not executed until revenue.**
 - [ ] DEMO_SCRIPT rehearsal checklist completed twice end to end, with timings recorded (automated

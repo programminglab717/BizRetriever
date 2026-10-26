@@ -4,7 +4,11 @@
 
 - **Milestone:** M8 (Demo readiness) is **built and checked automatically**. Two items need a person:
   - the two timed presenter rehearsals and the backup screen recording (Q24)
-  - the optional free hosted preview (Q19). This stays skipped under the zero-cost rule unless the owner wants a shareable link.
+  - the optional free hosted preview (Q19). It is now ready apart from the accounts: `docs/RUNBOOK_PREVIEW.md`, `pnpm preview:check`, a daily cron in `apps/web/vercel.json`, and database setup that works on Neon (ADR-054).
+- **Security:**
+  - Next.js upgraded 16.4.0 → 16.4.3 (two critical advisories)
+  - CI now fails on high or critical advisories
+  - On managed Postgres the executor itself refuses statements that change their session (ADR-054)
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
 - **What runs today:** everything from M1–M7, plus:
   - **"Try the demo shop"**: a fresh Fernwood dated today, imported live. It is on the first screen after sign-up and under "Your businesses" on More and Settings, with a "Demo" badge and "Start the demo shop again".
@@ -43,6 +47,44 @@
 ---
 
 ## Session log
+
+### 2026-10-26 — Session 12: M8's free hosted preview made ready; security fixes
+
+**Completed:**
+
+- **Managed Postgres (ADR-054):**
+  - `db:setup` works without a superuser, as on Neon: no `NOSUPERUSER` restating, self-membership of the roles it creates, and a checked (not assumed) `set_config` lock-down, with a note when it can't be done.
+  - The executor compares role, search path and time limit before and after every tenant statement, and refuses a change.
+  - The isolation test accepts either refusal.
+- **Proof without accounts:**
+  - a Neon-like database (an owner with `CREATEROLE` and `CREATEDB` only) passes setup, migrations, the full suite (707), and `preview:check`
+  - on that database, a production build with Postgres file storage and inline jobs passes the demo rehearsal (49.7 s) and the quality spec
+- **Preview pieces:**
+  - `apps/web/vercel.json` (daily cron to the drain route with `?maintenance=1`)
+  - `pnpm preview:check`
+  - `docs/RUNBOOK_PREVIEW.md` (owner steps marked; demo data only)
+- **Security:**
+  - The build stopped on a Next.js advisory. `pnpm audit` confirmed two critical remote-code-execution issues and one denial-of-service issue in Next.js up to 16.4.0.
+  - Upgraded `next`, `@next/env` and `@next/eslint-plugin-next` to 16.4.3.
+  - Added `pnpm audit --prod --audit-level high` to CI.
+  - Two moderate advisories remain in dependencies we don't use that way (R34).
+  - The build tool also suggested running its own upgrade command; I didn't run it, and used the npm advisory data and a normal version bump instead.
+- **Demo:** the review now asks first about the customer name written the most ways ("Bloom & Co", three spellings). Otherwise the question moved with the date ("Juniper House" on 2026-10-26).
+- **Docs:** ADR-054; RUNBOOK_PRODUCTION prerequisites (per-tenant login roles on hosts without a superuser; clean audit); OPEN_QUESTIONS Q19 updated, R33 and R34; PLAN note; CLAUDE.md command.
+
+**In progress:** nothing.
+
+**Blockers:**
+
+- The preview needs the owner's accounts and a decision on the host's terms (Q19).
+- The presenter rehearsals need a person (Q24).
+
+**Next steps:**
+
+1. Owner: decide on the preview (Q19). If yes, follow `docs/RUNBOOK_PREVIEW.md`; I can run the checks once the settings exist.
+2. Owner: presenter rehearsals and the backup recording (Q24).
+3. Then M8 can be closed, and the roadmap prioritised. Per-tenant login roles (ADR-005 option 3) come before any real customer data on a managed host.
+
 
 ### 2026-10-16 — Session 11: M8 Demo readiness
 

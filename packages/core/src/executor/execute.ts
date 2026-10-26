@@ -83,6 +83,7 @@ export async function executeTenantQuery(request: ExecuteRequest): Promise<Execu
     await client.query(
       `SET LOCAL ROLE ${ident(mode === 'read' ? names.readerRole : names.writerRole)}`,
     );
+    const before = await sessionState(client);
 
     if (mode === 'read') {
       await client.query(`DECLARE ${CURSOR} NO SCROLL CURSOR FOR ${request.sql}`, request.params);
@@ -107,6 +108,17 @@ export async function executeTenantQuery(request: ExecuteRequest): Promise<Execu
         truncated: false,
         durationMs: 0,
       };
+    }
+    // The statement must leave the session as it found it. Where the database can't take set_config
+    // away from tenant roles (managed Postgres without a superuser, ADR-054), this is what notices a
+    // switch to another role, schema or time limit. Nothing it read is returned.
+    const after = await sessionState(client);
+    if (after !== before) {
+      getLogger('executor').error(
+        { workspaceId: request.tenant.workspaceId, origin: request.origin, before, after },
+        'tenant statement changed its session settings',
+      );
+      throw new SessionTamperError();
     }
     await client.query('COMMIT');
   } catch (err) {
@@ -163,6 +175,22 @@ function sqlState(err: unknown): string | undefined {
 export function isConnectionError(err: unknown): boolean {
   const code = sqlState(err);
   return code === undefined || code.startsWith('08');
+}
+
+/** A statement changed the role, search path or time limit it runs under. */
+class SessionTamperError extends Error {
+  readonly code = '42501';
+  constructor() {
+    super('permission denied: the statement changed its session settings');
+  }
+}
+
+async function sessionState(client: { query: (sql: string) => Promise<{ rows: unknown[] }> }) {
+  const r = await client.query(
+    `SELECT current_user || '|' || current_setting('search_path') || '|' ||
+            current_setting('statement_timeout') AS s`,
+  );
+  return (r.rows[0] as { s: string }).s;
 }
 
 function toExecutionError(err: unknown): QueryExecutionError {

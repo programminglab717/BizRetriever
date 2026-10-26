@@ -155,6 +155,9 @@ describe.skipIf(!hasDb)('tenant isolation (integration)', () => {
   });
 
   it('cannot switch to another tenant role or undo its settings via set_config', async () => {
+    // Where set_config is taken away from tenant roles (a real superuser ran db:setup) the call is
+    // refused; on managed Postgres the executor notices the changed session and returns nothing.
+    const refused = /permission denied for function set_config|changed its session settings/;
     await expectDenied(
       executeTenantQuery({
         tenant: tenantA,
@@ -162,7 +165,7 @@ describe.skipIf(!hasDb)('tenant isolation (integration)', () => {
         origin: 'system',
         path: 'system',
       }),
-      /permission denied for function set_config/,
+      refused,
     );
     await expectDenied(
       executeTenantQuery({
@@ -171,7 +174,17 @@ describe.skipIf(!hasDb)('tenant isolation (integration)', () => {
         origin: 'system',
         path: 'system',
       }),
-      /permission denied for function set_config/,
+      refused,
+    );
+    await expectDenied(
+      executeTenantQuery({
+        tenant: tenantA,
+        mode: 'write',
+        sql: `SELECT set_config('search_path', '${tenantNames(b).schema}', true)`,
+        origin: 'system',
+        path: 'system',
+      }),
+      refused,
     );
   });
 

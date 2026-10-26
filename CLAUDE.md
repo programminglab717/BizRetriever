@@ -84,6 +84,7 @@ docs/             all planning documentation
 | Local demo machine (M8) | `pnpm demo:up` (reset only: `--no-start`; rebuild first: `--build`) |
 | Speed check on a workspace (M8) | `pnpm perf <slug>` (production build running; signs in as `DEMO_EMAIL`) |
 | Internal admin page (M8) | `/admin`, for `ADMIN_EMAILS` only |
+| Check a free hosted preview's setup (M8) | `pnpm preview:check` (with the preview's env loaded; `docs/RUNBOOK_PREVIEW.md`) |
 
 ## Coding conventions
 

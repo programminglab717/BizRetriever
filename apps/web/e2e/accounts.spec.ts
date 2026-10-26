@@ -118,7 +118,8 @@ test.describe('accounts and workspaces', () => {
     await expect(deleteButton).toBeDisabled();
     await page.getByLabel(/^Type “/).fill(`${business} Ltd`);
     await deleteButton.click();
-    await expect(page).toHaveURL(/\/onboarding$/);
+    // Deleting drops the business's data and roles, which takes a few seconds on a busy database.
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 15_000 });
   });
 
   test('wrong passwords and taken emails get plain-language errors', async ({ page }) => {

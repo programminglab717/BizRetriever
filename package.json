@@ -29,11 +29,12 @@
     "demo:generate": "pnpm --filter @bizr/demo-data run generate",
     "eval": "pnpm --filter @bizr/evals run eval",
     "demo:up": "pnpm --filter @bizr/worker run demo:up",
-    "perf": "pnpm --filter @bizr/web run perf"
+    "perf": "pnpm --filter @bizr/web run perf",
+    "preview:check": "pnpm --filter @bizr/worker run preview:check"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@next/eslint-plugin-next": "16.4.0",
+    "@next/eslint-plugin-next": "16.4.3",
     "@types/node": "^24.19.2",
     "@vitest/coverage-v8": "^5.0.4",
     "eslint": "^10.12.0",

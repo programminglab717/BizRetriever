@@ -1046,3 +1046,29 @@ Template for new entries:
 - **Consequences:**
   - The weekly cost and quality check needs no database access.
   - Once the AI key is in use, the "failed checks" rate is the early warning for prompt problems.
+
+## ADR-054 — Running on managed Postgres without a superuser
+
+- **Status:** Accepted (2026-10-26)
+- **Context:**
+  - Managed Postgres hosts (Neon for Stage 1, and most paid hosts for Stage 2) give a console owner role with `CREATEROLE`, not a true superuser.
+  - `db:setup` assumed a superuser in three places:
+    - restating `NOSUPERUSER` on roles
+    - creating the job-queue schema for another role, and setting that role's default privileges
+    - taking `set_config` away from PUBLIC
+  - On a non-superuser host the last one is silently ignored: Postgres only warns about a non-owner's `REVOKE`.
+  - `set_config` is defense in depth. It stops a tenant statement from switching to another tenant's role, because the broker login is a member of every tenant role.
+- **Decision:**
+  - **`db:setup` has a managed mode,** picked automatically when it isn't run by a superuser:
+    - it leaves `NOSUPERUSER` out
+    - it grants itself membership of the roles it creates (`WITH INHERIT TRUE, SET TRUE`)
+    - it checks whether `set_config` is still open to PUBLIC, rather than trusting the `REVOKE`. Open is an error with a superuser, and a printed note without one.
+  - **The executor checks the session after every tenant statement.** It records role, search path and statement timeout before the statement and compares them after. A change rolls everything back, returns nothing, logs an error and fails as "permission denied".
+    - Within one statement, the tables' permissions are checked before anything runs, so a switch can only matter to later statements. There are none: one statement per transaction.
+  - **The remaining gap on managed hosts:** one statement that switches role and then runs dynamic SQL (`query_to_xml` and similar). The SQL validator's function allowlist blocks it, as it always has.
+  - **Before real customers' data sits on a host without a superuser,** build per-tenant login roles (ADR-005 option 3, on the roadmap). Then the broker isn't a member of other tenants' roles at all. It is now a prerequisite in `docs/RUNBOOK_PRODUCTION.md`.
+  - **Stage 1 preview is ready** apart from the accounts: `apps/web/vercel.json` (daily cron), `pnpm preview:check`, and `docs/RUNBOOK_PREVIEW.md`. It is for demo data only.
+- **Consequences:**
+  - The same setup works on local Postgres, CI and Neon.
+  - A Neon-like database was simulated locally: an owner role with `CREATEROLE` and `CREATEDB` only, owning the database. It passes the full suite (707 tests), `preview:check`, and the demo rehearsal on a production build with Postgres file storage and inline jobs.
+  - The isolation test accepts either refusal: the database's or the executor's.

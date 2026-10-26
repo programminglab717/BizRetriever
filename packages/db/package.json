@@ -19,7 +19,7 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
-    "@next/env": "16.4.0",
+    "@next/env": "16.4.3",
     "@types/pg": "^8.15.6",
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15"
