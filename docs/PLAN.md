@@ -592,17 +592,17 @@ after M10; forecasting and goals are the next roadmap rows that need no accounts
 
 **Depends on:** M3 (metrics), M7 (insights), M9 (downloads, emails).
 
-- [ ] Forecast engine (pure, test-first): daily history → daily estimates from the business's own
+- [x] Forecast engine (pure, test-first): daily history → daily estimates from the business's own
   year (month-of-year and weekday patterns, current level from recent weeks), with a range from how
   wrong the same method was on past weeks; plain fallback with less than a year of history. Every
   estimate says what it assumed.
-- [ ] Demo data: an option for two years of history, and a back-test on it (forecast November from 1
+- [x] Demo data: an option for two years of history, and a back-test on it (forecast November from 1
   November using only earlier data, compare with what was sold)
-- [ ] Goals: a monthly goal per business for a pack measure (net sales, orders, gross profit); Home
+- [x] Goals: a monthly goal per business for a pack measure (net sales, orders, gross profit); Home
   shows progress and where the month is heading; the weekly email says it too
-- [ ] Reorder list: every product that needs ordering, with a quantity that covers the supplier's
+- [x] Reorder list: every product that needs ordering, with a quantity that covers the supplier's
   lead time plus 30 days including the usual season, grouped by supplier, downloadable
-- [ ] Pack settings for which measures can have goals and estimates; copy, e2e, docs
+- [x] Pack settings for which measures can have goals and estimates; copy, e2e, docs
 
 **Acceptance:**
 
@@ -622,7 +622,7 @@ after M10; forecasting and goals are the next roadmap rows that need no accounts
 |---|---|
 | Connectors | Square/Lightspeed/Clover POS, WooCommerce, Amazon Seller Central, Etsy API, QuickBooks/Xero |
 | Channels | WhatsApp questions and alerts (email digests and alerts: done in M9) |
-| Product | Multilingual UI and questions; multi-currency; forecasting (seasonality-aware); goals/targets; scheduled reports; PDF export of answers (CSV/Excel: done in M9) |
+| Product | Multilingual UI and questions; multi-currency; estimates in Ask and per-product seasons (season-aware estimates, goals and the reorder list: done in M11); scheduled reports; PDF export of answers (CSV/Excel: done in M9) |
 | Collaboration | Granular roles and permissions; comments on insights |
 | Platform | Public API and MCP server exposing the semantic layer to other apps and agents; webhooks |
 | Packs | Wholesale/distribution, restaurants/food service, services/agencies, health & beauty salons |

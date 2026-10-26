@@ -1201,3 +1201,36 @@ Template for new entries:
   - **Built and tested against recorded answers only.** The queries follow Shopify's documented API, but they haven't been run against a real store, and shopify.dev isn't reachable from the build environment. A first live check on a development store is the owner's step (Q26).
   - Orders older than 60 days need Shopify's `read_all_orders` access, and customer names and emails need protected-customer-data access. Both are requested in the app's settings (`docs/RUNBOOK_SHOPIFY.md`).
   - Bulk exports, for very large stores, are on the roadmap.
+
+## ADR-060 — Planning ahead: estimates, goals and the reorder list
+
+- **Status:** Accepted (2026-10-26). M11.
+- **Context:**
+  - Owners ask "how will next month go?", "will I hit my target?" and "what should I order?".
+  - The MVP spec left forecasting beyond run-rate maths for later; the roadmap lists season-aware forecasting and goals.
+  - Rule 5 (never invent numbers) and rule 6 (show assumptions) still apply.
+- **Decision:**
+  - **Estimates are code, not AI.** `planning/forecast.ts` is pure and deterministic. Its input is a daily series from an executed query of a pack measure (`runQuery`, the same definitions as every answer). Today is left out: its sales aren't all in.
+  - **Methods**, by how much history there is:
+    - **13 months or more:** last year's same weeks, weekday-aligned and steadied over three weeks, scaled by the last 4 weeks against the same weeks a year earlier.
+    - **12 months:** a month-of-year pattern from the year, the weekday pattern from the last 12 weeks, and today's level from the last 4 weeks.
+    - **Less:** the last 4 weeks and their weekday pattern carried on, saying the season isn't known yet.
+    - **Under two weeks:** no estimate.
+  - **Range and wording:**
+    - The range is the mean error of the same method on the last three 4-week periods, between 5% and 60%.
+    - Estimates show rounded to three figures with "about", with their range and one sentence per assumption (season, growth, busiest weekday, no season yet).
+    - Recorded numbers ("so far", the goal itself) stay exact.
+  - **Back-test:** on the demo shop with two years of trading, the November estimate made on 1 November is within 15% of what was sold, and closer than the run-rate. March is within 15% too. `planning/backtest.test.ts` checks both on every run.
+  - **Goals** (`app.goal`):
+    - one standing monthly goal per pack planning measure (`pack.yaml` `planning.goals`)
+    - each goal shows: this month so far (exact, from the query), where the month is heading (yesterday's total plus the estimate for the remaining days), a status (ahead or on track within 5% and 3%, behind, reached), and what each remaining day would need
+    - shown on Home, on Plan ahead, and in the weekly email
+  - **Reorder list:**
+    - every product whose stock won't last the supplier's lead time plus 30 days (14 days when none is recorded), from the same measures as the "running out" alert
+    - the quantity covers that window, scaled by the business's expected items sold over it against its last 4 weeks (between 0.5 and 3), the same factor for every product
+    - grouped by supplier, downloadable as CSV or Excel
+  - **Packs:** `pack.yaml` `planning: { goals, forecasts }` names the measures. The loader refuses snapshot or percent measures, which don't add up over days.
+- **Consequences:**
+  - $0, no AI calls.
+  - Home runs about 0.2 s more per business with goals (two goals measured on the demo shop).
+  - Not built yet: per-product seasons (a Christmas-only product gets the business-wide factor) and estimates in Ask ("how much will I sell next month?"). Both are on the roadmap.

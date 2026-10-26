@@ -39,7 +39,12 @@ industries_label: "Shop, online store or both"   # shown in the industry picker
 locale_defaults: { currency: USD, date_order: MDY }
 requires_core: ">=0.1.0"      # minimum engine version
 primary_time_entity: sale      # default time axis for dashboards
+planning:                      # M11 (ADR-060), optional
+  goals: [net_sales, order_count, gross_profit]     # measures that can have a monthly goal
+  forecasts: [net_sales, order_count, units_sold]   # measures estimated on Plan ahead
 ```
+
+Planning measures must add up over days: the loader refuses snapshot and percent measures.
 
 ### 1.3 `entities.yaml`
 

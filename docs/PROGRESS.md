@@ -2,26 +2,53 @@
 
 ## Current Status
 
-- **Milestone:** M10 (Connected sources, $0) is **built and checked automatically**. It needs the owner's confirmation, and the Shopify live check needs a free Shopify account (Q26). M9 was confirmed on 2026-10-26.
+- **Milestone:** M11 (Planning ahead, $0) is **built and checked automatically**. It needs the owner's confirmation. M10 was confirmed on 2026-10-26 ("keep going"); its live checks are still the owner's (Q26, a Google Sheet link).
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M10:**
-  - **Link a Google Sheet** (import page): paste a share link. The first import is checked like an upload. After that, the sheet is checked daily and on "Update now", and changes come in by themselves when nothing needs a person (ADR-058). Unchanged sheets do nothing.
-  - **Connect a Shopify store** (import page, only when the app's keys are set): Shopify's sign-in, read-only access, tokens encrypted at rest and refreshed. Products, customers and orders come in as one workbook through the same import. Removing the app disconnects the store; privacy requests are listed on `/admin` (ADR-059, `docs/RUNBOOK_SHOPIFY.md`).
-  - **My data → "Kept up to date from":** each source's state, Update now, Pause, "bring in changes by itself", and Stop updating (records stay). Home says when a source needs a look.
-  - `/admin` also shows linked sources, failed emails and Shopify privacy requests.
-- **Tests:** 757 unit/integration pass; 35 e2e pass (desktop + mobile; 3 desktop-only skipped on mobile). The e2e upload step now chooses files again if the page wasn't interactive yet (a race seen once under load).
-- **Not reachable from here:** Google and shopify.dev are blocked by this environment's network. Every connector test plays recorded answers back; live checks are listed for the owner.
-- **Performance and evals:** unchanged from M8 (see the M8 entry).
+- **New in M11** (ADR-060):
+  - **Plan ahead** (sidebar; More on phones): net sales for the next 4 weeks, week by week, with a range and one sentence per assumption ("November is usually 43% busier…"). The estimates are worked out by code from the business's own history; they are not AI.
+  - **Monthly goals** for net sales, orders or gross profit: this month so far (exact), where the month is heading (estimate and range), and what each remaining day needs. Shown on Home, on Plan ahead and in the weekly email.
+  - **What to reorder:** every product that won't last its supplier's lead time plus 30 days, with a quantity that allows for the coming season. Grouped by supplier; CSV and Excel.
+  - **Back-test** on a two-year demo shop: November within 15% of what was sold, and closer than the run-rate. It runs in CI.
+- **Tests:** 774 unit/integration pass; 36 e2e pass (desktop + mobile; 4 desktop-only skipped on mobile). Plan ahead and the reorder list pass the phone and accessibility check.
+- **Performance:** goals add about 0.2 s to Home (two goals, demo shop). Everything else is unchanged from M8.
 - **Waiting on the owner:**
-  - confirm M10
-  - Shopify: a free Partner account, a Dev Dashboard app and a development store for the live check (Q26)
-  - a live check of a link-shared Google Sheet (no account needed: paste a link on the running app)
+  - confirm M11
+  - M10 live checks: a link-shared Google Sheet; Shopify's free app and development store (Q26)
   - still open: presenter rehearsals (Q24), the Anthropic API key (Q20), Google OAuth, the email account and domain (Q25)
+  - a product choice: goals that change by month (Q27)
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-26 — Session 15: M11 built (estimates, goals, reorder list)
+
+**Completed:**
+
+- **Estimate engine** (`@bizr/core/planning`, pure, written test-first):
+  - methods: last year's weeks scaled by recent growth (13+ months), month and weekday patterns (12 months), or the recent level (less)
+  - range from the method's own error on past 4-week periods
+  - plain-language notes
+- **Demo data:** a `historyDays` option. The back-test on two years: November within 15%, March within 15%, closer than the run-rate.
+- **Pack:** `pack.yaml` `planning` (goals, forecasts), validated by the loader; retail sets net sales, orders, gross profit and items sold.
+- **Goals:** migration 0017 (`goal`); set, change and remove goals; progress with exact "so far" and an estimated month end; Home card; a line in the weekly email.
+- **Reorder list:** the same measures as the stock-out alert, a season-adjusted quantity, grouped by supplier, CSV and Excel.
+- **UI:** Plan ahead (sidebar and More); `/plan/reorder`.
+- **Tests:**
+  - unit: engine, back-test, wording
+  - integration: history matches the measure exactly; estimates; goals (exact so-far, bad input, change, remove); reorder sums
+  - e2e: `plan.spec.ts`; quality.spec now includes both pages
+  - full suite: 774 unit/integration, 36 e2e
+
+**In progress:** nothing.
+
+**Blockers:** none.
+
+**Next steps:**
+
+1. Owner: confirm M11; decide Q27 (goals by month) if wanted; the M10 live checks.
+2. After confirmation: the next roadmap rows the owner prefers. The default is estimates in Ask ("how much will I sell next month?") and per-product seasons, or more connectors once Q26 shows the pattern working live.
 
 ### 2026-10-26 — Session 14: M10 built (Google Sheets by link, Shopify)
 
