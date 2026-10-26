@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
 
-import { getAppDb, getPool, queryRun, type QueryOrigin, type QueryPath } from '@bizr/db';
+import { getAppDb, queryRun, type QueryOrigin, type QueryPath } from '@bizr/db';
 import { currentCorrelationId, getLogger } from '@bizr/platform';
 
 import { ident } from '../sql/ident';
+import { connectTenant } from '../tenancy/login';
 import { tenantNames } from '../tenancy/names';
 
 export interface TenantRef {
@@ -68,7 +69,7 @@ export async function executeTenantQuery(request: ExecuteRequest): Promise<Execu
   const timeoutMs = Math.max(100, Math.min(request.timeoutMs ?? DEFAULT_TIMEOUT_MS, 60_000));
   const started = performance.now();
 
-  const client = await getPool('tenant').connect();
+  const client = await connectTenant(request.tenant.tenantSchema);
   let result: ExecuteResult | undefined;
   let failure: unknown;
   try {

@@ -8,6 +8,8 @@ export interface TenantNames {
   snapshotSchema: string;
   readerRole: string;
   writerRole: string;
+  /** The business's own database login (ADR-055): may become reader or writer, nothing else. */
+  loginRole: string;
 }
 
 const TENANT_SCHEMA = /^t_[a-z0-9]{10}$/;
@@ -28,6 +30,7 @@ export function tenantNames(schema: string): TenantNames {
     snapshotSchema: `${schema}_snap`,
     readerRole: `${schema}_reader`,
     writerRole: `${schema}_writer`,
+    loginRole: `${schema}_login`,
   };
   for (const n of Object.values(names)) {
     if (!isSafeIdentifier(n)) throw new Error(`Invalid tenant object name: ${n}`);

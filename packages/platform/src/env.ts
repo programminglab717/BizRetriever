@@ -32,6 +32,9 @@ export const envSchema = z
     JOB_RUNNER: z.enum(['worker', 'inline']).default('worker'),
     JOB_STEP_BUDGET_MS: z.coerce.number().int().min(1_000).default(45_000),
     JOB_DRAIN_SECRET: z.string().min(32).optional(),
+    // Per-business database logins (ADR-055): each business's queries run under its own login, whose
+    // password is derived from this secret. Unset: the shared broker login (local dev).
+    TENANT_LOGIN_SECRET: z.string().min(32).optional(),
 
     // Auth (ADR-012). The secret signs sessions; required outside development and tests.
     BETTER_AUTH_SECRET: z.string().min(32).optional(),

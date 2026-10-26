@@ -7,9 +7,9 @@ before revenue.
 **Status:** everything that needs no account is ready and tested (ADR-054). The steps marked **Owner**
 need an account, or terms to accept, and are the owner's to do or approve.
 
-**Use it for demo data only.** On a managed Postgres host the database can't fully lock down one
-built-in function. Isolation then rests on the SQL checks and the executor's session check (ADR-054),
-which is fine for the demo shop but not for real customers' data.
+**Isolation:** a managed Postgres host can't lock down one built-in function (ADR-054). With
+`TENANT_LOGIN_SECRET` set, each business has its own database login, so that no longer matters
+(ADR-055). Without it, keep the preview to demo data.
 
 ---
 
@@ -64,6 +64,8 @@ which is fine for the demo shop but not for real customers' data.
    - `BETTER_AUTH_SECRET` (`openssl rand -hex 32`)
    - `JOB_RUNNER=inline`, `JOB_DRAIN_SECRET` (`openssl rand -hex 32`), and `CRON_SECRET` set to the
      **same value** (the cron sends it as its `Bearer` token)
+   - `TENANT_LOGIN_SECRET` (`openssl rand -hex 32`): each business gets its own database login
+     (ADR-055). With it, the preview is as well isolated as production would be.
    - `STORAGE_DRIVER=postgres` (serverless disks don't keep files)
    - `AI_REPLAY_MODE=replay`, or a key plus `off` and the caps if AI is on
    - `ADMIN_EMAILS`, and `RESEND_API_KEY` / `EMAIL_FROM` if invite and reset emails should be sent

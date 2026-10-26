@@ -26,3 +26,8 @@ export function loginRoles(env: Env) {
     tenant: credentialsFrom(env.DATABASE_URL_TENANT, 'DATABASE_URL_TENANT'),
   };
 }
+
+/** The group every per-business login belongs to (ADR-055): `bizr_tenant` → `bizr_tenant_logins`. */
+export function loginGroupName(brokerRole: string): string {
+  return `${brokerRole}_logins`;
+}

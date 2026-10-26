@@ -8,7 +8,7 @@
 import { getEnv } from '@bizr/platform';
 import pg from 'pg';
 
-import { loginRoles } from './roles';
+import { loginGroupName, loginRoles } from './roles';
 
 async function main() {
   const env = getEnv();
@@ -64,6 +64,16 @@ async function main() {
     for (const r of [roles.owner, roles.app, roles.admin, roles.tenant]) {
       await client.query(`GRANT CONNECT ON DATABASE ${db} TO ${id(r.name)}`);
     }
+    // Per-business logins (ADR-055) get CONNECT (and set_config, below) through this group. The
+    // admin role makes the logins and adds them to it, so it holds the group with ADMIN only.
+    const logins = loginGroupName(roles.tenant.name);
+    const group = await client.query('select 1 from pg_roles where rolname = $1', [logins]);
+    if (!group.rowCount) await client.query(`CREATE ROLE ${id(logins)} NOLOGIN`);
+    await client.query(`GRANT CONNECT ON DATABASE ${db} TO ${id(logins)}`);
+    await client.query(
+      `GRANT ${id(logins)} TO ${id(roles.admin.name)} WITH ADMIN TRUE, INHERIT FALSE, SET FALSE`,
+    );
+
     // Owner creates the `app` schema (migrations); admin creates tenant schemas.
     await client.query(
       `GRANT CREATE ON DATABASE ${db} TO ${id(roles.owner.name)}, ${id(roles.admin.name)}`,
@@ -81,7 +91,7 @@ async function main() {
     );
     await client.query(
       `GRANT EXECUTE ON FUNCTION pg_catalog.set_config(text, text, boolean)
-         TO ${[roles.owner, roles.app, roles.admin, roles.tenant].map((r) => id(r.name)).join(', ')}`,
+         TO ${[roles.owner.name, roles.app.name, roles.admin.name, roles.tenant.name, logins].map(id).join(', ')}`,
     );
     const [open] = (
       await client.query<{ open: boolean }>(

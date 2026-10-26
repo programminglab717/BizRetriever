@@ -1,6 +1,5 @@
-import { getPool } from '@bizr/db';
-
 import { ident } from '../sql/ident';
+import { connectTenant } from '../tenancy/login';
 import { tenantNames } from '../tenancy/names';
 import { isConnectionError, recordRun, type TenantRef } from './execute';
 
@@ -26,7 +25,7 @@ export async function withTenantWriter<T>(
   const names = tenantNames(tenant.tenantSchema);
   const timeoutMs = Math.max(1_000, Math.min(options.timeoutMs ?? 120_000, 600_000));
   const started = performance.now();
-  const client = await getPool('tenant').connect();
+  const client = await connectTenant(tenant.tenantSchema);
   let rowCount = 0;
   let failure: unknown;
   let value: T | undefined;

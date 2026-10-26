@@ -3,6 +3,7 @@ import { getEnv, getLogger } from '@bizr/platform';
 import type pg from 'pg';
 
 import { ident } from '../sql/ident';
+import { dropTenantLogin, ensureTenantLogin, tenantLoginsEnabled } from './login';
 import { tenantNames, type TenantNames } from './names';
 
 function roleName(url: string): string {
@@ -16,8 +17,9 @@ function roleName(url: string): string {
  * - `t_x_reader`: USAGE on t_x and SELECT on its tables. Nothing else.
  * - `t_x_writer`: reader + INSERT/UPDATE (no DELETE: records are soft-deleted; no DDL).
  * - `t_x_snap`: rollback snapshots; no tenant role can see it.
- * - The broker login role (`bizr_tenant`, NOINHERIT) is granted both roles so the safe executor can
- *   `SET LOCAL ROLE` to exactly one tenant per transaction.
+ * - With per-business logins (ADR-055), `t_x_login` may become those two roles and nothing else.
+ *   Without them, the broker login role (`bizr_tenant`, NOINHERIT) is granted both roles. Either way
+ *   the safe executor `SET LOCAL ROLE`s to exactly one tenant per transaction.
  */
 export async function provisionTenant(schema: string): Promise<TenantNames> {
   const names = tenantNames(schema);
@@ -56,7 +58,8 @@ export async function provisionTenant(schema: string): Promise<TenantNames> {
       `ALTER DEFAULT PRIVILEGES FOR ROLE ${admin} IN SCHEMA ${s} REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC`,
     );
 
-    await client.query(`GRANT ${reader}, ${writer} TO ${broker}`);
+    if (tenantLoginsEnabled()) await ensureTenantLogin(schema, client);
+    else await client.query(`GRANT ${reader}, ${writer} TO ${broker}`);
     await client.query('COMMIT');
     getLogger('tenancy').info({ schema }, 'tenant provisioned');
     return names;
@@ -77,6 +80,7 @@ export async function deprovisionTenant(schema: string): Promise<void> {
     // Dropping the schemas also removes their per-schema default privileges.
     await client.query(`DROP SCHEMA IF EXISTS ${ident(names.schema)} CASCADE`);
     await client.query(`DROP SCHEMA IF EXISTS ${ident(names.snapshotSchema)} CASCADE`);
+    await dropTenantLogin(client, schema);
     await client.query(`DROP ROLE IF EXISTS ${ident(names.writerRole)}`);
     await client.query(`DROP ROLE IF EXISTS ${ident(names.readerRole)}`);
     await client.query('COMMIT');

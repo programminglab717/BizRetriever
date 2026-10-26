@@ -1072,3 +1072,23 @@ Template for new entries:
   - The same setup works on local Postgres, CI and Neon.
   - A Neon-like database was simulated locally: an owner role with `CREATEROLE` and `CREATEDB` only, owning the database. It passes the full suite (707 tests), `preview:check`, and the demo rehearsal on a production build with Postgres file storage and inline jobs.
   - The isolation test accepts either refusal: the database's or the executor's.
+
+## ADR-055 — Per-business database logins
+
+- **Status:** Accepted (2026-10-26). Builds ADR-005 option 3 and closes the gap ADR-054 left on managed Postgres.
+- **Decision:**
+  - **One login per business.** With `TENANT_LOGIN_SECRET` set, every business has its own database login, `t_x_login`. Its grants:
+    - its reader and writer roles, `WITH INHERIT FALSE, SET TRUE`: it may *become* them but holds none of their rights itself
+    - a group role, `<broker>_logins`: CONNECT, and `set_config` where it can be locked
+  - **The executor and the writer connect as that login.** So no statement can switch to another business's role, even where `set_config` is open: Postgres refuses with "permission denied to set role". Without the secret, the shared broker login is used, as before.
+  - **No stored passwords.** Each password is an HMAC of the login's name under the secret.
+  - **Creation and repair:**
+    - provisioning creates the login; deleting a business drops it
+    - `connectTenant` makes or refreshes a missing or stale login on first use
+    - `pnpm --filter @bizr/worker run tenant-logins` switches existing businesses over and takes the broker out of their roles. Run it again after changing the secret, which is how passwords rotate.
+  - **Setup:** `db:setup` creates the group and gives the admin role ADMIN on it, so the admin can add new logins.
+  - **Connections:** one small pool per business (at most 3 connections, closed after 10 s idle), with the 32 most recently used kept. Each login also has a database-side limit of 10 connections. Behind a pooler (Neon) this is cheap.
+- **Consequences:**
+  - **Tested on both kinds of database.** The isolation suite connects as one business's login and fails to reach another business, or even its own data without becoming its reader. It also checks a missing login is remade. On a Neon-like database (no superuser), the full suite (709) passes with logins on, and `preview:check` reports the stronger state.
+  - CI runs with logins on, as production will. A run with them off keeps the fallback covered.
+  - `TENANT_LOGIN_SECRET` is now required before real customers' data, wherever we host.

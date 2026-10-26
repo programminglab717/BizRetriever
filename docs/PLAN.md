@@ -523,6 +523,32 @@ records by chat, structural changes by chat with versioning and rollback.
 
 ---
 
+## M9 — Ready for a first real customer ($0)
+
+**Goal:** what a first paying shop needs beyond the demo, still at no cost. The owner asked on
+2026-10-26 to keep building while the M8 owner items (preview accounts, presenter rehearsals) wait.
+
+**Depends on:** M8.
+
+- [x] Per-business database logins (ADR-055): own login per business, derived passwords, backfill
+  and rotation command, isolation tests in both modes, CI with logins on
+- [ ] Download any answer or dashboard tile as a spreadsheet (CSV / Excel), and "Download all my
+  data" (every record type as a sheet)
+- [ ] Email the weekly summary and new urgent alerts (Resend free tier; off without a key), with
+  per-person settings and one-click unsubscribe
+
+**Acceptance:**
+
+- With `TENANT_LOGIN_SECRET` set, no statement run for one business can reach another business's
+  data, on a database without a superuser too (tested).
+- Every answer, tile and record type can be downloaded, with the numbers exactly as shown in the app
+  and plain-language column names.
+- Emails contain only what the app already shows that person, link back to the app, and stop with one
+  click. Nothing is sent without an email key.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |

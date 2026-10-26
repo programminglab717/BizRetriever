@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { executeTenantQuery, QueryExecutionError, type TenantRef } from '../executor/execute';
 import { ident } from '../sql/ident';
+import { tenantConnectionString, tenantLoginsEnabled } from './login';
 import { newTenantSchemaName, tenantNames } from './names';
 import { deprovisionTenant, provisionTenant } from './provision';
 
@@ -86,6 +87,51 @@ describe.skipIf(!hasDb)('tenant isolation (integration)', () => {
     await closePools();
   });
 
+  it.skipIf(!tenantLoginsEnabled())(
+    'each business has its own login, which can become only its own roles',
+    async () => {
+      const login = await connectAs(tenantConnectionString(a));
+      const fails = async (sql: string) => {
+        await login.query('BEGIN');
+        try {
+          await expect(login.query(sql)).rejects.toThrow(/permission denied/);
+        } finally {
+          await login.query('ROLLBACK');
+        }
+      };
+      // Not another business's roles, however it asks…
+      await fails(`SET LOCAL ROLE ${ident(tenantNames(b).readerRole)}`);
+      await fails(`SELECT set_config('role', '${tenantNames(b).writerRole}', true)`);
+      // …and not even its own data without becoming its reader first.
+      await fails(`SELECT label FROM ${ident(a)}.items`);
+      await login.query('BEGIN');
+      await login.query(`SET LOCAL ROLE ${ident(tenantNames(a).readerRole)}`);
+      const own = await login.query(`SELECT count(*)::int AS n FROM ${ident(a)}.items`);
+      await login.query('ROLLBACK');
+      expect(own.rows[0]).toEqual({ n: 2 });
+
+      // The shared broker isn't a member of businesses that have their own login.
+      const broker = decodeURIComponent(new URL(getEnv().DATABASE_URL_TENANT).username);
+      const member = await getPool('admin').query(
+        `SELECT 1 FROM pg_auth_members m JOIN pg_roles r ON r.oid = m.roleid
+         JOIN pg_roles u ON u.oid = m.member WHERE u.rolname = $1 AND r.rolname = $2`,
+        [broker, tenantNames(a).readerRole],
+      );
+      expect(member.rowCount).toBe(0);
+    },
+  );
+
+  it.skipIf(!tenantLoginsEnabled())('remakes a missing login on first use', async () => {
+    await getPool('admin').query(`DROP ROLE ${ident(tenantNames(a).loginRole)}`);
+    const r = await executeTenantQuery({
+      tenant: tenantA,
+      sql: 'SELECT count(*)::int AS n FROM items',
+      origin: 'system',
+      path: 'system',
+    });
+    expect(r.rows).toEqual([{ n: 2 }]);
+  });
+
   it("reads its own tenant's data through the executor", async () => {
     const result = await executeTenantQuery({
       tenant: tenantA,
@@ -155,9 +201,11 @@ describe.skipIf(!hasDb)('tenant isolation (integration)', () => {
   });
 
   it('cannot switch to another tenant role or undo its settings via set_config', async () => {
-    // Where set_config is taken away from tenant roles (a real superuser ran db:setup) the call is
-    // refused; on managed Postgres the executor notices the changed session and returns nothing.
-    const refused = /permission denied for function set_config|changed its session settings/;
+    // Refused by the database where set_config is locked (a real superuser ran db:setup), or because
+    // the business's own login can't become another business's role (ADR-055); otherwise the
+    // executor notices the changed session and returns nothing (ADR-054).
+    const refused =
+      /permission denied for function set_config|permission denied to set role|changed its session settings/;
     await expectDenied(
       executeTenantQuery({
         tenant: tenantA,

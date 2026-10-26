@@ -16,10 +16,10 @@ locally (Stage 0), on a free preview (Stage 1) and in paid production (Stage 2).
 - [ ] `main` is green: lint, typecheck, unit and integration tests, e2e, `pnpm eval` (rules only).
 - [ ] A security review of the branch being released (tenant isolation, the SQL validator, auth, uploads).
 - [ ] Decide the production domain (for example `app.<brand>.com`) and the sending email domain.
-- [ ] **Isolation on a managed database (ADR-054).** If the production Postgres host gives no true
-  superuser (Neon and most hosts don't), build per-tenant login roles first (ADR-005 option 3).
-  Without them, one database-level safety layer is missing, and real customers' data shouldn't depend
-  on the SQL validator alone. `pnpm preview:check` reports which case a database is in.
+- [ ] **Per-business database logins on (ADR-055).** Set `TENANT_LOGIN_SECRET` (`openssl rand -hex
+  32`) for web and worker, then run `pnpm --filter @bizr/worker run tenant-logins` once. This is
+  required on managed Postgres, where `set_config` can't be locked (ADR-054). `pnpm preview:check`
+  reports the state.
 - [ ] `pnpm audit --prod --audit-level high` is clean (CI runs it on every push).
 
 ## 1. Database (Neon paid, or equivalent Postgres 17)

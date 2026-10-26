@@ -28,6 +28,8 @@ env:
   DATABASE_URL_TENANT: postgres://bizr_tenant:ci_tenant_pw@localhost:5432/bizretriever
   # CI-only throwaway value (the e2e server runs in production mode, where a secret is required).
   BETTER_AUTH_SECRET: ci-only-not-a-real-secret-0123456789abcdef
+  # Per-business database logins on (ADR-055), as in production.
+  TENANT_LOGIN_SECRET: ci-only-tenant-login-secret-0123456789abcdef
 
 jobs:
   checks:

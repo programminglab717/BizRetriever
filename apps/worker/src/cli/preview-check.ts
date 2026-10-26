@@ -7,6 +7,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { loginGroupName } from '@bizr/db';
 import { findRepoRoot, getEnv } from '@bizr/platform';
 import pg from 'pg';
 
@@ -62,6 +63,11 @@ async function main() {
     `JOB_STEP_BUDGET_MS=${env.JOB_STEP_BUDGET_MS}`,
     'JOB_STEP_BUDGET_MS should stay under the host’s function time limit',
   );
+  if (env.TENANT_LOGIN_SECRET) ok('per-business database logins are on (TENANT_LOGIN_SECRET)');
+  else
+    note(
+      'TENANT_LOGIN_SECRET is not set: every business shares one database login (demo data only)',
+    );
   if (!env.ANTHROPIC_API_KEY)
     note('No ANTHROPIC_API_KEY: the preview runs on rules only (fine for the demo)');
   else
@@ -143,7 +149,14 @@ async function main() {
       try {
         await c.query('CREATE ROLE bizr_preview_probe NOLOGIN');
         await c.query('CREATE SCHEMA bizr_preview_probe');
-        ok('the admin role can make a new business (role and schema; rolled back)');
+        // A business's own login (ADR-055), with CONNECT through the logins group.
+        const group = loginGroupName(decodeURIComponent(new URL(env.DATABASE_URL_TENANT).username));
+        await c.query('CREATE ROLE bizr_preview_probe_login LOGIN');
+        await c.query(
+          'GRANT bizr_preview_probe TO bizr_preview_probe_login WITH INHERIT FALSE, SET TRUE',
+        );
+        await c.query(`GRANT ${c.escapeIdentifier(group)} TO bizr_preview_probe_login`);
+        ok('the admin role can make a new business with its own login (rolled back)');
       } catch (err) {
         bad(`the admin role can't make a new business: ${(err as Error).message}`);
       } finally {
@@ -155,11 +168,15 @@ async function main() {
            WHERE p.oid = 'pg_catalog.set_config(text, text, boolean)'::regprocedure
              AND a.grantee = 0 AND a.privilege_type = 'EXECUTE') AS open`,
       );
-      if (open.rows[0]?.open)
-        note(
-          'set_config is open to every role (no superuser on this host): isolation relies on the SQL validator and the executor’s session check (ADR-054). Demo data only.',
+      if (!open.rows[0]?.open) ok('set_config is locked to our own roles');
+      else if (env.TENANT_LOGIN_SECRET)
+        ok(
+          'set_config is open (no superuser on this host), but each business’s own login can only become its own roles (ADR-055)',
         );
-      else ok('set_config is locked to our own roles');
+      else
+        note(
+          'set_config is open to every role (no superuser on this host) and the login is shared: demo data only (ADR-054). Set TENANT_LOGIN_SECRET for real data.',
+        );
     }).catch((err: Error) => bad(`admin checks failed: ${err.message}`));
   }
 

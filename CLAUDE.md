@@ -85,6 +85,7 @@ docs/             all planning documentation
 | Speed check on a workspace (M8) | `pnpm perf <slug>` (production build running; signs in as `DEMO_EMAIL`) |
 | Internal admin page (M8) | `/admin`, for `ADMIN_EMAILS` only |
 | Check a free hosted preview's setup (M8) | `pnpm preview:check` (with the preview's env loaded; `docs/RUNBOOK_PREVIEW.md`) |
+| Give every business its own database login / rotate (M9) | `pnpm --filter @bizr/worker run tenant-logins` (needs `TENANT_LOGIN_SECRET`) |
 
 ## Coding conventions
 
