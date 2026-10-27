@@ -44,6 +44,32 @@ export function settledByMapping(
   });
 }
 
+/** JSON with object keys sorted, so a mapping read back from the database compares equal. */
+function stable(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(stable).join(',')}]`;
+  if (v && typeof v === 'object')
+    return `{${Object.keys(v)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stable((v as Record<string, unknown>)[k])}`)
+      .join(',')}}`;
+  return JSON.stringify(v);
+}
+
+/**
+ * Why a recognised re-import still needs the owner, or null. The proposal that would be approved
+ * must be exactly the approved mappings: no records treated as one (only the owner decides that)
+ * and no sheet whose mapping changed since it was approved (the AI's check can revise one).
+ */
+export function changedFromApproved(latest: ModelProposal, approved: ModelProposal): string | null {
+  if (latest.dedupe.some((d) => d.clusters.length > 0)) return 'records that may be the same';
+  for (const s of latest.sources) {
+    if (s.decision !== 'map') continue;
+    const before = approved.sources.find((a) => a.sourceId === s.sourceId);
+    if (!before || stable(before) !== stable(s)) return `a changed mapping for ${s.sourceId}`;
+  }
+  return null;
+}
+
 async function linkedRun(runId: string) {
   const db = getAppDb();
   const [run] = await db.select().from(ingestionRun).where(eq(ingestionRun.id, runId));
@@ -91,13 +117,11 @@ export async function continueLinkedReview(
   if (mapped.length === 0) return wait('nothing to bring in');
   const ctx = await loadRunContext(runId);
   const analysis = await analyzeRun(ctx);
-  const { matches } = await reuseKnownMappings(
-    ctx.workspace.id,
-    analysis.profiled,
-    latest.proposal,
-  );
-  const known = new Set(matches.map((m) => m.sourceId));
+  const approved = await reuseKnownMappings(ctx.workspace.id, analysis.profiled, latest.proposal);
+  const known = new Set(approved.matches.map((m) => m.sourceId));
   if (!mapped.every((m) => known.has(m.sourceId))) return wait('a sheet we haven’t seen before');
+  const changed = changedFromApproved(latest.proposal, approved.proposal);
+  if (changed) return wait(changed);
   const open = latest.proposal.questions.filter((q) => !settledByMapping(q, known));
   if (open.length > 0) return wait(`questions to answer: ${open.map((q) => q.id).join(', ')}`);
   await queueJob(runId, 'applying', () =>

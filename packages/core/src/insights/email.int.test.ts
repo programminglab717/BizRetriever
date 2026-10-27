@@ -5,7 +5,13 @@ import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { loadDemoWorkspace, type DemoWorkspace } from '../testing';
-import { getEmailPreferences, sendInsightEmails, unsubscribe, unsubscribeUrl } from './email';
+import {
+  getEmailPreferences,
+  MAX_EMAIL_ATTEMPTS,
+  sendInsightEmails,
+  unsubscribe,
+  unsubscribeUrl,
+} from './email';
 import { runInsights } from './service';
 
 /** M9 (ADR-057): the weekly summary and urgent alerts go out once, to confirmed members only. */
@@ -71,6 +77,41 @@ describe.skipIf(!hasDb)('insight emails (integration)', () => {
       .from(emailDelivery)
       .where(eq(emailDelivery.workspaceId, demo.member.workspace.id));
     expect(rows.every((r) => r.status === 'sent' && r.userId === demo.ownerId)).toBe(true);
+  }, 60_000);
+
+  it('tries a failed email again on the next run, up to three times', async () => {
+    const db = getAppDb();
+    const mine = eq(emailDelivery.workspaceId, demo.member.workspace.id);
+    await db.delete(emailDelivery).where(mine);
+    setEmailTransport(() => Promise.reject(new Error('email service down')));
+    expect(await sendInsightEmails(demo.member, { now: NOW })).toEqual({
+      weeklySummaries: 0,
+      urgentAlerts: 0,
+    });
+    expect((await db.select().from(emailDelivery).where(mine)).map((r) => r.status)).toEqual([
+      'failed',
+      'failed',
+    ]);
+    setEmailTransport(async (e) => {
+      sent.push(e);
+    });
+    expect(await sendInsightEmails(demo.member, { now: NOW })).toEqual({
+      weeklySummaries: 1,
+      urgentAlerts: 1,
+    });
+    const rows = await db.select().from(emailDelivery).where(mine);
+    expect(rows.map((r) => [r.status, r.attempts])).toEqual([
+      ['sent', 2],
+      ['sent', 2],
+    ]);
+    // Sent ones never go again; one that has failed three times is left alone.
+    await db
+      .update(emailDelivery)
+      .set({ status: 'failed', attempts: MAX_EMAIL_ATTEMPTS })
+      .where(mine);
+    sent.length = 0;
+    await sendInsightEmails(demo.member, { now: NOW });
+    expect(sent).toHaveLength(0);
   }, 60_000);
 
   it('turns a kind off from the link in the email, and only with a genuine link', async () => {

@@ -10,7 +10,7 @@ import {
   type EmailKind,
 } from '@bizr/db';
 import { getEnv, getLogger, sendEmail, type Email } from '@bizr/platform';
-import { and, asc, desc, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
 
 import { localeFor } from '../ask/view';
 import { goalProgress } from '../planning/goals';
@@ -341,7 +341,12 @@ async function recipients(workspaceId: string): Promise<Recipient[]> {
   }));
 }
 
-/** Claims (kind, keys) for one person; returns the keys not sent before. */
+export const MAX_EMAIL_ATTEMPTS = 3;
+
+/**
+ * Claims (kind, keys) for one person; returns the keys not sent before. One that failed (the email
+ * service was down) is claimed again, up to three tries in all; one sent or being sent never is.
+ */
 async function claim(
   workspaceId: string,
   userId: string,
@@ -352,7 +357,19 @@ async function claim(
   const rows = await getAppDb()
     .insert(emailDelivery)
     .values(keys.map((key) => ({ workspaceId, userId, kind, key })))
-    .onConflictDoNothing()
+    .onConflictDoUpdate({
+      target: [
+        emailDelivery.workspaceId,
+        emailDelivery.userId,
+        emailDelivery.kind,
+        emailDelivery.key,
+      ],
+      set: { status: 'sending', error: null, attempts: sql`${emailDelivery.attempts} + 1` },
+      setWhere: and(
+        eq(emailDelivery.status, 'failed'),
+        lt(emailDelivery.attempts, MAX_EMAIL_ATTEMPTS),
+      ),
+    })
     .returning({ key: emailDelivery.key });
   return rows.map((r) => r.key);
 }

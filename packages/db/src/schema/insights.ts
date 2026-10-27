@@ -200,6 +200,8 @@ export const emailDelivery = app.table(
       .notNull()
       .default('sending'),
     error: text('error'),
+    /** Tries so far; a failed email is tried again on the next run, up to three times. */
+    attempts: integer('attempts').notNull().default(1),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     sentAt: timestamp('sent_at', { withTimezone: true }),
   },

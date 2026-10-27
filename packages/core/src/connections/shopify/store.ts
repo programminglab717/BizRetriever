@@ -1,6 +1,6 @@
 import { connection, getAppDb } from '@bizr/db';
 import { getEnv, getLogger } from '@bizr/platform';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { toXlsx } from '../../export/write';
 import type { Sheet, SheetCell } from '../../export/sheet';
@@ -39,11 +39,18 @@ export async function accessTokenFor(c: Connection, now = new Date()): Promise<s
         'needs_attention',
       );
     tokens = await refreshTokens(c.externalId, tokens.refreshToken, now);
-    // The old pair is now dead: keep the new one before anything else can fail.
-    await getAppDb()
+    // The old pair is now dead: keep the new one before anything else can fail. Only over the pair
+    // we refreshed: if the store was connected again meanwhile, its newer tokens win.
+    const db = getAppDb();
+    const kept = await db
       .update(connection)
       .set({ secret: sealSecret(tokens), updatedAt: new Date() })
-      .where(eq(connection.id, c.id));
+      .where(and(eq(connection.id, c.id), eq(connection.secret, c.secret)))
+      .returning({ id: connection.id });
+    if (kept.length === 0) {
+      const [fresh] = await db.select().from(connection).where(eq(connection.id, c.id));
+      if (fresh?.secret && fresh.secret !== c.secret) return accessTokenFor(fresh, now);
+    }
   }
   return tokens.accessToken;
 }

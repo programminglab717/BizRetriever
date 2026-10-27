@@ -1,0 +1,1 @@
+ALTER TABLE "app"."email_delivery" ADD COLUMN "attempts" integer DEFAULT 1 NOT NULL;

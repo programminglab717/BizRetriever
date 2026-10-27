@@ -80,6 +80,8 @@ export const connection = app.table(
     /** Fingerprint of what the last sync fetched: the same again means nothing changed. */
     lastFingerprint: text('last_fingerprint'),
     lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
+    /** A check holds the source until then, so two checks never run at once (cleared when done). */
+    syncingUntil: timestamp('syncing_until', { withTimezone: true }),
     lastChangedAt: timestamp('last_changed_at', { withTimezone: true }),
     lastRunId: uuid('last_run_id').references((): AnyPgColumn => ingestionRun.id, {
       onDelete: 'set null',

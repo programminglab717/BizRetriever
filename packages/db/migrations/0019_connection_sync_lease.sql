@@ -1,0 +1,1 @@
+ALTER TABLE "app"."connection" ADD COLUMN "syncing_until" timestamp with time zone;

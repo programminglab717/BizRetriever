@@ -66,6 +66,8 @@ describe.skipIf(!hasDb)('linked sources (integration)', () => {
   /** What "Google" answers with now. */
   let serving: { status: number; bytes?: Uint8Array; location?: string } = { status: 200 };
   const requested: string[] = [];
+  /** Runs once while "Google" is answering, to change things mid-check. */
+  let duringFetch: (() => Promise<void>) | null = null;
   let clock = Date.now();
   const later = () => new Date((clock += 5 * 60_000));
 
@@ -112,6 +114,11 @@ describe.skipIf(!hasDb)('linked sources (integration)', () => {
           status: 200,
           headers: { 'content-type': 'text/html' },
         });
+      if (duringFetch) {
+        const f = duringFetch;
+        duringFetch = null;
+        await f();
+      }
       if (serving.location)
         return new Response(null, { status: 302, headers: { location: serving.location } });
       return new Response(serving.status === 200 ? (serving.bytes ?? orders) : 'Not here', {
@@ -286,5 +293,27 @@ describe.skipIf(!hasDb)('linked sources (integration)', () => {
           eq(workspaceMember.userId, owner),
         ),
       );
+  }, 60_000);
+
+  it('never undoes a pause made during a check, and runs one check of a source at a time', async () => {
+    const db = getAppDb();
+    const [before] = await db.select().from(connection).where(eq(connection.id, connectionId));
+    serving = { status: 200, bytes: nextOrders };
+    const at = later();
+    let overlapping: string | undefined;
+    duringFetch = async () => {
+      // A second check (another press of "Update now", the daily job) while this one reads.
+      overlapping = await syncConnection(connectionId, enqueue, new Date(at.getTime() + 120_000));
+      await updateConnection(member, owner, connectionId, { paused: true });
+    };
+    expect(await syncConnection(connectionId, enqueue, at)).toBe('skipped');
+    expect(overlapping).toBe('skipped');
+    const [after] = await db.select().from(connection).where(eq(connection.id, connectionId));
+    expect(after).toMatchObject({
+      status: 'paused',
+      syncingUntil: null,
+      lastRunId: before!.lastRunId,
+      lastFingerprint: before!.lastFingerprint,
+    });
   }, 60_000);
 });

@@ -40,6 +40,10 @@ type Connection = typeof connection.$inferSelect;
 const UNFINISHED = ['done', 'failed', 'cancelled'] as const;
 /** Two checks of one source at least this far apart ("Update now" pressed twice, daily + manual). */
 const MIN_CHECK_INTERVAL_MS = 60_000;
+/** Longer than the slowest check (a large store read page by page, with waits). */
+const SYNC_LEASE_MS = 30 * 60_000;
+/** Only these can be checked or have their status set by a check; paused and disconnected stay so. */
+const CHECKABLE = ['active', 'needs_attention'] as const;
 
 export interface Fetched {
   name: string;
@@ -196,7 +200,7 @@ async function markProblem(c: Connection, err: unknown): Promise<void> {
       ...(attention ? { status: 'needs_attention' as const } : {}),
       updatedAt: new Date(),
     })
-    .where(eq(connection.id, c.id));
+    .where(and(eq(connection.id, c.id), inArray(connection.status, [...CHECKABLE])));
 }
 
 export type SyncOutcome = 'started' | 'unchanged' | 'busy' | 'skipped' | 'problem';
@@ -211,22 +215,35 @@ export async function syncConnection(
   now = new Date(),
 ): Promise<SyncOutcome> {
   const db = getAppDb();
-  // Claim the check: only one caller per minute gets the row back.
+  // Claim the check: at most one a minute, and never while another check of it is running.
   const [c] = await db
     .update(connection)
-    .set({ lastCheckedAt: now })
+    .set({ lastCheckedAt: now, syncingUntil: new Date(now.getTime() + SYNC_LEASE_MS) })
     .where(
       and(
         eq(connection.id, connectionId),
-        inArray(connection.status, ['active', 'needs_attention']),
+        inArray(connection.status, [...CHECKABLE]),
         or(
           isNull(connection.lastCheckedAt),
           lt(connection.lastCheckedAt, new Date(now.getTime() - MIN_CHECK_INTERVAL_MS)),
         ),
+        or(isNull(connection.syncingUntil), lt(connection.syncingUntil, now)),
       ),
     )
     .returning();
   if (!c) return 'skipped';
+  try {
+    return await checkClaimed(c, enqueue, now);
+  } finally {
+    await db
+      .update(connection)
+      .set({ syncingUntil: null })
+      .where(and(eq(connection.id, c.id), eq(connection.lastCheckedAt, now)));
+  }
+}
+
+async function checkClaimed(c: Connection, enqueue: JobEnqueuer, now: Date): Promise<SyncOutcome> {
+  const db = getAppDb();
   const [busy] = await db
     .select({ id: ingestionRun.id })
     .from(ingestionRun)
@@ -258,6 +275,8 @@ export async function syncConnection(
     await markProblem(c, err);
     return 'problem';
   }
+  // Paused or disconnected while we were reading it: leave it as the owner (or the store) set it.
+  const stillOn = and(eq(connection.id, c.id), inArray(connection.status, [...CHECKABLE]));
   const fingerprint = await contentFingerprint(fetched.files);
   if (fingerprint === c.lastFingerprint) {
     await db
@@ -268,9 +287,11 @@ export async function syncConnection(
         config: { ...c.config, ...fetched.config },
         updatedAt: new Date(),
       })
-      .where(eq(connection.id, c.id));
+      .where(stillOn);
     return 'unchanged';
   }
+  const [on] = await db.select({ id: connection.id }).from(connection).where(stillOn);
+  if (!on) return 'skipped';
   try {
     const { runId } = await startIngestion({
       member: member.member,
@@ -279,6 +300,7 @@ export async function syncConnection(
       queue: { enqueue },
       connectionId: c.id,
     });
+    // Recorded whatever the status now is (the run exists); a pause still keeps it waiting.
     await db
       .update(connection)
       .set({
@@ -286,12 +308,12 @@ export async function syncConnection(
         lastFingerprint: fingerprint,
         lastChangedAt: now,
         lastError: null,
-        status: 'active',
         name: fetched.name.slice(0, 120) || c.name,
         config: { ...c.config, ...fetched.config },
         updatedAt: new Date(),
       })
       .where(eq(connection.id, c.id));
+    await db.update(connection).set({ status: 'active' }).where(stillOn);
     log().info({ connectionId: c.id, runId }, 'source changed: import started');
     return 'started';
   } catch (err) {

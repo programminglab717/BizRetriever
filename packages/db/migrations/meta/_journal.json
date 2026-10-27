@@ -134,6 +134,20 @@
       "when": 1793060602887,
       "tag": "0018_viewer_role",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793061493632,
+      "tag": "0019_connection_sync_lease",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793061641645,
+      "tag": "0020_email_retry",
+      "breakpoints": true
     }
   ]
 }

@@ -22,9 +22,10 @@ import {
 } from '../../workspaces/service';
 import { setConnectorFetch } from '../fetch';
 import { connectionsDailyJob, connectionSyncJob } from '../jobs';
-import { openSecret } from '../secret';
+import { openSecret, sealSecret } from '../secret';
 import { listConnections, syncConnection } from '../service';
 import { beginShopifyInstall, completeShopifyInstall, handleShopifyWebhook } from './service';
+import { accessTokenFor } from './store';
 
 /**
  * M10 acceptance (ADR-059): connecting a store through Shopify's sign-in brings its products,
@@ -312,6 +313,24 @@ describe.skipIf(!hasDb)('Shopify (integration)', () => {
     expect(view.run.status).toBe('done');
     expect(await count('SELECT count(DISTINCT order_number) AS n FROM sales')).toBe(4);
   }, 240_000);
+
+  it('keeps the tokens of a reconnect made while an old token was being refreshed', async () => {
+    const db = getAppDb();
+    const [stale] = await db.select().from(connection).where(eq(connection.id, connectionId));
+    const reconnected = sealSecret({
+      accessToken: 'shpat_reconnected',
+      refreshToken: 'shprt_reconnected',
+      expiresAt: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+    });
+    await db.update(connection).set({ secret: reconnected }).where(eq(connection.id, connectionId));
+    const before = refreshes;
+    expect(await accessTokenFor(stale!, new Date(Date.now() + 5 * 3600_000))).toBe(
+      'shpat_reconnected',
+    );
+    expect(refreshes).toBe(before + 1);
+    const [c] = await db.select().from(connection).where(eq(connection.id, connectionId));
+    expect(c!.secret).toBe(reconnected);
+  });
 
   it('stops when the app is removed from the store', async () => {
     await handleShopifyWebhook('app/uninstalled', SHOP, { id: 1 });
