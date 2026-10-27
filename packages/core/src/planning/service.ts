@@ -27,9 +27,13 @@ export interface MetricEstimate {
 
 export class PlanningError extends Error {}
 
-export function planningMetrics(packId: string): { goals: string[]; forecasts: string[] } {
+export function planningMetrics(packId: string): {
+  goals: string[];
+  forecasts: string[];
+  goalWords: Record<string, string[]>;
+} {
   const p = getPack(packId).manifest.planning;
-  return { goals: [...p.goals], forecasts: [...p.forecasts] };
+  return { goals: [...p.goals], forecasts: [...p.forecasts], goalWords: p.goal_words };
 }
 
 /** The measure's value for every day up to yesterday (days without any are left out). */

@@ -122,15 +122,17 @@ async function runSpec(
   return r.rows;
 }
 
-/** Days from the first sale to today; null without sales. */
+/** Days from the first day with any business (the pack's activity count) to today; null without. */
 async function historyDays(
   target: InsightTarget,
   model: SemanticModel,
   ctx: CompileContext,
 ): Promise<number | null> {
+  const activity = getPack(target.workspace.packId).manifest.key_numbers.activity;
+  if (!activity || !model.metrics.has(activity)) return null;
   try {
     const [first] = await runSpec(target, model, ctx, {
-      metrics: ['order_count'],
+      metrics: [activity],
       dimensions: [{ time: 'day' }],
       period: { from: EPOCH, to: ctx.today },
       sort: { by: 'd0', dir: 'asc' },

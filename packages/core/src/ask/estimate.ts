@@ -73,14 +73,17 @@ function mentionedMetric(text: string, catalog: AskCatalog): string | null {
   return phrases.find((x) => text.includes(x.p))?.id ?? null;
 }
 
-/** Words for a goal's measure that aren't synonyms ("my order goal"). */
-function goalMetric(text: string, catalog: AskCatalog, goals: readonly string[]): string | null {
+/** A goal's measure by name, or by the pack's everyday words for it ("my order goal"). */
+function goalMetric(
+  text: string,
+  catalog: AskCatalog,
+  goals: readonly string[],
+  words: Readonly<Record<string, readonly string[]>>,
+): string | null {
   const named = mentionedMetric(text, catalog);
   if (named && goals.includes(named)) return named;
-  if (/ order /.test(text) && goals.includes('order_count')) return 'order_count';
-  if (/ profit /.test(text) && goals.includes('gross_profit')) return 'gross_profit';
-  if (/ (sale|sales|revenue|takings|turnover) /.test(text) && goals.includes('net_sales'))
-    return 'net_sales';
+  for (const id of goals)
+    if ((words[id] ?? []).some((w) => text.includes(` ${normalizeQuestion(w).trim()} `))) return id;
   return null;
 }
 
@@ -155,13 +158,20 @@ function comingPeriod(text: string, today: string, weekStart: number, future: bo
 export function estimateRequestWithRules(
   question: string,
   catalog: AskCatalog,
-  planning: { forecasts: readonly string[]; goals: readonly string[] },
+  planning: {
+    forecasts: readonly string[];
+    goals: readonly string[];
+    goalWords?: Readonly<Record<string, readonly string[]>>;
+  },
 ): EstimateRequest | null {
   const text = normalizeQuestion(question);
   if (PAST.test(text)) return null;
   if (REORDER.test(text) || / reorder list /.test(text)) return { kind: 'reorder' };
   if (GOAL.test(text) && GOAL_CUE.test(text))
-    return { kind: 'goal', metric: goalMetric(text, catalog, planning.goals) };
+    return {
+      kind: 'goal',
+      metric: goalMetric(text, catalog, planning.goals, planning.goalWords ?? {}),
+    };
 
   const future = FUTURE_VERB.test(text);
   const { today, weekStart } = catalog.calendar;

@@ -10,7 +10,18 @@ locale_defaults:
   date_order: MDY
 requires_core: '>=0.1.0'
 primary_time_entity: sale
+# Home's and the weekly summary's key numbers; orders say a day had any business (M14).
+key_numbers:
+  home: [net_sales, gross_profit, order_count]
+  weekly: [net_sales, order_count]
+  activity: order_count
 # Planning ahead (M11): measures owners can set a monthly goal for, and see estimated ahead.
 planning:
   goals: [net_sales, order_count, gross_profit]
   forecasts: [net_sales, order_count, units_sold]
+  goal_words:
+    order_count: [order]
+    gross_profit: [profit]
+    net_sales: [sale, sales, revenue, takings, turnover]
+  reorder:
+    { cover: days_of_cover, rate: daily_sales_rate, stock: stock_on_hand, season: units_sold }

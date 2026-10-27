@@ -48,8 +48,6 @@ export function weekOf(today: string, weekStart: number): string {
   return addDays(today, -((iso - weekStart + 7) % 7));
 }
 
-const KPIS = ['net_sales', 'order_count'] as const;
-
 export async function ensureWeeklyDigest(
   target: InsightTarget,
   options: { now?: Date } = {},
@@ -74,7 +72,7 @@ export async function ensureWeeklyDigest(
         .where(and(eq(metric.workspaceId, ws.id), eq(metric.available, true)))
     ).map((m) => m.key),
   );
-  const ids = KPIS.filter((k) => available.has(k));
+  const ids = pack.manifest.key_numbers.weekly.filter((k) => available.has(k));
   // Nothing to summarise without sales.
   if (ids.length === 0) return null;
 

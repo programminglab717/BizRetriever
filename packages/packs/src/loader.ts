@@ -112,6 +112,17 @@ export function loadPack(dir: string): LoadedPack {
   }
 
   if (manifest.success && metrics.success) {
+    const known = (m: string) => metrics.data.metrics.some((x) => x.id === m);
+    const { home, weekly, activity } = manifest.data.key_numbers;
+    for (const [where, ids] of [
+      ['key_numbers.home', home],
+      ['key_numbers.weekly', weekly],
+      ['key_numbers.activity', activity ? [activity] : []],
+      ['planning.goal_words', Object.keys(manifest.data.planning.goal_words)],
+      ['planning.reorder', Object.values(manifest.data.planning.reorder ?? {})],
+    ] as const)
+      for (const m of ids)
+        if (!known(m)) problems.push(`pack.yaml ${where}: unknown measure "${m}"`);
     const { goals, forecasts } = manifest.data.planning;
     for (const [list, ids] of [
       ['goals', goals],

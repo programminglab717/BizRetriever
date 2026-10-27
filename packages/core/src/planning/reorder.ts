@@ -1,3 +1,5 @@
+import { getPack } from '@bizr/packs';
+
 import { toAnswerData } from '../ask/answer';
 import { QueryExecutionError } from '../executor/execute';
 import { SemanticError } from '../semantic/graph';
@@ -12,13 +14,12 @@ import { dailyHistory } from './service';
  * the recent rate adjusted by the business's usual season for those weeks (from its items-sold
  * estimate); with 13 months of history, it is at least what the product sold in the same weeks last
  * year, scaled by how the business is doing against a year ago. So Christmas stock shows up in
- * October although it isn't selling yet. Measures come from the pack (`days_of_cover`,
- * `daily_sales_rate`, `stock_on_hand`, `units_sold`), as the "running out" alert uses them.
+ * October although it isn't selling yet. The measures are the pack's (`planning.reorder`: days of
+ * stock left, sold a day, on hand, items sold), as its "running out" alert uses them.
  */
 
 export const DEFAULT_LEAD_DAYS = 14;
 export const COVER_EXTRA_DAYS = 30;
-const SEASON_MEASURE = 'units_sold';
 
 export interface ReorderLine {
   product: string;
@@ -49,6 +50,8 @@ export interface ReorderList {
   available: boolean;
   /** Each product's own season from last year is used (13 months of history or more). */
   perProductSeasons: boolean;
+  /** The pack's days-of-stock measure the list is sorted by. */
+  coverMeasure: string;
 }
 
 const num = (v: unknown) => {
@@ -60,9 +63,15 @@ const num = (v: unknown) => {
  * The business's own expected rise or fall over the next `days` (from its items-sold estimate), and
  * its last 4 weeks against the same weeks a year earlier when there's history for it.
  */
-async function businessTrend(member: MemberWorkspace, days: number, now?: Date) {
+async function businessTrend(
+  member: MemberWorkspace,
+  season: string | undefined,
+  days: number,
+  now?: Date,
+) {
+  if (!season) return { today: null, factor: 1, note: null, yearOnYear: null };
   try {
-    const h = await dailyHistory(member, SEASON_MEASURE, now ? { now } : {});
+    const h = await dailyHistory(member, season, now ? { now } : {});
     const sum = (from: string, to: string) =>
       h.history.filter((d) => d.date >= from && d.date < to).reduce((a, d) => a + d.value, 0);
     const recent = sum(addDays(h.today, -28), h.today);
@@ -92,15 +101,20 @@ const empty: ReorderList = {
   seasonNote: null,
   available: false,
   perProductSeasons: false,
+  coverMeasure: '',
 };
 
 export async function reorderList(
   member: MemberWorkspace,
   options: { now?: Date } = {},
 ): Promise<ReorderList> {
+  const measures = getPack(member.workspace.packId).manifest.planning.reorder;
+  if (!measures) return empty;
   const model = await loadSemanticModel(member.workspace);
-  const needed = ['days_of_cover', 'daily_sales_rate', 'stock_on_hand'];
+  const needed = [measures.cover, measures.rate, measures.stock];
   if (!needed.every((m) => model.metrics.has(m))) return empty;
+  const season =
+    measures.season && model.metrics.has(measures.season) ? measures.season : undefined;
   const hasSupplier = model.dimensions.some((d) => d.field === 'supplier.name');
   const hasLead = model.dimensions.some((d) => d.field === 'supplier.lead_time_days');
   let data;
@@ -114,7 +128,7 @@ export async function reorderList(
           ...(hasSupplier ? [{ field: 'supplier.name' }] : []),
           ...(hasSupplier && hasLead ? [{ field: 'supplier.lead_time_days' }] : []),
         ],
-        sort: { by: 'days_of_cover', dir: 'asc' },
+        sort: { by: measures.cover, dir: 'asc' },
         limit: 1000,
       },
       'system',
@@ -140,21 +154,20 @@ export async function reorderList(
         supplier: supplierCol ? ((r[supplierCol.key] as string | null) ?? null) : null,
         leadDays,
         leadAssumed: lead === null || lead <= 0,
-        onHand: Math.max(0, num(r[key('stock_on_hand')]) ?? 0),
-        perDay: Math.max(0, num(r[key('daily_sales_rate')]) ?? 0),
+        onHand: Math.max(0, num(r[key(measures.stock)]) ?? 0),
+        perDay: Math.max(0, num(r[key(measures.rate)]) ?? 0),
         /** The pack's own measure, as the "running out" alert shows it. */
-        cover: num(r[key('days_of_cover')]),
+        cover: num(r[key(measures.cover)]),
         coverDays: leadDays + COVER_EXTRA_DAYS,
       };
     })
     .filter((r) => r.product);
   const longest = Math.max(DEFAULT_LEAD_DAYS, ...rows.map((r) => r.leadDays)) + COVER_EXTRA_DAYS;
-  const trend = await businessTrend(member, longest, options.now);
+  const trend = await businessTrend(member, season, longest, options.now);
 
   // Each product's same weeks last year, one question per cover length (a few suppliers' lead times).
   const lastYear = new Map<string, Map<string, number>>();
-  const perProduct =
-    trend.yearOnYear !== null && trend.today !== null && model.metrics.has(SEASON_MEASURE);
+  const perProduct = trend.yearOnYear !== null && trend.today !== null && season !== undefined;
   if (perProduct)
     for (const cover of new Set(rows.map((r) => r.coverDays))) {
       const from = addDays(trend.today, -364);
@@ -162,7 +175,7 @@ export async function reorderList(
         await runQuery(
           member,
           {
-            metrics: [SEASON_MEASURE],
+            metrics: [season],
             dimensions: [{ field: 'product.name' }],
             period: { from, to: addDays(from, cover) },
             limit: 1000,
@@ -211,5 +224,6 @@ export async function reorderList(
     seasonNote: trend.note,
     available: true,
     perProductSeasons: perProduct,
+    coverMeasure: measures.cover,
   };
 }

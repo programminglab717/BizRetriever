@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { estimateRequestWithRules } from './estimate';
+import { planningMetrics } from '../planning/service';
 import { fixtureCatalog } from './fixtures';
 
 // Tuesday 13 October 2026, weeks start on Monday.
 const catalog = fixtureCatalog();
-const planning = {
-  forecasts: ['net_sales', 'order_count', 'units_sold'],
-  goals: ['net_sales', 'order_count', 'gross_profit'],
-};
+// The retail pack's planning settings, goal words included.
+const planning = planningMetrics('retail');
 const read = (q: string) => estimateRequestWithRules(q, catalog, planning);
 
 describe('estimateRequestWithRules', () => {

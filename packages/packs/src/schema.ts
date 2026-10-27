@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 /** Pack manifest (`pack.yaml`), VERTICAL_PACKS.md §1.2. Other pack files get schemas as they land. */
+const measureId = z.string().regex(/^[a-z][a-z0-9_]*$/);
+
 export const packManifestSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9_]+$/, 'lowercase letters, digits and _ only'),
@@ -16,20 +18,39 @@ export const packManifestSchema = z
       .strict(),
     requires_core: z.string().min(1),
     primary_time_entity: z.string().regex(/^[a-z0-9_]+$/),
+    /**
+     * The industry's key numbers (M14, ADR-064): Home's row and the weekly summary's, and the count
+     * that says a day had any business (how much history there is, for trend insights).
+     */
+    key_numbers: z
+      .object({
+        home: z.array(measureId).max(4).default([]),
+        weekly: z.array(measureId).max(4).default([]),
+        activity: measureId.optional(),
+      })
+      .strict()
+      .default({ home: [], weekly: [] }),
     /** Planning ahead (M11, ADR-060): measures owners can set goals for and see estimated. */
     planning: z
       .object({
-        goals: z
-          .array(z.string().regex(/^[a-z][a-z0-9_]*$/))
-          .max(10)
-          .default([]),
-        forecasts: z
-          .array(z.string().regex(/^[a-z][a-z0-9_]*$/))
-          .max(10)
-          .default([]),
+        goals: z.array(measureId).max(10).default([]),
+        forecasts: z.array(measureId).max(10).default([]),
+        /** Everyday words for a goal's measure that aren't its synonyms ("my order goal"). */
+        goal_words: z.record(measureId, z.array(z.string().min(2)).max(10)).default({}),
+        /** The reorder list's measures (M11); without them there is no reorder list. */
+        reorder: z
+          .object({
+            cover: measureId,
+            rate: measureId,
+            stock: measureId,
+            /** Items sold, for each product's own season (M12). */
+            season: measureId.optional(),
+          })
+          .strict()
+          .optional(),
       })
       .strict()
-      .default({ goals: [], forecasts: [] }),
+      .default({ goals: [], forecasts: [], goal_words: {} }),
   })
   .strict();
 

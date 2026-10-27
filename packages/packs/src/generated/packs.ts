@@ -15,6 +15,18 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
       },
       "requires_core": ">=0.1.0",
       "primary_time_entity": "sale",
+      "key_numbers": {
+        "home": [
+          "net_sales",
+          "gross_profit",
+          "order_count"
+        ],
+        "weekly": [
+          "net_sales",
+          "order_count"
+        ],
+        "activity": "order_count"
+      },
       "planning": {
         "goals": [
           "net_sales",
@@ -25,7 +37,28 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "net_sales",
           "order_count",
           "units_sold"
-        ]
+        ],
+        "goal_words": {
+          "order_count": [
+            "order"
+          ],
+          "gross_profit": [
+            "profit"
+          ],
+          "net_sales": [
+            "sale",
+            "sales",
+            "revenue",
+            "takings",
+            "turnover"
+          ]
+        },
+        "reorder": {
+          "cover": "days_of_cover",
+          "rate": "daily_sales_rate",
+          "stock": "stock_on_hand",
+          "season": "units_sold"
+        }
       }
     },
     "entities": [

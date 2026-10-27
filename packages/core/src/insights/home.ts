@@ -10,9 +10,10 @@ import { SemanticError } from '../semantic/graph';
 import { compileContext, runQuery } from '../semantic/service';
 import type { MemberWorkspace } from '../workspaces/service';
 
-/** Home's key numbers (PRODUCT_SPEC Journey 5): the last 30 days against the 30 before. */
-
-const HOME_KPIS = ['net_sales', 'gross_profit', 'order_count'] as const;
+/**
+ * Home's key numbers (PRODUCT_SPEC Journey 5): the last 30 days against the 30 before. Which ones
+ * is the pack's choice (`key_numbers.home`, M14).
+ */
 
 export interface HomeKpis {
   kpis: KpiView[];
@@ -24,6 +25,8 @@ export async function homeKpis(
   options: { now?: Date } = {},
 ): Promise<HomeKpis> {
   const ws = member.workspace;
+  const homeKpis = getPack(ws.packId).manifest.key_numbers.home;
+  if (homeKpis.length === 0) return { kpis: [], comparedWith: null };
   const available = new Set(
     (
       await getAppDb()
@@ -33,12 +36,12 @@ export async function homeKpis(
           and(
             eq(metric.workspaceId, ws.id),
             eq(metric.available, true),
-            inArray(metric.key, [...HOME_KPIS]),
+            inArray(metric.key, [...homeKpis]),
           ),
         )
     ).map((m) => m.key),
   );
-  const metrics = HOME_KPIS.filter((k) => available.has(k));
+  const metrics = homeKpis.filter((k) => available.has(k));
   if (metrics.length === 0) return { kpis: [], comparedWith: null };
   const cc = compileContext(member, options.now);
   const cal = {

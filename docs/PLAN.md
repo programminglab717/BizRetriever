@@ -686,6 +686,43 @@ accounts.
 
 ---
 
+## M14 — A second industry: Wholesale & distribution ($0)
+
+**Goal:** businesses that sell to other businesses (distributors, importers, makers selling to
+stockists, cafés and salons) get the same outcome from their messy files, in their own terms: who
+owes them money and how late, accounts over their credit limit, accounts that stopped reordering,
+margin per account and backorders. It is also the test of the pack promise: the core reads its
+industry choices from the pack, and a new pack needs no new core code. The owner said "continue" on
+2026-10-27 after M13; a second vertical is the first candidate listed then.
+
+**Depends on:** M2–M7 (import, measures, Ask, dashboard, insights), M11 (planning).
+
+- [ ] The core reads industry choices from the pack, not code: Home's and the weekly summary's key
+  numbers, the reorder list's measures, the goal words in Ask. Retail behaves exactly as before
+- [ ] Import without AI for any pack: a sheet whose columns mostly match one kind of record (a
+  customer list with credit limits, a payments sheet) is recognised from the pack's own words, and
+  extra columns that match details of a recognised record are kept
+- [ ] The `wholesale` pack: trade accounts (terms, credit limit, sales rep), invoices with due dates,
+  payments, backorders, products, stock and suppliers; synonyms and known export formats; measures
+  (owed, overdue, days to get paid, credit used, revenue and margin per account, backorders);
+  dashboard; insights (over the credit limit, paying later than usual, an account that missed its
+  usual reorder, margin squeeze per account, backorders building, stock running out); example
+  questions; planning measures
+- [ ] Demo wholesale business with messy files and planted stories (ground truth); ingest fixtures;
+  question and dashboard evals for the pack
+- [ ] Onboarding offers "I sell to other businesses"; pack docs (VERTICAL_PACKS Part 3); tests, e2e
+
+**Acceptance:**
+
+- The demo wholesale business's files are brought in without AI, every planted story is found by
+  the insights, and the numbers match the ground truth.
+- The wholesale question eval scores at least 85% with rules only; the retail evals are unchanged.
+- Adding the pack needed only the pack files and its registration; every core change is
+  industry-neutral and keeps retail's results identical.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |
@@ -695,7 +732,7 @@ accounts.
 | Product | Multilingual UI and questions; multi-currency; estimates handed over by the AI (rules-only now) (season-aware estimates, goals and the reorder list: M11; in Ask and per-product seasons: M12); scheduled reports; PDF export of answers (CSV/Excel: done in M9) |
 | Collaboration | Granular per-area permissions; ownership transfer; @mentions (view-only role, notes and handing insights to people: M13) |
 | Platform | Public API and MCP server exposing the semantic layer to other apps and agents; webhooks |
-| Packs | Wholesale/distribution, restaurants/food service, services/agencies, health & beauty salons |
+| Packs | Restaurants/food service, services/agencies, health & beauty salons (wholesale/distribution: M14) |
 | Business | Billing and plans (usage-based AI cost informs pricing); onboarding concierge |
 | Production upgrade (after revenue) | Execute the Stage 2 runbook: paid web plan, dedicated worker (`JOB_RUNNER=worker`), S3/R2 storage + migration of blobs, Sentry, custom domain, backups/PITR |
 | Hardening | Tenant sharding across databases; SOC 2 readiness; data residency (EU) |

@@ -254,7 +254,7 @@ async function reorderAnswer(member: MemberWorkspace): Promise<RenderedEstimate>
                   label: 'Days of stock left',
                   kind: 'metric' as const,
                   format: 'days' as const,
-                  metric: 'days_of_cover',
+                  metric: list.coverMeasure,
                 },
                 {
                   key: 'm1',
