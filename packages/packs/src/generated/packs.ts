@@ -2617,7 +2617,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "drifting away"
           ],
           "assumptions": [],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "by": "customer.name",
+            "totals": false,
+            "nonzero": true
+          }
         },
         {
           "id": "stock_on_hand",
@@ -2745,7 +2750,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "about to run out"
           ],
           "assumptions": [],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "by": "product.name",
+            "totals": false,
+            "nonzero": false
+          }
         },
         {
           "id": "dead_stock_value",
@@ -2812,7 +2822,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "sitting on the shelf"
           ],
           "assumptions": [],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "by": "product.name",
+            "totals": false,
+            "nonzero": true
+          }
         },
         {
           "id": "sell_through_rate",
@@ -3157,7 +3172,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "assumptions": [
             "Without payment records, part-paid invoices are counted as fully owed."
           ],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "totals": false,
+            "who": "customer.name",
+            "nonzero": true
+          }
         },
         {
           "id": "overdue_receivables",
@@ -3262,7 +3282,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "Without payment records, part-paid invoices are counted as fully owed.",
             "Sales without a due date count as due thirty days after the sale."
           ],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "totals": false,
+            "who": "customer.name",
+            "nonzero": true
+          }
         },
         {
           "id": "supplier_spend",
@@ -7794,7 +7819,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "drifting away"
           ],
           "assumptions": [],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "by": "customer.name",
+            "totals": false,
+            "nonzero": true
+          }
         },
         {
           "id": "stock_on_hand",
@@ -7922,7 +7952,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "about to run out"
           ],
           "assumptions": [],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "by": "product.name",
+            "totals": false,
+            "nonzero": false
+          }
         },
         {
           "id": "dead_stock_value",
@@ -7989,7 +8024,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "sitting on the shelf"
           ],
           "assumptions": [],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "by": "product.name",
+            "totals": false,
+            "nonzero": true
+          }
         },
         {
           "id": "sell_through_rate",
@@ -8334,7 +8374,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "assumptions": [
             "Without payment records, part-paid invoices are counted as fully owed."
           ],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "totals": false,
+            "who": "customer.name",
+            "nonzero": true
+          }
         },
         {
           "id": "overdue_receivables",
@@ -8439,7 +8484,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "Without payment records, part-paid invoices are counted as fully owed.",
             "Sales without a due date count as due thirty days after the sale."
           ],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "totals": false,
+            "who": "customer.name",
+            "nonzero": true
+          }
         },
         {
           "id": "supplier_spend",
@@ -8459,6 +8509,8 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "spend with suppliers",
             "bought from suppliers",
             "supplier orders total",
+            "spend by",
+            "spending by",
             "spend with",
             "spent with"
           ],
@@ -8491,7 +8543,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "short shipped"
           ],
           "assumptions": [],
-          "snapshot": false
+          "snapshot": false,
+          "list": {
+            "by": "product.name",
+            "totals": true,
+            "nonzero": true
+          }
         },
         {
           "id": "fill_rate",
@@ -8586,7 +8643,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "credit utilisation"
           ],
           "assumptions": [],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "totals": false,
+            "who": "customer.name",
+            "nonzero": false
+          }
         },
         {
           "id": "over_credit_limit",
@@ -8633,7 +8695,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "credit limit exceeded"
           ],
           "assumptions": [],
-          "snapshot": true
+          "snapshot": true,
+          "list": {
+            "totals": false,
+            "who": "customer.name",
+            "nonzero": true
+          }
         },
         {
           "id": "days_to_pay",

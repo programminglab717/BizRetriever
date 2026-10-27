@@ -516,22 +516,16 @@ export function interpretWithRules(
     if (!dims.some((d) => 'field' in d && d.field === field) && !valueFields.has(field))
       dims.push({ field });
   };
-  if (
-    ['dead_stock_value', 'days_of_cover'].includes(primary) ||
-    p.metrics.some((m) => /best seller|sells? best/.test(m.phrase))
-  )
-    want('product.name');
+  // How the pack says this measure is listed (M14): "What's about to run out?" by product, "Who
+  // owes me money?" by customer, leaving out the zeros; with `totals`, "How many…" gets the total.
+  const list = metric(primary)?.list;
+  const asksTotal = Boolean(list?.totals) && /^\s*(how (many|much)|total)\b/i.test(question);
+  if (list?.by && !asksTotal) want(list.by);
+  if (list?.who && p.who) want(list.who);
+  if (p.metrics.some((m) => /best seller|sells? best/.test(m.phrase))) want('product.name');
   // "What are my biggest expenses?" lists expense types.
   if (primary === 'expenses_total' && p.rank) want('expense.category');
-  if (primary === 'lapsed_customers' || (p.who && /receivables$/.test(primary)))
-    want('customer.name');
-  if (
-    primary === 'dead_stock_value' ||
-    primary === 'lapsed_customers' ||
-    /receivables$/.test(primary)
-  ) {
-    if (dims.length) having.push({ metric: primary, op: 'gt', value: 0 });
-  }
+  if (list?.nonzero && dims.length) having.push({ metric: primary, op: 'gt', value: 0 });
   if (p.grain && !metric(primary)?.snapshot) dims = [{ time: p.grain }, ...dims].slice(0, 2);
 
   // Filters from recognised values ("on Etsy", "mugs").

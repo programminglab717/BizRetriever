@@ -1,0 +1,374 @@
+# Question evals for the wholesale pack (M14) on the Harbour & Pine demo data, today = 2026-10-13.
+# Same format and scoring as retail.yaml: each `query` case is scored by RESULT against `ref`.
+
+# --- Sales ---------------------------------------------------------------------------------------
+- id: w-sales-last-month
+  q: How much did I sell last month?
+  expect: query
+  demo: true
+  ref: { metrics: [net_sales], timeRange: { preset: last_month } }
+- id: w-sales-this-year
+  q: Total sales this year
+  expect: query
+  ref: { metrics: [net_sales], timeRange: { preset: this_year } }
+- id: w-revenue-last-90
+  q: What was my revenue in the last 90 days?
+  expect: query
+  ref: { metrics: [net_sales], timeRange: { preset: last_90_days } }
+- id: w-sales-by-month
+  q: Show sales by month this year
+  expect: query
+  demo: true
+  ref: { metrics: [net_sales], dimensions: [{ time: month }], timeRange: { preset: this_year } }
+- id: w-sales-by-week
+  q: sales by week in the last 90 days
+  expect: query
+  ref: { metrics: [net_sales], dimensions: [{ time: week }], timeRange: { preset: last_90_days } }
+- id: w-invoices-last-month
+  q: How many invoices did I send last month?
+  expect: query
+  ref: { metrics: [order_count], timeRange: { preset: last_month } }
+- id: w-orders-this-month
+  q: How many orders this month?
+  expect: query
+  ref: { metrics: [order_count], timeRange: { preset: this_month } }
+- id: w-average-invoice
+  q: What's my average invoice value this year?
+  expect: query
+  ref: { metrics: [average_order_value], timeRange: { preset: this_year } }
+- id: w-profit-this-year
+  q: What's my gross profit this year?
+  expect: query
+  ref: { metrics: [gross_profit], timeRange: { preset: this_year } }
+- id: w-margin-this-year
+  q: What's my margin this year?
+  expect: query
+  ref: { metrics: [gross_margin_pct], timeRange: { preset: this_year } }
+- id: w-items-last-month
+  q: How many units did I sell last month?
+  expect: query
+  ref: { metrics: [units_sold], timeRange: { preset: last_month } }
+- id: w-sales-by-channel
+  q: sales by channel this year
+  expect: query
+  ref:
+    {
+      metrics: [net_sales],
+      dimensions: [{ field: sale.channel }],
+      timeRange: { preset: this_year },
+    }
+
+# --- Customers -----------------------------------------------------------------------------------
+- id: w-top-customers
+  q: Who are my top customers?
+  expect: clarify
+- id: w-top-customers-sales
+  q: Top 10 customers by sales this year
+  expect: query
+  demo: true
+  ref:
+    {
+      metrics: [net_sales],
+      dimensions: [{ field: customer.name }],
+      timeRange: { preset: this_year },
+      orderBy: { by: net_sales, dir: desc },
+      limit: 10,
+    }
+- id: w-customers-margin
+  q: Which customers give me the best margin?
+  expect: query
+  ref:
+    {
+      metrics: [gross_margin_pct],
+      dimensions: [{ field: customer.name }],
+      orderBy: { by: gross_margin_pct, dir: desc },
+      limit: 10,
+    }
+- id: w-stopped-ordering
+  q: Which customers stopped ordering?
+  expect: query
+  demo: true
+  ref:
+    {
+      metrics: [lapsed_customers],
+      dimensions: [{ field: customer.name }],
+      having: [{ metric: lapsed_customers, op: gt, value: 0 }],
+    }
+- id: w-accounts-this-month
+  q: How many accounts ordered this month?
+  expect: query
+  ref: { metrics: [customer_count], timeRange: { preset: this_month } }
+- id: w-customers-last-month
+  q: number of customers last month
+  expect: query
+  ref: { metrics: [customer_count], timeRange: { preset: last_month } }
+- id: w-new-customers
+  q: How many new customers did I get this year?
+  expect: query
+  ref: { metrics: [new_customers], timeRange: { preset: this_year } }
+- id: w-spend-per-account
+  q: What's the average spend per account this year?
+  expect: query
+  ref: { metrics: [customer_revenue], timeRange: { preset: this_year } }
+- id: w-sales-by-rep
+  q: sales by rep this year
+  expect: query
+  demo: true
+  ref:
+    {
+      metrics: [net_sales],
+      dimensions: [{ field: customer.sales_rep }],
+      timeRange: { preset: this_year },
+    }
+- id: w-rep-most
+  q: Which rep sold the most this quarter?
+  expect: query
+  ref:
+    {
+      metrics: [net_sales],
+      dimensions: [{ field: customer.sales_rep }],
+      timeRange: { preset: this_quarter },
+      orderBy: { by: net_sales, dir: desc },
+      limit: 1,
+    }
+- id: w-sales-by-type
+  q: sales by type of business
+  expect: query
+  ref: { metrics: [net_sales], dimensions: [{ field: customer.business_type }] }
+- id: w-sales-by-city
+  q: sales by city last month
+  expect: query
+  ref:
+    {
+      metrics: [net_sales],
+      dimensions: [{ field: customer.city }],
+      timeRange: { preset: last_month },
+    }
+- id: w-corner-bloom-sales
+  q: How much did Corner Bloom Café buy this year?
+  expect: query
+  ref:
+    {
+      metrics: [net_sales],
+      filters: [{ field: customer.name, op: eq, values: [Corner Bloom Café] }],
+      timeRange: { preset: this_year },
+    }
+- id: w-hilltop-by-month
+  q: Hilltop Hotel sales by month
+  expect: query
+  ref:
+    {
+      metrics: [net_sales],
+      dimensions: [{ time: month }],
+      filters: [{ field: customer.name, op: eq, values: [Hilltop Hotel] }],
+    }
+
+# --- Money owed ----------------------------------------------------------------------------------
+- id: w-owes-me
+  q: Who owes me money?
+  expect: query
+  demo: true
+  ref:
+    {
+      metrics: [outstanding_receivables],
+      dimensions: [{ field: customer.name }],
+      having: [{ metric: outstanding_receivables, op: gt, value: 0 }],
+    }
+- id: w-owed-total
+  q: How much am I owed?
+  expect: query
+  ref: { metrics: [outstanding_receivables] }
+- id: w-overdue-total
+  q: How much is overdue?
+  expect: query
+  ref: { metrics: [overdue_receivables] }
+- id: w-paying-late
+  q: Which customers are paying late?
+  expect: query
+  ref:
+    {
+      metrics: [overdue_receivables],
+      dimensions: [{ field: customer.name }],
+      having: [{ metric: overdue_receivables, op: gt, value: 0 }],
+    }
+- id: w-over-limit
+  q: Who is over their credit limit?
+  expect: query
+  demo: true
+  ref:
+    {
+      metrics: [over_credit_limit],
+      dimensions: [{ field: customer.name }],
+      having: [{ metric: over_credit_limit, op: gt, value: 0 }],
+    }
+- id: w-over-limit-count
+  q: How many customers are over their credit limit?
+  expect: query
+  ref: { metrics: [over_credit_limit] }
+- id: w-credit-used
+  q: credit used by customer
+  expect: query
+  ref: { metrics: [credit_used_pct], dimensions: [{ field: customer.name }] }
+- id: w-days-to-pay
+  q: How long do customers take to pay?
+  expect: query
+  ref: { metrics: [days_to_pay], timeRange: { preset: last_90_days } }
+  note: Days to get paid has no period of its own; "how long" reads as lately.
+- id: w-days-to-pay-customer
+  q: days to get paid by customer this year
+  expect: query
+  ref:
+    {
+      metrics: [days_to_pay],
+      dimensions: [{ field: customer.name }],
+      timeRange: { preset: this_year },
+    }
+- id: w-dso-by-month
+  q: DSO by month this year
+  expect: query
+  ref: { metrics: [days_to_pay], dimensions: [{ time: month }], timeRange: { preset: this_year } }
+- id: w-days-overdue
+  q: How late is the oldest unpaid invoice?
+  expect: query
+  ref: { metrics: [days_overdue] }
+
+# --- Products and stock --------------------------------------------------------------------------
+- id: w-profit-products
+  q: Which products made me the most profit last month?
+  expect: query
+  demo: true
+  ref:
+    {
+      metrics: [gross_profit],
+      dimensions: [{ field: product.name }],
+      timeRange: { preset: last_month },
+      orderBy: { by: gross_profit, dir: desc },
+      limit: 10,
+    }
+- id: w-best-sellers
+  q: best selling products this year
+  expect: query
+  ref:
+    {
+      metrics: [net_sales],
+      dimensions: [{ field: product.name }],
+      timeRange: { preset: this_year },
+      orderBy: { by: net_sales, dir: desc },
+      limit: 10,
+    }
+- id: w-sales-by-category
+  q: sales by category this year
+  expect: query
+  ref:
+    {
+      metrics: [net_sales],
+      dimensions: [{ field: product.category }],
+      timeRange: { preset: this_year },
+    }
+- id: w-margin-by-category
+  q: margin by category
+  expect: query
+  ref: { metrics: [gross_margin_pct], dimensions: [{ field: product.category }] }
+- id: w-still-to-send
+  q: What's still to send?
+  expect: query
+  demo: true
+  ref:
+    {
+      metrics: [backordered_units],
+      dimensions: [{ field: product.name }],
+      having: [{ metric: backordered_units, op: gt, value: 0 }],
+    }
+- id: w-backorders-last-month
+  q: How many items were backordered in the last 30 days?
+  expect: query
+  ref: { metrics: [backordered_units], timeRange: { preset: last_30_days } }
+- id: w-fill-rate
+  q: What's my fill rate this month?
+  expect: query
+  ref: { metrics: [fill_rate], timeRange: { preset: this_month } }
+- id: w-run-out
+  q: What's about to run out?
+  expect: query
+  demo: true
+  ref:
+    {
+      metrics: [days_of_cover],
+      dimensions: [{ field: product.name }],
+      orderBy: { by: days_of_cover, dir: asc },
+      limit: 10,
+    }
+- id: w-stock-value
+  q: How much money is tied up in stock?
+  expect: query
+  ref: { metrics: [stock_value] }
+- id: w-not-selling
+  q: What's not selling?
+  expect: query
+  ref:
+    {
+      metrics: [dead_stock_value],
+      dimensions: [{ field: product.name }],
+      having: [{ metric: dead_stock_value, op: gt, value: 0 }],
+      orderBy: { by: dead_stock_value, dir: desc },
+    }
+- id: w-stock-levels
+  q: stock levels by product
+  expect: query
+  ref: { metrics: [stock_on_hand], dimensions: [{ field: product.name }] }
+- id: w-supplier-spend
+  q: How much did I spend with suppliers this year?
+  expect: query
+  ref: { metrics: [supplier_spend], timeRange: { preset: this_year } }
+- id: w-spend-by-supplier
+  q: spend by supplier this year
+  expect: query
+  ref:
+    {
+      metrics: [supplier_spend],
+      dimensions: [{ field: supplier.name }],
+      timeRange: { preset: this_year },
+    }
+- id: w-cups-sales
+  q: How many Paper Cups 12oz did I sell last month?
+  expect: query
+  ref:
+    {
+      metrics: [units_sold],
+      filters: [{ field: product.name, op: eq, values: [Paper Cups 12oz] }],
+      timeRange: { preset: last_month },
+    }
+
+# --- Ahead ---------------------------------------------------------------------------------------
+- id: w-ahead-next-month
+  q: How much will I sell next month?
+  expect: estimate
+  estimate: { kind: forecast, metric: net_sales, from: '2026-11-01', to: '2026-12-01' }
+- id: w-ahead-invoices
+  q: How many invoices should I expect next week?
+  expect: estimate
+  estimate: { kind: forecast, metric: order_count, from: '2026-10-19', to: '2026-10-26' }
+- id: w-ahead-goal
+  q: Am I on track for my sales goal?
+  expect: estimate
+  estimate: { kind: goal, metric: net_sales }
+- id: w-ahead-invoice-goal
+  q: Will I hit my invoice goal this month?
+  expect: estimate
+  estimate: { kind: goal, metric: order_count }
+- id: w-ahead-reorder
+  q: What should I reorder?
+  expect: estimate
+  estimate: { kind: reorder }
+- id: w-ahead-not-estimable
+  q: Will my margin go up next month?
+  expect: estimate
+  estimate: { kind: not_estimable, metric: gross_margin_pct }
+
+# --- Not answerable here -------------------------------------------------------------------------
+- id: w-weather
+  q: What will the weather be tomorrow?
+  expect: unanswerable
+- id: w-staff-hours
+  q: How many hours did my staff work last week?
+  expect: unanswerable

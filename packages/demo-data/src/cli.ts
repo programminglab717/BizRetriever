@@ -1,12 +1,13 @@
 /**
- * `pnpm demo:generate [--today YYYY-MM-DD] [--seed N] [--out DIR] [--next-month DIR]`
+ * `pnpm demo:generate [--today YYYY-MM-DD] [--seed N] [--out DIR] [--next-month DIR] [--pack wholesale]`
  * Writes the Fernwood Home & Gift demo files (DEMO_SCRIPT §3) plus ground_truth.json. With
- * `--next-month`, also writes next month's website export there (for trying a re-upload).
+ * `--next-month`, also writes next month's website export there (for trying a re-upload). With
+ * `--pack wholesale`, writes the Harbour & Pine Supply wholesale demo instead (M14).
  */
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 
-import { generateDemoDataset, generateNextMonthUpdate } from './index';
+import { generateDemoDataset, generateNextMonthUpdate, generateWholesaleDataset } from './index';
 
 const { values } = parseArgs({
   options: {
@@ -14,10 +15,24 @@ const { values } = parseArgs({
     seed: { type: 'string', default: '42' },
     out: { type: 'string', default: '.data/demo/fernwood' },
     'next-month': { type: 'string' },
+    pack: { type: 'string', default: 'retail' },
   },
 });
 
 const today = values.today ?? new Date().toISOString().slice(0, 10);
+if (values.pack === 'wholesale') {
+  const out = path.resolve(
+    process.env.INIT_CWD ?? process.cwd(),
+    values.out === '.data/demo/fernwood' ? '.data/demo/harbour' : values.out,
+  );
+  const t = await generateWholesaleDataset({ today, seed: Number(values.seed), outDir: out });
+  console.log(`Harbour & Pine wholesale demo for ${today} written to ${out}`);
+  for (const f of t.files) console.log(`  ${f.file} › ${f.sheet}: ${f.dataRows} rows`);
+  console.log('Stories:');
+  for (const [name, story] of Object.entries(t.stories))
+    console.log(`  ${name}: ${JSON.stringify(story)}`);
+  process.exit(0);
+}
 const outDir = path.resolve(process.env.INIT_CWD ?? process.cwd(), values.out);
 const truth = await generateDemoDataset({ today, seed: Number(values.seed), outDir });
 if (values['next-month']) {

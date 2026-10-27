@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
 
 import type { LLMProvider } from '@bizr/ai';
-import { loadDemoWorkspace } from '@bizr/core/testing';
+import { loadDemoWorkspace, loadWholesaleWorkspace } from '@bizr/core/testing';
 import { closePools } from '@bizr/db';
 import { databaseAvailable } from '@bizr/platform/testing';
 
@@ -13,6 +13,7 @@ import {
   evalEnv,
   loadQuestionCases,
   questionRegressions,
+  questionsFile,
   runQuestionSuite,
   scoreQuestions,
   type QuestionScores,
@@ -21,8 +22,12 @@ import {
 const root = path.resolve(import.meta.dirname, '..');
 const baselinePath = path.join(root, 'baselines', 'questions.json');
 
-/** `pnpm eval -- --suite questions [--case ID] [--limit N] [--demo] [--ai] [--yes] [--update-baseline]` */
+/**
+ * `pnpm eval -- --suite questions [--pack retail|wholesale] [--case ID] [--limit N] [--demo] [--ai]
+ * [--yes] [--update-baseline]`
+ */
 export async function runQuestionsCli(values: {
+  pack?: string | undefined;
   case?: string | undefined;
   limit?: string | undefined;
   demo?: boolean | undefined;
@@ -34,8 +39,16 @@ export async function runQuestionsCli(values: {
     console.log('Question evals need the database (docker compose up -d). Skipped.');
     return 0;
   }
+  const pack = values.pack ?? 'retail';
+  if (!['retail', 'wholesale'].includes(pack)) {
+    console.error('--pack is retail or wholesale');
+    return 1;
+  }
   const mode = values.ai ? 'ai' : 'rules';
-  let cases = loadQuestionCases();
+  // Retail's baselines keep their names; other packs' are "<pack>-<mode>".
+  const baselineKey = pack === 'retail' ? mode : `${pack}-${mode}`;
+  const all = loadQuestionCases(questionsFile(pack));
+  let cases = all;
   if (values.case) cases = cases.filter((c) => c.id === values.case);
   if (values.demo) cases = cases.filter((c) => c.demo);
   if (values.limit) cases = cases.slice(0, Number(values.limit));
@@ -60,13 +73,17 @@ export async function runQuestionsCli(values: {
     provider = getAiProvider();
   }
 
-  console.log(`Loading the demo business (today = ${EVAL_TODAY})…`);
-  const demo = await loadDemoWorkspace({ today: EVAL_TODAY, name: 'Fernwood Question Evals' });
+  console.log(`Loading the ${pack} demo business (today = ${EVAL_TODAY})…`);
+  const demo =
+    pack === 'wholesale'
+      ? await loadWholesaleWorkspace({ today: EVAL_TODAY, name: 'Harbour Question Evals' })
+      : await loadDemoWorkspace({ today: EVAL_TODAY, name: 'Fernwood Question Evals' });
   try {
     const env = await evalEnv(demo.member);
     const results = await runQuestionSuite(env, cases, {
       provider,
       ai: values.ai,
+      all,
       onResult: (r) => {
         console.log(`${r.passed ? 'PASS' : 'FAIL'}  ${r.id}  (${r.origin}, ${r.latencyMs} ms)`);
         if (r.failure) console.log(`      ${r.failure}`);
@@ -78,7 +95,7 @@ export async function runQuestionsCli(values: {
     const baselines = JSON.parse(readFileSync(baselinePath, 'utf8')) as Partial<
       Record<string, QuestionScores>
     >;
-    const previous = baselines[mode];
+    const previous = baselines[baselineKey];
     const full = !values.case && !values.limit && !values.demo;
     const regressed = previous && full ? questionRegressions(scores, previous) : [];
     if (regressed.length > 0)
@@ -88,13 +105,13 @@ export async function runQuestionsCli(values: {
     const reportDir = path.join(root, 'reports');
     mkdirSync(reportDir, { recursive: true });
     writeFileSync(
-      path.join(reportDir, `questions-${mode}-${stamp}.json`),
+      path.join(reportDir, `questions-${baselineKey}-${stamp}.json`),
       JSON.stringify({ mode, scores, results }, null, 2),
     );
     writeFileSync(
-      path.join(reportDir, `questions-${mode}-${stamp}.md`),
+      path.join(reportDir, `questions-${baselineKey}-${stamp}.md`),
       [
-        `# Question eval (${mode}) ${new Date().toISOString()}`,
+        `# Question eval (${pack}, ${mode}) ${new Date().toISOString()}`,
         '',
         '| Metric | Value | Baseline |',
         '|---|---|---|',
@@ -114,9 +131,9 @@ export async function runQuestionsCli(values: {
         console.error('Run the full suite to update the baseline.');
         return 1;
       }
-      baselines[mode] = scores;
+      baselines[baselineKey] = scores;
       writeFileSync(baselinePath, `${JSON.stringify(baselines, null, 2)}\n`);
-      console.log(`Updated the ${mode} question baseline.`);
+      console.log(`Updated the ${baselineKey} question baseline.`);
     }
     return regressed.length > 0 ? 1 : 0;
   } finally {

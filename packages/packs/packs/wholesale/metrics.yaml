@@ -359,6 +359,7 @@ metrics:
       div: [{ ref: net_sales }, { ref: customer_count }]
 
   - id: lapsed_customers
+    list: { by: customer.name, nonzero: true }
     label: Accounts that stopped ordering
     synonyms:
       [
@@ -481,6 +482,7 @@ metrics:
         - { const: 28 }
 
   - id: days_of_cover
+    list: { by: product.name }
     label: Days of stock left
     synonyms:
       [
@@ -501,6 +503,7 @@ metrics:
     unavailable_hint: Upload a stock list and your sales to see how many days of stock you have left.
 
   - id: dead_stock_value
+    list: { by: product.name, nonzero: true }
     label: Money tied up in unsold stock
     synonyms:
       [
@@ -665,6 +668,7 @@ metrics:
     unavailable_hint: Add product costs and upload your expenses to see profit after expenses.
 
   - id: outstanding_receivables
+    list: { who: customer.name, nonzero: true }
     label: Money owed to you
     synonyms:
       ['owes me', 'owe me', 'owed', 'owing', 'unpaid', 'money owed', 'outstanding', 'receivables']
@@ -685,6 +689,7 @@ metrics:
     unavailable_hint: Include a “Paid?” column on your invoices to see money owed to you.
 
   - id: overdue_receivables
+    list: { who: customer.name, nonzero: true }
     label: Overdue money owed
     synonyms: ['overdue', 'late payments', 'paid late', 'past due', 'late paying', 'paying late']
     description: >-
@@ -728,6 +733,8 @@ metrics:
         'spend with suppliers',
         'bought from suppliers',
         'supplier orders total',
+        'spend by',
+        'spending by',
         'spend with',
         'spent with',
       ]
@@ -740,6 +747,7 @@ metrics:
 
   # --- Wholesale (M14) ---------------------------------------------------------------------------
   - id: backordered_units
+    list: { by: product.name, totals: true, nonzero: true }
     label: Items still to send
     synonyms:
       [
@@ -787,6 +795,7 @@ metrics:
     unavailable_hint: Upload your customer list with credit limits.
 
   - id: credit_used_pct
+    list: { who: customer.name }
     label: Credit used
     synonyms:
       ['credit used', 'credit use', 'how much credit', 'of their limit', 'credit utilisation']
@@ -799,6 +808,7 @@ metrics:
     unavailable_hint: Upload your customer list with credit limits, and invoices with a “Paid?” column.
 
   - id: over_credit_limit
+    list: { who: customer.name, nonzero: true }
     label: Customers over their credit limit
     synonyms:
       [

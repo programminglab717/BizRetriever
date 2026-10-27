@@ -23,6 +23,8 @@ export interface AskCatalog {
     reason?: string;
     synonyms: string[];
     defaultTime?: string;
+    /** How it's listed without a breakdown (the pack's `list`, M14). */
+    list?: { by?: string; totals: boolean; who?: string; nonzero: boolean };
   }[];
   dimensions: {
     field: string;
@@ -78,6 +80,7 @@ export async function loadAskContext(member: MemberWorkspace): Promise<AskContex
           ...(row?.unavailableReason ? { reason: row.unavailableReason } : {}),
           synonyms: [...m.synonyms, (row?.label ?? m.label).toLowerCase()],
           ...(m.default_time ? { defaultTime: m.default_time } : {}),
+          ...(m.list ? { list: m.list } : {}),
         };
       }),
       dimensions: pack.metrics.dimensions

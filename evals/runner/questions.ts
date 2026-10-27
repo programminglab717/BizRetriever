@@ -30,6 +30,9 @@ import { z } from 'zod';
  */
 
 export const QUESTIONS_FILE = path.resolve(import.meta.dirname, '../questions/retail.yaml');
+/** Each pack's question set (M14): `questions/<pack>.yaml`, on that pack's demo business. */
+export const questionsFile = (pack: string) =>
+  path.resolve(import.meta.dirname, `../questions/${pack}.yaml`);
 export const EVAL_TODAY = '2026-10-13';
 
 const refSchema = questionSpecSchema.partial().extend({ metrics: z.array(z.string()).min(1) });
@@ -312,10 +315,16 @@ export async function runQuestionCase(
 export async function runQuestionSuite(
   env: EvalEnv,
   cases: QuestionCase[],
-  options: { provider: LLMProvider | null; ai: boolean; onResult?: (r: QuestionResult) => void },
+  options: {
+    provider: LLMProvider | null;
+    ai: boolean;
+    onResult?: (r: QuestionResult) => void;
+    /** Every case of the set, for follow-ups (`after`); the retail set by default. */
+    all?: QuestionCase[];
+  },
 ): Promise<QuestionResult[]> {
   const meanings = new Map<string, Turn>();
-  const all = loadQuestionCases();
+  const all = options.all ?? loadQuestionCases();
   const results: QuestionResult[] = [];
   for (const c of cases) {
     const history: Turn[] = [];

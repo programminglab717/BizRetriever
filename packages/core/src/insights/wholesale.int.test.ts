@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { toAnswerData } from '../ask/answer';
 import { resolvePreset } from '../ask/time';
+import { dashboardView } from '../dashboard/service';
 import { runQuery } from '../semantic/service';
 import { loadWholesaleWorkspace, type WholesaleWorkspace } from '../testing';
 import type { FactValue } from './evaluate';
@@ -84,6 +85,26 @@ describe.skipIf(!hasDb)('the wholesale pack on its demo business (integration)',
       'Gross profit',
       'Money owed to you',
     ]);
+  });
+
+  it('builds the wholesale dashboard with every tile working and nothing left to unlock', async () => {
+    const view = await dashboardView(w.member);
+    expect(view.tiles.map((t) => t.packKey)).toEqual([
+      'net_sales',
+      'gross_profit',
+      'money_owed',
+      'sales_over_time',
+      'days_to_pay',
+      'top_customers',
+      'who_owes',
+      'sales_by_rep',
+      'top_products_profit',
+      'running_low',
+      'backorders',
+      'slow_stock_total',
+    ]);
+    expect(view.tiles.filter((t) => t.error).map((t) => `${t.title}: ${t.error}`)).toEqual([]);
+    expect(view.unlock).toEqual([]);
   });
 
   it('finds the customer over their credit limit', () => {

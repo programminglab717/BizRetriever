@@ -12,7 +12,7 @@ import {
   type ModelProposal,
   type ProfiledSource,
 } from '@bizr/core/ingestion';
-import { generateDemoDataset } from '@bizr/demo-data';
+import { generateDemoDataset, generateWholesaleDataset } from '@bizr/demo-data';
 import { getPack } from '@bizr/packs';
 import { parse } from 'yaml';
 import { z } from 'zod';
@@ -28,7 +28,9 @@ const expectedSchema = z
   .object({
     description: z.string(),
     dateOrder: z.enum(['DMY', 'MDY', 'YMD']).default('MDY'),
-    generator: z.literal('demo').optional(),
+    /** The industry pack the files are read with (M14). */
+    pack: z.enum(['retail', 'wholesale']).default('retail'),
+    generator: z.enum(['demo', 'wholesale-demo']).optional(),
     today: z.string().default('2026-10-13'),
     /** Exact record counts per record type. Types not listed must produce no records. */
     counts: z.record(z.string(), z.number().int().min(0)).default({}),
@@ -92,6 +94,12 @@ async function loadCase(name: string) {
     };
     return { expected, files: readFiles(out) };
   }
+  if (expected.generator === 'wholesale-demo') {
+    const out = mkdtempSync(path.join(tmpdir(), 'eval-harbour-'));
+    const truth = await generateWholesaleDataset({ today: expected.today, seed: 42, outDir: out });
+    expected.counts = { ...truth.counts, stock_count: truth.counts.product! };
+    return { expected, files: readFiles(out) };
+  }
   return { expected, files: readFiles(dir) };
 }
 
@@ -143,7 +151,7 @@ export async function runIngestCase(
 ): Promise<CaseResult> {
   const started = Date.now();
   const { expected, files } = await loadCase(name);
-  const pack = getPack('retail');
+  const pack = getPack(expected.pack);
   const settings = { currency: 'USD', dateOrder: expected.dateOrder, today: expected.today };
   const ctx = {
     pack,

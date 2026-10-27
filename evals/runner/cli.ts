@@ -35,6 +35,7 @@ const { values } = parseArgs({
     'update-baseline': { type: 'boolean', default: false },
     suite: { type: 'string', default: 'all' },
     demo: { type: 'boolean', default: false },
+    pack: { type: 'string', default: 'retail' },
   },
 });
 

@@ -229,6 +229,21 @@ export const packMetricSchema = z
     assumptions: z.array(z.string()).default([]),
     /** Shown as a snapshot ("as of your latest count") rather than over a period. */
     snapshot: z.boolean().default(false),
+    /**
+     * How a question about it is answered without a breakdown (M14): `by` lists it by that field
+     * ("What's about to run out?" → by product); with `totals`, a "how many/how much" question gets
+     * the total instead; `who` lists it by that field for "who" questions ("Who owes me money?");
+     * `nonzero` leaves out rows where it's zero.
+     */
+    list: z
+      .object({
+        by: fieldRef.optional(),
+        totals: z.boolean().default(false),
+        who: fieldRef.optional(),
+        nonzero: z.boolean().default(false),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export type PackMetric = z.infer<typeof packMetricSchema>;

@@ -1,0 +1,24 @@
+description: >-
+  The generated Harbour & Pine wholesale demo (M14): invoices, a customer account list, payments
+  received, a warehouse stock list and purchase orders. Counts come from its answer key.
+pack: wholesale
+generator: wholesale-demo
+today: '2026-10-13'
+dateOrder: MDY
+mappings:
+  - { file: Sales invoices.xlsx, header: Invoice No, field: sale.order_number }
+  - { file: Sales invoices.xlsx, header: Account, field: sale.customer }
+  - { file: Sales invoices.xlsx, header: Due Date, field: sale.due_date }
+  - { file: Sales invoices.xlsx, header: Status, field: sale.payment_status }
+  - { file: Sales invoices.xlsx, header: Backordered, field: sale_line.quantity_backordered }
+  - { file: Customer accounts.csv, header: Acct No, field: customer.account_number }
+  - { file: Customer accounts.csv, header: Rep, field: customer.sales_rep }
+  - { file: Customer accounts.csv, header: Terms, field: customer.payment_terms_days }
+  - { file: Customer accounts.csv, header: Credit Limit, field: customer.credit_limit }
+  - { file: Payments received.xlsx, header: Invoice, field: payment.sale }
+  - { file: Payments received.xlsx, header: Amount, field: payment.amount }
+  - { file: Payments received.xlsx, header: Date, field: payment.received_date }
+  - { file: Warehouse stock.xlsx, header: Case Size, field: product.pack_size }
+  - { file: Warehouse stock.xlsx, header: In Stock, field: stock_count.quantity_on_hand }
+  - { file: Sales invoices.xlsx, header: Invoice No, field: sale_line.sale }
+  - { file: Sales invoices.xlsx, header: Account, field: customer.name }
