@@ -2,13 +2,14 @@ import { auditEvent, getAppDb } from '@bizr/db';
 import { getPack } from '@bizr/packs';
 
 import { getAnswer } from '../ask/service';
-import { localeFor, type ViewOptions } from '../ask/view';
+import { answerView, localeFor, tableView, type ViewOptions } from '../ask/view';
 import type { AnswerData } from '../ask/answer';
-import { tileData } from '../dashboard/service';
+import { dashboardView, tileData } from '../dashboard/service';
 import type { DashboardRange } from '../dashboard/model';
 import { allRecords, listRecordTypes } from '../records/service';
 import type { MemberWorkspace } from '../workspaces/service';
 import { answerSheet, fieldColumn, fileNameFor, type Sheet } from './sheet';
+import { toPdf, type PdfBlock } from './pdf';
 import { toCsv, toXlsx, type AboutLine } from './write';
 
 /**
@@ -17,7 +18,7 @@ import { toCsv, toXlsx, type AboutLine } from './write';
  * records themselves); nothing is recalculated here.
  */
 
-export type DownloadFormat = 'csv' | 'xlsx';
+export type DownloadFormat = 'csv' | 'xlsx' | 'pdf';
 
 export interface Download {
   fileName: string;
@@ -31,7 +32,11 @@ export const RECORDS_PER_TYPE_MAX = 100_000;
 const CONTENT_TYPES: Record<DownloadFormat, string> = {
   csv: 'text/csv; charset=utf-8',
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  pdf: 'application/pdf',
 };
+
+const words = (segments: readonly { text: string }[] | undefined) =>
+  segments?.map((s) => s.text).join('') ?? '';
 
 function viewOptions(member: MemberWorkspace): ViewOptions {
   return {
@@ -59,7 +64,7 @@ function rowsNote(data: AnswerData): string | undefined {
 }
 
 async function encode(
-  format: DownloadFormat,
+  format: 'csv' | 'xlsx',
   title: string,
   sheet: Sheet,
   about: AboutLine[],
@@ -68,6 +73,19 @@ async function encode(
     fileName: fileNameFor(title, format),
     contentType: CONTENT_TYPES[format],
     body: format === 'csv' ? new TextEncoder().encode(toCsv(sheet)) : await toXlsx([sheet], about),
+  };
+}
+
+async function pdfFile(
+  title: string,
+  subtitle: string,
+  blocks: PdfBlock[],
+  about: AboutLine[],
+): Promise<Download> {
+  return {
+    fileName: fileNameFor(title, 'pdf'),
+    contentType: CONTENT_TYPES.pdf,
+    body: await toPdf({ title, subtitle, blocks, about }),
   };
 }
 
@@ -92,6 +110,24 @@ export async function answerDownload(
     { label: 'Asked', value: madeAt(member, a.createdAt) },
     { label: 'Downloaded', value: madeAt(member, now) },
   ];
+  if (format === 'pdf') {
+    const v = answerView(a, viewOptions(member));
+    return pdfFile(
+      c.title,
+      `${member.workspace.name} · “${a.question}”`,
+      [
+        {
+          paragraphs: [words(v.headline)].filter(Boolean),
+          ...(v.chart === 'kpi' && v.kpis?.length ? { kpis: v.kpis } : {}),
+          ...(v.chart ? { chart: v.chart } : {}),
+          ...(v.table ? { table: v.table } : {}),
+          ...(v.steps?.length ? { steps: v.steps } : {}),
+          ...(v.assumptions.length ? { notes: v.assumptions } : {}),
+        },
+      ],
+      about.filter((l) => l.label !== 'Assumption' && l.label !== 'Answer'),
+    );
+  }
   const sheet = answerSheet('Answer', data, {
     ...viewOptions(member),
     comparedWith: c.comparedWith,
@@ -118,11 +154,47 @@ export async function tileDownload(
     ...(rows ? [{ label: 'Note', value: rows }] : []),
     { label: 'Downloaded', value: madeAt(member, now) },
   ];
+  if (format === 'pdf') {
+    const table = tableView(t.data, viewOptions(member));
+    return pdfFile(
+      `${t.title} ${t.datesLabel}`,
+      `${member.workspace.name} · ${t.datesLabel}`,
+      [{ chart: t.chart, table, ...(t.note ? { notes: [t.note] } : {}) }],
+      about.filter((l) => l.label !== 'Tile'),
+    );
+  }
   const sheet = answerSheet(t.title, t.data, {
     ...viewOptions(member),
     comparedWith: t.comparedWith,
   });
   return encode(format, `${t.title} ${t.datesLabel}`, sheet, about);
+}
+
+/**
+ * The whole dashboard as one PDF (M15): every tile as the dashboard shows it for its dates, the
+ * key numbers as figures, the others as a chart and table. Tiles that can't be worked out say so.
+ */
+export async function dashboardPdf(
+  member: MemberWorkspace,
+  range?: DashboardRange,
+  now = new Date(),
+): Promise<Download> {
+  const view = await dashboardView(member, range);
+  const blocks: PdfBlock[] = view.tiles.map((t) => ({
+    heading: t.datesLabel ? `${t.title} (${t.datesLabel})` : t.title,
+    ...(t.error
+      ? { paragraphs: [t.error] }
+      : t.kpis?.length && t.chart === 'kpi'
+        ? { kpis: t.kpis }
+        : { chart: t.chart, ...(t.table ? { table: t.table } : {}) }),
+    ...(t.note ? { notes: [t.note] } : {}),
+  }));
+  return pdfFile(
+    `${member.workspace.name} dashboard`,
+    `${view.rangeLabel}${view.comparedWith ? `, compared with ${view.comparedWith}` : ''}`,
+    blocks,
+    [{ label: 'Made', value: madeAt(member, now) }],
+  );
 }
 
 /**

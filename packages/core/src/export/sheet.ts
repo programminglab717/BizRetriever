@@ -106,7 +106,7 @@ export function fieldColumn(
 }
 
 /** A file name from a title: letters, digits, spaces and dashes only. */
-export function fileNameFor(title: string, ext: 'csv' | 'xlsx'): string {
+export function fileNameFor(title: string, ext: 'csv' | 'xlsx' | 'pdf'): string {
   const base =
     title
       .normalize('NFKD')

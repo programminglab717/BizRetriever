@@ -464,6 +464,7 @@ export async function tileData(
   requested?: DashboardRange,
 ): Promise<{
   title: string;
+  chart: ChartType;
   data: AnswerData;
   datesLabel: string;
   comparedWith?: string;
@@ -487,6 +488,7 @@ export async function tileData(
   const { data, note } = withoutBlankGroups(toAnswerData(r), getPack(ws.packId));
   return {
     title: tile.title,
+    chart: tile.chart,
     data,
     datesLabel: periodLabel(periodOf(spec.timeRange, cal)),
     ...(r.previousPeriod ? { comparedWith: periodLabel(r.previousPeriod) } : {}),

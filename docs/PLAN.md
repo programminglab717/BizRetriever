@@ -723,6 +723,50 @@ industry choices from the pack, and a new pack needs no new core code. The owner
 
 ---
 
+## Build order after M14 (owner, 2026-10-27)
+
+The owner confirmed M14 and asked for everything left that needs no outside account or key to be
+built, without the AI key ("we will test once we are done completely"). Each milestone below is
+planned here when it starts and checked without AI. Items that need an account (billing, WhatsApp,
+hosting, Sentry) wait with the other owner items.
+
+1. M15 — Reports: PDF answers and dashboards, scheduled report emails
+2. M16 — Platform: public API, MCP server, webhooks
+3. M17 — Production storage: S3/R2 driver and moving files to it
+4. M18 — More connectors (built and tested on recorded answers, hidden until keys): QuickBooks,
+   Xero, Square, WooCommerce
+5. M19 — Team extras: transfer ownership, @mentions in notes
+6. M20 — Multi-currency and a second language
+
+---
+
+## M15 — Reports you can send ($0)
+
+**Goal:** an answer or the whole dashboard can be saved as a tidy PDF to print or send to an
+accountant, and an owner can have the dashboard or a saved question emailed to them every week or
+month, worked out fresh each time.
+
+**Depends on:** M4 (answers), M5 (dashboard), M9 (downloads, emails).
+
+- [ ] PDF writer (free library, no service): title, business, dates, the answer's sentence, a simple
+  chart drawn by code, the table, how it was worked out, assumptions, page numbers; every number is
+  the executed query's, formatted as the app shows it
+- [ ] "Download as PDF" for answers, dashboard tiles and the whole dashboard
+- [ ] Scheduled reports: "Email me this every Monday / on the 1st" for the dashboard and for a
+  question; run fresh by the daily job, sent once per period, with an unsubscribe link; anyone in
+  the business (viewers too) can schedule reports for themselves
+- [ ] Settings list of my reports (pause, delete); tests, e2e, docs
+
+**Acceptance:**
+
+- A PDF of an answer holds the same numbers as its Excel download, and the dashboard PDF every tile
+  that works on screen.
+- A weekly report is sent once a week however often the job runs, re-runs the question with that
+  day's data, and stops when unsubscribed or deleted.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |

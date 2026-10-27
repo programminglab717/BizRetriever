@@ -110,6 +110,18 @@ export function DashboardBoard({
         <span className="text-sm text-muted-foreground" data-testid="range-label">
           {view.rangeLabel}
         </span>
+        <a
+          className="text-sm font-medium underline-offset-4 hover:underline"
+          href={`/api/w/${slug}/dashboard/download${
+            'preset' in view.range.range
+              ? `?range=${view.range.range.preset}&compare=${view.range.compare ? 1 : 0}`
+              : ''
+          }`}
+          download
+          data-testid="dashboard-pdf"
+        >
+          Download as PDF
+        </a>
         {view.canUndo && editor && (
           <Button variant="ghost" size="sm" className="ml-auto" disabled={pending} onClick={undo}>
             <Undo2 /> Undo last change

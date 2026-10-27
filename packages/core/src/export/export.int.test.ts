@@ -10,7 +10,8 @@ import { askQuestion } from '../ask/service';
 import { currentDashboard, ensureDefaultDashboard } from '../dashboard/service';
 import { listRecordTypes } from '../records/service';
 import { loadDemoWorkspace, type DemoWorkspace } from '../testing/demo-workspace';
-import { allDataDownload, answerDownload, tileDownload } from './service';
+import { pdfText } from '../testing/pdf';
+import { allDataDownload, answerDownload, dashboardPdf, tileDownload } from './service';
 
 /** Downloads (M9, ADR-056): the file holds the same values the owner saw. */
 const hasDb = await databaseAvailable();
@@ -64,6 +65,42 @@ describe.skipIf(!hasDb)('downloads (integration)', () => {
     expect(wb.worksheets[0]!.rowCount).toBe(data.rows.length + 1);
     const about = wb.worksheets[1]!.getColumn(2).values.map(String);
     expect(about).toContain('Net sales by channel last month');
+  }, 60_000);
+
+  it('makes a PDF of an answer with the same numbers the owner saw (M15)', async () => {
+    const a = await askQuestion(
+      demo.member,
+      demo.ownerId,
+      { question: 'Net sales by channel last month' },
+      noAi,
+    );
+    const pdf = await answerDownload(demo.member, a.answerId, 'pdf');
+    expect(pdf!.contentType).toBe('application/pdf');
+    expect(pdf!.fileName).toMatch(/\.pdf$/);
+    const text = pdfText(pdf!.body).join('\n');
+    expect(text).toContain(a.content.title);
+    // Every formatted value of the table, as the answer card shows it.
+    const money = a.content.data!.columns.find((c) => c.format === 'money')!;
+    for (const r of a.content.data!.rows) {
+      const n = Number(r[money.key]).toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      });
+      expect(text).toContain(n);
+    }
+  }, 60_000);
+
+  it('makes a PDF of the whole dashboard, one section per tile (M15)', async () => {
+    await ensureDefaultDashboard(demo.member.workspace);
+    const { tiles } = await currentDashboard(demo.member);
+    const pdf = await dashboardPdf(demo.member, {
+      range: { preset: 'last_90_days' },
+      compare: true,
+    });
+    const text = pdfText(pdf.body).join('\n');
+    expect(pdf.fileName).toBe('Fernwood Export Test dashboard.pdf');
+    for (const t of tiles) expect(text).toContain(t.title);
+    expect(text).not.toContain('Something went wrong');
   }, 60_000);
 
   it('gives nothing for answers without numbers or from elsewhere', async () => {

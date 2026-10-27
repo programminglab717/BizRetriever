@@ -249,7 +249,9 @@ export function AnswerCard({
           <Button variant="ghost" size="sm" onClick={onFollowUp}>
             Ask a follow-up
           </Button>
-          {answer.table && <DownloadLinks href={`/api/w/${slug}/answers/${answer.id}/download`} />}
+          {answer.table && (
+            <DownloadLinks href={`/api/w/${slug}/answers/${answer.id}/download`} pdf />
+          )}
           <span className="ml-auto flex items-center gap-1">
             <Button
               variant="ghost"
@@ -302,7 +304,7 @@ export function AnswerCard({
 }
 
 /** "Download: Excel · CSV" for an answer or a tile. Plain links, so the browser saves the file. */
-export function DownloadLinks({ href }: { href: string }) {
+export function DownloadLinks({ href, pdf = false }: { href: string; pdf?: boolean }) {
   return (
     <span className="flex items-center gap-1 text-sm text-muted-foreground">
       <Download className="size-4" aria-hidden />
@@ -322,6 +324,18 @@ export function DownloadLinks({ href }: { href: string }) {
       >
         CSV
       </a>
+      {pdf && (
+        <>
+          <span aria-hidden>·</span>
+          <a
+            className="rounded px-1 font-medium text-foreground underline-offset-4 hover:underline"
+            href={`${href}?format=pdf`}
+            download
+          >
+            PDF
+          </a>
+        </>
+      )}
     </span>
   );
 }

@@ -1,9 +1,9 @@
 import type { Download, DownloadFormat } from '@bizr/core/export';
 
-/** `?format=csv|xlsx`, Excel when missing. */
+/** `?format=csv|xlsx|pdf`, Excel when missing. */
 export function formatParam(url: URL): DownloadFormat | null {
   const f = url.searchParams.get('format') ?? 'xlsx';
-  return f === 'csv' || f === 'xlsx' ? f : null;
+  return f === 'csv' || f === 'xlsx' || f === 'pdf' ? f : null;
 }
 
 /** A file to save, never shown inline or cached. */

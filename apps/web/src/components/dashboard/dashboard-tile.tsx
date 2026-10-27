@@ -201,6 +201,15 @@ export function DashboardTile({
                   >
                     Download as CSV
                   </a>
+                  <a
+                    role="menuitem"
+                    className="rounded px-3 py-2 hover:bg-accent"
+                    href={`/api/w/${slug}/dashboard/tiles/${tile.id}/download?format=pdf${rangeQuery}`}
+                    download
+                    onClick={() => setMenu(false)}
+                  >
+                    Download as PDF
+                  </a>
                 </>
               )}
               <Link

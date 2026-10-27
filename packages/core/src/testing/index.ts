@@ -4,3 +4,4 @@ export {
   type DemoWorkspace,
   type WholesaleWorkspace,
 } from './demo-workspace';
+export { pdfText } from './pdf';
