@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useCanChange } from '@/components/shell/can-change';
+import { Notes } from '@/components/team/notes';
 
 import { AnswerChart, AnswerTable, KpiCards, type NumberStyle } from './answer-chart';
 
@@ -294,6 +295,7 @@ export function AnswerCard({
             </div>
           </div>
         )}
+        <Notes slug={slug} subject={{ kind: 'answer', id: answer.id }} />
       </CardContent>
     </Card>
   );

@@ -214,6 +214,8 @@ export function weeklySummaryEmail(
   ctx: EmailContext,
   /** "Net sales: October 2026 so far: …", worked out by code (planning/text.ts). */
   goals: readonly string[] = [],
+  /** Insights handed to this person (M13), as stored. */
+  forYou: readonly string[] = [],
 ): Email {
   const week = weekLabel(digest.period);
   const kpiLine = (k: DigestContent['kpis'][number]) =>
@@ -238,6 +240,13 @@ export function weeklySummaryEmail(
     html.push(
       '<p style="margin-bottom:4px">Your goals:</p>',
       `<ul style="padding-left:20px;margin-top:0">${goals.map((g) => `<li>${escapeHtml(g)}</li>`).join('')}</ul>`,
+    );
+  }
+  if (forYou.length) {
+    text.push('', 'Handed to you:', ...forYou.map((t) => `• ${plainText(t)}`));
+    html.push(
+      '<p style="margin-bottom:4px">Handed to you:</p>',
+      `<ul style="padding-left:20px;margin-top:0">${forYou.map((t) => `<li>${htmlText(t)}</li>`).join('')}</ul>`,
     );
   }
   if (digest.insights.length) {
@@ -401,6 +410,23 @@ async function deliver(
   }
 }
 
+/** What's been handed to this person and is still open (M13), most important first. */
+async function handedTo(workspaceId: string, userId: string): Promise<string[]> {
+  const rows = await getAppDb()
+    .select({ text: insight.text })
+    .from(insight)
+    .where(
+      and(
+        eq(insight.workspaceId, workspaceId),
+        eq(insight.assignedTo, userId),
+        inArray(insight.status, ['new', 'seen']),
+      ),
+    )
+    .orderBy(desc(insight.score))
+    .limit(10);
+  return rows.map((r) => r.text);
+}
+
 /** This month's goals as sentences for the summary. A problem here never stops the email. */
 async function goalText(target: InsightTarget, now: Date): Promise<string[]> {
   try {
@@ -491,7 +517,13 @@ export async function sendInsightEmails(
           p.userId,
           'weekly_summary',
           fresh,
-          weeklySummaryEmail(p.email, digest.content, ctxFor(p, 'weekly_summary'), goals),
+          weeklySummaryEmail(
+            p.email,
+            digest.content,
+            ctxFor(p, 'weekly_summary'),
+            goals,
+            await handedTo(ws.id, p.userId),
+          ),
         ))
       )
         summary.weeklySummaries += 1;

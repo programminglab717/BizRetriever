@@ -148,6 +148,13 @@
       "when": 1793061641645,
       "tag": "0020_email_retry",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793062281341,
+      "tag": "0021_team_notes",
+      "breakpoints": true
     }
   ]
 }

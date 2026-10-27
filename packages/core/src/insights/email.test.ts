@@ -62,6 +62,21 @@ describe('weeklySummaryEmail', () => {
     expect(e.html).not.toContain('<Home>');
   });
 
+  it('lists what was handed to this person, escaped', () => {
+    const mine = weeklySummaryEmail(
+      'avery@example.test',
+      digest,
+      ctx,
+      [],
+      ['**Linen Napkins** are selling <i>slower</i>'],
+    );
+    expect(mine.text).toContain('Handed to you:\n• Linen Napkins are selling <i>slower</i>');
+    expect(mine.html).toContain(
+      '<strong>Linen Napkins</strong> are selling &lt;i&gt;slower&lt;/i&gt;',
+    );
+    expect(e.text).not.toContain('Handed to you');
+  });
+
   it('has a one-click unsubscribe', () => {
     expect(e.headers).toEqual({
       'List-Unsubscribe': `<${ctx.unsubscribeUrl}>`,

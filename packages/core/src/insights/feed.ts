@@ -31,6 +31,7 @@ export type InsightCard = Pick<
   | 'status'
   | 'firstSeenAt'
   | 'lastSeenAt'
+  | 'assignedTo'
 >;
 
 const cardColumns = {
@@ -45,6 +46,7 @@ const cardColumns = {
   status: insight.status,
   firstSeenAt: insight.firstSeenAt,
   lastSeenAt: insight.lastSeenAt,
+  assignedTo: insight.assignedTo,
 };
 
 export interface LastRun {
@@ -85,7 +87,13 @@ export async function lastInsightRun(
 
 export async function getInsights(
   member: MemberWorkspace,
-  options: { limit?: number; category?: InsightCategory; now?: Date } = {},
+  options: {
+    limit?: number;
+    category?: InsightCategory;
+    now?: Date;
+    /** Only those handed to this person (Home's "For you", M13). */
+    assignedTo?: string;
+  } = {},
 ): Promise<InsightOverview> {
   const db = getAppDb();
   const insights = await db
@@ -96,6 +104,7 @@ export async function getInsights(
         eq(insight.workspaceId, member.workspace.id),
         active,
         ...(options.category ? [eq(insight.category, options.category)] : []),
+        ...(options.assignedTo ? [eq(insight.assignedTo, options.assignedTo)] : []),
       ),
     )
     .orderBy(desc(insight.score), desc(insight.lastSeenAt))

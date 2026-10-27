@@ -3,6 +3,7 @@ import { listRuns } from '@bizr/core/ingestion';
 import { currentDigest, getInsights, homeKpis } from '@bizr/core/insights';
 import { localeFor } from '@bizr/core/ask';
 import { goalProgress } from '@bizr/core/planning';
+import { listNotes } from '@bizr/core/team';
 import type { Route } from 'next';
 import Link from 'next/link';
 
@@ -102,7 +103,15 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       </div>
     );
 
-  const overview = await getInsights(member, { limit: 5 });
+  const [overview, forYou] = await Promise.all([
+    getInsights(member, { limit: 5 }),
+    getInsights(member, { assignedTo: member.user.id, limit: 20 }),
+  ]);
+  const notes = await listNotes(member, member.user.id, 'insight', [
+    ...forYou.insights.map((i) => i.id),
+    ...overview.insights.map((i) => i.id),
+  ]);
+  const card = ({ firstSeenAt: _f, lastSeenAt: _l, ...i }: (typeof overview.insights)[number]) => i;
   // The data changed or a new day began since the last check: look again (one run per business).
   if (overview.stale) await queueInsights(member.workspace.id, 'home');
   const [kpis, digest, goals] = await Promise.all([
@@ -167,6 +176,19 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       {digest && (
         <DigestCard slug={slug} id={digest.id} content={digest.content} weekLabel={weekLabel} />
       )}
+      {forYou.insights.length > 0 && (
+        <section className="grid gap-3" aria-labelledby="for-you" data-testid="for-you">
+          <h2 id="for-you" className="text-lg font-semibold">
+            For you
+          </h2>
+          <InsightFeed
+            slug={slug}
+            insights={forYou.insights.map(card)}
+            notes={notes}
+            label="For you"
+          />
+        </section>
+      )}
       <section className="grid gap-3" aria-labelledby="attention">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="attention" className="text-lg font-semibold">
@@ -184,7 +206,8 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
         ) : (
           <InsightFeed
             slug={slug}
-            insights={overview.insights.map(({ firstSeenAt: _f, lastSeenAt: _l, ...i }) => i)}
+            insights={overview.insights.filter((i) => i.assignedTo !== member.user.id).map(card)}
+            notes={notes}
           />
         )}
         {overview.waitingForHistory && (

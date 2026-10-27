@@ -1,6 +1,7 @@
 'use client';
 
 import type { InsightCard as Card } from '@bizr/core/insights';
+import type { NoteView } from '@bizr/core/team';
 import {
   BadgePercent,
   MoreVertical,
@@ -13,9 +14,13 @@ import {
 } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { dismiss, markSeen } from '@/app/w/[slug]/insights/actions';
+import { assignAction, doneAction } from '@/app/w/[slug]/team-actions';
+import { Notes } from '@/components/team/notes';
+import { useTeam } from '@/components/team/team-context';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useCanChange } from '@/components/shell/can-change';
@@ -62,13 +67,29 @@ function Segments({ segments }: { segments: { text: string; bold?: true }[] }) {
 function InsightItem({
   slug,
   insight,
+  notes,
   onGone,
 }: {
   slug: string;
   insight: InsightCardData;
+  notes: NoteView[] | undefined;
   onGone: (id: string) => void;
 }) {
   const editor = useCanChange();
+  const { me, people } = useTeam();
+  const router = useRouter();
+  const holder = insight.assignedTo
+    ? insight.assignedTo === me
+      ? 'you'
+      : (people.find((p) => p.id === insight.assignedTo)?.name ?? 'someone')
+    : null;
+  const team = (fn: () => Promise<{ ok: true } | { ok: false; error: string }>) =>
+    start(async () => {
+      setMenu(false);
+      const r = await fn();
+      if (r.ok) router.refresh();
+      else setError(r.error);
+    });
   const [menu, setMenu] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -101,6 +122,14 @@ function InsightItem({
               New
             </span>
           )}
+          {holder && (
+            <span
+              className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-900"
+              data-testid="assigned"
+            >
+              For {holder}
+            </span>
+          )}
         </div>
         <p className="leading-snug">
           <Segments segments={insight.headline} />
@@ -110,13 +139,26 @@ function InsightItem({
             <Segments segments={insight.context} />
           </p>
         )}
-        {insight.action && (
-          <div>
-            <Button asChild size="sm" variant="outline">
-              <Link href={actionHref(slug, insight.action) as Route}>{insight.action.label}</Link>
-            </Button>
+        {(insight.action || holder === 'you') && (
+          <div className="flex flex-wrap gap-2">
+            {insight.action && (
+              <Button asChild size="sm" variant="outline">
+                <Link href={actionHref(slug, insight.action) as Route}>{insight.action.label}</Link>
+              </Button>
+            )}
+            {holder === 'you' && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={pending}
+                onClick={() => team(() => doneAction(slug, insight.id))}
+              >
+                Mark done
+              </Button>
+            )}
           </div>
         )}
+        <Notes slug={slug} subject={{ kind: 'insight', id: insight.id }} initial={notes} />
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
       <div className="relative">
@@ -135,6 +177,28 @@ function InsightItem({
             role="menu"
             className="absolute right-0 z-10 mt-1 grid w-48 rounded-md border bg-popover p-1 text-sm shadow-md"
           >
+            {editor &&
+              people
+                .filter((p) => p.id !== insight.assignedTo)
+                .map((p) => (
+                  <button
+                    key={p.id}
+                    role="menuitem"
+                    className="rounded px-3 py-2 text-left hover:bg-accent"
+                    onClick={() => team(() => assignAction(slug, insight.id, p.id))}
+                  >
+                    {p.id === me ? 'I’ll deal with it' : `Hand to ${p.name}`}
+                  </button>
+                ))}
+            {editor && insight.assignedTo && (
+              <button
+                role="menuitem"
+                className="rounded px-3 py-2 text-left hover:bg-accent"
+                onClick={() => team(() => assignAction(slug, insight.id, null))}
+              >
+                Take it back
+              </button>
+            )}
             {editor && (
               <>
                 <button
@@ -168,7 +232,20 @@ function InsightItem({
 }
 
 /** The insight cards, most important first. Showing them marks them as seen. */
-export function InsightFeed({ slug, insights }: { slug: string; insights: InsightCardData[] }) {
+export function InsightFeed({
+  slug,
+  insights,
+  notes = {},
+  empty,
+  label = 'Insights',
+}: {
+  slug: string;
+  insights: InsightCardData[];
+  notes?: Record<string, NoteView[]>;
+  /** Shown instead of the usual "nothing needs your attention". */
+  empty?: string;
+  label?: string;
+}) {
   const [gone, setGone] = useState<Set<string>>(new Set());
   const marked = useRef(false);
   useEffect(() => {
@@ -181,16 +258,18 @@ export function InsightFeed({ slug, insights }: { slug: string; insights: Insigh
   if (shown.length === 0)
     return (
       <p className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
-        Nothing needs your attention right now. 🎉 We check every time your data changes.
+        {empty ??
+          'Nothing needs your attention right now. 🎉 We check every time your data changes.'}
       </p>
     );
   return (
-    <ul className="grid gap-3" aria-label="Insights">
+    <ul className="grid gap-3" aria-label={label}>
       {shown.map((i) => (
         <InsightItem
           key={i.id}
           slug={slug}
           insight={i}
+          notes={notes[i.id] ?? []}
           onGone={(id) => setGone((g) => new Set(g).add(id))}
         />
       ))}

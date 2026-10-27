@@ -1,4 +1,5 @@
 import { getInsights } from '@bizr/core/insights';
+import { listNotes } from '@bizr/core/team';
 import { insightCategories, type InsightCategory } from '@bizr/packs';
 import type { Route } from 'next';
 import Link from 'next/link';
@@ -30,6 +31,12 @@ export default async function InsightsPage({
   const member = await requireWorkspace(slug);
   const chosen = insightCategories.find((c) => c === category);
   const overview = await getInsights(member, chosen ? { category: chosen } : {});
+  const notes = await listNotes(
+    member,
+    member.user.id,
+    'insight',
+    overview.insights.map((i) => i.id),
+  );
   if (overview.stale && member.workspace.dataVersion > 0)
     await queueInsights(member.workspace.id, 'home');
   const chip = (c: InsightCategory | undefined, label: string) => (
@@ -69,6 +76,7 @@ export default async function InsightsPage({
         key={chosen ?? 'all'}
         slug={slug}
         insights={overview.insights.map(({ firstSeenAt: _f, lastSeenAt: _l, ...i }) => i)}
+        notes={notes}
       />
     </div>
   );

@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { teammates } from '@bizr/core/team';
 import { canChange } from '@bizr/core/workspaces';
 
 import { CanChangeProvider } from '@/components/shell/can-change';
+import { TeamProvider } from '@/components/team/team-context';
 import { BottomNav, SidebarNav } from '@/components/shell/nav';
 import { SignOutButton } from '@/components/shell/sign-out-button';
 import { requireWorkspace } from '@/lib/session';
@@ -30,8 +32,10 @@ export default async function WorkspaceLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { workspace, user, role } = await requireWorkspace(slug);
+  const member = await requireWorkspace(slug);
+  const { workspace, user, role } = member;
   const editor = canChange(role);
+  const people = await teammates(member);
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_1fr]">
@@ -64,7 +68,9 @@ export default async function WorkspaceLayout({
           {workspace.isDemo && <DemoBadge className="ml-2" />}
         </header>
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 md:px-8 md:pb-10 md:pt-10">
-          <CanChangeProvider value={editor}>{children}</CanChangeProvider>
+          <CanChangeProvider value={editor}>
+            <TeamProvider value={{ me: user.id, people }}>{children}</TeamProvider>
+          </CanChangeProvider>
         </main>
       </div>
       <BottomNav slug={slug} />

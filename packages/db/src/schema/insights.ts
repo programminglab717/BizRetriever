@@ -78,10 +78,15 @@ export const insight = app.table(
     /** How serious it was when dismissed: it comes back only if it gets worse. */
     dismissedLevel: text('dismissed_level', { enum: insightLevels }),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    /** Handed to a person to deal with (M13): on their Home and in their weekly email. */
+    assignedTo: uuid('assigned_to').references(() => user.id, { onDelete: 'set null' }),
+    assignedBy: uuid('assigned_by').references(() => user.id, { onDelete: 'set null' }),
+    assignedAt: timestamp('assigned_at', { withTimezone: true }),
   },
   (t) => [
     unique('insight_fingerprint_unique').on(t.workspaceId, t.fingerprint),
     index('insight_feed_idx').on(t.workspaceId, t.status, t.score),
+    index('insight_assigned_idx').on(t.workspaceId, t.assignedTo),
     check('insight_level_check', inList(t.level.name, insightLevels)),
     check('insight_status_check', inList(t.status.name, insightStatuses)),
   ],
