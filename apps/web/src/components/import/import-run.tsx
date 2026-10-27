@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ImportView } from '@/lib/imports';
 import { cn } from '@/lib/utils';
+import { useCanChange } from '@/components/shell/can-change';
 
 import { MergeReview } from './merge-review';
 import { Review } from './review';
@@ -305,6 +306,7 @@ function UpdateReport({
   view: ImportView;
   onUndone: () => void;
 }) {
+  const editor = useCanChange();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const r = view.report;
@@ -373,7 +375,7 @@ function UpdateReport({
         <Button asChild size="lg">
           <Link href={`/w/${slug}/dashboard`}>See my dashboard</Link>
         </Button>
-        {!view.undone && lines.length > 0 ? (
+        {!view.undone && lines.length > 0 && editor ? (
           <Button size="lg" variant="outline" disabled={pending} onClick={undo}>
             {pending ? <Loader2 className="animate-spin" /> : <Undo2 />} Undo this update
           </Button>

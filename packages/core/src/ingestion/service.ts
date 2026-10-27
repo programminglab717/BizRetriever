@@ -17,7 +17,7 @@ import { getLogger } from '@bizr/platform';
 import { and, desc, eq } from 'drizzle-orm';
 
 import type { JobQueue } from '../jobs/queue';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import { answerToCorrection, type Correction } from './corrections';
 import { UndoError } from '../records/edits';
 import type { MergePreview } from '../merge/service';
@@ -74,6 +74,7 @@ export async function startIngestion(input: {
   /** Brought in from a linked source (M10). */
   connectionId?: string;
 }): Promise<{ runId: string }> {
+  requireEditor(input.member);
   checkFiles(input.files);
   const ws = input.member.workspace;
   const storage = getStorage();
@@ -240,6 +241,7 @@ export async function reviseRun(input: {
   action: ReviewAction;
   queue: JobQueue;
 }): Promise<void> {
+  requireEditor(input.member);
   const { latest } = await draftFor(input.member, input.runId, input.proposalId);
   let corrections: Correction[] = [...latest.corrections];
   let ownerRequest: string | undefined;
@@ -303,6 +305,7 @@ export async function approveRun(input: {
   proposalId: string;
   queue: JobQueue;
 }): Promise<void> {
+  requireEditor(input.member);
   const { latest } = await draftFor(input.member, input.runId, input.proposalId);
   if (!latest.proposal.sources.some((s) => s.decision === 'map'))
     throw new IngestionRequestError('There’s nothing to bring in from these files yet.');
@@ -323,6 +326,7 @@ export async function mergeRun(input: {
   resolutions: Record<string, 'mine' | 'theirs'>;
   queue: JobQueue;
 }): Promise<void> {
+  requireEditor(input.member);
   const run = await getRun(input.member, input.runId);
   if (run.status !== 'merge_review')
     throw new IngestionRequestError('This update isn’t waiting for you any more.');
@@ -348,6 +352,7 @@ export async function undoRun(
   userId: string,
   runId: string,
 ): Promise<{ edits: number }> {
+  requireEditor(member);
   await getRun(member, runId);
   try {
     return await undoReupload(runId, userId);
@@ -359,6 +364,7 @@ export async function undoRun(
 }
 
 export async function cancelRun(member: MemberWorkspace, runId: string): Promise<void> {
+  requireEditor(member);
   const run = await getRun(member, runId);
   if (run.status !== 'review' && run.status !== 'failed' && run.status !== 'merge_review')
     throw new IngestionRequestError('This import can’t be cancelled right now.');

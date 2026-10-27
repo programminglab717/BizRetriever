@@ -650,6 +650,42 @@ after M11.
 
 ---
 
+## M13 — Working as a team ($0)
+
+**Goal:** a business with more than one person can share the work safely. The owner can add someone
+who can look but not change anything (a bookkeeper, an investor, a part-time helper). People can
+leave a note on an insight or an answer ("ordered 50 more, arriving Friday") and hand an insight to
+someone to deal with, who then sees it on their Home and in their weekly email. The owner said
+"continue" on 2026-10-27 after M12; this is the roadmap's collaboration row, and it needs no
+accounts.
+
+**Depends on:** M4 (saved answers), M6 (invites and roles), M7 (insights), M9 (emails).
+
+- [ ] A "can view" role next to owner and member: sees everything, asks questions, downloads, leaves
+  notes; cannot bring in files, change records or the set-up, link sources, approve imports, edit
+  the dashboard, set goals or alerts. Enforced in the core services, not only hidden in the UI;
+  a test lists every server action and changing route and fails if one isn't either guarded or
+  explicitly allowed for viewers
+- [ ] The owner picks the role when inviting and can change a person's role later; settings show
+  what each role can do in plain words
+- [ ] Notes on insights and on saved answers: short plain text with who and when; the author or the
+  owner can delete one; shown only inside the business; recorded in the activity log
+- [ ] Hand an insight to a person: "For you" on their Home, a line in their weekly email, and the
+  insight shows who has it; marking it done clears it
+- [ ] Tests (role matrix, isolation of notes between businesses), e2e, copy, docs
+
+**Acceptance:**
+
+- A viewer can open every page and ask questions, but every attempt to change something (server
+  actions and routes, called directly) is refused, and the UI doesn't offer it.
+- Notes and assignments never show outside their business, are plain text only, and their numbers
+  are never shown as facts.
+- An insight handed to someone appears on their Home and in their next weekly email, and not on
+  anyone else's "For you".
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |
@@ -657,7 +693,7 @@ after M11.
 | Connectors | Square/Lightspeed/Clover POS, WooCommerce, Amazon Seller Central, Etsy API, QuickBooks/Xero |
 | Channels | WhatsApp questions and alerts (email digests and alerts: done in M9) |
 | Product | Multilingual UI and questions; multi-currency; estimates handed over by the AI (rules-only now) (season-aware estimates, goals and the reorder list: M11; in Ask and per-product seasons: M12); scheduled reports; PDF export of answers (CSV/Excel: done in M9) |
-| Collaboration | Granular roles and permissions; comments on insights |
+| Collaboration | Granular per-area permissions; ownership transfer; @mentions (view-only role, notes and handing insights to people: M13) |
 | Platform | Public API and MCP server exposing the semantic layer to other apps and agents; webhooks |
 | Packs | Wholesale/distribution, restaurants/food service, services/agencies, health & beauty salons |
 | Business | Billing and plans (usage-based AI cost informs pricing); onboarding concierge |

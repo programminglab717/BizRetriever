@@ -15,7 +15,7 @@ import { z } from 'zod';
 
 import { kickJobs } from '@/lib/imports';
 import { getJobQueue } from '@/lib/jobs';
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor } from '@/lib/session';
 
 export type SourceResult<T = null> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -44,7 +44,7 @@ export async function linkSheetAction(
   slug: string,
   link: string,
 ): Promise<SourceResult<{ runId: string }>> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const text = String(link).slice(0, 2_000);
   return guard(slug, 'link', async () => {
     const { runId } = await linkGoogleSheet({
@@ -59,7 +59,7 @@ export async function linkSheetAction(
 
 /** "Update now". */
 export async function syncNowAction(slug: string, connectionId: string): Promise<SourceResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!id.safeParse(connectionId).success) return { ok: false, error: 'This page is out of date.' };
   return guard(slug, 'sync', async () => {
     // Only this business's sources: this refuses any other id.
@@ -75,7 +75,7 @@ export async function updateSourceAction(
   connectionId: string,
   change: { paused?: boolean; autoUpdate?: boolean },
 ): Promise<SourceResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = z
     .object({ paused: z.boolean(), autoUpdate: z.boolean() })
     .partial()
@@ -94,7 +94,7 @@ export async function unlinkSourceAction(
   slug: string,
   connectionId: string,
 ): Promise<SourceResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!id.safeParse(connectionId).success) return { ok: false, error: 'This page is out of date.' };
   return guard(slug, 'unlink', async () => {
     await unlinkConnection(member, member.user.id, connectionId);

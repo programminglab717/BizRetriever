@@ -1,9 +1,11 @@
 import { shopifyEnabled } from '@bizr/core/connections';
+import { canChange } from '@bizr/core/workspaces';
 
 import { ConnectShopifyForm } from '@/components/import/connect-shopify-form';
 import { LinkSheetForm } from '@/components/import/link-sheet-form';
 import { UploadForm } from '@/components/import/upload-form';
 import { PageHeader } from '@/components/shell/page-header';
+import { ViewOnlyNote } from '@/components/shell/view-only';
 import { requireWorkspace } from '@/lib/session';
 
 const HELPFUL = [
@@ -21,8 +23,15 @@ export default async function ImportPage({
   searchParams: Promise<{ shopify?: string }>;
 }) {
   const { slug } = await params;
-  await requireWorkspace(slug);
+  const { role } = await requireWorkspace(slug);
   const { shopify } = await searchParams;
+  if (!canChange(role))
+    return (
+      <div className="grid gap-6">
+        <PageHeader title="Bring in your files" />
+        <ViewOnlyNote>Bringing in files is for the owner and members.</ViewOnlyNote>
+      </div>
+    );
   return (
     <div className="grid gap-6">
       <PageHeader

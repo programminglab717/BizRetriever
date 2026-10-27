@@ -18,6 +18,7 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import { dismiss, markSeen } from '@/app/w/[slug]/insights/actions';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useCanChange } from '@/components/shell/can-change';
 
 /** Plain JSON for the client: dates as strings. */
 export type InsightCardData = Omit<Card, 'firstSeenAt' | 'lastSeenAt'>;
@@ -67,6 +68,7 @@ function InsightItem({
   insight: InsightCardData;
   onGone: (id: string) => void;
 }) {
+  const editor = useCanChange();
   const [menu, setMenu] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -133,20 +135,24 @@ function InsightItem({
             role="menu"
             className="absolute right-0 z-10 mt-1 grid w-48 rounded-md border bg-popover p-1 text-sm shadow-md"
           >
-            <button
-              role="menuitem"
-              className="rounded px-3 py-2 text-left hover:bg-accent"
-              onClick={() => hide(false)}
-            >
-              Dismiss
-            </button>
-            <button
-              role="menuitem"
-              className="rounded px-3 py-2 text-left hover:bg-accent"
-              onClick={() => hide(true)}
-            >
-              Not useful
-            </button>
+            {editor && (
+              <>
+                <button
+                  role="menuitem"
+                  className="rounded px-3 py-2 text-left hover:bg-accent"
+                  onClick={() => hide(false)}
+                >
+                  Dismiss
+                </button>
+                <button
+                  role="menuitem"
+                  className="rounded px-3 py-2 text-left hover:bg-accent"
+                  onClick={() => hide(true)}
+                >
+                  Not useful
+                </button>
+              </>
+            )}
             <Link
               role="menuitem"
               href={`/w/${slug}/insights/settings#${insight.ruleId}` as Route}

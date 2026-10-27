@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { kickJobs } from '@/lib/imports';
 import { getJobQueue } from '@/lib/jobs';
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor } from '@/lib/session';
 
 export interface ActionResult {
   error?: string;
@@ -73,7 +73,7 @@ export async function reviewAction(
   proposalId: string,
   action: ReviewAction,
 ): Promise<ActionResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = actionSchema.safeParse(action);
   if (
     !parsed.success ||
@@ -98,7 +98,7 @@ export async function approveImport(
   runId: string,
   proposalId: string,
 ): Promise<ActionResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!idSchema.safeParse(runId).success || !idSchema.safeParse(proposalId).success)
     return { error: 'This page is out of date. Please reload it.' };
   return run(slug, async () =>
@@ -107,7 +107,7 @@ export async function approveImport(
 }
 
 export async function cancelImport(slug: string, runId: string): Promise<ActionResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!idSchema.safeParse(runId).success) return { error: 'We couldn’t find that import.' };
   return run(slug, () => cancelRun(member, runId));
 }
@@ -123,7 +123,7 @@ export async function mergeImport(
   runId: string,
   resolutions: Record<string, 'mine' | 'theirs'>,
 ): Promise<ActionResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = resolutionsSchema.safeParse(resolutions);
   if (!idSchema.safeParse(runId).success || !parsed.success)
     return { error: 'This page is out of date. Please reload it.' };
@@ -140,7 +140,7 @@ export async function mergeImport(
 
 /** "Undo this update": new records are hidden and changed details get their old values back. */
 export async function undoImport(slug: string, runId: string): Promise<ActionResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!idSchema.safeParse(runId).success) return { error: 'We couldn’t find that import.' };
   return run(slug, async () => {
     await undoRun(member, member.user.id, runId);

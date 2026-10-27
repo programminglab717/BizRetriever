@@ -13,7 +13,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { queueInsights } from '@/lib/insights';
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor, requireWorkspace } from '@/lib/session';
 
 export type Result = { ok: true } | { ok: false; error: string };
 
@@ -39,7 +39,7 @@ export async function markSeen(slug: string, insightIds: string[]): Promise<Resu
 }
 
 export async function dismiss(slug: string, id: string, notUseful: boolean): Promise<Result> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!z.uuid().safeParse(id).success) return { ok: false, error: 'That insight isn’t here.' };
   return guard(slug, 'dismiss', async () => {
     await dismissInsight(member, member.user.id, id, { notUseful });
@@ -49,7 +49,7 @@ export async function dismiss(slug: string, id: string, notUseful: boolean): Pro
 }
 
 export async function hideDigest(slug: string, id: string): Promise<Result> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!z.uuid().safeParse(id).success) return { ok: false, error: 'That summary isn’t here.' };
   return guard(slug, 'digest', () => dismissDigest(member, id));
 }
@@ -64,7 +64,7 @@ const settingSchema = z
 
 /** Saves one alert's settings, then checks the data again with them. */
 export async function saveAlert(slug: string, input: unknown): Promise<Result> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = settingSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Please check the numbers.' };
   return guard(slug, 'settings', async () => {

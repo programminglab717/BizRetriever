@@ -11,6 +11,7 @@ import { checkUndo, undoChange } from '@/app/w/[slug]/history/actions';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useCanChange } from '@/components/shell/can-change';
 
 export type HistoryItem = {
   key: string;
@@ -28,6 +29,7 @@ export function ChangeHistory({ slug, items }: { slug: string; items: HistoryIte
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const editor = useCanChange();
   const [confirm, setConfirm] = useState<UndoPreview | null>(null);
 
   const undo = (version: number, confirmed: boolean) =>
@@ -108,7 +110,7 @@ export function ChangeHistory({ slug, items }: { slug: string; items: HistoryIte
                   .join(' · ')}
               </p>
             </div>
-            {item.canUndo ? (
+            {item.canUndo && editor ? (
               item.kind === 'structure' ? (
                 <Button
                   size="sm"

@@ -5,7 +5,7 @@ import { getLogger } from '@bizr/platform';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor } from '@/lib/session';
 
 const key = z.string().regex(/^[a-z][a-z0-9_]{0,40}$/);
 const label = z.string().max(200);
@@ -19,7 +19,7 @@ export async function renameAction(
   slug: string,
   target: RenameTarget,
 ): Promise<{ error?: string }> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = targetSchema.safeParse(target);
   if (!parsed.success) return { error: 'That name can’t be used.' };
   try {

@@ -9,6 +9,7 @@ import {
   reorderList,
 } from '@bizr/core/planning';
 import { loadSemanticModel } from '@bizr/core/semantic';
+import { canChange } from '@bizr/core/workspaces';
 import { ChevronRight } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
@@ -29,6 +30,7 @@ export default async function PlanPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const member = await requireWorkspace(slug);
   const style = { locale: localeFor(member.settings), currency: member.settings.currency };
+  const editor = canChange(member.role);
   const { forecasts, goals: goalMetrics } = planningMetrics(member.workspace.packId);
   const model = await loadSemanticModel(member.workspace);
   const headline = forecasts.find((m) => model.metrics.has(m));
@@ -158,13 +160,17 @@ export default async function PlanPage({ params }: { params: Promise<{ slug: str
                   ) : (
                     <h3 className="font-semibold">{label}</h3>
                   )}
-                  <GoalEditor
-                    slug={slug}
-                    metricKey={m}
-                    label={label}
-                    current={saved.find((s) => s.metricKey === m)?.target ?? null}
-                    money={model.metrics.get(m)?.format === 'money'}
-                  />
+                  {editor ? (
+                    <GoalEditor
+                      slug={slug}
+                      metricKey={m}
+                      label={label}
+                      current={saved.find((s) => s.metricKey === m)?.target ?? null}
+                      money={model.metrics.get(m)?.format === 'money'}
+                    />
+                  ) : !g ? (
+                    <p className="text-sm text-muted-foreground">No goal set.</p>
+                  ) : null}
                 </div>
               );
             })}

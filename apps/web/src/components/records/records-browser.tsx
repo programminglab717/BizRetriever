@@ -17,6 +17,7 @@ import {
 } from '@/app/w/[slug]/data/[entity]/actions';
 import { Alert } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
+import { useCanChange } from '@/components/shell/can-change';
 
 import { FieldEditor } from './field-editor';
 import { formatValue, isNumeric, valueLabel } from './format';
@@ -62,6 +63,7 @@ export function RecordsBrowser({
   const pathname = usePathname();
   const params = useSearchParams();
   const entity = initial.entity;
+  const editor = useCanChange();
   const [rows, setRows] = useState<RecordRow[]>(initial.rows);
   const [total, setTotal] = useState(initial.total);
   const [loading, setLoading] = useState(false);
@@ -264,7 +266,7 @@ export function RecordsBrowser({
     return (
       <button
         type="button"
-        disabled={query.deleted}
+        disabled={query.deleted || !editor}
         onClick={() =>
           setEditing({ rowId: row.id, field: f.key, error: null, busy: false, inPanel: false })
         }

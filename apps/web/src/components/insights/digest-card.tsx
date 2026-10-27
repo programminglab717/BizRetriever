@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { hideDigest } from '@/app/w/[slug]/insights/actions';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useCanChange } from '@/components/shell/can-change';
 
 /** The weekly summary on Home: last week against the one before, top new insights, a question. */
 export function DigestCard({
@@ -22,6 +23,7 @@ export function DigestCard({
   content: DigestContent;
   weekLabel: string;
 }) {
+  const editor = useCanChange();
   const [hidden, setHidden] = useState(false);
   if (hidden) return null;
   return (
@@ -33,17 +35,19 @@ export function DigestCard({
             {weekLabel}, compared with the week before
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Hide this summary"
-          onClick={() => {
-            setHidden(true);
-            void hideDigest(slug, id);
-          }}
-        >
-          <X className="size-4" />
-        </Button>
+        {editor && (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Hide this summary"
+            onClick={() => {
+              setHidden(true);
+              void hideDigest(slug, id);
+            }}
+          >
+            <X className="size-4" />
+          </Button>
+        )}
       </div>
       {content.kpis.length > 0 && (
         <dl className="grid grid-cols-2 gap-3">

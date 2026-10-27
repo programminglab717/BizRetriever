@@ -1,4 +1,4 @@
-import { COMMON_CURRENCIES, listMembers } from '@bizr/core/workspaces';
+import { canChange, COMMON_CURRENCIES, listMembers } from '@bizr/core/workspaces';
 
 import { BusinessForm } from '@/components/settings/business-form';
 import { DeleteBusiness } from '@/components/settings/delete-business';
@@ -23,16 +23,33 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
           <CardTitle>Business details</CardTitle>
         </CardHeader>
         <CardContent>
-          <BusinessForm
-            action={updateBusiness.bind(null, slug)}
-            name={workspace.name}
-            settings={{
-              currency: settings.currency,
-              timezone: settings.timezone,
-              dateOrder: settings.dateOrder,
-            }}
-            currencies={COMMON_CURRENCIES}
-          />
+          {canChange(role) ? (
+            <BusinessForm
+              action={updateBusiness.bind(null, slug)}
+              name={workspace.name}
+              settings={{
+                currency: settings.currency,
+                timezone: settings.timezone,
+                dateOrder: settings.dateOrder,
+              }}
+              currencies={COMMON_CURRENCIES}
+            />
+          ) : (
+            <dl className="grid gap-1 text-sm">
+              <div>
+                <dt className="inline text-muted-foreground">Name:</dt>{' '}
+                <dd className="inline">{workspace.name}</dd>
+              </div>
+              <div>
+                <dt className="inline text-muted-foreground">Currency:</dt>{' '}
+                <dd className="inline">{settings.currency}</dd>
+              </div>
+              <div>
+                <dt className="inline text-muted-foreground">Time zone:</dt>{' '}
+                <dd className="inline">{settings.timezone}</dd>
+              </div>
+            </dl>
+          )}
         </CardContent>
       </Card>
       <Card>

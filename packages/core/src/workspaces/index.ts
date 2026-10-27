@@ -3,7 +3,9 @@ export {
   deleteWorkspace,
   getMemberWorkspace,
   listUserWorkspaces,
+  canChange,
   NotAllowedError,
+  requireEditor,
   retryProvisioning,
   updateWorkspaceDetails,
   type MemberWorkspace,
@@ -18,6 +20,8 @@ export {
 export { workspaceSlug } from './slug';
 export {
   acceptInvite,
+  assignableRoles,
+  changeRole,
   createInvite,
   getInvite,
   INVITE_DAYS,
@@ -25,6 +29,7 @@ export {
   listMembers,
   removeMember,
   revokeInvite,
+  type AssignableRole,
   type InviteView,
   type MemberList,
 } from './invites';

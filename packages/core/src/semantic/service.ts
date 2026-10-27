@@ -5,7 +5,7 @@ import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
 import { loadCatalog } from '../change-plan/apply';
 import { executeTenantQuery } from '../executor/execute';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import { AvailabilityResolver } from './availability';
 import { compileQuery, type CompiledQuery, type ResultColumn } from './compile';
 import { fieldsWithData, topValues } from './data';
@@ -290,6 +290,7 @@ export async function renameLabel(
   userId: string,
   target: RenameTarget,
 ): Promise<void> {
+  requireEditor(member);
   const ws = member.workspace;
   const db = getAppDb();
   const check = (label: string) => {

@@ -10,6 +10,7 @@ import { feedbackAction, pinAction, unpinAction } from '@/app/w/[slug]/ask/actio
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useCanChange } from '@/components/shell/can-change';
 
 import { AnswerChart, AnswerTable, KpiCards, type NumberStyle } from './answer-chart';
 
@@ -57,6 +58,7 @@ export function AnswerCard({
   onToast: (t: Toast) => void;
   busy: boolean;
 }) {
+  const editor = useCanChange();
   const [asTable, setAsTable] = useState(false);
   const [feedback, setFeedback] = useState(answer.feedback);
   const [askWhy, setAskWhy] = useState(false);
@@ -238,7 +240,7 @@ export function AnswerCard({
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          {answer.kind === 'query' && (
+          {answer.kind === 'query' && editor && (
             <Button variant="outline" size="sm" onClick={pin} disabled={pinned || pending}>
               <Pin /> {pinned ? 'On your dashboard' : 'Add to dashboard'}
             </Button>

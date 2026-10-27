@@ -14,7 +14,7 @@ import { renderTemplate, type FormatOptions, type Segment } from '../narration';
 import { SemanticError } from '../semantic/graph';
 import { runFallbackSql } from '../semantic/fallback';
 import { compileContext, runQuery } from '../semantic/service';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import {
   answerFacts,
   chooseChart,
@@ -555,6 +555,7 @@ export async function setAnswerFeedback(
 
 /** "Add to dashboard": the answer's question becomes a tile at the top. Returns the tile id (for Undo). */
 export async function pinAnswer(member: MemberWorkspace, answerId: string): Promise<string> {
+  requireEditor(member);
   const ws = member.workspace;
   const [row] = await getAppDb()
     .select()
@@ -586,6 +587,7 @@ export async function pinAnswer(member: MemberWorkspace, answerId: string): Prom
 
 /** Undo for "Add to dashboard": takes the pinned tile off again. */
 export async function unpinTile(member: MemberWorkspace, tileId: string): Promise<void> {
+  requireEditor(member);
   const { tiles } = await currentDashboard(member);
   if (tiles.some((t) => t.id === tileId))
     await applyDashboardEdit(member, null, [{ op: 'remove_tile', tileId }]);

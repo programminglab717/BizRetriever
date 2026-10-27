@@ -17,7 +17,7 @@ import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
 import { withInsights } from '@/lib/insights';
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor, requireWorkspace } from '@/lib/session';
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -93,7 +93,7 @@ export async function saveEdit(
   slug: string,
   input: unknown,
 ): Promise<Result<{ batchId: string | null; record: RecordRow | null }>> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = editSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'That change isn’t possible here.' };
   return guard(slug, 'edit', () =>
@@ -109,7 +109,7 @@ export async function removeRecords(
   slug: string,
   input: unknown,
 ): Promise<Result<{ batchId: string | null; count: number }>> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = idsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Choose up to 500 records.' };
   return guard(slug, 'delete', () =>
@@ -123,7 +123,7 @@ export async function bringBack(
   slug: string,
   input: unknown,
 ): Promise<Result<{ batchId: string | null; count: number }>> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = idsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'Choose up to 500 records.' };
   return guard(slug, 'restore', () =>
@@ -140,7 +140,7 @@ export async function undoChange(
   batchId: string,
   recordIds: string[],
 ): Promise<Result<RecordRow[]>> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (
     !key.safeParse(entity).success ||
     !z.uuid().safeParse(batchId).success ||

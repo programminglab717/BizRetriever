@@ -12,7 +12,12 @@ import { and, desc, eq, inArray, isNull, lt, notInArray, or } from 'drizzle-orm'
 
 import { IngestionRequestError, startIngestion, type IncomingFile } from '../ingestion/service';
 import type { JobEnqueuer } from '../jobs/define';
-import { getMemberWorkspace, type MemberWorkspace } from '../workspaces/service';
+import {
+  canChange,
+  getMemberWorkspace,
+  type MemberWorkspace,
+  requireEditor,
+} from '../workspaces/service';
 import { SourceError } from './fetch';
 import { contentFingerprint } from './fingerprint';
 import { externalIdOf, fetchSheet, parseSheetLink, refOf } from './sheets';
@@ -68,6 +73,7 @@ export async function linkGoogleSheet(input: {
   link: string;
   queue: { enqueue: JobEnqueuer };
 }): Promise<{ connectionId: string; runId: string }> {
+  requireEditor(input.member);
   const ws = input.member.workspace;
   const ref = parseSheetLink(input.link);
   if (!ref)
@@ -230,13 +236,16 @@ export async function syncConnection(
     .limit(1);
   if (busy) return 'busy';
 
-  // Imports run as the person who linked the source, while they're still part of the business.
+  // Imports run as the person who linked the source, while they're still part of the business
+  // and can change things (M13: not after they've been made a viewer).
   const member = await memberFor(c);
-  if (!member) {
+  if (!member || !canChange(member.member.role)) {
     await markProblem(
       c,
       new SourceError(
-        'The person who linked this is no longer part of this business. Please link it again.',
+        member
+          ? 'The person who linked this can now only view this business. Please link it again.'
+          : 'The person who linked this is no longer part of this business. Please link it again.',
         'needs_attention',
       ),
     );
@@ -380,6 +389,7 @@ export async function updateConnection(
   id: string,
   change: { paused?: boolean; autoUpdate?: boolean },
 ): Promise<void> {
+  requireEditor(member);
   const c = await ownConnection(member, id);
   if (c.status === 'disconnected' && change.paused === false)
     throw new ConnectionError('This source was disconnected. Please connect it again.');
@@ -412,6 +422,7 @@ export async function unlinkConnection(
   userId: string,
   id: string,
 ): Promise<Connection> {
+  requireEditor(member);
   const c = await ownConnection(member, id);
   await getAppDb().transaction(async (tx) => {
     await tx.delete(connection).where(eq(connection.id, c.id));

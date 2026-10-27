@@ -1,5 +1,6 @@
 import { IngestionRequestError, startIngestion, UPLOAD_LIMITS } from '@bizr/core/ingestion';
 import { getLogger, withLogContext } from '@bizr/platform';
+import { canChange } from '@bizr/core/workspaces';
 
 import { kickJobs } from '@/lib/imports';
 import { getJobQueue } from '@/lib/jobs';
@@ -17,6 +18,11 @@ export async function POST(
   const member = await workspaceForApi(slug);
   const session = await getSession();
   if (!member || !session) return Response.json({ error: 'Not found' }, { status: 404 });
+  if (!canChange(member.role))
+    return Response.json(
+      { error: 'You can view this business but not change it. Ask the owner.' },
+      { status: 403 },
+    );
 
   const length = Number(request.headers.get('content-length') ?? 0);
   if (length > UPLOAD_LIMITS.maxFiles * UPLOAD_LIMITS.maxFileBytes + 1_000_000) {

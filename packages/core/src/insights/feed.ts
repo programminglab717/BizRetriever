@@ -11,7 +11,7 @@ import { getPack, type InsightCategory, type PackInsightRule } from '@bizr/packs
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { compileContext } from '../semantic/service';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import { effectiveThresholds } from './evaluate';
 
 /** What Home, All insights and alert settings read and change. */
@@ -132,6 +132,7 @@ export async function dismissInsight(
   id: string,
   options: { notUseful?: boolean } = {},
 ): Promise<void> {
+  requireEditor(member);
   const db = getAppDb();
   const r = await db
     .update(insight)
@@ -226,6 +227,7 @@ export async function saveAlertSetting(
   ruleId: string,
   input: { enabled: boolean; thresholds: Record<string, number> },
 ): Promise<void> {
+  requireEditor(member);
   const rule = getPack(member.workspace.packId).insights.rules.find((r) => r.id === ruleId);
   if (!rule) throw new InsightError('That alert doesn’t exist.');
   const thresholds: Record<string, number> = {};

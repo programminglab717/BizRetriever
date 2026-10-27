@@ -6,7 +6,7 @@ import { getLogger } from '@bizr/platform';
 import { getAiProvider } from '../ai/runtime';
 import { loadAskContext, type AskContext } from '../ask/catalog';
 import { findJargon } from '../narration';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import {
   applyOps,
   DashboardEditError,
@@ -85,6 +85,7 @@ export async function planDashboardEdit(
     tileId?: string;
   } = {},
 ): Promise<PlanOutcome> {
+  requireEditor(member);
   const text = request.trim().slice(0, 300);
   if (!text) return { kind: 'none', message: CANT_EDIT };
   const [snapshot, ask] = await Promise.all([currentDashboard(member), loadAskContext(member)]);

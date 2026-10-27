@@ -9,7 +9,7 @@ import { ChangePlanError, compileChangePlan } from '../change-plan/compile';
 import { changePlanSchema, type ChangePlan } from '../change-plan/schema';
 import { findJargon } from '../narration';
 import { recordCatalog } from '../records/write-plan';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import { planChangeWithRules } from './plan-rules';
 import { analyzeChange, listChanges, StructureError, type ChangeImpact } from './service';
 
@@ -69,6 +69,7 @@ export async function planStructureChange(
   request: string,
   options: { provider?: LLMProvider | null; aiMode?: 'auto' | 'never' } = {},
 ): Promise<ChangeOutcome> {
+  requireEditor(member);
   const text = request.trim().slice(0, 400);
   if (!text) return { kind: 'none', message: CANT_CHANGE };
   const catalog = await loadCatalog(member.workspace.id);

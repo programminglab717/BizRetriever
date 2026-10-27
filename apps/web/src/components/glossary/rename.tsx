@@ -7,6 +7,7 @@ import { useState, useTransition } from 'react';
 import { renameAction } from '@/app/w/[slug]/glossary/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useCanChange } from '@/components/shell/can-change';
 
 /** What a rename applies to (plain data, so server pages can pass it). */
 export type RenameSubject =
@@ -51,11 +52,13 @@ export function Renameable({
   target: RenameSubject;
   className?: string;
 }) {
+  const editor = useCanChange();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(value);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
+  if (!editor) return <span className={className}>{value}</span>;
   if (!editing)
     return (
       <span className={className}>

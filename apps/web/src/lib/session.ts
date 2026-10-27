@@ -1,8 +1,10 @@
 import 'server-only';
 
 import {
+  canChange,
   getMemberWorkspace,
   listUserWorkspaces,
+  NotAllowedError,
   type MemberWorkspace,
 } from '@bizr/core/workspaces';
 import type { Route } from 'next';
@@ -37,6 +39,20 @@ export const requireWorkspace = cache(
     return { ...member, user: u };
   },
 );
+
+/**
+ * For server actions that change something: the workspace, only for owners and members. Viewers
+ * (M13) are refused here and again in the core service (ADR-062). `role-guards.test.ts` checks that
+ * every action uses this or is on its list of actions viewers may use.
+ */
+export async function requireEditor(
+  slug: string,
+): Promise<MemberWorkspace & { user: SessionUser }> {
+  const member = await requireWorkspace(slug);
+  if (!canChange(member.role))
+    throw new NotAllowedError('You can view this business but not change it. Ask the owner.');
+  return member;
+}
 
 /** Where a signed-in user should land: their first business, or onboarding. */
 export async function homePathFor(userId: string): Promise<Route> {

@@ -5,6 +5,7 @@ import {
   ShopifyConnectError,
 } from '@bizr/core/connections';
 import { getEnv } from '@bizr/platform';
+import { canChange } from '@bizr/core/workspaces';
 import { cookies } from 'next/headers';
 
 import { getSession, workspaceForApi } from '@/lib/session';
@@ -21,6 +22,11 @@ export async function GET(
   const session = await getSession();
   if (!member || !session || !shopifyEnabled())
     return Response.json({ error: 'Not found' }, { status: 404 });
+  if (!canChange(member.role))
+    return Response.json(
+      { error: 'You can view this business but not change it. Ask the owner.' },
+      { status: 403 },
+    );
   const url = new URL(request.url);
   try {
     const start = beginShopifyInstall(member, session.user.id, url.searchParams.get('shop') ?? '');

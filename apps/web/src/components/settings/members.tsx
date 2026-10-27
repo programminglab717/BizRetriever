@@ -4,13 +4,23 @@ import type { MemberList } from '@bizr/core/workspaces';
 import { Copy, Loader2, UserPlus } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
-import { cancelInvite, inviteMember, removePerson } from '@/app/w/[slug]/settings/member-actions';
+import {
+  cancelInvite,
+  changePersonRole,
+  inviteMember,
+  removePerson,
+} from '@/app/w/[slug]/settings/member-actions';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select';
+import { ROLE_LABEL, ROLE_SUMMARY } from '@/lib/roles';
 
 const when = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' });
 
-/** People in the business. Owners invite by email (with a link to share another way) and remove people. */
+/**
+ * People in the business. Owners invite by email (with a link to share another way), choose and
+ * change what each person can do (M13), and remove people.
+ */
 export function Members({
   slug,
   list,
@@ -23,6 +33,7 @@ export function Members({
   me: string;
 }) {
   const [email, setEmail] = useState('');
+  const [as, setAs] = useState<'member' | 'viewer'>('member');
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<{ email: string; link: string; emailed: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -32,7 +43,7 @@ export function Members({
     startTransition(async () => {
       setError(null);
       setCopied(false);
-      const r = await inviteMember(slug, email);
+      const r = await inviteMember(slug, email, as);
       if (!r.ok) return setError(r.error);
       setSent({ email, ...r.data });
       setEmail('');
@@ -48,10 +59,30 @@ export function Members({
               <span className="text-muted-foreground">{m.email}</span>
             </span>
             <span className="flex items-center gap-2">
-              <span className="text-muted-foreground">
-                {m.role === 'owner' ? 'Owner' : 'Member'}
-              </span>
-              {isOwner && m.userId !== me && m.role === 'member' ? (
+              {isOwner && m.userId !== me && m.role !== 'owner' ? (
+                <Select
+                  aria-label={`What ${m.name} can do`}
+                  className="h-9 w-auto"
+                  value={m.role}
+                  disabled={pending}
+                  onChange={(e) => {
+                    const to = e.target.value;
+                    startTransition(async () => {
+                      setError(null);
+                      const r = await changePersonRole(slug, m.userId, to);
+                      if (!r.ok) setError(r.error);
+                    });
+                  }}
+                >
+                  <option value="member">{ROLE_LABEL.member}</option>
+                  <option value="viewer">{ROLE_LABEL.viewer}</option>
+                </Select>
+              ) : (
+                <span className="text-muted-foreground" data-testid="member-role">
+                  {ROLE_LABEL[m.role]}
+                </span>
+              )}
+              {isOwner && m.userId !== me && m.role !== 'owner' ? (
                 <Button
                   size="sm"
                   variant="ghost"
@@ -72,7 +103,7 @@ export function Members({
         {list.invites.map((i) => (
           <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
             <span className="text-muted-foreground">
-              {i.email} · invited {when.format(i.sentAt)}
+              {i.email} · {ROLE_LABEL[i.role].toLowerCase()} · invited {when.format(i.sentAt)}
             </span>
             <Button
               size="sm"
@@ -107,6 +138,15 @@ export function Members({
             aria-label="Email of the person to invite"
             className="h-9 min-w-56 flex-1 rounded-md border bg-background px-3 shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
+          <Select
+            aria-label="What they can do"
+            className="h-9 w-auto"
+            value={as}
+            onChange={(e) => setAs(e.target.value === 'viewer' ? 'viewer' : 'member')}
+          >
+            <option value="member">{ROLE_LABEL.member}</option>
+            <option value="viewer">{ROLE_LABEL.viewer}</option>
+          </Select>
           <Button type="submit" disabled={pending || !email.trim()}>
             {pending ? <Loader2 className="animate-spin" /> : <UserPlus />} Invite
           </Button>
@@ -143,6 +183,14 @@ export function Members({
         </div>
       ) : null}
       {error ? <Alert tone="error">{error}</Alert> : null}
+      <dl className="grid gap-1 text-muted-foreground" aria-label="What each role can do">
+        {(['owner', 'member', 'viewer'] as const).map((r) => (
+          <div key={r}>
+            <dt className="inline font-medium text-foreground">{ROLE_LABEL[r]}:</dt>{' '}
+            <dd className="inline">{ROLE_SUMMARY[r]}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }

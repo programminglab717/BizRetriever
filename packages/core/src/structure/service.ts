@@ -38,7 +38,7 @@ import { buildModel } from '../semantic/model';
 import { refreshSemanticCatalog } from '../semantic/service';
 import { ident } from '../sql/ident';
 import { analyzeTenant } from '../tenancy/provision';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import { describeOp, describePlan } from './describe';
 
 /**
@@ -324,6 +324,7 @@ export async function makeStructuralChange(input: {
   /** What the owner typed, for destructive changes. */
   confirmation?: string;
 }): Promise<{ version: number }> {
+  requireEditor(input.member);
   const { member } = input;
   const impact = await analyzeChange(member, input.plan);
   const confirmed =
@@ -541,6 +542,7 @@ export async function undoStructuralChange(input: {
   version: number;
   confirmed?: boolean;
 }): Promise<{ version: number }> {
+  requireEditor(input.member);
   const { member } = input;
   const preview = await previewUndo(member, input.version);
   if (preview.needsConfirmation && !input.confirmed)

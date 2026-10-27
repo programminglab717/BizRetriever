@@ -1,6 +1,7 @@
 import {
   auditEvent,
   getAppDb,
+  type MemberRole,
   sha256Hex,
   user,
   workspace,
@@ -8,7 +9,7 @@ import {
   workspaceMember,
 } from '@bizr/db';
 import { getLogger } from '@bizr/platform';
-import { and, asc, eq, gt, isNull } from 'drizzle-orm';
+import { and, asc, eq, gt, isNull, ne } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { NotAllowedError, type MemberWorkspace } from './service';
@@ -16,11 +17,17 @@ import { NotAllowedError, type MemberWorkspace } from './service';
 /**
  * Inviting people to a business (PRODUCT_SPEC Settings, M6). Owners invite by email; the link
  * carries a random token (only its hash is stored), works once, for the invited address, within
- * 7 days. Members can do everything except inviting, removing people and deleting the business.
+ * 7 days. Members can do everything except inviting, removing people and deleting the business;
+ * viewers (M13) can look, ask, download and leave notes. The owner picks the role and can change it.
  */
 
 export const INVITE_DAYS = 7;
 export class InviteError extends Error {}
+
+/** The roles the owner can give someone (there is one owner). */
+export const assignableRoles = ['member', 'viewer'] as const;
+export type AssignableRole = (typeof assignableRoles)[number];
+const roleSchema = z.enum(assignableRoles);
 
 const emailSchema = z.email().max(254);
 const hashOf = (token: string) => sha256Hex(new TextEncoder().encode(token));
@@ -35,10 +42,10 @@ export interface MemberList {
     userId: string;
     name: string;
     email: string;
-    role: 'owner' | 'member';
+    role: MemberRole;
     joinedAt: Date;
   }[];
-  invites: { id: string; email: string; sentAt: Date; expiresAt: Date }[];
+  invites: { id: string; email: string; role: MemberRole; sentAt: Date; expiresAt: Date }[];
 }
 
 export async function listMembers(member: MemberWorkspace): Promise<MemberList> {
@@ -66,6 +73,7 @@ export async function listMembers(member: MemberWorkspace): Promise<MemberList> 
           .select({
             id: workspaceInvite.id,
             email: workspaceInvite.email,
+            role: workspaceInvite.role,
             sentAt: workspaceInvite.createdAt,
             expiresAt: workspaceInvite.expiresAt,
           })
@@ -88,8 +96,11 @@ export async function createInvite(
   member: MemberWorkspace,
   inviterId: string,
   rawEmail: string,
+  rawRole: AssignableRole = 'member',
 ): Promise<{ id: string; token: string; email: string }> {
   requireOwner(member, 'invite people');
+  const role = roleSchema.safeParse(rawRole);
+  if (!role.success) throw new InviteError('Please choose what they can do.');
   const parsed = emailSchema.safeParse(rawEmail.trim().toLowerCase());
   if (!parsed.success) throw new InviteError('Please enter a valid email address.');
   const email = parsed.data;
@@ -119,7 +130,7 @@ export async function createInvite(
       .values({
         workspaceId: member.workspace.id,
         email,
-        role: 'member',
+        role: role.data,
         tokenHash: hashOf(token),
         invitedBy: inviterId,
         expiresAt: new Date(Date.now() + INVITE_DAYS * 86_400_000),
@@ -129,7 +140,7 @@ export async function createInvite(
       workspaceId: member.workspace.id,
       userId: inviterId,
       action: 'member.invited',
-      details: { email },
+      details: { email, role: role.data },
     });
     return row!.id;
   });
@@ -178,11 +189,11 @@ export async function removeMember(
       and(
         eq(workspaceMember.workspaceId, member.workspace.id),
         eq(workspaceMember.userId, removeUserId),
-        eq(workspaceMember.role, 'member'),
+        ne(workspaceMember.role, 'owner'),
       ),
     )
     .returning({ userId: workspaceMember.userId });
-  if (r.length === 0) throw new InviteError('That person isn’t a member here.');
+  if (r.length === 0) throw new InviteError('That person isn’t part of this business.');
   await db.insert(auditEvent).values({
     workspaceId: member.workspace.id,
     userId,
@@ -191,10 +202,45 @@ export async function removeMember(
   });
 }
 
+/** The owner changes what someone can do (M13). The owner's own role never changes here. */
+export async function changeRole(
+  member: MemberWorkspace,
+  userId: string,
+  targetUserId: string,
+  rawRole: AssignableRole,
+): Promise<void> {
+  requireOwner(member, 'change what people can do');
+  const role = roleSchema.safeParse(rawRole);
+  if (!role.success) throw new InviteError('Please choose what they can do.');
+  if (targetUserId === userId) throw new InviteError('You can’t change your own role.');
+  const db = getAppDb();
+  await db.transaction(async (tx) => {
+    const r = await tx
+      .update(workspaceMember)
+      .set({ role: role.data })
+      .where(
+        and(
+          eq(workspaceMember.workspaceId, member.workspace.id),
+          eq(workspaceMember.userId, targetUserId),
+          ne(workspaceMember.role, 'owner'),
+        ),
+      )
+      .returning({ userId: workspaceMember.userId });
+    if (r.length === 0) throw new InviteError('That person isn’t part of this business.');
+    await tx.insert(auditEvent).values({
+      workspaceId: member.workspace.id,
+      userId,
+      action: 'member.role_changed',
+      details: { userId: targetUserId, role: role.data },
+    });
+  });
+}
+
 export interface InviteView {
   businessName: string;
   invitedBy: string | null;
   email: string;
+  role: MemberRole;
   status: 'pending' | 'used' | 'expired' | 'cancelled';
 }
 
@@ -231,6 +277,7 @@ export async function getInvite(token: string): Promise<InviteView | undefined> 
     businessName: row.businessName,
     invitedBy: row.inviter,
     email: row.invite.email,
+    role: row.invite.role,
     status: statusOf(row.invite),
   };
 }

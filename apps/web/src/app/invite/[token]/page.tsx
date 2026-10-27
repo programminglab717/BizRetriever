@@ -33,8 +33,12 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
             <CardHeader>
               <CardTitle>Join {invite.businessName}</CardTitle>
               <CardDescription>
-                {invite.invitedBy ?? 'Someone'} invited {invite.email} to help run{' '}
-                {invite.businessName} on BizRetriever.
+                {invite.invitedBy ?? 'Someone'} invited {invite.email} to{' '}
+                {invite.role === 'viewer' ? 'see' : 'help run'} {invite.businessName} on
+                BizRetriever.
+                {invite.role === 'viewer'
+                  ? ' You’ll be able to look at everything and ask questions, but not change anything.'
+                  : ''}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">

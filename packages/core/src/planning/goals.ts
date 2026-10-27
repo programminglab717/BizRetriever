@@ -4,7 +4,7 @@ import { and, asc, eq } from 'drizzle-orm';
 
 import { toAnswerData } from '../ask/answer';
 import { loadSemanticModel, runQuery } from '../semantic/service';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import { addDays, forecastDaily, type ForecastNote } from './forecast';
 import { dailyHistory, planningMetrics, PlanningError } from './service';
 
@@ -68,6 +68,7 @@ export async function setGoal(
   metricKey: string,
   targetText: string,
 ): Promise<void> {
+  requireEditor(member);
   if (!planningMetrics(member.workspace.packId).goals.includes(metricKey))
     throw new PlanningError('You can’t set a goal for that.');
   const model = await loadSemanticModel(member.workspace);
@@ -96,6 +97,7 @@ export async function removeGoal(
   userId: string,
   metricKey: string,
 ): Promise<void> {
+  requireEditor(member);
   const db = getAppDb();
   await db
     .delete(goal)

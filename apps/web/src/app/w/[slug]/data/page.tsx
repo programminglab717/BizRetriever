@@ -1,6 +1,7 @@
 import { listConnections } from '@bizr/core/connections';
 import { listRuns } from '@bizr/core/ingestion';
 import { listRecordTypes } from '@bizr/core/records';
+import { canChange } from '@bizr/core/workspaces';
 import { Download, FileUp, History } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
@@ -49,6 +50,7 @@ export default async function DataPage({
     lastChangedAt: c.lastChangedAt?.toISOString() ?? null,
   }));
   const shown = types.filter((t) => t.count > 0 || t.deleted > 0);
+  const editor = canChange(member.role);
   return (
     <div className="grid gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -66,14 +68,16 @@ export default async function DataPage({
               </a>
             </Button>
           )}
-          <Button asChild>
-            <Link href={`/w/${slug}/data/import`}>
-              <FileUp /> Add or update files
-            </Link>
-          </Button>
+          {editor && (
+            <Button asChild>
+              <Link href={`/w/${slug}/data/import`}>
+                <FileUp /> Add or update files
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
-      {shown.length > 0 ? <DataChat slug={slug} initial={prefill} /> : null}
+      {shown.length > 0 && editor ? <DataChat slug={slug} initial={prefill} /> : null}
       {connected === 'shopify' && (
         <p role="status" className="rounded-md border bg-muted px-4 py-3 text-sm">
           Your Shopify store is connected. We’re reading it now; in a minute you’ll be able to check

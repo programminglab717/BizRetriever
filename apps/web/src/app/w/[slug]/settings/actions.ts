@@ -10,7 +10,7 @@ import { getLogger } from '@bizr/platform';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor, requireWorkspace } from '@/lib/session';
 import { formText } from '@/lib/forms';
 
 export interface SettingsState {
@@ -24,7 +24,7 @@ export async function updateBusiness(
   _previous: SettingsState,
   formData: FormData,
 ): Promise<SettingsState> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = businessSettingsSchema.extend({ name: newWorkspaceSchema.shape.name }).safeParse({
     name: formData.get('name'),
     currency: formData.get('currency'),

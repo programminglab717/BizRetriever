@@ -11,7 +11,7 @@ import { asText } from '../merge/diff';
 import { executeTenantQuery } from '../executor/execute';
 import { withTenantWriter, type TenantWriter } from '../executor/write';
 import { ident } from '../sql/ident';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import {
   EDIT_TABLE,
   ensureEditLog,
@@ -547,6 +547,7 @@ export async function editRecord(input: {
   value: unknown;
   origin?: 'grid' | 'chat';
 }): Promise<EditResult> {
+  requireEditor(input.member);
   const { member } = input;
   if (!/^\d{1,18}$/.test(input.id)) throw new RecordsError('We couldn’t find that record.');
   const { catalog, e } = await catalogEntity(member, input.entity);
@@ -670,6 +671,7 @@ export async function deleteRecords(input: {
   ids: string[];
   origin?: 'grid' | 'chat';
 }): Promise<{ batchId: string | null; count: number }> {
+  requireEditor(input.member);
   return setDeleted(input, true);
 }
 
@@ -679,6 +681,7 @@ export async function restoreRecords(input: {
   entity: string;
   ids: string[];
 }): Promise<{ batchId: string | null; count: number }> {
+  requireEditor(input.member);
   return setDeleted(input, false);
 }
 
@@ -739,6 +742,7 @@ export async function undoRecordEdit(
   member: MemberWorkspace,
   batchId: string,
 ): Promise<{ edits: number }> {
+  requireEditor(member);
   if (!/^[0-9a-f-]{36}$/.test(batchId)) throw new RecordsError('There’s nothing to undo.');
   try {
     return await write(member, `records.undo ${batchId}`, async (w) => {

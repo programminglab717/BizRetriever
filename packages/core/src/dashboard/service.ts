@@ -20,7 +20,7 @@ import { kpiViews, localeFor, tableView, type KpiView, type TableView } from '..
 import { QueryExecutionError } from '../executor/execute';
 import { SemanticError } from '../semantic/graph';
 import { compileContext, loadSemanticModel, runQuery } from '../semantic/service';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import {
   applyOps,
   DashboardEditError,
@@ -248,6 +248,7 @@ export async function applyDashboardEdit(
   ops: readonly EditOp[],
   options: { newId?: () => string } = {},
 ): Promise<EditResult> {
+  requireEditor(member);
   if (ops.length === 0) throw new DashboardEditError('There’s nothing to change.');
   const problems = await editProblems(member, ops);
   if (problems.length) {
@@ -269,6 +270,7 @@ export async function undoDashboardEdit(
   member: MemberWorkspace,
   userId: string | null,
 ): Promise<{ undone: string }> {
+  requireEditor(member);
   const db = getAppDb();
   return db.transaction(async (tx) => {
     const row = await defaultDashboardRow(tx, member.workspace.id);
@@ -549,6 +551,7 @@ export async function saveDashboardRange(
   member: MemberWorkspace,
   range: DashboardRange,
 ): Promise<void> {
+  requireEditor(member);
   const db = getAppDb();
   const row = await defaultDashboardRow(db, member.workspace.id);
   await db

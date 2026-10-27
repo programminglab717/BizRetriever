@@ -10,6 +10,7 @@ import { openRecord } from '@/app/w/[slug]/data/[entity]/actions';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useCanChange } from '@/components/shell/can-change';
 
 import { FieldEditor } from './field-editor';
 import { formatValue } from './format';
@@ -45,6 +46,7 @@ export function RecordPanel({
   onRestore: (row: RecordRow) => void;
   onClose: () => void;
 }) {
+  const editor = useCanChange();
   const [detail, setDetail] = useState<RecordDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -122,7 +124,7 @@ export function RecordPanel({
                       ) : (
                         <button
                           type="button"
-                          disabled={deleted}
+                          disabled={deleted || !editor}
                           aria-label={`Change ${f.label.toLowerCase()}`}
                           onClick={() => onEdit(f.key)}
                           className="w-full rounded-md px-2 py-1.5 -mx-2 text-left hover:bg-muted disabled:hover:bg-transparent"
@@ -215,7 +217,7 @@ export function RecordPanel({
           </>
         ) : null}
       </div>
-      {row ? (
+      {row && editor ? (
         <footer className="flex flex-wrap items-center gap-2 border-t p-4">
           {deleted ? (
             <Button onClick={() => onRestore(row)}>

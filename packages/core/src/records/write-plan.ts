@@ -7,7 +7,7 @@ import { loadCatalog } from '../change-plan/apply';
 import type { CatalogEntity } from '../change-plan/compile';
 import { executeTenantQuery } from '../executor/execute';
 import { ident } from '../sql/ident';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import { bestMatches, words } from './lookup';
 import { RecordsError } from './service';
 import { titleFieldOf } from './values';
@@ -133,6 +133,7 @@ export async function planRecordWrite(
     now?: Date;
   } = {},
 ): Promise<WriteOutcome> {
+  requireEditor(member);
   const text = request.trim().slice(0, 400);
   if (!text) return { kind: 'none', message: CANT_WRITE };
   const catalog = await loadCatalog(member.workspace.id);

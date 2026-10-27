@@ -5,7 +5,12 @@ import { getLogger } from '@bizr/platform';
 import { and, eq } from 'drizzle-orm';
 
 import type { JobEnqueuer } from '../../jobs/define';
-import { getMemberWorkspace, type MemberWorkspace } from '../../workspaces/service';
+import {
+  canChange,
+  getMemberWorkspace,
+  type MemberWorkspace,
+  requireEditor,
+} from '../../workspaces/service';
 import { SourceError } from '../fetch';
 import { connectionSyncJob } from '../jobs';
 import { openSecret, sealSecret } from '../secret';
@@ -41,6 +46,7 @@ export function beginShopifyInstall(
   shopInput: string,
   now = Date.now(),
 ): { url: string; cookie: string; maxAgeSeconds: number } {
+  requireEditor(member);
   const shop = normalizeShop(shopInput);
   if (!shop)
     throw new ShopifyConnectError(
@@ -88,7 +94,12 @@ export async function completeShopifyInstall(input: {
   )
     throw refuse();
   const member = await getMemberWorkspace(saved.slug, saved.userId);
-  if (!member || member.workspace.id !== saved.workspaceId || member.workspace.status !== 'active')
+  if (
+    !member ||
+    member.workspace.id !== saved.workspaceId ||
+    member.workspace.status !== 'active' ||
+    !canChange(member.role)
+  )
     throw refuse();
 
   let tokens;

@@ -5,7 +5,7 @@ import { getLogger } from '@bizr/platform';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor } from '@/lib/session';
 
 export type Result = { ok: true } | { ok: false; error: string };
 
@@ -29,14 +29,14 @@ export async function setGoalAction(
   metricKey: string,
   target: string,
 ): Promise<Result> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!metric.safeParse(metricKey).success)
     return { ok: false, error: 'This page is out of date.' };
   return guard(slug, () => setGoal(member, member.user.id, metricKey, String(target).slice(0, 40)));
 }
 
 export async function removeGoalAction(slug: string, metricKey: string): Promise<Result> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!metric.safeParse(metricKey).success)
     return { ok: false, error: 'This page is out of date.' };
   return guard(slug, () => removeGoal(member, member.user.id, metricKey));

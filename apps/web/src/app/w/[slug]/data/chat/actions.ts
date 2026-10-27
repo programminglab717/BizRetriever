@@ -22,7 +22,7 @@ import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
 import { withInsights } from '@/lib/insights';
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor } from '@/lib/session';
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 export type ChatPlan =
@@ -50,7 +50,7 @@ const planInput = z.object({
 
 /** "Change or add by chat": works out whether it's about records or how they're organised. */
 export async function planDataRequest(slug: string, input: unknown): Promise<Result<ChatPlan>> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = planInput.safeParse(input);
   if (!parsed.success)
     return { ok: false, error: 'Please write what you’d like to add or change.' };
@@ -74,7 +74,7 @@ export async function addRecords(
   slug: string,
   plan: unknown,
 ): Promise<Result<{ batchId: string; records: { entity: string; id: string; title: string }[] }>> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = recordWritePlanSchema.safeParse(plan);
   if (!parsed.success) return { ok: false, error: 'This card is out of date. Please ask again.' };
   return guard(slug, 'write', () =>
@@ -88,7 +88,7 @@ export async function undoRecords(
   slug: string,
   batchId: string,
 ): Promise<Result<{ edits: number }>> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   if (!z.uuid().safeParse(batchId).success) return { ok: false, error: 'There’s nothing to undo.' };
   return guard(slug, 'undo', () =>
     withInsights(member.workspace.id, 'record_edit', () => undoRecordEdit(member, batchId)),
@@ -100,7 +100,7 @@ export async function makeChange(
   plan: unknown,
   confirmation: string,
 ): Promise<Result<{ version: number }>> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = changePlanSchema.safeParse(plan);
   if (!parsed.success) return { ok: false, error: 'This card is out of date. Please ask again.' };
   return guard(slug, 'change', () =>

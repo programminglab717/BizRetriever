@@ -46,7 +46,11 @@ export const workspace = app.table(
   ],
 );
 
-export const memberRoles = ['owner', 'member'] as const;
+/**
+ * Owners do everything; members everything except managing people and deleting the business;
+ * viewers (M13) look, ask, download and leave notes, and change nothing.
+ */
+export const memberRoles = ['owner', 'member', 'viewer'] as const;
 export type MemberRole = (typeof memberRoles)[number];
 export const memberStatus = ['active', 'invited'] as const;
 

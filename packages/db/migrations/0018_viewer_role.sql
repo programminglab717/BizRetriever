@@ -1,0 +1,2 @@
+ALTER TABLE "app"."workspace_member" DROP CONSTRAINT "workspace_member_role_check";--> statement-breakpoint
+ALTER TABLE "app"."workspace_member" ADD CONSTRAINT "workspace_member_role_check" CHECK (role in ('owner', 'member', 'viewer'));

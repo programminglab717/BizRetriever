@@ -11,6 +11,7 @@ import { editAction, saveRangeAction, undoAction } from '@/app/w/[slug]/dashboar
 import type { NumberStyle } from '@/components/ask/answer-chart';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { useCanChange } from '@/components/shell/can-change';
 
 import { DashboardTile } from './dashboard-tile';
 import { EditBox } from './edit-box';
@@ -38,6 +39,7 @@ export function DashboardBoard({
   style: NumberStyle;
 }) {
   const router = useRouter();
+  const editor = useCanChange();
   const [pending, start] = useTransition();
   const [toast, setToast] = useState<Toast | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,8 @@ export function DashboardBoard({
     const compare = next.compare ?? view.range.compare;
     const range = { range: { preset: p }, compare } as DashboardView['range'];
     start(async () => {
-      await saveRangeAction(slug, range);
+      // Viewers look at other dates without changing what everyone else sees.
+      if (editor) await saveRangeAction(slug, range);
       router.push(`/w/${slug}/dashboard?range=${p}&compare=${compare ? 1 : 0}` as Route);
     });
   };
@@ -107,22 +110,24 @@ export function DashboardBoard({
         <span className="text-sm text-muted-foreground" data-testid="range-label">
           {view.rangeLabel}
         </span>
-        {view.canUndo && (
+        {view.canUndo && editor && (
           <Button variant="ghost" size="sm" className="ml-auto" disabled={pending} onClick={undo}>
             <Undo2 /> Undo last change
           </Button>
         )}
       </div>
 
-      <EditBox
-        slug={slug}
-        style={style}
-        disabled={pending}
-        onApplied={(changes) => {
-          setToast({ text: `${changes.join('. ')}.`, undo: true });
-          router.refresh();
-        }}
-      />
+      {editor && (
+        <EditBox
+          slug={slug}
+          style={style}
+          disabled={pending}
+          onApplied={(changes) => {
+            setToast({ text: `${changes.join('. ')}.`, undo: true });
+            router.refresh();
+          }}
+        />
+      )}
 
       {error && <Alert tone="error">{error}</Alert>}
 

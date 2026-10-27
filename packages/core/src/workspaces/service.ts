@@ -146,6 +146,7 @@ export async function updateWorkspaceDetails(
   userId: string,
   input: { name: string } & BusinessSettings,
 ): Promise<void> {
+  requireEditor(member);
   const name = newWorkspaceSchema.shape.name.parse(input.name);
   const settings = businessSettingsSchema.parse(input);
   const db = getAppDb();
@@ -168,6 +169,20 @@ export async function updateWorkspaceDetails(
 }
 
 export class NotAllowedError extends Error {}
+
+/** Whether a role can change anything in the business (M13: viewers can't). */
+export function canChange(role: MemberRole): boolean {
+  return role === 'owner' || role === 'member';
+}
+
+/**
+ * Every core service that changes data, set-up, sources, the dashboard, goals or alerts starts with
+ * this, so a viewer is refused however the call arrives (M13, ADR-062).
+ */
+export function requireEditor(member: Pick<MemberWorkspace, 'role'>): void {
+  if (!canChange(member.role))
+    throw new NotAllowedError('You can view this business but not change it. Ask the owner.');
+}
 
 /**
  * Permanently deletes a business and all of its data. Owners only; the caller must have collected an

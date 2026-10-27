@@ -15,7 +15,7 @@ import {
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor } from '@/lib/session';
 
 /**
  * Dashboard changes. Ops from the browser are never trusted as they are: they're parsed here and
@@ -27,7 +27,7 @@ export type EditActionResult = { ok: true; changes: string[] } | { ok: false; er
 const log = () => getLogger('dashboard.web');
 
 export async function editAction(slug: string, ops: EditOp[]): Promise<EditActionResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = z.array(editOpSchema).min(1).max(6).safeParse(ops);
   if (!parsed.success) return { ok: false, error: 'That change can’t be made.' };
   try {
@@ -41,7 +41,7 @@ export async function editAction(slug: string, ops: EditOp[]): Promise<EditActio
 }
 
 export async function undoAction(slug: string): Promise<EditActionResult> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   try {
     const r = await undoDashboardEdit(member, member.user.id);
     return { ok: true, changes: [`Undid: ${r.undone}`] };
@@ -52,7 +52,7 @@ export async function undoAction(slug: string): Promise<EditActionResult> {
 }
 
 export async function saveRangeAction(slug: string, range: DashboardRange): Promise<void> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const parsed = dashboardRangeSchema.safeParse(range);
   if (parsed.success) await saveDashboardRange(member, parsed.data);
 }
@@ -63,7 +63,7 @@ export async function planAction(
   request: string,
   tileId?: string,
 ): Promise<PlanOutcome> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const text = z.string().max(300).safeParse(request);
   const tile = z.string().uuid().optional().safeParse(tileId);
   if (!text.success || !tile.success) return { kind: 'none', message: 'Please keep it shorter.' };

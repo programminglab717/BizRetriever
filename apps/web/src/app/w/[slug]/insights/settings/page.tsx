@@ -1,10 +1,12 @@
 import { getAlertSettings, getEmailPreferences } from '@bizr/core/insights';
+import { canChange } from '@bizr/core/workspaces';
 import Link from 'next/link';
 
 import { AlertSettings } from '@/components/insights/alert-settings';
 import { EmailSettings } from '@/components/insights/email-settings';
 import { PageHeader } from '@/components/shell/page-header';
 import { requireWorkspace } from '@/lib/session';
+import { ViewOnlyNote } from '@/components/shell/view-only';
 
 export default async function AlertSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -35,7 +37,11 @@ export default async function AlertSettingsPage({ params }: { params: Promise<{ 
         email={member.user.email}
         verified={member.user.emailVerified}
       />
-      <AlertSettings slug={slug} settings={settings} currency={member.settings.currency} />
+      {canChange(member.role) ? (
+        <AlertSettings slug={slug} settings={settings} currency={member.settings.currency} />
+      ) : (
+        <ViewOnlyNote>Alerts are set by the owner and members.</ViewOnlyNote>
+      )}
     </div>
   );
 }

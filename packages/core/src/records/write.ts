@@ -10,7 +10,7 @@ import { executeTenantQuery } from '../executor/execute';
 import { withTenantWriter, type TenantWriter } from '../executor/write';
 import { asText } from '../merge/diff';
 import { ident } from '../sql/ident';
-import type { MemberWorkspace } from '../workspaces/service';
+import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import { ensureEditLog, logEdits, type LoggedEdit } from './edits';
 import { bestMatches, type Candidate } from './lookup';
 import { RecordsError } from './service';
@@ -525,6 +525,7 @@ export async function applyRecordWrite(input: {
   userId: string;
   plan: RecordWritePlan;
 }): Promise<{ batchId: string; records: { entity: string; id: string; title: string }[] }> {
+  requireEditor(input.member);
   const { member } = input;
   const { prepared, card } = await prepareRecordWrite(member, input.plan);
   await ensureEditLog(member.workspace.tenantSchema);

@@ -14,7 +14,7 @@ import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
 import { viewOptions } from '@/lib/ask';
-import { requireWorkspace } from '@/lib/session';
+import { requireEditor, requireWorkspace } from '@/lib/session';
 
 const uuid = z.string().uuid();
 const askInput = z.object({
@@ -76,7 +76,7 @@ export async function pinAction(
   slug: string,
   answerId: string,
 ): Promise<{ tileId?: string; error?: string }> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const id = uuid.safeParse(answerId);
   if (!id.success) return { error: 'That can’t be added.' };
   try {
@@ -89,7 +89,7 @@ export async function pinAction(
 }
 
 export async function unpinAction(slug: string, tileId: string): Promise<{ error?: string }> {
-  const member = await requireWorkspace(slug);
+  const member = await requireEditor(slug);
   const id = uuid.safeParse(tileId);
   if (!id.success) return { error: 'That can’t be removed.' };
   await unpinTile(member, id.data);

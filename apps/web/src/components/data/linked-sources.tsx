@@ -11,6 +11,7 @@ import {
   updateSourceAction,
 } from '@/app/w/[slug]/data/sources/actions';
 import { Button } from '@/components/ui/button';
+import { useCanChange } from '@/components/shell/can-change';
 
 export interface LinkedSource {
   id: string;
@@ -29,6 +30,7 @@ const KIND = { google_sheet: 'Google Sheet', shopify: 'Shopify store' } as const
 const when = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
 function Source({ slug, source }: { slug: string; source: LinkedSource }) {
+  const editor = useCanChange();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [pending, start] = useTransition();
@@ -87,68 +89,77 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
           </p>
         )}
       </div>
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          className="size-5 accent-primary"
-          checked={source.autoUpdate}
-          disabled={pending}
-          onChange={(e) =>
-            act(
-              () => updateSourceAction(slug, source.id, { autoUpdate: e.target.checked }),
-              e.target.checked
-                ? 'Changes will come in by themselves when nothing needs you.'
-                : 'We’ll ask you before bringing in changes.',
-            )
-          }
-        />
-        Bring in changes by itself when nothing needs me
-      </label>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={pending || paused}
-          onClick={() =>
-            act(() => syncNowAction(slug, source.id), 'Checking now. This takes a minute.')
-          }
-        >
-          <RefreshCw /> Update now
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled={pending}
-          onClick={() =>
-            act(
-              () => updateSourceAction(slug, source.id, { paused: !paused }),
-              paused ? 'Resumed.' : 'Paused.',
-            )
-          }
-        >
-          {paused ? 'Resume' : 'Pause'}
-        </Button>
-        {confirming ? (
-          <span className="flex flex-wrap items-center gap-2 text-sm">
-            Stop updating from this? Your records stay.
+      {editor && (
+        <>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="size-5 accent-primary"
+              checked={source.autoUpdate}
+              disabled={pending}
+              onChange={(e) =>
+                act(
+                  () => updateSourceAction(slug, source.id, { autoUpdate: e.target.checked }),
+                  e.target.checked
+                    ? 'Changes will come in by themselves when nothing needs you.'
+                    : 'We’ll ask you before bringing in changes.',
+                )
+              }
+            />
+            Bring in changes by itself when nothing needs me
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
-              variant="destructive"
-              disabled={pending}
-              onClick={() => act(() => unlinkSourceAction(slug, source.id), 'Stopped.')}
+              variant="outline"
+              disabled={pending || paused}
+              onClick={() =>
+                act(() => syncNowAction(slug, source.id), 'Checking now. This takes a minute.')
+              }
             >
-              Stop updating
+              <RefreshCw /> Update now
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
-              Keep it
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={pending}
+              onClick={() =>
+                act(
+                  () => updateSourceAction(slug, source.id, { paused: !paused }),
+                  paused ? 'Resumed.' : 'Paused.',
+                )
+              }
+            >
+              {paused ? 'Resume' : 'Pause'}
             </Button>
-          </span>
-        ) : (
-          <Button size="sm" variant="ghost" disabled={pending} onClick={() => setConfirming(true)}>
-            Stop updating from this
-          </Button>
-        )}
-      </div>
+            {confirming ? (
+              <span className="flex flex-wrap items-center gap-2 text-sm">
+                Stop updating from this? Your records stay.
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={pending}
+                  onClick={() => act(() => unlinkSourceAction(slug, source.id), 'Stopped.')}
+                >
+                  Stop updating
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+                  Keep it
+                </Button>
+              </span>
+            ) : (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={pending}
+                onClick={() => setConfirming(true)}
+              >
+                Stop updating from this
+              </Button>
+            )}
+          </div>
+        </>
+      )}
       {message && (
         <p
           role="status"
