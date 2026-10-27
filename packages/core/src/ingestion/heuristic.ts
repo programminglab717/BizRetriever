@@ -1,5 +1,5 @@
 import type { ColumnProfile, DateOrder, RegionProfile } from '@bizr/ingest';
-import type { PackData } from '@bizr/packs';
+import type { PackData, PackEntity } from '@bizr/packs';
 
 import type {
   FieldMapping,
@@ -13,8 +13,10 @@ import type {
 /**
  * Deterministic baseline proposer. Uses the pack's header synonyms, value synonyms and known formats
  * plus the column profiles to recognise common table shapes (order lines, product lists, supplier
- * orders, returns, wide monthly expenses). It needs no AI, so ingestion always works; the AI then
- * refines this proposal for files it doesn't fully understand.
+ * orders, returns, wide monthly expenses). Any other sheet that is mostly one kind of the pack's
+ * records (a customer list, payments received) is recognised from the pack's words alone, and columns
+ * left over that match details of a recognised record are kept (M14). It needs no AI, so ingestion
+ * always works; the AI then refines this proposal for files it doesn't fully understand.
  */
 
 export interface ProfiledSource {
@@ -92,6 +94,21 @@ class SourceAnalysis {
       default:
         return c.filled > 0;
     }
+  }
+
+  /** How well a column's header names this field (0: not at all; exact beats contained). */
+  score(ref: FieldRef, c: ColumnProfile): number {
+    if (!this.typeOk(ref, c)) return 0;
+    const header = norm(c.header);
+    let best = 0;
+    (this.ctx.pack.synonyms.fields[ref] ?? []).map(norm).forEach((syn, rank) => {
+      let score = 0;
+      if (header === syn) score = 2 - rank * 0.01;
+      else if (syn.length >= 3 && ` ${header} `.includes(` ${syn} `))
+        score = 1 + syn.length / 100 - rank * 0.001;
+      best = Math.max(best, score);
+    });
+    return best;
   }
 
   /** Best unused column for any of these fields, by synonym (exact beats contained; earlier synonyms win ties). */
@@ -214,6 +231,140 @@ function knownFormat(
       best = { id: f.id, label: f.label, overlap };
   }
   return best;
+}
+
+/** Columns a source's targets already read. */
+function columnsRead(targets: readonly TargetMapping[], rowRules: SourceMapping['rowRules']) {
+  const read = new Set<number>();
+  for (const r of rowRules)
+    if ('columns' in r && Array.isArray(r.columns))
+      for (const c of r.columns) if (typeof c === 'number') read.add(c);
+  for (const t of targets) {
+    for (const g of t.groupBy ?? []) if (typeof g === 'number') read.add(g);
+    for (const f of t.fields) {
+      const src = f.source;
+      if (src.kind === 'column' && typeof src.column === 'number') read.add(src.column);
+      if (src.kind === 'first_of')
+        for (const c of src.columns) if (typeof c === 'number') read.add(c);
+    }
+  }
+  return read;
+}
+
+/**
+ * A sheet that is mostly one kind of record (M14): the entity whose fields match the most columns by
+ * the pack's synonyms, with every required field found, at least two fields, and at least half the
+ * filled columns explained. Links to other records match on the other record's key (a customer by
+ * account number, email or name; an invoice by its number).
+ */
+function recogniseList(
+  a: SourceAnalysis,
+  ctx: HeuristicContext,
+  dateRules: (c: ColumnProfile | undefined) => WireValueRule[],
+): TargetMapping[] {
+  const filled = a.columns.filter((c) => c.filled > 0 && !a.used.has(c.index)).length;
+  if (filled < 2) return [];
+  let best: {
+    entity: PackEntity;
+    fields: FieldMapping[];
+    links: TargetMapping[];
+    n: number;
+  } | null = null;
+  for (const entity of ctx.pack.entities) {
+    const taken = new Set<number>();
+    const fields: FieldMapping[] = [];
+    const links: TargetMapping[] = [];
+    let missingRequired = false;
+    for (const f of entity.fields) {
+      if (f.type === 'reference') {
+        const target = ctx.pack.entities.find((e) => e.id === f.references);
+        const keys = [
+          ...new Set((target?.natural_keys ?? []).filter((k) => k.length === 1).flat()),
+        ];
+        let hit: { key: string; column: ColumnProfile } | undefined;
+        for (const key of keys) {
+          const c = a.find([`${entity.id}.${f.id}`, `${f.references}.${key}`] as FieldRef[], {
+            exclude: taken,
+            take: false,
+          });
+          if (c) {
+            hit = { key, column: c };
+            break;
+          }
+        }
+        if (!hit) {
+          if (f.required) missingRequired = true;
+          continue;
+        }
+        taken.add(hit.column.index);
+        fields.push(...mapping(f.id, hit.column.index, [], { matchOn: [hit.key] }));
+        // Master records (customers, suppliers) come into being from the list; dated ones don't.
+        if (target && !target.time_field)
+          links.push({
+            entity: target.id,
+            grain: 'group',
+            groupBy: [hit.column.index],
+            fields: mapping(hit.key, hit.column.index),
+          });
+        continue;
+      }
+      const ref: FieldRef = `${entity.id}.${f.id}`;
+      const c = a.find([ref], { exclude: taken, take: false });
+      if (!c) {
+        if (f.required) missingRequired = true;
+        continue;
+      }
+      taken.add(c.index);
+      const rules =
+        f.type === 'date' || f.type === 'datetime' ? dateRules(c) : valueMap(ctx, ref, c);
+      fields.push(...mapping(f.id, c.index, rules));
+    }
+    const n = fields.length;
+    if (missingRequired || n < 2 || n * 2 < filled) continue;
+    if (!best || n > best.n) best = { entity, fields, links, n };
+  }
+  if (!best) return [];
+  return [{ entity: best.entity.id, grain: 'row', fields: best.fields }, ...best.links];
+}
+
+/**
+ * Columns no shape used whose header names a detail of a record the sheet already fills (a credit
+ * limit on a customer list, "Backordered" on invoice lines) are mapped to it (M14). Order-level
+ * columns go to grouped records, line-level ones to row records.
+ */
+function addLeftovers(
+  a: SourceAnalysis,
+  ctx: HeuristicContext,
+  targets: TargetMapping[],
+  rowRules: SourceMapping['rowRules'],
+  dateRules: (c: ColumnProfile | undefined) => WireValueRule[],
+) {
+  const read = columnsRead(targets, rowRules);
+  const grouped = a.source.profile.groupKeyColumn !== undefined;
+  for (const c of a.columns) {
+    if (read.has(c.index) || a.used.has(c.index) || c.filled === 0) continue;
+    const groupLevel = grouped && a.isGroupLevel(c);
+    const picks: { target: TargetMapping; field: string; type: string; score: number }[] = [];
+    for (const t of targets) {
+      if (grouped && (t.grain === 'group') !== groupLevel) continue;
+      const entity = ctx.pack.entities.find((e) => e.id === t.entity);
+      for (const f of entity?.fields ?? []) {
+        if (f.type === 'reference' || t.fields.some((m) => m.field === f.id)) continue;
+        const field: FieldRef = `${t.entity}.${f.id}`;
+        const score = a.score(field, c);
+        if (score > 0) picks.push({ target: t, field: f.id, type: f.type, score });
+      }
+    }
+    picks.sort((x, y) => y.score - x.score);
+    const pick = picks[0];
+    // Two records could take it equally well: leave it for a person (or the AI) to decide.
+    if (!pick || picks.some((p) => p.target !== pick.target && p.score === pick.score)) continue;
+    const ref: FieldRef = `${pick.target.entity}.${pick.field}`;
+    const rules =
+      pick.type === 'date' || pick.type === 'datetime' ? dateRules(c) : valueMap(ctx, ref, c);
+    pick.target.fields.push(...mapping(pick.field, c.index, rules, { confidence: 0.7 }));
+    read.add(c.index);
+  }
 }
 
 export interface HeuristicResult {
@@ -659,6 +810,9 @@ export function proposeHeuristically(
       if (costC)
         costColumns.push({ sourceId: source.sourceId, name: label(source), header: costC.header });
     }
+
+    if (targets.length === 0) targets.push(...recogniseList(a, ctx, dateRules));
+    if (targets.length > 0) addLeftovers(a, ctx, targets, rowRules, dateRules);
 
     if (targets.length === 0) {
       out.sources.push({

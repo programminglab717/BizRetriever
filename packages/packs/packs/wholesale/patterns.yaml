@@ -1,0 +1,27 @@
+# Known export formats (VERTICAL_PACKS §2.4). Matching one raises confidence and is mentioned on the
+# processing screen ("Found a sheet that looks like Etsy orders"). Headers are normalised.
+known_formats:
+  - id: quickbooks_invoices
+    label: QuickBooks invoices
+    headers:
+      [date, transaction type, num, customer, due date, amount, open balance, product service, qty]
+  - id: xero_invoices
+    label: Xero invoices
+    headers:
+      [
+        contactname,
+        invoicenumber,
+        invoicedate,
+        duedate,
+        description,
+        quantity,
+        unitamount,
+        total,
+        status,
+      ]
+  - id: sage_invoices
+    label: Sage invoices
+    headers: [invoice no, invoice date, account ref, customer name, due date, net, vat, gross]
+  - id: faire_orders
+    label: Faire orders
+    headers: [order number, order date, retailer name, product name, sku, quantity, wholesale price]

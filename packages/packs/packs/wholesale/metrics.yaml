@@ -1,0 +1,885 @@
+# Metrics for the wholesale pack (VERTICAL_PACKS Part 3); ids match retail's where they mean the same, written in the metric IR (§1.6). No SQL here: the
+# compiler turns these into SQL for each workspace. Parts inside `coalesce` are optional: if their data
+# is missing they drop out; anything else that's missing makes the metric unavailable.
+
+expressions:
+  # A sale item's value after its own discount and its share of any order-level discount.
+  line_net:
+    sub:
+      - { field: sale_line.line_total }
+      - coalesce:
+          - allocate:
+              amount: sale.discount_total
+              by: { field: sale_line.line_total }
+              within: sale_line.sale
+          - { const: 0 }
+  # Cost of a sold item: cost at the time of sale if recorded, else the product's current cost.
+  line_cost:
+    mul:
+      - { field: sale_line.quantity }
+      - coalesce:
+          - { field: sale_line.unit_cost_at_sale }
+          - { field: product.unit_cost }
+  purchase_line_value:
+    coalesce:
+      - { field: purchase_line.line_total }
+      - mul: [{ field: purchase_line.quantity }, { field: purchase_line.unit_cost }]
+
+filters:
+  # Cancelled and pending sales don't count. A blank status counts as completed.
+  completed:
+    - { field: sale.status, op: not_in, value: [cancelled, pending] }
+  owed:
+    - { field: sale.payment_status, op: in, value: [unpaid, partial] }
+
+dimensions:
+  - field: product.name
+    label: Product
+    synonyms: [item, product, products, items]
+    noun: [product, products]
+  - field: product.category
+    label: Category
+    synonyms: [category, type, department]
+    noun: [category, categories]
+  - { field: product.brand, label: Brand, synonyms: [brand], noun: [brand, brands] }
+  - field: customer.name
+    label: Customer
+    synonyms: [customer, account, buyer, client, stockist, retailer, trade customer]
+    noun: [customer, customers]
+  - field: customer.business_type
+    label: Type of business
+    synonyms: [type of business, business type, customer type, segment, sector]
+    noun: [type of business, types of business]
+  - field: customer.sales_rep
+    label: Sales rep
+    synonyms: [rep, reps, sales rep, salesperson, account manager]
+    noun: [sales rep, sales reps]
+  - field: customer.price_tier
+    label: Price list
+    synonyms: [price list, price tier, price level, tier]
+    noun: [price list, price lists]
+  - { field: customer.city, label: City, synonyms: [city, town], noun: [city, cities] }
+  - field: customer.region
+    label: State or region
+    synonyms: [state, region, county]
+    noun: [area, areas]
+  - field: sale.channel
+    label: Ordered through
+    synonyms: [channel, ordered through, order method, how they order]
+    noun: [channel, channels]
+    value_labels:
+      sales_rep: Sales rep
+      online_portal: Online portal
+      phone: Phone
+      email: Email
+      trade_show: Trade show
+      marketplace: Marketplace
+      other: Other
+  - field: location.name
+    label: Warehouse
+    synonyms: [warehouse, depot, location]
+    noun: [warehouse, warehouses]
+  - field: supplier.name
+    label: Supplier
+    synonyms: [supplier, vendor, maker]
+    noun: [supplier, suppliers]
+  - field: expense.category
+    label: Expense type
+    synonyms: [expense category, cost type]
+    noun: [expense type, expense types]
+
+# Where two routes link the same records, the one that means what owners mean.
+join_paths:
+  # Spend with a supplier is what was ordered from them, not what their products cost elsewhere.
+  - { from: purchase_line, to: supplier, via: [purchase_line.purchase, purchase.supplier] }
+
+metrics:
+  - id: gross_sales
+    label: Sales before discounts
+    synonyms: ['gross sales', 'sales before discounts', 'full price sales']
+    description: Price × quantity for every item on completed sales, before discounts.
+    format: money
+    ir:
+      sum: { mul: [{ field: sale_line.quantity }, { field: sale_line.unit_price }] }
+      where: [completed]
+    unavailable_hint: Add the price of each item sold to see sales before discounts.
+
+  - id: discounts
+    label: Discounts given
+    synonyms: ['discounts', 'discount', 'money off', 'promotions']
+    description: Discounts on completed sales, from item discounts and order discounts.
+    format: money
+    good_direction: down
+    ir:
+      sum:
+        add:
+          - coalesce: [{ field: sale_line.discount }, { const: 0 }]
+          - coalesce:
+              - allocate:
+                  amount: sale.discount_total
+                  by: { field: sale_line.line_total }
+                  within: sale_line.sale
+              - { const: 0 }
+      where: [completed]
+    requires_any: [sale_line.discount, sale.discount_total]
+    unavailable_hint: Include the discount column from your sales export to see discounts.
+
+  - id: refunds
+    label: Refunds
+    synonyms: ['refunds', 'refunded', 'money back']
+    description: Money refunded on returns, by the date of the return.
+    format: money
+    good_direction: down
+    ir:
+      sum: { field: return.refund_amount }
+    unavailable_hint: Upload your returns or refunds to see refunds.
+
+  - id: net_sales
+    label: Net sales
+    synonyms:
+      [
+        'sales',
+        'revenue',
+        'takings',
+        'turnover',
+        'income',
+        'sold',
+        'sell',
+        'selling',
+        'sell the most',
+        'sells best',
+        'sell best',
+        'sells',
+        'best seller',
+        'best sellers',
+        'bestseller',
+        'bestsellers',
+        'net sales',
+        'money in',
+        'make money',
+        'earned',
+      ]
+    description: >-
+      Money from completed sales after discounts and refunds. Excludes tax and shipping charged.
+      Refunds count on the day of the return.
+    format: money
+    ir:
+      sub:
+        - { sum: { expr: line_net }, where: [completed] }
+        - coalesce: [{ ref: refunds }, { const: 0 }]
+    assumptions:
+      - Order discounts are shared across the order’s items in proportion to their price.
+    unavailable_hint: Upload your sales with the amount of each item to see net sales.
+
+  - id: units_sold
+    label: Items sold
+    synonyms:
+      [
+        'items sold',
+        'units sold',
+        'units',
+        'how many items',
+        'how many did i sell',
+        'quantity sold',
+        'pieces sold',
+      ]
+    description: Number of items sold on completed sales, minus items returned.
+    format: number
+    ir:
+      sub:
+        - { sum: { field: sale_line.quantity }, where: [completed] }
+        - coalesce: [{ sum: { field: return.quantity } }, { const: 0 }]
+
+  - id: order_count
+    label: Orders
+    synonyms:
+      [
+        'orders',
+        'number of orders',
+        'how many orders',
+        'order count',
+        'invoices',
+        'how many invoices',
+        'number of invoices',
+      ]
+    description: Number of invoices, not counting cancelled or draft ones.
+    format: number
+    ir:
+      count_distinct: { field: sale_line.sale }
+      where: [completed]
+
+  - id: average_order_value
+    label: Average invoice value
+    synonyms:
+      [
+        'average order value',
+        'average order',
+        'aov',
+        'average invoice',
+        'average invoice value',
+        'average sale',
+        'drop size',
+      ]
+    description: Net sales ÷ invoices.
+    format: money
+    ir:
+      div: [{ ref: net_sales }, { ref: order_count }]
+
+  - id: items_per_order
+    label: Items per order
+    synonyms: ['items per order', 'units per order', 'basket items']
+    description: Items sold ÷ orders.
+    format: number
+    ir:
+      div: [{ ref: units_sold }, { ref: order_count }]
+
+  - id: cogs
+    label: Cost of goods sold
+    synonyms: ['cost of goods sold', 'cost of goods', 'cogs', 'cost of sales', 'product costs']
+    description: >-
+      Items sold × their cost (the cost at the time of sale if known, otherwise the product’s current
+      cost), minus the cost of items returned.
+    format: money
+    good_direction: down
+    ir:
+      sub:
+        - { sum: { expr: line_cost }, where: [completed] }
+        - coalesce:
+            - sum: { mul: [{ field: return.quantity }, { field: product.unit_cost }] }
+            - { const: 0 }
+    assumptions:
+      - Where we don’t know what an item cost when it was sold, we use its current cost.
+    unavailable_hint: Add what each product costs you (for example in your stock list) to see profit.
+
+  - id: gross_profit
+    label: Gross profit
+    synonyms:
+      ['profit', 'profits', 'gross profit', 'most profit', 'profitable', 'made me', 'earn the most']
+    description: Net sales − cost of goods sold.
+    format: money
+    ir:
+      sub: [{ ref: net_sales }, { ref: cogs }]
+    unavailable_hint: Add what each product costs you (for example in your stock list) to see profit.
+
+  - id: gross_margin_pct
+    label: Profit margin
+    synonyms: ['margin', 'margins', 'profit margin', 'gross margin', 'markup']
+    description: Gross profit ÷ net sales.
+    format: percent
+    ir:
+      div: [{ ref: gross_profit }, { ref: net_sales }]
+    unavailable_hint: Add what each product costs you (for example in your stock list) to see your margin.
+
+  - id: customer_count
+    label: Accounts that ordered
+    default_time: this_month
+    synonyms:
+      [
+        'number of customers',
+        'how many customers',
+        'customer count',
+        'active accounts',
+        'how many accounts',
+        'accounts that ordered',
+      ]
+    description: Different customers with an invoice in the period.
+    format: number
+    ir:
+      count_distinct: { field: sale.customer }
+      from: sale_line
+      where: [completed]
+    unavailable_hint: Include customer names or emails in your sales to see customers.
+
+  - id: new_customers
+    label: New customers
+    default_time: this_month
+    synonyms: ['new customers', 'new buyers', 'first time customers', 'first-time customers']
+    description: Customers whose first-ever completed order was in the period.
+    format: number
+    ir:
+      per: customer
+      rollup: count
+      where:
+        - of:
+            min: { field: sale.sale_date }
+            from: sale_line
+            where: [completed]
+            window: to_end
+          op: gte
+          value: { period: start }
+    unavailable_hint: Include customer names or emails in your sales to see new customers.
+
+  - id: repeat_customer_rate
+    label: Returning customers
+    default_time: this_year
+    synonyms:
+      [
+        'returning customers',
+        'repeat customers',
+        'come back',
+        'came back',
+        'repeat rate',
+        'repeat customer rate',
+        'loyal',
+      ]
+    description: Share of customers who bought in the period and had ordered before it.
+    format: percent
+    ir:
+      div:
+        - per: customer
+          rollup: count
+          where:
+            - of: { count_distinct: { field: sale_line.sale }, where: [completed] }
+              op: gt
+              value: 0
+            - of:
+                min: { field: sale.sale_date }
+                from: sale_line
+                where: [completed]
+                window: to_end
+              op: lt
+              value: { period: start }
+        - { ref: customer_count }
+    unavailable_hint: Include customer names or emails in your sales to see returning customers.
+
+  - id: customer_revenue
+    label: Spend per account
+    synonyms:
+      [
+        'spend per customer',
+        'spend per account',
+        'customer spend',
+        'average account',
+        'revenue per account',
+        'revenue per customer',
+      ]
+    description: Net sales ÷ customers who bought.
+    format: money
+    ir:
+      div: [{ ref: net_sales }, { ref: customer_count }]
+
+  - id: lapsed_customers
+    label: Accounts that stopped ordering
+    synonyms:
+      [
+        'missed their reorder',
+        'not reordered',
+        "haven't reordered",
+        'haven’t reordered',
+        'overdue reorder',
+        'stopped ordering',
+        'stopped buying',
+        'lapsed',
+        'lost customers',
+        'haven’t ordered',
+        "haven't ordered",
+        'drifting away',
+      ]
+    description: >-
+      Customers with at least three past orders whose time since their last order is more than twice
+      their usual gap between orders, and more than thirty days.
+    format: number
+    good_direction: down
+    snapshot: true
+    ir:
+      per: customer
+      rollup: count
+      where:
+        - of: { count_distinct: { field: sale_line.sale }, where: [completed], window: to_end }
+          op: gte
+          value: 3
+        - of:
+            days_between:
+              - {
+                  max: { field: sale.sale_date },
+                  from: sale_line,
+                  where: [completed],
+                  window: to_end,
+                }
+              - { period: end }
+          op: gt
+          value: 30
+        - of:
+            days_between:
+              - {
+                  max: { field: sale.sale_date },
+                  from: sale_line,
+                  where: [completed],
+                  window: to_end,
+                }
+              - { period: end }
+          op: gt
+          value:
+            mul:
+              - { const: 2 }
+              - div:
+                  - days_between:
+                      - min: { field: sale.sale_date }
+                        from: sale_line
+                        where: [completed]
+                        window: to_end
+                      - max: { field: sale.sale_date }
+                        from: sale_line
+                        where: [completed]
+                        window: to_end
+                  - sub:
+                      - count_distinct: { field: sale_line.sale }
+                        where: [completed]
+                        window: to_end
+                      - { const: 1 }
+    unavailable_hint: Include customer names or emails in your sales to see who stopped ordering.
+
+  - id: stock_on_hand
+    label: Items in stock
+    synonyms:
+      ['stock', 'in stock', 'inventory', 'stock levels', 'how many do i have', 'stock on hand']
+    description: How many items you have, from your latest stock count of each product.
+    format: number
+    snapshot: true
+    ir:
+      latest: { field: stock_count.quantity_on_hand }
+      per: stock_count.product
+      by: stock_count.counted_at
+      window: all
+    assumptions:
+      - Stock is as of your latest count; sales since then aren’t taken off yet.
+    unavailable_hint: Upload a stock list with how many of each product you have.
+
+  - id: stock_value
+    label: Stock value (at cost)
+    synonyms:
+      [
+        'stock value',
+        'value of stock',
+        'tied up in stock',
+        'tie up the most money in stock',
+        'money in stock',
+        'inventory value',
+        'inventory worth',
+        'stock worth',
+        'worth of stock',
+      ]
+    description: Items in stock × what each costs you.
+    format: money
+    snapshot: true
+    ir:
+      per: product
+      rollup: sum
+      measure:
+        mul: [{ ref: stock_on_hand }, { max: { field: product.unit_cost } }]
+    unavailable_hint: Upload a stock list with how many you have and what each product costs.
+
+  - id: daily_sales_rate
+    label: Average items sold per day
+    synonyms: ['sold per day', 'daily sales rate', 'sales per day', 'items per day']
+    description: Items sold in the last 28 days ÷ 28.
+    format: number
+    snapshot: true
+    ir:
+      div:
+        - { sum: { field: sale_line.quantity }, where: [completed], window: { last_days: 28 } }
+        - { const: 28 }
+
+  - id: days_of_cover
+    label: Days of stock left
+    synonyms:
+      [
+        'run out',
+        'running out',
+        'days of stock',
+        'days of cover',
+        'reorder',
+        'restock',
+        'sell out',
+        'about to run out',
+      ]
+    description: Items in stock ÷ average items sold per day.
+    format: days
+    snapshot: true
+    ir:
+      div: [{ ref: stock_on_hand }, { ref: daily_sales_rate }]
+    unavailable_hint: Upload a stock list and your sales to see how many days of stock you have left.
+
+  - id: dead_stock_value
+    label: Money tied up in unsold stock
+    synonyms:
+      [
+        'not selling',
+        'dead stock',
+        'unsold stock',
+        "isn't selling",
+        'not sold',
+        'slow moving',
+        'slow-moving',
+        'sitting on the shelf',
+      ]
+    description: Stock value (at cost) of products you have in stock but haven’t sold in 90 days.
+    format: money
+    good_direction: down
+    snapshot: true
+    ir:
+      per: product
+      rollup: sum
+      measure:
+        mul: [{ ref: stock_on_hand }, { max: { field: product.unit_cost } }]
+      where:
+        - of: { ref: stock_on_hand }
+          op: gt
+          value: 0
+        - of:
+            coalesce:
+              - {
+                  sum: { field: sale_line.quantity },
+                  where: [completed],
+                  window: { last_days: 90 },
+                }
+              - { const: 0 }
+          op: eq
+          value: 0
+    unavailable_hint: Upload a stock list with costs and your sales to see unsold stock.
+
+  - id: sell_through_rate
+    label: Sell-through
+    synonyms: ['sell through', 'sell-through', 'sell through rate']
+    description: Items sold ÷ (items sold + items in stock).
+    format: percent
+    ir:
+      div:
+        - { ref: units_sold }
+        - add: [{ ref: units_sold }, { ref: stock_on_hand }]
+
+  - id: return_rate
+    label: Return rate
+    default_time: last_90_days
+    synonyms:
+      ['return rate', 'returned', 'returns rate', 'how often do things come back', 'returns']
+    description: Items returned ÷ items sold.
+    format: percent
+    good_direction: down
+    ir:
+      div:
+        - { sum: { field: return.quantity } }
+        - { sum: { field: sale_line.quantity }, where: [completed] }
+    unavailable_hint: Upload your returns with how many items came back to see your return rate.
+
+  - id: units_returned
+    label: Items returned
+    synonyms: ['items returned', 'units returned', 'returned items', 'how many came back']
+    description: Items that came back, counted on the day they were returned.
+    format: number
+    good_direction: down
+    ir:
+      sum: { field: return.quantity }
+    unavailable_hint: Upload your returns with how many items came back.
+
+  - id: purchase_unit_cost
+    label: Supplier cost per item
+    synonyms:
+      [
+        'supplier cost',
+        'cost from the supplier',
+        'what i pay for',
+        'buying price',
+        'purchase price',
+      ]
+    description: What you paid suppliers per item, from your supplier orders.
+    format: money
+    good_direction: down
+    ir:
+      div:
+        - { sum: { expr: purchase_line_value } }
+        - { sum: { field: purchase_line.quantity } }
+    unavailable_hint: Upload your supplier orders with quantities and prices.
+
+  - id: days_since_last_order
+    label: Days since last order
+    synonyms: ['days since last order', 'last ordered', 'since they last ordered']
+    description: Days from the most recent completed order to today.
+    format: days
+    good_direction: down
+    snapshot: true
+    ir:
+      days_between:
+        - { max: { field: sale.sale_date }, from: sale_line, where: [completed], window: to_end }
+        - { period: end }
+    unavailable_hint: Upload your sales with dates to see when customers last ordered.
+
+  - id: days_overdue
+    label: Days overdue
+    synonyms: ['days late', 'how late', 'days overdue', 'overdue by']
+    description: How many days past its due date the oldest unpaid sale is.
+    format: days
+    good_direction: down
+    snapshot: true
+    ir:
+      coalesce:
+        - days_between:
+            - min: { field: sale.due_date }
+              where: [completed, owed, { field: sale.due_date, op: lt, value: { period: end } }]
+              window: to_end
+            - { period: end }
+        - sub:
+            - days_between:
+                - min: { field: sale.sale_date }
+                  where:
+                    - completed
+                    - owed
+                    - { field: sale.due_date, op: is_null }
+                    - { field: sale.sale_date, op: lt, value: { period: end, offset_days: -30 } }
+                  window: to_end
+                - { period: end }
+            - { const: 30 }
+    assumptions:
+      - Sales without a due date count as due thirty days after the sale.
+    unavailable_hint: Include due dates and a “Paid?” column on your invoices to see how late payments are.
+
+  - id: expenses_total
+    label: Expenses
+    synonyms:
+      [
+        'expenses',
+        'spend on',
+        'spent on',
+        'overheads',
+        'running costs',
+        'bills',
+        'ads',
+        'advertising',
+        'rent',
+        'wages',
+      ]
+    description: Everything you recorded as an expense.
+    format: money
+    good_direction: down
+    ir:
+      sum: { field: expense.amount }
+    unavailable_hint: Upload your expenses to see your costs of running the business.
+
+  - id: net_profit_estimate
+    label: Profit after expenses (estimate)
+    synonyms: ['profit after expenses', 'net profit', 'bottom line', 'real profit', 'after costs']
+    description: Gross profit − expenses. An estimate, because it leaves out anything not recorded.
+    format: money
+    ir:
+      sub: [{ ref: gross_profit }, { ref: expenses_total }]
+    unavailable_hint: Add product costs and upload your expenses to see profit after expenses.
+
+  - id: outstanding_receivables
+    label: Money owed to you
+    synonyms:
+      ['owes me', 'owe me', 'owed', 'owing', 'unpaid', 'money owed', 'outstanding', 'receivables']
+    description: Sales marked unpaid or part paid, minus payments received for them.
+    format: money
+    good_direction: down
+    snapshot: true
+    ir:
+      sub:
+        - { sum: { expr: line_net }, where: [completed, owed], window: to_end }
+        - coalesce:
+            - sum: { field: payment.amount }
+              where: [{ field: sale.payment_status, op: in, value: [unpaid, partial] }]
+              window: to_end
+            - { const: 0 }
+    assumptions:
+      - Without payment records, part-paid invoices are counted as fully owed.
+    unavailable_hint: Include a “Paid?” column on your invoices to see money owed to you.
+
+  - id: overdue_receivables
+    label: Overdue money owed
+    synonyms: ['overdue', 'late payments', 'paid late', 'past due', 'late paying', 'paying late']
+    description: >-
+      Money owed to you on sales past their payment due date.
+    format: money
+    good_direction: down
+    snapshot: true
+    ir:
+      sub:
+        - add:
+            - sum: { expr: line_net }
+              where: [completed, owed, { field: sale.due_date, op: lt, value: { period: end } }]
+              window: to_end
+            - coalesce:
+                - sum: { expr: line_net }
+                  where:
+                    - completed
+                    - owed
+                    - { field: sale.due_date, op: is_null }
+                    - { field: sale.sale_date, op: lt, value: { period: end, offset_days: -30 } }
+                  window: to_end
+                - { const: 0 }
+        - coalesce:
+            - sum: { field: payment.amount }
+              where:
+                - { field: sale.payment_status, op: in, value: [unpaid, partial] }
+                - { field: sale.due_date, op: lt, value: { period: end } }
+              window: to_end
+            - { const: 0 }
+    assumptions:
+      - Without payment records, part-paid invoices are counted as fully owed.
+      - Sales without a due date count as due thirty days after the sale.
+    unavailable_hint: Include due dates and a “Paid?” column on your invoices to see overdue payments.
+
+  - id: supplier_spend
+    label: Spent with suppliers
+    synonyms:
+      [
+        'spent with suppliers',
+        'supplier spend',
+        'spend with suppliers',
+        'bought from suppliers',
+        'supplier orders total',
+        'spend with',
+        'spent with',
+      ]
+    description: Total of your supplier orders, by the date you ordered.
+    format: money
+    good_direction: neutral
+    ir:
+      sum: { expr: purchase_line_value }
+    unavailable_hint: Upload your supplier orders to see what you spend with suppliers.
+
+  # --- Wholesale (M14) ---------------------------------------------------------------------------
+  - id: backordered_units
+    label: Items still to send
+    synonyms:
+      [
+        'backorders',
+        'backordered',
+        'back orders',
+        'back ordered',
+        'still to send',
+        'to follow',
+        'not sent',
+        'short shipped',
+      ]
+    description: Items ordered but not sent yet because they were out of stock, on completed invoices.
+    format: number
+    good_direction: down
+    ir:
+      sum: { field: sale_line.quantity_backordered }
+      where: [completed]
+    unavailable_hint: Include a “Backordered” or “To follow” column on your invoices to see what’s still to send.
+
+  - id: fill_rate
+    label: Orders filled
+    synonyms: ['fill rate', 'filled', 'orders filled', 'in full', 'shipped in full']
+    description: Items sent ÷ items ordered (items sent plus items still to send).
+    format: percent
+    ir:
+      div:
+        - { sum: { field: sale_line.quantity }, where: [completed] }
+        - add:
+            - { sum: { field: sale_line.quantity }, where: [completed] }
+            - { ref: backordered_units }
+    unavailable_hint: Include a “Backordered” or “To follow” column on your invoices to see how much you fill.
+
+  - id: credit_limit_total
+    label: Credit limits
+    synonyms: ['credit limit', 'credit limits', 'limit']
+    description: The credit limit on each customer's account, as recorded.
+    format: money
+    good_direction: neutral
+    snapshot: true
+    ir:
+      per: customer
+      rollup: sum
+      measure: { max: { field: customer.credit_limit } }
+    unavailable_hint: Upload your customer list with credit limits.
+
+  - id: credit_used_pct
+    label: Credit used
+    synonyms:
+      ['credit used', 'credit use', 'how much credit', 'of their limit', 'credit utilisation']
+    description: Money owed ÷ the customer's credit limit.
+    format: percent
+    good_direction: down
+    snapshot: true
+    ir:
+      div: [{ ref: outstanding_receivables }, { ref: credit_limit_total }]
+    unavailable_hint: Upload your customer list with credit limits, and invoices with a “Paid?” column.
+
+  - id: over_credit_limit
+    label: Customers over their credit limit
+    synonyms:
+      [
+        'over their credit limit',
+        'over the limit',
+        'over limit',
+        'over their limit',
+        'above their limit',
+        'exceeded',
+        'credit limit exceeded',
+      ]
+    description: Customers who owe you more than their credit limit.
+    format: number
+    good_direction: down
+    snapshot: true
+    ir:
+      per: customer
+      rollup: count
+      where:
+        - of: { max: { field: customer.credit_limit } }
+          op: gt
+          value: { const: 0 }
+        - of: { ref: outstanding_receivables }
+          op: gt
+          value: { max: { field: customer.credit_limit } }
+    unavailable_hint: Upload your customer list with credit limits, and invoices with a “Paid?” column.
+
+  - id: days_to_pay
+    label: Days to get paid
+    synonyms:
+      [
+        'days to pay',
+        'days to get paid',
+        'how long to pay',
+        'take to pay',
+        'pay on time',
+        'dso',
+        'debtor days',
+        'payment days',
+      ]
+    description: >-
+      On average, days from an invoice's date to the payment for it, for payments received in the
+      period.
+    format: days
+    good_direction: down
+    ir:
+      per: payment
+      rollup: avg
+      measure:
+        days_between:
+          - { min: { field: sale.sale_date }, from: payment, window: all }
+          - { max: { field: payment.received_date } }
+    unavailable_hint: Upload the payments you received with the invoice number each one paid.
+
+  - id: lifetime_orders
+    label: Invoices ever
+    synonyms: ['invoices ever', 'all time orders', 'orders ever']
+    description: Every invoice up to the end of the period, not counting cancelled or draft ones.
+    format: number
+    snapshot: true
+    ir:
+      count_distinct: { field: sale_line.sale }
+      where: [completed]
+      window: to_end
+
+  - id: usual_order_gap
+    label: Usual days between orders
+    synonyms: ['how often', 'usual gap', 'order every', 'order cycle', 'reorder cycle']
+    description: Days from a customer's first invoice to their latest, ÷ the gaps between invoices.
+    format: days
+    snapshot: true
+    ir:
+      div:
+        - days_between:
+            - min: { field: sale.sale_date }
+              from: sale_line
+              where: [completed]
+              window: to_end
+            - max: { field: sale.sale_date }
+              from: sale_line
+              where: [completed]
+              window: to_end
+        - sub: [{ ref: lifetime_orders }, { const: 1 }]
+    unavailable_hint: Upload your invoices with dates and customers.

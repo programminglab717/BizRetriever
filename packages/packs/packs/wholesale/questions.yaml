@@ -1,0 +1,23 @@
+# Example questions for the wholesale pack. Shown as suggestion chips in Ask when the measures they
+# need are available.
+examples:
+  - { group: Sales, text: How much did I sell last month?, needs: [net_sales] }
+  - { group: Sales, text: Show sales by month this year., needs: [net_sales] }
+  - { group: Sales, text: Which rep sold the most this quarter?, needs: [net_sales] }
+  - { group: Customers, text: Who are my top customers?, needs: [net_sales] }
+  - { group: Customers, text: Which customers give me the best margin?, needs: [gross_margin_pct] }
+  - { group: Customers, text: Which customers stopped ordering?, needs: [lapsed_customers] }
+  - { group: Customers, text: How many accounts ordered this month?, needs: [customer_count] }
+  - { group: Money, text: Who owes me money?, needs: [outstanding_receivables] }
+  - { group: Money, text: Who is over their credit limit?, needs: [over_credit_limit] }
+  - { group: Money, text: How long do customers take to pay?, needs: [days_to_pay] }
+  - {
+      group: Products,
+      text: Which products made me the most profit last month?,
+      needs: [gross_profit],
+    }
+  - { group: Products, text: What's still to send?, needs: [backordered_units] }
+  - { group: Stock, text: What's about to run out?, needs: [days_of_cover] }
+  - { group: Stock, text: What should I reorder?, needs: [days_of_cover] }
+  - { group: Ahead, text: How much will I sell next month?, needs: [net_sales] }
+  - { group: Ahead, text: Am I on track for my goal?, needs: [net_sales] }

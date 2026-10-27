@@ -5037,5 +5037,5907 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
       ]
     },
     "primer": "Small retailers and online sellers usually keep these files:\n- Order exports from their website or marketplaces (Shopify, Etsy, Amazon, WooCommerce). These are\n  usually one row per item sold, with the order's number, date and customer repeated on every item row\n  or written only on the first row of each order. In Shopify exports the \"Name\" column is the order\n  number (like \"#1001\"), not a person's name.\n- A till or point-of-sale export from a physical shop: one row per item, often without a customer.\n  Negative quantities usually mean refunds.\n- A hand-kept stock list: one row per product, with code (SKU), name, cost, selling price and how many\n  are in stock. Categories are often written as a heading row above each group of products. \"Cost\" on a\n  stock list is normally the cost per item. Quantities may be written like \"12 pcs\".\n- Supplier orders (purchase orders): one row per product ordered, with the supplier, dates, quantity\n  and cost each. These show when supplier prices change.\n- Wholesale invoices to other shops, often one sheet per month or quarter, with a \"Paid?\" column.\n- An expenses sheet, often with months as columns (Jan, Feb, …) and categories as rows.\nTotals, subtotals, notes and blank rows are common and are not records. The same customer or supplier is\noften spelled in slightly different ways. Dates may be written day-first or month-first in different files."
+  },
+  "wholesale": {
+    "manifest": {
+      "id": "wholesale",
+      "version": "1.0.0",
+      "name": "Wholesale & Distribution",
+      "description": "For businesses that sell to other businesses, like shops, cafés and salons.",
+      "industries_label": "I sell to other businesses (wholesale)",
+      "locale_defaults": {
+        "currency": "USD",
+        "date_order": "MDY"
+      },
+      "requires_core": ">=0.1.0",
+      "primary_time_entity": "sale",
+      "key_numbers": {
+        "home": [
+          "net_sales",
+          "gross_profit",
+          "outstanding_receivables"
+        ],
+        "weekly": [
+          "net_sales",
+          "order_count"
+        ],
+        "activity": "order_count"
+      },
+      "planning": {
+        "goals": [
+          "net_sales",
+          "order_count",
+          "gross_profit"
+        ],
+        "forecasts": [
+          "net_sales",
+          "order_count",
+          "units_sold"
+        ],
+        "goal_words": {
+          "order_count": [
+            "order",
+            "invoice"
+          ],
+          "gross_profit": [
+            "profit"
+          ],
+          "net_sales": [
+            "sale",
+            "sales",
+            "revenue",
+            "turnover"
+          ]
+        },
+        "reorder": {
+          "cover": "days_of_cover",
+          "rate": "daily_sales_rate",
+          "stock": "stock_on_hand",
+          "season": "units_sold"
+        }
+      }
+    },
+    "entities": [
+      {
+        "id": "product",
+        "label": {
+          "singular": "Product",
+          "plural": "Products"
+        },
+        "description": "Something you sell.",
+        "natural_keys": [
+          [
+            "sku"
+          ],
+          [
+            "name",
+            "variant"
+          ]
+        ],
+        "fields": [
+          {
+            "id": "sku",
+            "label": "Product code",
+            "type": "text",
+            "semantic": "identifier",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "name",
+            "label": "Name",
+            "type": "text",
+            "semantic": "name",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "variant",
+            "label": "Variant",
+            "type": "text",
+            "required": false,
+            "pii": false,
+            "description": "Size, colour or other option."
+          },
+          {
+            "id": "category",
+            "label": "Category",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "brand",
+            "label": "Brand",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "unit_price",
+            "label": "Selling price",
+            "type": "money",
+            "semantic": "unit_price",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "unit_cost",
+            "label": "Cost per item",
+            "type": "money",
+            "semantic": "unit_cost",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "supplier",
+            "label": "Supplier",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "supplier"
+          },
+          {
+            "id": "reorder_point",
+            "label": "Reorder when stock reaches",
+            "type": "decimal",
+            "semantic": "quantity",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "is_active",
+            "label": "Still selling",
+            "type": "boolean",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "barcode",
+            "label": "Barcode",
+            "type": "text",
+            "semantic": "identifier",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "pack_size",
+            "label": "Units per case",
+            "type": "integer",
+            "semantic": "quantity",
+            "required": false,
+            "pii": false
+          }
+        ]
+      },
+      {
+        "id": "customer",
+        "label": {
+          "singular": "Customer",
+          "plural": "Customers"
+        },
+        "description": "A business that buys from you, like a shop, café, salon or another trader.",
+        "natural_keys": [
+          [
+            "account_number"
+          ],
+          [
+            "email"
+          ],
+          [
+            "name",
+            "city"
+          ],
+          [
+            "name"
+          ]
+        ],
+        "fields": [
+          {
+            "id": "name",
+            "label": "Name",
+            "type": "text",
+            "semantic": "name",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "account_number",
+            "label": "Account number",
+            "type": "text",
+            "semantic": "identifier",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "email",
+            "label": "Email",
+            "type": "text",
+            "semantic": "email",
+            "required": false,
+            "pii": true
+          },
+          {
+            "id": "phone",
+            "label": "Phone",
+            "type": "text",
+            "semantic": "phone",
+            "required": false,
+            "pii": true
+          },
+          {
+            "id": "city",
+            "label": "City",
+            "type": "text",
+            "semantic": "city",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "region",
+            "label": "State or region",
+            "type": "text",
+            "semantic": "region",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "country",
+            "label": "Country",
+            "type": "text",
+            "semantic": "country",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "postal_code",
+            "label": "Postcode",
+            "type": "text",
+            "semantic": "postal_code",
+            "required": false,
+            "pii": true
+          },
+          {
+            "id": "business_type",
+            "label": "Type of business",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "sales_rep",
+            "label": "Sales rep",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "price_tier",
+            "label": "Price list",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "payment_terms_days",
+            "label": "Days to pay",
+            "type": "integer",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "credit_limit",
+            "label": "Credit limit",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          }
+        ]
+      },
+      {
+        "id": "supplier",
+        "label": {
+          "singular": "Supplier",
+          "plural": "Suppliers"
+        },
+        "description": "Someone you buy stock from.",
+        "natural_keys": [
+          [
+            "name"
+          ]
+        ],
+        "fields": [
+          {
+            "id": "name",
+            "label": "Name",
+            "type": "text",
+            "semantic": "name",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "contact_name",
+            "label": "Contact",
+            "type": "text",
+            "semantic": "name",
+            "required": false,
+            "pii": true
+          },
+          {
+            "id": "email",
+            "label": "Email",
+            "type": "text",
+            "semantic": "email",
+            "required": false,
+            "pii": true
+          },
+          {
+            "id": "phone",
+            "label": "Phone",
+            "type": "text",
+            "semantic": "phone",
+            "required": false,
+            "pii": true
+          },
+          {
+            "id": "lead_time_days",
+            "label": "Days to deliver",
+            "type": "integer",
+            "required": false,
+            "pii": false
+          }
+        ]
+      },
+      {
+        "id": "location",
+        "label": {
+          "singular": "Warehouse",
+          "plural": "Warehouses"
+        },
+        "description": "Where you keep stock or sell from, like a warehouse, depot or showroom.",
+        "natural_keys": [
+          [
+            "name"
+          ]
+        ],
+        "fields": [
+          {
+            "id": "name",
+            "label": "Name",
+            "type": "text",
+            "semantic": "name",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "location_type",
+            "label": "Type",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false,
+            "allowed_values": [
+              "warehouse",
+              "depot",
+              "showroom",
+              "shop"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sale",
+        "label": {
+          "singular": "Invoice",
+          "plural": "Invoices"
+        },
+        "description": "An order you invoiced to a customer. One invoice can contain several items.",
+        "natural_keys": [
+          [
+            "order_number",
+            "channel"
+          ],
+          [
+            "order_number"
+          ]
+        ],
+        "time_field": "sale_date",
+        "fields": [
+          {
+            "id": "order_number",
+            "label": "Invoice number",
+            "type": "text",
+            "semantic": "identifier",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "customer_po",
+            "label": "Customer's order number",
+            "type": "text",
+            "semantic": "identifier",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "sale_date",
+            "label": "Date",
+            "type": "datetime",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "customer",
+            "label": "Customer",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "customer"
+          },
+          {
+            "id": "channel",
+            "label": "Ordered through",
+            "type": "text",
+            "semantic": "channel",
+            "required": false,
+            "pii": false,
+            "allowed_values": [
+              "sales_rep",
+              "online_portal",
+              "phone",
+              "email",
+              "trade_show",
+              "marketplace",
+              "other"
+            ]
+          },
+          {
+            "id": "location",
+            "label": "Warehouse",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "location"
+          },
+          {
+            "id": "status",
+            "label": "Status",
+            "type": "text",
+            "semantic": "status",
+            "required": false,
+            "pii": false,
+            "allowed_values": [
+              "completed",
+              "cancelled",
+              "refunded",
+              "pending"
+            ]
+          },
+          {
+            "id": "discount_total",
+            "label": "Discount",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "shipping_charged",
+            "label": "Shipping charged",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "tax_total",
+            "label": "Tax",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "total",
+            "label": "Invoice total",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "payment_status",
+            "label": "Paid?",
+            "type": "text",
+            "semantic": "status",
+            "required": false,
+            "pii": false,
+            "allowed_values": [
+              "paid",
+              "unpaid",
+              "partial"
+            ]
+          },
+          {
+            "id": "due_date",
+            "label": "Payment due",
+            "type": "date",
+            "required": false,
+            "pii": false
+          }
+        ]
+      },
+      {
+        "id": "sale_line",
+        "label": {
+          "singular": "Invoice item",
+          "plural": "Invoice items"
+        },
+        "description": "One product on an invoice, with how many and at what price.",
+        "natural_keys": [
+          [
+            "sale",
+            "line_number"
+          ],
+          [
+            "sale",
+            "product"
+          ]
+        ],
+        "fields": [
+          {
+            "id": "sale",
+            "label": "Invoice",
+            "type": "reference",
+            "required": true,
+            "pii": false,
+            "references": "sale"
+          },
+          {
+            "id": "line_number",
+            "label": "Line",
+            "type": "integer",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "product",
+            "label": "Product",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "product"
+          },
+          {
+            "id": "product_name_raw",
+            "label": "Product as written",
+            "type": "text",
+            "semantic": "name",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "quantity",
+            "label": "Quantity",
+            "type": "decimal",
+            "semantic": "quantity",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "unit_price",
+            "label": "Price each",
+            "type": "money",
+            "semantic": "unit_price",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "discount",
+            "label": "Discount",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "line_total",
+            "label": "Line total",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "unit_cost_at_sale",
+            "label": "Cost each at the time",
+            "type": "money",
+            "semantic": "unit_cost",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "quantity_backordered",
+            "label": "Still to send",
+            "type": "decimal",
+            "semantic": "quantity",
+            "required": false,
+            "pii": false,
+            "description": "Ordered but not sent yet because it was out of stock."
+          }
+        ]
+      },
+      {
+        "id": "return",
+        "label": {
+          "singular": "Credit note",
+          "plural": "Credit notes"
+        },
+        "description": "Goods a customer sent back, or a credit you gave them.",
+        "natural_keys": [
+          [
+            "sale",
+            "product",
+            "return_date"
+          ]
+        ],
+        "time_field": "return_date",
+        "fields": [
+          {
+            "id": "sale",
+            "label": "Invoice",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "sale"
+          },
+          {
+            "id": "product",
+            "label": "Product",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "product"
+          },
+          {
+            "id": "return_date",
+            "label": "Date",
+            "type": "date",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "quantity",
+            "label": "Quantity",
+            "type": "decimal",
+            "semantic": "quantity",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "refund_amount",
+            "label": "Credit",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "reason",
+            "label": "Reason",
+            "type": "text",
+            "semantic": "note",
+            "required": false,
+            "pii": false
+          }
+        ]
+      },
+      {
+        "id": "purchase",
+        "label": {
+          "singular": "Supplier order",
+          "plural": "Supplier orders"
+        },
+        "description": "Stock you ordered from a supplier.",
+        "natural_keys": [
+          [
+            "po_number"
+          ],
+          [
+            "supplier",
+            "order_date"
+          ]
+        ],
+        "time_field": "order_date",
+        "fields": [
+          {
+            "id": "po_number",
+            "label": "Order number",
+            "type": "text",
+            "semantic": "identifier",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "supplier",
+            "label": "Supplier",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "supplier"
+          },
+          {
+            "id": "order_date",
+            "label": "Ordered on",
+            "type": "date",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "received_date",
+            "label": "Received on",
+            "type": "date",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "status",
+            "label": "Status",
+            "type": "text",
+            "semantic": "status",
+            "required": false,
+            "pii": false,
+            "allowed_values": [
+              "ordered",
+              "received",
+              "cancelled"
+            ]
+          },
+          {
+            "id": "total",
+            "label": "Total",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "shipping_cost",
+            "label": "Shipping cost",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          }
+        ]
+      },
+      {
+        "id": "purchase_line",
+        "label": {
+          "singular": "Supplier order item",
+          "plural": "Supplier order items"
+        },
+        "description": "One product on a supplier order.",
+        "natural_keys": [
+          [
+            "purchase",
+            "product"
+          ]
+        ],
+        "fields": [
+          {
+            "id": "purchase",
+            "label": "Supplier order",
+            "type": "reference",
+            "required": true,
+            "pii": false,
+            "references": "purchase"
+          },
+          {
+            "id": "product",
+            "label": "Product",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "product"
+          },
+          {
+            "id": "quantity",
+            "label": "Quantity",
+            "type": "decimal",
+            "semantic": "quantity",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "unit_cost",
+            "label": "Cost each",
+            "type": "money",
+            "semantic": "unit_cost",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "line_total",
+            "label": "Line total",
+            "type": "money",
+            "semantic": "amount",
+            "required": false,
+            "pii": false
+          }
+        ]
+      },
+      {
+        "id": "stock_count",
+        "label": {
+          "singular": "Stock level",
+          "plural": "Stock levels"
+        },
+        "description": "How many of a product you had on a given day.",
+        "natural_keys": [
+          [
+            "product",
+            "location",
+            "counted_at"
+          ]
+        ],
+        "time_field": "counted_at",
+        "fields": [
+          {
+            "id": "product",
+            "label": "Product",
+            "type": "reference",
+            "required": true,
+            "pii": false,
+            "references": "product"
+          },
+          {
+            "id": "location",
+            "label": "Warehouse",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "location"
+          },
+          {
+            "id": "counted_at",
+            "label": "Counted on",
+            "type": "date",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "quantity_on_hand",
+            "label": "In stock",
+            "type": "decimal",
+            "semantic": "quantity",
+            "required": true,
+            "pii": false
+          }
+        ]
+      },
+      {
+        "id": "stock_movement",
+        "label": {
+          "singular": "Stock change",
+          "plural": "Stock changes"
+        },
+        "description": "Stock going in or out, like a delivery, a breakage or a correction.",
+        "natural_keys": [],
+        "time_field": "moved_at",
+        "fields": [
+          {
+            "id": "product",
+            "label": "Product",
+            "type": "reference",
+            "required": true,
+            "pii": false,
+            "references": "product"
+          },
+          {
+            "id": "moved_at",
+            "label": "Date",
+            "type": "date",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "quantity_change",
+            "label": "Change",
+            "type": "decimal",
+            "semantic": "quantity",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "reason",
+            "label": "Reason",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false,
+            "allowed_values": [
+              "sale",
+              "purchase",
+              "adjustment",
+              "damage",
+              "return"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "expense",
+        "label": {
+          "singular": "Expense",
+          "plural": "Expenses"
+        },
+        "description": "Money you spent running the business.",
+        "natural_keys": [],
+        "time_field": "expense_date",
+        "fields": [
+          {
+            "id": "expense_date",
+            "label": "Date",
+            "type": "date",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "category",
+            "label": "Category",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "description",
+            "label": "Description",
+            "type": "text",
+            "semantic": "note",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "amount",
+            "label": "Amount",
+            "type": "money",
+            "semantic": "amount",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "vendor",
+            "label": "Paid to",
+            "type": "text",
+            "semantic": "name",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "payment_method",
+            "label": "Paid with",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false
+          }
+        ]
+      },
+      {
+        "id": "payment",
+        "label": {
+          "singular": "Payment received",
+          "plural": "Payments received"
+        },
+        "description": "Money a customer paid you for an invoice.",
+        "natural_keys": [
+          [
+            "reference"
+          ]
+        ],
+        "time_field": "received_date",
+        "fields": [
+          {
+            "id": "reference",
+            "label": "Reference",
+            "type": "text",
+            "semantic": "identifier",
+            "required": false,
+            "pii": false
+          },
+          {
+            "id": "received_date",
+            "label": "Date",
+            "type": "date",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "customer",
+            "label": "Customer",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "customer"
+          },
+          {
+            "id": "sale",
+            "label": "Invoice",
+            "type": "reference",
+            "required": false,
+            "pii": false,
+            "references": "sale"
+          },
+          {
+            "id": "amount",
+            "label": "Amount",
+            "type": "money",
+            "semantic": "amount",
+            "required": true,
+            "pii": false
+          },
+          {
+            "id": "method",
+            "label": "Paid with",
+            "type": "text",
+            "semantic": "category",
+            "required": false,
+            "pii": false
+          }
+        ]
+      }
+    ],
+    "synonyms": {
+      "fields": {
+        "product.sku": [
+          "sku",
+          "item code",
+          "product code",
+          "code",
+          "ref",
+          "style no",
+          "lineitem sku",
+          "variant sku",
+          "item sku",
+          "article no",
+          "part no"
+        ],
+        "product.name": [
+          "product",
+          "product name",
+          "item",
+          "item name",
+          "description",
+          "product title",
+          "title",
+          "lineitem name",
+          "listing",
+          "product description"
+        ],
+        "product.variant": [
+          "variant",
+          "variant title",
+          "option",
+          "size",
+          "colour",
+          "color"
+        ],
+        "product.category": [
+          "category",
+          "type",
+          "product type",
+          "department",
+          "dept",
+          "collection",
+          "section",
+          "group"
+        ],
+        "product.brand": [
+          "brand",
+          "vendor brand",
+          "make",
+          "manufacturer brand"
+        ],
+        "product.unit_price": [
+          "price",
+          "rrp",
+          "retail price",
+          "sell price",
+          "selling price",
+          "unit price",
+          "srp",
+          "sale price",
+          "retail",
+          "price rrp",
+          "variant price"
+        ],
+        "product.unit_cost": [
+          "cost",
+          "unit cost",
+          "cost price",
+          "buy price",
+          "wholesale cost",
+          "cogs",
+          "landed cost",
+          "cost ex vat",
+          "cost ex tax",
+          "price cost ex tax",
+          "cost per item",
+          "purchase price"
+        ],
+        "product.supplier": [
+          "supplier",
+          "vendor",
+          "maker",
+          "manufacturer",
+          "made by",
+          "supplied by"
+        ],
+        "product.reorder_point": [
+          "reorder at",
+          "reorder point",
+          "reorder level",
+          "min stock",
+          "minimum stock",
+          "stock reorder at",
+          "par level"
+        ],
+        "product.barcode": [
+          "barcode",
+          "ean",
+          "upc",
+          "gtin"
+        ],
+        "product.pack_size": [
+          "case size",
+          "pack size",
+          "units per case",
+          "case qty",
+          "per case",
+          "outer",
+          "inner"
+        ],
+        "customer.name": [
+          "customer",
+          "cust name",
+          "customer name",
+          "buyer",
+          "billing name",
+          "client",
+          "account",
+          "ship to name",
+          "bill to",
+          "company",
+          "stockist",
+          "retailer",
+          "store name"
+        ],
+        "customer.email": [
+          "email",
+          "e mail",
+          "customer email",
+          "buyer email",
+          "email address"
+        ],
+        "customer.phone": [
+          "phone",
+          "telephone",
+          "tel",
+          "mobile",
+          "phone number",
+          "billing phone"
+        ],
+        "customer.city": [
+          "city",
+          "town",
+          "billing city",
+          "ship city",
+          "shipping city"
+        ],
+        "customer.region": [
+          "state",
+          "province",
+          "region",
+          "county",
+          "billing province",
+          "ship state",
+          "shipping province"
+        ],
+        "customer.country": [
+          "country",
+          "billing country",
+          "ship country"
+        ],
+        "customer.postal_code": [
+          "zip",
+          "zip code",
+          "postcode",
+          "postal code",
+          "billing zip"
+        ],
+        "customer.account_number": [
+          "account no",
+          "account number",
+          "acct",
+          "acct no",
+          "account code",
+          "account ref",
+          "customer code",
+          "customer no",
+          "cust no",
+          "customer id",
+          "customer number"
+        ],
+        "customer.business_type": [
+          "business type",
+          "type of business",
+          "customer type",
+          "segment",
+          "sector",
+          "type"
+        ],
+        "customer.sales_rep": [
+          "rep",
+          "sales rep",
+          "salesperson",
+          "sales person",
+          "account manager",
+          "agent",
+          "territory"
+        ],
+        "customer.price_tier": [
+          "price list",
+          "price tier",
+          "price level",
+          "tier",
+          "pricing",
+          "price band"
+        ],
+        "customer.payment_terms_days": [
+          "terms",
+          "payment terms",
+          "days to pay",
+          "credit terms",
+          "terms days",
+          "net days"
+        ],
+        "customer.credit_limit": [
+          "credit limit",
+          "limit",
+          "credit",
+          "max credit",
+          "credit line"
+        ],
+        "supplier.name": [
+          "supplier",
+          "vendor",
+          "supplier name",
+          "from",
+          "manufacturer"
+        ],
+        "supplier.email": [
+          "supplier email",
+          "vendor email"
+        ],
+        "supplier.lead_time_days": [
+          "lead time",
+          "lead time days",
+          "days to deliver"
+        ],
+        "sale.order_number": [
+          "order",
+          "order number",
+          "order no",
+          "order id",
+          "name",
+          "receipt no",
+          "receipt number",
+          "receipt",
+          "receipt id",
+          "transaction no",
+          "invoice no",
+          "invoice number",
+          "invoice",
+          "transaction id",
+          "sale id"
+        ],
+        "sale.sale_date": [
+          "date",
+          "order date",
+          "created at",
+          "sale date",
+          "paid at",
+          "transaction date",
+          "invoice date",
+          "day",
+          "date sold"
+        ],
+        "sale.customer_po": [
+          "po",
+          "po number",
+          "customer po",
+          "your ref",
+          "customer ref",
+          "order ref",
+          "their ref"
+        ],
+        "sale.channel": [
+          "channel",
+          "source",
+          "ordered via",
+          "ordered through",
+          "order method",
+          "how ordered"
+        ],
+        "sale.status": [
+          "order status",
+          "invoice status",
+          "state"
+        ],
+        "sale.discount_total": [
+          "discount amount",
+          "discount",
+          "order discount",
+          "discounts"
+        ],
+        "sale.shipping_charged": [
+          "shipping",
+          "shipping charged",
+          "order shipping",
+          "delivery",
+          "postage",
+          "shipping price"
+        ],
+        "sale.tax_total": [
+          "taxes",
+          "tax",
+          "sales tax",
+          "vat",
+          "tax total"
+        ],
+        "sale.total": [
+          "total",
+          "invoice total",
+          "order total",
+          "invoice value",
+          "grand total",
+          "amount due"
+        ],
+        "sale.payment_status": [
+          "status",
+          "paid",
+          "paid?",
+          "payment status",
+          "payment",
+          "settled"
+        ],
+        "sale.due_date": [
+          "due date",
+          "payment due",
+          "due",
+          "due on",
+          "terms date"
+        ],
+        "sale_line.quantity": [
+          "qty",
+          "quantity",
+          "pcs",
+          "units",
+          "no of items",
+          "lineitem quantity",
+          "count",
+          "qty sold",
+          "number of items"
+        ],
+        "sale_line.unit_price": [
+          "price",
+          "unit price",
+          "lineitem price",
+          "each",
+          "rate",
+          "item price"
+        ],
+        "sale_line.discount": [
+          "line discount",
+          "discount",
+          "lineitem discount",
+          "item discount",
+          "trade discount"
+        ],
+        "sale_line.quantity_backordered": [
+          "backordered",
+          "back ordered",
+          "backorder",
+          "back order",
+          "to follow",
+          "qty to follow",
+          "bo",
+          "short",
+          "owed qty"
+        ],
+        "sale_line.line_total": [
+          "line total",
+          "total",
+          "amount",
+          "gross",
+          "net",
+          "value",
+          "subtotal",
+          "line amount"
+        ],
+        "return.return_date": [
+          "return date",
+          "date returned",
+          "date",
+          "credit date",
+          "credit note date"
+        ],
+        "return.quantity": [
+          "qty",
+          "quantity",
+          "units returned",
+          "qty returned"
+        ],
+        "return.refund_amount": [
+          "credit",
+          "credit amount",
+          "refund",
+          "refund amount",
+          "credited",
+          "amount credited"
+        ],
+        "return.reason": [
+          "reason",
+          "return reason",
+          "why"
+        ],
+        "purchase.po_number": [
+          "po number",
+          "po",
+          "purchase order",
+          "po no",
+          "order number",
+          "order no"
+        ],
+        "purchase.order_date": [
+          "order date",
+          "ordered",
+          "date ordered",
+          "date",
+          "po date"
+        ],
+        "purchase.received_date": [
+          "received",
+          "received date",
+          "date received",
+          "delivered"
+        ],
+        "purchase.total": [
+          "total",
+          "po total",
+          "order total"
+        ],
+        "purchase_line.quantity": [
+          "qty",
+          "quantity",
+          "units",
+          "qty ordered"
+        ],
+        "purchase_line.unit_cost": [
+          "unit cost",
+          "cost",
+          "cost each",
+          "price",
+          "unit price"
+        ],
+        "purchase_line.line_total": [
+          "line total",
+          "total",
+          "amount"
+        ],
+        "stock_count.quantity_on_hand": [
+          "in stock",
+          "stock",
+          "on hand",
+          "qty on hand",
+          "pcs in stock",
+          "stock pcs in stock",
+          "inventory",
+          "available",
+          "stock level",
+          "variant inventory qty"
+        ],
+        "stock_count.counted_at": [
+          "counted",
+          "count date",
+          "stock date",
+          "as of"
+        ],
+        "expense.expense_date": [
+          "date",
+          "month",
+          "expense date",
+          "paid on"
+        ],
+        "expense.category": [
+          "category",
+          "expense",
+          "type",
+          "account",
+          "item"
+        ],
+        "expense.description": [
+          "description",
+          "details",
+          "memo",
+          "note"
+        ],
+        "expense.amount": [
+          "amount",
+          "cost",
+          "value",
+          "spend",
+          "paid",
+          "total"
+        ],
+        "expense.vendor": [
+          "vendor",
+          "paid to",
+          "payee",
+          "supplier"
+        ],
+        "payment.received_date": [
+          "date",
+          "received",
+          "payment date",
+          "date paid",
+          "date received"
+        ],
+        "payment.reference": [
+          "reference",
+          "ref",
+          "payment ref",
+          "transaction",
+          "cheque no"
+        ],
+        "payment.method": [
+          "method",
+          "payment method",
+          "paid with",
+          "paid by",
+          "how paid"
+        ],
+        "payment.amount": [
+          "amount",
+          "paid",
+          "payment",
+          "amount paid"
+        ]
+      },
+      "values": {
+        "sale.channel": {
+          "sales_rep": [
+            "rep",
+            "sales rep",
+            "field sales",
+            "agent",
+            "salesperson"
+          ],
+          "online_portal": [
+            "portal",
+            "web",
+            "website",
+            "online",
+            "b2b portal",
+            "trade portal",
+            "online store"
+          ],
+          "phone": [
+            "phone",
+            "telephone",
+            "call",
+            "phoned"
+          ],
+          "email": [
+            "email",
+            "e-mail",
+            "emailed"
+          ],
+          "trade_show": [
+            "trade show",
+            "show",
+            "fair",
+            "expo",
+            "trade fair"
+          ],
+          "marketplace": [
+            "faire",
+            "ankorstore",
+            "marketplace",
+            "amazon business"
+          ]
+        },
+        "sale.status": {
+          "completed": [
+            "complete",
+            "completed",
+            "invoiced",
+            "sent",
+            "shipped",
+            "dispatched",
+            "delivered",
+            "closed",
+            "done"
+          ],
+          "cancelled": [
+            "cancelled",
+            "canceled",
+            "void",
+            "voided"
+          ],
+          "refunded": [
+            "credited",
+            "refunded",
+            "credit note"
+          ],
+          "pending": [
+            "draft",
+            "quote",
+            "pending",
+            "awaiting approval",
+            "on hold"
+          ]
+        },
+        "sale.payment_status": {
+          "paid": [
+            "y",
+            "yes",
+            "paid",
+            "✓",
+            "✔",
+            "true",
+            "settled",
+            "paid in full",
+            "cleared"
+          ],
+          "unpaid": [
+            "n",
+            "no",
+            "unpaid",
+            "outstanding",
+            "false",
+            "owing",
+            "due",
+            "overdue",
+            "open",
+            "sent",
+            "awaiting payment"
+          ],
+          "partial": [
+            "part",
+            "partial",
+            "partly",
+            "part paid",
+            "partially paid",
+            "part payment"
+          ]
+        },
+        "purchase.status": {
+          "ordered": [
+            "ordered",
+            "open",
+            "pending",
+            "sent"
+          ],
+          "received": [
+            "received",
+            "delivered",
+            "complete",
+            "completed"
+          ],
+          "cancelled": [
+            "cancelled",
+            "canceled",
+            "void"
+          ]
+        }
+      },
+      "source_channels": {
+        "online_portal": [
+          "portal",
+          "web orders",
+          "online orders",
+          "b2b"
+        ],
+        "marketplace": [
+          "faire",
+          "ankorstore",
+          "marketplace"
+        ],
+        "trade_show": [
+          "trade show",
+          "fair"
+        ]
+      }
+    },
+    "knownFormats": [
+      {
+        "id": "quickbooks_invoices",
+        "label": "QuickBooks invoices",
+        "headers": [
+          "date",
+          "transaction type",
+          "num",
+          "customer",
+          "due date",
+          "amount",
+          "open balance",
+          "product service",
+          "qty"
+        ]
+      },
+      {
+        "id": "xero_invoices",
+        "label": "Xero invoices",
+        "headers": [
+          "contactname",
+          "invoicenumber",
+          "invoicedate",
+          "duedate",
+          "description",
+          "quantity",
+          "unitamount",
+          "total",
+          "status"
+        ]
+      },
+      {
+        "id": "sage_invoices",
+        "label": "Sage invoices",
+        "headers": [
+          "invoice no",
+          "invoice date",
+          "account ref",
+          "customer name",
+          "due date",
+          "net",
+          "vat",
+          "gross"
+        ]
+      },
+      {
+        "id": "faire_orders",
+        "label": "Faire orders",
+        "headers": [
+          "order number",
+          "order date",
+          "retailer name",
+          "product name",
+          "sku",
+          "quantity",
+          "wholesale price"
+        ]
+      }
+    ],
+    "metrics": {
+      "expressions": {
+        "line_net": {
+          "sub": [
+            {
+              "field": "sale_line.line_total"
+            },
+            {
+              "coalesce": [
+                {
+                  "allocate": {
+                    "amount": "sale.discount_total",
+                    "by": {
+                      "field": "sale_line.line_total"
+                    },
+                    "within": "sale_line.sale"
+                  }
+                },
+                {
+                  "const": 0
+                }
+              ]
+            }
+          ]
+        },
+        "line_cost": {
+          "mul": [
+            {
+              "field": "sale_line.quantity"
+            },
+            {
+              "coalesce": [
+                {
+                  "field": "sale_line.unit_cost_at_sale"
+                },
+                {
+                  "field": "product.unit_cost"
+                }
+              ]
+            }
+          ]
+        },
+        "purchase_line_value": {
+          "coalesce": [
+            {
+              "field": "purchase_line.line_total"
+            },
+            {
+              "mul": [
+                {
+                  "field": "purchase_line.quantity"
+                },
+                {
+                  "field": "purchase_line.unit_cost"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "filters": {
+        "completed": [
+          {
+            "field": "sale.status",
+            "op": "not_in",
+            "value": [
+              "cancelled",
+              "pending"
+            ]
+          }
+        ],
+        "owed": [
+          {
+            "field": "sale.payment_status",
+            "op": "in",
+            "value": [
+              "unpaid",
+              "partial"
+            ]
+          }
+        ]
+      },
+      "dimensions": [
+        {
+          "field": "product.name",
+          "label": "Product",
+          "synonyms": [
+            "item",
+            "product",
+            "products",
+            "items"
+          ],
+          "noun": [
+            "product",
+            "products"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "product.category",
+          "label": "Category",
+          "synonyms": [
+            "category",
+            "type",
+            "department"
+          ],
+          "noun": [
+            "category",
+            "categories"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "product.brand",
+          "label": "Brand",
+          "synonyms": [
+            "brand"
+          ],
+          "noun": [
+            "brand",
+            "brands"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "customer.name",
+          "label": "Customer",
+          "synonyms": [
+            "customer",
+            "account",
+            "buyer",
+            "client",
+            "stockist",
+            "retailer",
+            "trade customer"
+          ],
+          "noun": [
+            "customer",
+            "customers"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "customer.business_type",
+          "label": "Type of business",
+          "synonyms": [
+            "type of business",
+            "business type",
+            "customer type",
+            "segment",
+            "sector"
+          ],
+          "noun": [
+            "type of business",
+            "types of business"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "customer.sales_rep",
+          "label": "Sales rep",
+          "synonyms": [
+            "rep",
+            "reps",
+            "sales rep",
+            "salesperson",
+            "account manager"
+          ],
+          "noun": [
+            "sales rep",
+            "sales reps"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "customer.price_tier",
+          "label": "Price list",
+          "synonyms": [
+            "price list",
+            "price tier",
+            "price level",
+            "tier"
+          ],
+          "noun": [
+            "price list",
+            "price lists"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "customer.city",
+          "label": "City",
+          "synonyms": [
+            "city",
+            "town"
+          ],
+          "noun": [
+            "city",
+            "cities"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "customer.region",
+          "label": "State or region",
+          "synonyms": [
+            "state",
+            "region",
+            "county"
+          ],
+          "noun": [
+            "area",
+            "areas"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "sale.channel",
+          "label": "Ordered through",
+          "synonyms": [
+            "channel",
+            "ordered through",
+            "order method",
+            "how they order"
+          ],
+          "noun": [
+            "channel",
+            "channels"
+          ],
+          "value_labels": {
+            "sales_rep": "Sales rep",
+            "online_portal": "Online portal",
+            "phone": "Phone",
+            "email": "Email",
+            "trade_show": "Trade show",
+            "marketplace": "Marketplace",
+            "other": "Other"
+          }
+        },
+        {
+          "field": "location.name",
+          "label": "Warehouse",
+          "synonyms": [
+            "warehouse",
+            "depot",
+            "location"
+          ],
+          "noun": [
+            "warehouse",
+            "warehouses"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "supplier.name",
+          "label": "Supplier",
+          "synonyms": [
+            "supplier",
+            "vendor",
+            "maker"
+          ],
+          "noun": [
+            "supplier",
+            "suppliers"
+          ],
+          "value_labels": {}
+        },
+        {
+          "field": "expense.category",
+          "label": "Expense type",
+          "synonyms": [
+            "expense category",
+            "cost type"
+          ],
+          "noun": [
+            "expense type",
+            "expense types"
+          ],
+          "value_labels": {}
+        }
+      ],
+      "join_paths": [
+        {
+          "from": "purchase_line",
+          "to": "supplier",
+          "via": [
+            "purchase_line.purchase",
+            "purchase.supplier"
+          ]
+        }
+      ],
+      "metrics": [
+        {
+          "id": "gross_sales",
+          "label": "Sales before discounts",
+          "description": "Price × quantity for every item on completed sales, before discounts.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "sum": {
+              "mul": [
+                {
+                  "field": "sale_line.quantity"
+                },
+                {
+                  "field": "sale_line.unit_price"
+                }
+              ]
+            },
+            "where": [
+              "completed"
+            ]
+          },
+          "unavailable_hint": "Add the price of each item sold to see sales before discounts.",
+          "synonyms": [
+            "gross sales",
+            "sales before discounts",
+            "full price sales"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "discounts",
+          "label": "Discounts given",
+          "description": "Discounts on completed sales, from item discounts and order discounts.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sum": {
+              "add": [
+                {
+                  "coalesce": [
+                    {
+                      "field": "sale_line.discount"
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                },
+                {
+                  "coalesce": [
+                    {
+                      "allocate": {
+                        "amount": "sale.discount_total",
+                        "by": {
+                          "field": "sale_line.line_total"
+                        },
+                        "within": "sale_line.sale"
+                      }
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            "where": [
+              "completed"
+            ]
+          },
+          "requires_any": [
+            "sale_line.discount",
+            "sale.discount_total"
+          ],
+          "unavailable_hint": "Include the discount column from your sales export to see discounts.",
+          "synonyms": [
+            "discounts",
+            "discount",
+            "money off",
+            "promotions"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "refunds",
+          "label": "Refunds",
+          "description": "Money refunded on returns, by the date of the return.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sum": {
+              "field": "return.refund_amount"
+            }
+          },
+          "unavailable_hint": "Upload your returns or refunds to see refunds.",
+          "synonyms": [
+            "refunds",
+            "refunded",
+            "money back"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "net_sales",
+          "label": "Net sales",
+          "description": "Money from completed sales after discounts and refunds. Excludes tax and shipping charged. Refunds count on the day of the return.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "sub": [
+              {
+                "sum": {
+                  "expr": "line_net"
+                },
+                "where": [
+                  "completed"
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "ref": "refunds"
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your sales with the amount of each item to see net sales.",
+          "synonyms": [
+            "sales",
+            "revenue",
+            "takings",
+            "turnover",
+            "income",
+            "sold",
+            "sell",
+            "selling",
+            "sell the most",
+            "sells best",
+            "sell best",
+            "sells",
+            "best seller",
+            "best sellers",
+            "bestseller",
+            "bestsellers",
+            "net sales",
+            "money in",
+            "make money",
+            "earned"
+          ],
+          "assumptions": [
+            "Order discounts are shared across the order’s items in proportion to their price."
+          ],
+          "snapshot": false
+        },
+        {
+          "id": "units_sold",
+          "label": "Items sold",
+          "description": "Number of items sold on completed sales, minus items returned.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "sub": [
+              {
+                "sum": {
+                  "field": "sale_line.quantity"
+                },
+                "where": [
+                  "completed"
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "sum": {
+                      "field": "return.quantity"
+                    }
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "synonyms": [
+            "items sold",
+            "units sold",
+            "units",
+            "how many items",
+            "how many did i sell",
+            "quantity sold",
+            "pieces sold"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "order_count",
+          "label": "Orders",
+          "description": "Number of invoices, not counting cancelled or draft ones.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "count_distinct": {
+              "field": "sale_line.sale"
+            },
+            "where": [
+              "completed"
+            ]
+          },
+          "synonyms": [
+            "orders",
+            "number of orders",
+            "how many orders",
+            "order count",
+            "invoices",
+            "how many invoices",
+            "number of invoices"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "average_order_value",
+          "label": "Average invoice value",
+          "description": "Net sales ÷ invoices.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "net_sales"
+              },
+              {
+                "ref": "order_count"
+              }
+            ]
+          },
+          "synonyms": [
+            "average order value",
+            "average order",
+            "aov",
+            "average invoice",
+            "average invoice value",
+            "average sale",
+            "drop size"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "items_per_order",
+          "label": "Items per order",
+          "description": "Items sold ÷ orders.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "units_sold"
+              },
+              {
+                "ref": "order_count"
+              }
+            ]
+          },
+          "synonyms": [
+            "items per order",
+            "units per order",
+            "basket items"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "cogs",
+          "label": "Cost of goods sold",
+          "description": "Items sold × their cost (the cost at the time of sale if known, otherwise the product’s current cost), minus the cost of items returned.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sub": [
+              {
+                "sum": {
+                  "expr": "line_cost"
+                },
+                "where": [
+                  "completed"
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "sum": {
+                      "mul": [
+                        {
+                          "field": "return.quantity"
+                        },
+                        {
+                          "field": "product.unit_cost"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Add what each product costs you (for example in your stock list) to see profit.",
+          "synonyms": [
+            "cost of goods sold",
+            "cost of goods",
+            "cogs",
+            "cost of sales",
+            "product costs"
+          ],
+          "assumptions": [
+            "Where we don’t know what an item cost when it was sold, we use its current cost."
+          ],
+          "snapshot": false
+        },
+        {
+          "id": "gross_profit",
+          "label": "Gross profit",
+          "description": "Net sales − cost of goods sold.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "sub": [
+              {
+                "ref": "net_sales"
+              },
+              {
+                "ref": "cogs"
+              }
+            ]
+          },
+          "unavailable_hint": "Add what each product costs you (for example in your stock list) to see profit.",
+          "synonyms": [
+            "profit",
+            "profits",
+            "gross profit",
+            "most profit",
+            "profitable",
+            "made me",
+            "earn the most"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "gross_margin_pct",
+          "label": "Profit margin",
+          "description": "Gross profit ÷ net sales.",
+          "format": "percent",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "gross_profit"
+              },
+              {
+                "ref": "net_sales"
+              }
+            ]
+          },
+          "unavailable_hint": "Add what each product costs you (for example in your stock list) to see your margin.",
+          "synonyms": [
+            "margin",
+            "margins",
+            "profit margin",
+            "gross margin",
+            "markup"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "customer_count",
+          "label": "Accounts that ordered",
+          "description": "Different customers with an invoice in the period.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "count_distinct": {
+              "field": "sale.customer"
+            },
+            "where": [
+              "completed"
+            ],
+            "from": "sale_line"
+          },
+          "unavailable_hint": "Include customer names or emails in your sales to see customers.",
+          "default_time": "this_month",
+          "synonyms": [
+            "number of customers",
+            "how many customers",
+            "customer count",
+            "active accounts",
+            "how many accounts",
+            "accounts that ordered"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "new_customers",
+          "label": "New customers",
+          "description": "Customers whose first-ever completed order was in the period.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "per": "customer",
+            "rollup": "count",
+            "where": [
+              {
+                "of": {
+                  "min": {
+                    "field": "sale.sale_date"
+                  },
+                  "where": [
+                    "completed"
+                  ],
+                  "window": "to_end",
+                  "from": "sale_line"
+                },
+                "op": "gte",
+                "value": {
+                  "period": "start"
+                }
+              }
+            ]
+          },
+          "unavailable_hint": "Include customer names or emails in your sales to see new customers.",
+          "default_time": "this_month",
+          "synonyms": [
+            "new customers",
+            "new buyers",
+            "first time customers",
+            "first-time customers"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "repeat_customer_rate",
+          "label": "Returning customers",
+          "description": "Share of customers who bought in the period and had ordered before it.",
+          "format": "percent",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "per": "customer",
+                "rollup": "count",
+                "where": [
+                  {
+                    "of": {
+                      "count_distinct": {
+                        "field": "sale_line.sale"
+                      },
+                      "where": [
+                        "completed"
+                      ]
+                    },
+                    "op": "gt",
+                    "value": 0
+                  },
+                  {
+                    "of": {
+                      "min": {
+                        "field": "sale.sale_date"
+                      },
+                      "where": [
+                        "completed"
+                      ],
+                      "window": "to_end",
+                      "from": "sale_line"
+                    },
+                    "op": "lt",
+                    "value": {
+                      "period": "start"
+                    }
+                  }
+                ]
+              },
+              {
+                "ref": "customer_count"
+              }
+            ]
+          },
+          "unavailable_hint": "Include customer names or emails in your sales to see returning customers.",
+          "default_time": "this_year",
+          "synonyms": [
+            "returning customers",
+            "repeat customers",
+            "come back",
+            "came back",
+            "repeat rate",
+            "repeat customer rate",
+            "loyal"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "customer_revenue",
+          "label": "Spend per account",
+          "description": "Net sales ÷ customers who bought.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "net_sales"
+              },
+              {
+                "ref": "customer_count"
+              }
+            ]
+          },
+          "synonyms": [
+            "spend per customer",
+            "spend per account",
+            "customer spend",
+            "average account",
+            "revenue per account",
+            "revenue per customer"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "lapsed_customers",
+          "label": "Accounts that stopped ordering",
+          "description": "Customers with at least three past orders whose time since their last order is more than twice their usual gap between orders, and more than thirty days.",
+          "format": "number",
+          "good_direction": "down",
+          "ir": {
+            "per": "customer",
+            "rollup": "count",
+            "where": [
+              {
+                "of": {
+                  "count_distinct": {
+                    "field": "sale_line.sale"
+                  },
+                  "where": [
+                    "completed"
+                  ],
+                  "window": "to_end"
+                },
+                "op": "gte",
+                "value": 3
+              },
+              {
+                "of": {
+                  "days_between": [
+                    {
+                      "max": {
+                        "field": "sale.sale_date"
+                      },
+                      "where": [
+                        "completed"
+                      ],
+                      "window": "to_end",
+                      "from": "sale_line"
+                    },
+                    {
+                      "period": "end"
+                    }
+                  ]
+                },
+                "op": "gt",
+                "value": 30
+              },
+              {
+                "of": {
+                  "days_between": [
+                    {
+                      "max": {
+                        "field": "sale.sale_date"
+                      },
+                      "where": [
+                        "completed"
+                      ],
+                      "window": "to_end",
+                      "from": "sale_line"
+                    },
+                    {
+                      "period": "end"
+                    }
+                  ]
+                },
+                "op": "gt",
+                "value": {
+                  "mul": [
+                    {
+                      "const": 2
+                    },
+                    {
+                      "div": [
+                        {
+                          "days_between": [
+                            {
+                              "min": {
+                                "field": "sale.sale_date"
+                              },
+                              "where": [
+                                "completed"
+                              ],
+                              "window": "to_end",
+                              "from": "sale_line"
+                            },
+                            {
+                              "max": {
+                                "field": "sale.sale_date"
+                              },
+                              "where": [
+                                "completed"
+                              ],
+                              "window": "to_end",
+                              "from": "sale_line"
+                            }
+                          ]
+                        },
+                        {
+                          "sub": [
+                            {
+                              "count_distinct": {
+                                "field": "sale_line.sale"
+                              },
+                              "where": [
+                                "completed"
+                              ],
+                              "window": "to_end"
+                            },
+                            {
+                              "const": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "unavailable_hint": "Include customer names or emails in your sales to see who stopped ordering.",
+          "synonyms": [
+            "missed their reorder",
+            "not reordered",
+            "haven't reordered",
+            "haven’t reordered",
+            "overdue reorder",
+            "stopped ordering",
+            "stopped buying",
+            "lapsed",
+            "lost customers",
+            "haven’t ordered",
+            "haven't ordered",
+            "drifting away"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "stock_on_hand",
+          "label": "Items in stock",
+          "description": "How many items you have, from your latest stock count of each product.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "latest": {
+              "field": "stock_count.quantity_on_hand"
+            },
+            "per": "stock_count.product",
+            "by": "stock_count.counted_at",
+            "window": "all"
+          },
+          "unavailable_hint": "Upload a stock list with how many of each product you have.",
+          "synonyms": [
+            "stock",
+            "in stock",
+            "inventory",
+            "stock levels",
+            "how many do i have",
+            "stock on hand"
+          ],
+          "assumptions": [
+            "Stock is as of your latest count; sales since then aren’t taken off yet."
+          ],
+          "snapshot": true
+        },
+        {
+          "id": "stock_value",
+          "label": "Stock value (at cost)",
+          "description": "Items in stock × what each costs you.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "per": "product",
+            "rollup": "sum",
+            "measure": {
+              "mul": [
+                {
+                  "ref": "stock_on_hand"
+                },
+                {
+                  "max": {
+                    "field": "product.unit_cost"
+                  }
+                }
+              ]
+            }
+          },
+          "unavailable_hint": "Upload a stock list with how many you have and what each product costs.",
+          "synonyms": [
+            "stock value",
+            "value of stock",
+            "tied up in stock",
+            "tie up the most money in stock",
+            "money in stock",
+            "inventory value",
+            "inventory worth",
+            "stock worth",
+            "worth of stock"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "daily_sales_rate",
+          "label": "Average items sold per day",
+          "description": "Items sold in the last 28 days ÷ 28.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "sum": {
+                  "field": "sale_line.quantity"
+                },
+                "where": [
+                  "completed"
+                ],
+                "window": {
+                  "last_days": 28
+                }
+              },
+              {
+                "const": 28
+              }
+            ]
+          },
+          "synonyms": [
+            "sold per day",
+            "daily sales rate",
+            "sales per day",
+            "items per day"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "days_of_cover",
+          "label": "Days of stock left",
+          "description": "Items in stock ÷ average items sold per day.",
+          "format": "days",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "stock_on_hand"
+              },
+              {
+                "ref": "daily_sales_rate"
+              }
+            ]
+          },
+          "unavailable_hint": "Upload a stock list and your sales to see how many days of stock you have left.",
+          "synonyms": [
+            "run out",
+            "running out",
+            "days of stock",
+            "days of cover",
+            "reorder",
+            "restock",
+            "sell out",
+            "about to run out"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "dead_stock_value",
+          "label": "Money tied up in unsold stock",
+          "description": "Stock value (at cost) of products you have in stock but haven’t sold in 90 days.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "per": "product",
+            "rollup": "sum",
+            "measure": {
+              "mul": [
+                {
+                  "ref": "stock_on_hand"
+                },
+                {
+                  "max": {
+                    "field": "product.unit_cost"
+                  }
+                }
+              ]
+            },
+            "where": [
+              {
+                "of": {
+                  "ref": "stock_on_hand"
+                },
+                "op": "gt",
+                "value": 0
+              },
+              {
+                "of": {
+                  "coalesce": [
+                    {
+                      "sum": {
+                        "field": "sale_line.quantity"
+                      },
+                      "where": [
+                        "completed"
+                      ],
+                      "window": {
+                        "last_days": 90
+                      }
+                    },
+                    {
+                      "const": 0
+                    }
+                  ]
+                },
+                "op": "eq",
+                "value": 0
+              }
+            ]
+          },
+          "unavailable_hint": "Upload a stock list with costs and your sales to see unsold stock.",
+          "synonyms": [
+            "not selling",
+            "dead stock",
+            "unsold stock",
+            "isn't selling",
+            "not sold",
+            "slow moving",
+            "slow-moving",
+            "sitting on the shelf"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "sell_through_rate",
+          "label": "Sell-through",
+          "description": "Items sold ÷ (items sold + items in stock).",
+          "format": "percent",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "ref": "units_sold"
+              },
+              {
+                "add": [
+                  {
+                    "ref": "units_sold"
+                  },
+                  {
+                    "ref": "stock_on_hand"
+                  }
+                ]
+              }
+            ]
+          },
+          "synonyms": [
+            "sell through",
+            "sell-through",
+            "sell through rate"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "return_rate",
+          "label": "Return rate",
+          "description": "Items returned ÷ items sold.",
+          "format": "percent",
+          "good_direction": "down",
+          "ir": {
+            "div": [
+              {
+                "sum": {
+                  "field": "return.quantity"
+                }
+              },
+              {
+                "sum": {
+                  "field": "sale_line.quantity"
+                },
+                "where": [
+                  "completed"
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your returns with how many items came back to see your return rate.",
+          "default_time": "last_90_days",
+          "synonyms": [
+            "return rate",
+            "returned",
+            "returns rate",
+            "how often do things come back",
+            "returns"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "units_returned",
+          "label": "Items returned",
+          "description": "Items that came back, counted on the day they were returned.",
+          "format": "number",
+          "good_direction": "down",
+          "ir": {
+            "sum": {
+              "field": "return.quantity"
+            }
+          },
+          "unavailable_hint": "Upload your returns with how many items came back.",
+          "synonyms": [
+            "items returned",
+            "units returned",
+            "returned items",
+            "how many came back"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "purchase_unit_cost",
+          "label": "Supplier cost per item",
+          "description": "What you paid suppliers per item, from your supplier orders.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "div": [
+              {
+                "sum": {
+                  "expr": "purchase_line_value"
+                }
+              },
+              {
+                "sum": {
+                  "field": "purchase_line.quantity"
+                }
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your supplier orders with quantities and prices.",
+          "synonyms": [
+            "supplier cost",
+            "cost from the supplier",
+            "what i pay for",
+            "buying price",
+            "purchase price"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "days_since_last_order",
+          "label": "Days since last order",
+          "description": "Days from the most recent completed order to today.",
+          "format": "days",
+          "good_direction": "down",
+          "ir": {
+            "days_between": [
+              {
+                "max": {
+                  "field": "sale.sale_date"
+                },
+                "where": [
+                  "completed"
+                ],
+                "window": "to_end",
+                "from": "sale_line"
+              },
+              {
+                "period": "end"
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your sales with dates to see when customers last ordered.",
+          "synonyms": [
+            "days since last order",
+            "last ordered",
+            "since they last ordered"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "days_overdue",
+          "label": "Days overdue",
+          "description": "How many days past its due date the oldest unpaid sale is.",
+          "format": "days",
+          "good_direction": "down",
+          "ir": {
+            "coalesce": [
+              {
+                "days_between": [
+                  {
+                    "min": {
+                      "field": "sale.due_date"
+                    },
+                    "where": [
+                      "completed",
+                      "owed",
+                      {
+                        "field": "sale.due_date",
+                        "op": "lt",
+                        "value": {
+                          "period": "end"
+                        }
+                      }
+                    ],
+                    "window": "to_end"
+                  },
+                  {
+                    "period": "end"
+                  }
+                ]
+              },
+              {
+                "sub": [
+                  {
+                    "days_between": [
+                      {
+                        "min": {
+                          "field": "sale.sale_date"
+                        },
+                        "where": [
+                          "completed",
+                          "owed",
+                          {
+                            "field": "sale.due_date",
+                            "op": "is_null"
+                          },
+                          {
+                            "field": "sale.sale_date",
+                            "op": "lt",
+                            "value": {
+                              "period": "end",
+                              "offset_days": -30
+                            }
+                          }
+                        ],
+                        "window": "to_end"
+                      },
+                      {
+                        "period": "end"
+                      }
+                    ]
+                  },
+                  {
+                    "const": 30
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Include due dates and a “Paid?” column on your invoices to see how late payments are.",
+          "synonyms": [
+            "days late",
+            "how late",
+            "days overdue",
+            "overdue by"
+          ],
+          "assumptions": [
+            "Sales without a due date count as due thirty days after the sale."
+          ],
+          "snapshot": true
+        },
+        {
+          "id": "expenses_total",
+          "label": "Expenses",
+          "description": "Everything you recorded as an expense.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sum": {
+              "field": "expense.amount"
+            }
+          },
+          "unavailable_hint": "Upload your expenses to see your costs of running the business.",
+          "synonyms": [
+            "expenses",
+            "spend on",
+            "spent on",
+            "overheads",
+            "running costs",
+            "bills",
+            "ads",
+            "advertising",
+            "rent",
+            "wages"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "net_profit_estimate",
+          "label": "Profit after expenses (estimate)",
+          "description": "Gross profit − expenses. An estimate, because it leaves out anything not recorded.",
+          "format": "money",
+          "good_direction": "up",
+          "ir": {
+            "sub": [
+              {
+                "ref": "gross_profit"
+              },
+              {
+                "ref": "expenses_total"
+              }
+            ]
+          },
+          "unavailable_hint": "Add product costs and upload your expenses to see profit after expenses.",
+          "synonyms": [
+            "profit after expenses",
+            "net profit",
+            "bottom line",
+            "real profit",
+            "after costs"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "outstanding_receivables",
+          "label": "Money owed to you",
+          "description": "Sales marked unpaid or part paid, minus payments received for them.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sub": [
+              {
+                "sum": {
+                  "expr": "line_net"
+                },
+                "where": [
+                  "completed",
+                  "owed"
+                ],
+                "window": "to_end"
+              },
+              {
+                "coalesce": [
+                  {
+                    "sum": {
+                      "field": "payment.amount"
+                    },
+                    "where": [
+                      {
+                        "field": "sale.payment_status",
+                        "op": "in",
+                        "value": [
+                          "unpaid",
+                          "partial"
+                        ]
+                      }
+                    ],
+                    "window": "to_end"
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Include a “Paid?” column on your invoices to see money owed to you.",
+          "synonyms": [
+            "owes me",
+            "owe me",
+            "owed",
+            "owing",
+            "unpaid",
+            "money owed",
+            "outstanding",
+            "receivables"
+          ],
+          "assumptions": [
+            "Without payment records, part-paid invoices are counted as fully owed."
+          ],
+          "snapshot": true
+        },
+        {
+          "id": "overdue_receivables",
+          "label": "Overdue money owed",
+          "description": "Money owed to you on sales past their payment due date.",
+          "format": "money",
+          "good_direction": "down",
+          "ir": {
+            "sub": [
+              {
+                "add": [
+                  {
+                    "sum": {
+                      "expr": "line_net"
+                    },
+                    "where": [
+                      "completed",
+                      "owed",
+                      {
+                        "field": "sale.due_date",
+                        "op": "lt",
+                        "value": {
+                          "period": "end"
+                        }
+                      }
+                    ],
+                    "window": "to_end"
+                  },
+                  {
+                    "coalesce": [
+                      {
+                        "sum": {
+                          "expr": "line_net"
+                        },
+                        "where": [
+                          "completed",
+                          "owed",
+                          {
+                            "field": "sale.due_date",
+                            "op": "is_null"
+                          },
+                          {
+                            "field": "sale.sale_date",
+                            "op": "lt",
+                            "value": {
+                              "period": "end",
+                              "offset_days": -30
+                            }
+                          }
+                        ],
+                        "window": "to_end"
+                      },
+                      {
+                        "const": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "coalesce": [
+                  {
+                    "sum": {
+                      "field": "payment.amount"
+                    },
+                    "where": [
+                      {
+                        "field": "sale.payment_status",
+                        "op": "in",
+                        "value": [
+                          "unpaid",
+                          "partial"
+                        ]
+                      },
+                      {
+                        "field": "sale.due_date",
+                        "op": "lt",
+                        "value": {
+                          "period": "end"
+                        }
+                      }
+                    ],
+                    "window": "to_end"
+                  },
+                  {
+                    "const": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Include due dates and a “Paid?” column on your invoices to see overdue payments.",
+          "synonyms": [
+            "overdue",
+            "late payments",
+            "paid late",
+            "past due",
+            "late paying",
+            "paying late"
+          ],
+          "assumptions": [
+            "Without payment records, part-paid invoices are counted as fully owed.",
+            "Sales without a due date count as due thirty days after the sale."
+          ],
+          "snapshot": true
+        },
+        {
+          "id": "supplier_spend",
+          "label": "Spent with suppliers",
+          "description": "Total of your supplier orders, by the date you ordered.",
+          "format": "money",
+          "good_direction": "neutral",
+          "ir": {
+            "sum": {
+              "expr": "purchase_line_value"
+            }
+          },
+          "unavailable_hint": "Upload your supplier orders to see what you spend with suppliers.",
+          "synonyms": [
+            "spent with suppliers",
+            "supplier spend",
+            "spend with suppliers",
+            "bought from suppliers",
+            "supplier orders total",
+            "spend with",
+            "spent with"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "backordered_units",
+          "label": "Items still to send",
+          "description": "Items ordered but not sent yet because they were out of stock, on completed invoices.",
+          "format": "number",
+          "good_direction": "down",
+          "ir": {
+            "sum": {
+              "field": "sale_line.quantity_backordered"
+            },
+            "where": [
+              "completed"
+            ]
+          },
+          "unavailable_hint": "Include a “Backordered” or “To follow” column on your invoices to see what’s still to send.",
+          "synonyms": [
+            "backorders",
+            "backordered",
+            "back orders",
+            "back ordered",
+            "still to send",
+            "to follow",
+            "not sent",
+            "short shipped"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "fill_rate",
+          "label": "Orders filled",
+          "description": "Items sent ÷ items ordered (items sent plus items still to send).",
+          "format": "percent",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "sum": {
+                  "field": "sale_line.quantity"
+                },
+                "where": [
+                  "completed"
+                ]
+              },
+              {
+                "add": [
+                  {
+                    "sum": {
+                      "field": "sale_line.quantity"
+                    },
+                    "where": [
+                      "completed"
+                    ]
+                  },
+                  {
+                    "ref": "backordered_units"
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Include a “Backordered” or “To follow” column on your invoices to see how much you fill.",
+          "synonyms": [
+            "fill rate",
+            "filled",
+            "orders filled",
+            "in full",
+            "shipped in full"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "credit_limit_total",
+          "label": "Credit limits",
+          "description": "The credit limit on each customer's account, as recorded.",
+          "format": "money",
+          "good_direction": "neutral",
+          "ir": {
+            "per": "customer",
+            "rollup": "sum",
+            "measure": {
+              "max": {
+                "field": "customer.credit_limit"
+              }
+            }
+          },
+          "unavailable_hint": "Upload your customer list with credit limits.",
+          "synonyms": [
+            "credit limit",
+            "credit limits",
+            "limit"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "credit_used_pct",
+          "label": "Credit used",
+          "description": "Money owed ÷ the customer's credit limit.",
+          "format": "percent",
+          "good_direction": "down",
+          "ir": {
+            "div": [
+              {
+                "ref": "outstanding_receivables"
+              },
+              {
+                "ref": "credit_limit_total"
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your customer list with credit limits, and invoices with a “Paid?” column.",
+          "synonyms": [
+            "credit used",
+            "credit use",
+            "how much credit",
+            "of their limit",
+            "credit utilisation"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "over_credit_limit",
+          "label": "Customers over their credit limit",
+          "description": "Customers who owe you more than their credit limit.",
+          "format": "number",
+          "good_direction": "down",
+          "ir": {
+            "per": "customer",
+            "rollup": "count",
+            "where": [
+              {
+                "of": {
+                  "max": {
+                    "field": "customer.credit_limit"
+                  }
+                },
+                "op": "gt",
+                "value": {
+                  "const": 0
+                }
+              },
+              {
+                "of": {
+                  "ref": "outstanding_receivables"
+                },
+                "op": "gt",
+                "value": {
+                  "max": {
+                    "field": "customer.credit_limit"
+                  }
+                }
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your customer list with credit limits, and invoices with a “Paid?” column.",
+          "synonyms": [
+            "over their credit limit",
+            "over the limit",
+            "over limit",
+            "over their limit",
+            "above their limit",
+            "exceeded",
+            "credit limit exceeded"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "days_to_pay",
+          "label": "Days to get paid",
+          "description": "On average, days from an invoice's date to the payment for it, for payments received in the period.",
+          "format": "days",
+          "good_direction": "down",
+          "ir": {
+            "per": "payment",
+            "rollup": "avg",
+            "measure": {
+              "days_between": [
+                {
+                  "min": {
+                    "field": "sale.sale_date"
+                  },
+                  "window": "all",
+                  "from": "payment"
+                },
+                {
+                  "max": {
+                    "field": "payment.received_date"
+                  }
+                }
+              ]
+            }
+          },
+          "unavailable_hint": "Upload the payments you received with the invoice number each one paid.",
+          "synonyms": [
+            "days to pay",
+            "days to get paid",
+            "how long to pay",
+            "take to pay",
+            "pay on time",
+            "dso",
+            "debtor days",
+            "payment days"
+          ],
+          "assumptions": [],
+          "snapshot": false
+        },
+        {
+          "id": "lifetime_orders",
+          "label": "Invoices ever",
+          "description": "Every invoice up to the end of the period, not counting cancelled or draft ones.",
+          "format": "number",
+          "good_direction": "up",
+          "ir": {
+            "count_distinct": {
+              "field": "sale_line.sale"
+            },
+            "where": [
+              "completed"
+            ],
+            "window": "to_end"
+          },
+          "synonyms": [
+            "invoices ever",
+            "all time orders",
+            "orders ever"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        },
+        {
+          "id": "usual_order_gap",
+          "label": "Usual days between orders",
+          "description": "Days from a customer's first invoice to their latest, ÷ the gaps between invoices.",
+          "format": "days",
+          "good_direction": "up",
+          "ir": {
+            "div": [
+              {
+                "days_between": [
+                  {
+                    "min": {
+                      "field": "sale.sale_date"
+                    },
+                    "where": [
+                      "completed"
+                    ],
+                    "window": "to_end",
+                    "from": "sale_line"
+                  },
+                  {
+                    "max": {
+                      "field": "sale.sale_date"
+                    },
+                    "where": [
+                      "completed"
+                    ],
+                    "window": "to_end",
+                    "from": "sale_line"
+                  }
+                ]
+              },
+              {
+                "sub": [
+                  {
+                    "ref": "lifetime_orders"
+                  },
+                  {
+                    "const": 1
+                  }
+                ]
+              }
+            ]
+          },
+          "unavailable_hint": "Upload your invoices with dates and customers.",
+          "synonyms": [
+            "how often",
+            "usual gap",
+            "order every",
+            "order cycle",
+            "reorder cycle"
+          ],
+          "assumptions": [],
+          "snapshot": true
+        }
+      ]
+    },
+    "questions": [
+      {
+        "text": "How much did I sell last month?",
+        "group": "Sales",
+        "needs": [
+          "net_sales"
+        ]
+      },
+      {
+        "text": "Show sales by month this year.",
+        "group": "Sales",
+        "needs": [
+          "net_sales"
+        ]
+      },
+      {
+        "text": "Which rep sold the most this quarter?",
+        "group": "Sales",
+        "needs": [
+          "net_sales"
+        ]
+      },
+      {
+        "text": "Who are my top customers?",
+        "group": "Customers",
+        "needs": [
+          "net_sales"
+        ]
+      },
+      {
+        "text": "Which customers give me the best margin?",
+        "group": "Customers",
+        "needs": [
+          "gross_margin_pct"
+        ]
+      },
+      {
+        "text": "Which customers stopped ordering?",
+        "group": "Customers",
+        "needs": [
+          "lapsed_customers"
+        ]
+      },
+      {
+        "text": "How many accounts ordered this month?",
+        "group": "Customers",
+        "needs": [
+          "customer_count"
+        ]
+      },
+      {
+        "text": "Who owes me money?",
+        "group": "Money",
+        "needs": [
+          "outstanding_receivables"
+        ]
+      },
+      {
+        "text": "Who is over their credit limit?",
+        "group": "Money",
+        "needs": [
+          "over_credit_limit"
+        ]
+      },
+      {
+        "text": "How long do customers take to pay?",
+        "group": "Money",
+        "needs": [
+          "days_to_pay"
+        ]
+      },
+      {
+        "text": "Which products made me the most profit last month?",
+        "group": "Products",
+        "needs": [
+          "gross_profit"
+        ]
+      },
+      {
+        "text": "What's still to send?",
+        "group": "Products",
+        "needs": [
+          "backordered_units"
+        ]
+      },
+      {
+        "text": "What's about to run out?",
+        "group": "Stock",
+        "needs": [
+          "days_of_cover"
+        ]
+      },
+      {
+        "text": "What should I reorder?",
+        "group": "Stock",
+        "needs": [
+          "days_of_cover"
+        ]
+      },
+      {
+        "text": "How much will I sell next month?",
+        "group": "Ahead",
+        "needs": [
+          "net_sales"
+        ]
+      },
+      {
+        "text": "Am I on track for my goal?",
+        "group": "Ahead",
+        "needs": [
+          "net_sales"
+        ]
+      }
+    ],
+    "dashboard": {
+      "default_range": {
+        "preset": "last_90_days",
+        "compare": true
+      },
+      "tiles": [
+        {
+          "id": "net_sales",
+          "title": "Net sales",
+          "chart": "kpi",
+          "size": [
+            3,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "net_sales"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "gross_profit",
+          "title": "Gross profit",
+          "chart": "kpi",
+          "size": [
+            3,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "gross_profit"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "money_owed",
+          "title": "Money owed to you",
+          "chart": "kpi",
+          "size": [
+            6,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "outstanding_receivables",
+              "overdue_receivables"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "sales_over_time",
+          "title": "Sales over time",
+          "chart": "line",
+          "size": [
+            8,
+            4
+          ],
+          "spec": {
+            "metrics": [
+              "net_sales"
+            ],
+            "dimensions": [
+              {
+                "time": "week"
+              }
+            ],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": true
+        },
+        {
+          "id": "days_to_pay",
+          "title": "Days to get paid",
+          "chart": "kpi",
+          "size": [
+            4,
+            4
+          ],
+          "spec": {
+            "metrics": [
+              "days_to_pay"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "top_customers",
+          "title": "Top customers",
+          "chart": "table",
+          "size": [
+            6,
+            5
+          ],
+          "spec": {
+            "metrics": [
+              "net_sales",
+              "gross_margin_pct"
+            ],
+            "dimensions": [
+              {
+                "field": "customer.name"
+              }
+            ],
+            "filters": [],
+            "having": [],
+            "orderBy": {
+              "by": "net_sales",
+              "dir": "desc"
+            },
+            "limit": 10
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "who_owes",
+          "title": "Who owes you",
+          "chart": "table",
+          "size": [
+            6,
+            5
+          ],
+          "spec": {
+            "metrics": [
+              "outstanding_receivables",
+              "overdue_receivables"
+            ],
+            "dimensions": [
+              {
+                "field": "customer.name"
+              }
+            ],
+            "filters": [],
+            "having": [
+              {
+                "metric": "outstanding_receivables",
+                "op": "gt",
+                "value": 0
+              }
+            ],
+            "orderBy": {
+              "by": "outstanding_receivables",
+              "dir": "desc"
+            },
+            "limit": 10
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "sales_by_rep",
+          "title": "Sales by rep",
+          "chart": "bar_horizontal",
+          "size": [
+            6,
+            4
+          ],
+          "spec": {
+            "metrics": [
+              "net_sales"
+            ],
+            "dimensions": [
+              {
+                "field": "customer.sales_rep"
+              }
+            ],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "top_products_profit",
+          "title": "Top products by profit",
+          "chart": "bar_horizontal",
+          "size": [
+            6,
+            4
+          ],
+          "spec": {
+            "metrics": [
+              "gross_profit"
+            ],
+            "dimensions": [
+              {
+                "field": "product.name"
+              }
+            ],
+            "filters": [],
+            "having": [],
+            "orderBy": {
+              "by": "gross_profit",
+              "dir": "desc"
+            },
+            "limit": 10
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "running_low",
+          "title": "Running low",
+          "chart": "table",
+          "size": [
+            6,
+            5
+          ],
+          "spec": {
+            "metrics": [
+              "days_of_cover"
+            ],
+            "dimensions": [
+              {
+                "field": "product.name"
+              }
+            ],
+            "filters": [],
+            "having": [
+              {
+                "metric": "days_of_cover",
+                "op": "lt",
+                "value": 21
+              }
+            ],
+            "orderBy": {
+              "by": "days_of_cover",
+              "dir": "asc"
+            }
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "backorders",
+          "title": "Still to send",
+          "chart": "table",
+          "size": [
+            6,
+            5
+          ],
+          "spec": {
+            "metrics": [
+              "backordered_units"
+            ],
+            "dimensions": [
+              {
+                "field": "product.name"
+              }
+            ],
+            "filters": [],
+            "having": [
+              {
+                "metric": "backordered_units",
+                "op": "gt",
+                "value": 0
+              }
+            ],
+            "orderBy": {
+              "by": "backordered_units",
+              "dir": "desc"
+            }
+          },
+          "auto_grain": false
+        },
+        {
+          "id": "slow_stock_total",
+          "title": "Money tied up in slow stock",
+          "chart": "kpi",
+          "size": [
+            3,
+            2
+          ],
+          "spec": {
+            "metrics": [
+              "dead_stock_value"
+            ],
+            "dimensions": [],
+            "filters": [],
+            "having": []
+          },
+          "auto_grain": false
+        }
+      ]
+    },
+    "insights": {
+      "rules": [
+        {
+          "id": "stockout_risk",
+          "category": "stock",
+          "label": "Running out of stock",
+          "description": "Products that will run out soon at the rate they're selling.",
+          "enabled": true,
+          "thresholds": {
+            "warn_days": {
+              "label": "Warn me when stock will run out within {{value}} days",
+              "default": 14,
+              "min": 1,
+              "max": 90,
+              "unit": "days",
+              "editable": true
+            },
+            "urgent_days": {
+              "label": "Call it urgent when it's within {{value}} days",
+              "default": 7,
+              "min": 1,
+              "max": 60,
+              "unit": "days",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "cover": {
+              "metrics": [
+                "days_of_cover",
+                "daily_sales_rate",
+                "stock_on_hand"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                },
+                {
+                  "field": "supplier.name"
+                },
+                {
+                  "field": "supplier.lead_time_days"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": [
+                {
+                  "metric": "daily_sales_rate",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "days_of_cover",
+                "dir": "asc"
+              },
+              "limit": 100
+            },
+            "price": {
+              "metrics": [
+                "net_sales",
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 90
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "lt": [
+              "cover.days_of_cover",
+              {
+                "threshold": "warn_days"
+              }
+            ]
+          },
+          "facts": {
+            "product": {
+              "text": "key"
+            },
+            "days": {
+              "value": "cover.days_of_cover",
+              "format": "integer"
+            },
+            "rate": {
+              "value": "cover.daily_sales_rate",
+              "format": "number"
+            },
+            "on_hand": {
+              "value": "cover.stock_on_hand",
+              "format": "integer"
+            },
+            "cover_days": {
+              "value": {
+                "add": [
+                  {
+                    "coalesce": [
+                      "cover.d2",
+                      14
+                    ]
+                  },
+                  30
+                ]
+              },
+              "format": "integer"
+            },
+            "qty": {
+              "value": {
+                "max": [
+                  0,
+                  {
+                    "sub": [
+                      {
+                        "mul": [
+                          "cover.daily_sales_rate",
+                          {
+                            "add": [
+                              {
+                                "coalesce": [
+                                  "cover.d2",
+                                  14
+                                ]
+                              },
+                              30
+                            ]
+                          }
+                        ]
+                      },
+                      "cover.stock_on_hand"
+                    ]
+                  }
+                ]
+              },
+              "format": "integer"
+            },
+            "supplier": {
+              "text": "cover.d1",
+              "fallback": "your supplier"
+            }
+          },
+          "severity": {
+            "urgent": {
+              "lt": [
+                "cover.days_of_cover",
+                {
+                  "threshold": "urgent_days"
+                }
+              ]
+            },
+            "otherwise": "warn",
+            "impact": {
+              "mul": [
+                "cover.daily_sales_rate",
+                14,
+                {
+                  "coalesce": [
+                    {
+                      "div": [
+                        "price.net_sales",
+                        "price.units_sold"
+                      ]
+                    },
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          "template": "**{{product}}** will run out in about {{days}} {{days|day|days}} at the current sales rate ({{rate}} a day). You have {{on_hand}} left.",
+          "context": "Consider reordering about {{qty}} from {{supplier}} to cover the next {{cover_days}} days.",
+          "action": {
+            "label": "See product",
+            "records": "product",
+            "search": "key"
+          },
+          "limit": 5,
+          "cooldown_days": 3
+        },
+        {
+          "id": "dead_stock",
+          "category": "stock",
+          "label": "Stock that isn't selling",
+          "description": "Products in stock that haven't sold in 90 days, and the money they hold.",
+          "enabled": true,
+          "thresholds": {
+            "min_value": {
+              "label": "Only tell me when unsold stock is worth more than {{value}}",
+              "default": 100,
+              "min": 0,
+              "max": 1000000,
+              "unit": "money",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "dead": {
+              "metrics": [
+                "dead_stock_value",
+                "stock_on_hand"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": [
+                {
+                  "metric": "dead_stock_value",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "dead_stock_value",
+                "dir": "desc"
+              }
+            }
+          },
+          "scope": "summary",
+          "require": {
+            "gt": [
+              {
+                "total": "dead.dead_stock_value"
+              },
+              {
+                "threshold": "min_value"
+              }
+            ]
+          },
+          "facts": {
+            "count": {
+              "count": true
+            },
+            "value": {
+              "sum": "dead.dead_stock_value",
+              "format": "money"
+            },
+            "top_product": {
+              "top": "key",
+              "by": "dead.dead_stock_value",
+              "format": "text"
+            },
+            "days": {
+              "value": 90,
+              "format": "integer"
+            }
+          },
+          "severity": {
+            "otherwise": "warn",
+            "impact": {
+              "total": "dead.dead_stock_value"
+            }
+          },
+          "template": "{{count}} {{count|product hasn't|products haven't}} sold in {{days}} days. They're holding {{value}} of your money, led by **{{top_product}}**.",
+          "action": {
+            "label": "See which",
+            "ask": "Which products haven't sold in the last 90 days?"
+          },
+          "limit": 3,
+          "cooldown_days": 30
+        },
+        {
+          "id": "customer_slipping",
+          "category": "customers",
+          "label": "Regular accounts ordering less",
+          "description": "Accounts with several past invoices whose spending has dropped well below their usual.",
+          "enabled": true,
+          "thresholds": {
+            "drop": {
+              "label": "Tell me when a regular customer's spending drops by {{value}}% or more",
+              "default": 0.5,
+              "min": 0.1,
+              "max": 0.95,
+              "unit": "percent",
+              "editable": true
+            },
+            "min_orders": {
+              "label": "Count customers as regulars after {{value}} orders",
+              "default": 3,
+              "min": 2,
+              "max": 20,
+              "unit": "count",
+              "editable": true
+            },
+            "min_spend": {
+              "label": "Only for customers who usually spend {{value}} or more every two months",
+              "default": 200,
+              "min": 0,
+              "max": 1000000,
+              "unit": "money",
+              "editable": true
+            }
+          },
+          "needs_history_days": 240,
+          "queries": {
+            "before": {
+              "metrics": [
+                "net_sales",
+                "order_count"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "days_ago": [
+                  240,
+                  60
+                ]
+              },
+              "having": [
+                {
+                  "metric": "net_sales",
+                  "op": "gt",
+                  "value": 0
+                }
+              ]
+            },
+            "recent": {
+              "metrics": [
+                "net_sales"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 60
+              },
+              "having": []
+            },
+            "last": {
+              "metrics": [
+                "days_since_last_order"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "rows": "before",
+          "where": {
+            "all": [
+              {
+                "gte": [
+                  "before.order_count",
+                  {
+                    "threshold": "min_orders"
+                  }
+                ]
+              },
+              {
+                "gte": [
+                  {
+                    "div": [
+                      "before.net_sales",
+                      3
+                    ]
+                  },
+                  {
+                    "threshold": "min_spend"
+                  }
+                ]
+              },
+              {
+                "lte": [
+                  {
+                    "coalesce": [
+                      "recent.net_sales",
+                      0
+                    ]
+                  },
+                  {
+                    "mul": [
+                      {
+                        "div": [
+                          "before.net_sales",
+                          3
+                        ]
+                      },
+                      {
+                        "sub": [
+                          1,
+                          {
+                            "threshold": "drop"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "customer": {
+              "text": "key"
+            },
+            "drop_pct": {
+              "value": {
+                "sub": [
+                  1,
+                  {
+                    "div": [
+                      {
+                        "coalesce": [
+                          "recent.net_sales",
+                          0
+                        ]
+                      },
+                      {
+                        "div": [
+                          "before.net_sales",
+                          3
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "format": "percent"
+            },
+            "recent": {
+              "value": {
+                "coalesce": [
+                  "recent.net_sales",
+                  0
+                ]
+              },
+              "format": "money"
+            },
+            "usual": {
+              "value": {
+                "div": [
+                  "before.net_sales",
+                  3
+                ]
+              },
+              "format": "money"
+            },
+            "days_since": {
+              "value": "last.days_since_last_order",
+              "format": "integer"
+            }
+          },
+          "severity": {
+            "otherwise": "warn",
+            "impact": {
+              "sub": [
+                {
+                  "div": [
+                    "before.net_sales",
+                    3
+                  ]
+                },
+                {
+                  "coalesce": [
+                    "recent.net_sales",
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          "template": "**{{customer}}**'s orders dropped {{drop_pct}} compared with their usual. Their last order was {{days_since}} {{days_since|day|days}} ago.",
+          "context": "They spent {{recent}} in the last two months, against a usual {{usual}}.",
+          "action": {
+            "label": "View customer",
+            "records": "customer",
+            "search": "key"
+          },
+          "limit": 3,
+          "cooldown_days": 14
+        },
+        {
+          "id": "margin_squeeze",
+          "category": "profit",
+          "label": "Costs going up",
+          "description": "Products whose latest supplier cost rose, squeezing your margin.",
+          "enabled": true,
+          "thresholds": {
+            "rise": {
+              "label": "Tell me when a supplier's cost goes up by {{value}}% or more",
+              "default": 0.1,
+              "min": 0.01,
+              "max": 1,
+              "unit": "percent",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "costs": {
+              "metrics": [
+                "purchase_unit_cost"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                },
+                {
+                  "field": "purchase.order_date"
+                },
+                {
+                  "field": "product.unit_price"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 730
+              },
+              "having": []
+            },
+            "sold": {
+              "metrics": [
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 90
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "gte": [
+              {
+                "pct_change": [
+                  {
+                    "last": "costs.purchase_unit_cost"
+                  },
+                  {
+                    "prior": "costs.purchase_unit_cost"
+                  }
+                ]
+              },
+              {
+                "threshold": "rise"
+              }
+            ]
+          },
+          "facts": {
+            "product": {
+              "text": "key"
+            },
+            "cost_change": {
+              "value": {
+                "pct_change": [
+                  {
+                    "last": "costs.purchase_unit_cost"
+                  },
+                  {
+                    "prior": "costs.purchase_unit_cost"
+                  }
+                ]
+              },
+              "format": "percent"
+            },
+            "old_cost": {
+              "value": {
+                "prior": "costs.purchase_unit_cost"
+              },
+              "format": "money"
+            },
+            "new_cost": {
+              "value": {
+                "last": "costs.purchase_unit_cost"
+              },
+              "format": "money"
+            },
+            "price": {
+              "value": {
+                "last": "costs.d2"
+              },
+              "format": "money"
+            },
+            "old_margin": {
+              "value": {
+                "div": [
+                  {
+                    "sub": [
+                      {
+                        "last": "costs.d2"
+                      },
+                      {
+                        "prior": "costs.purchase_unit_cost"
+                      }
+                    ]
+                  },
+                  {
+                    "last": "costs.d2"
+                  }
+                ]
+              },
+              "format": "percent"
+            },
+            "new_margin": {
+              "value": {
+                "div": [
+                  {
+                    "sub": [
+                      {
+                        "last": "costs.d2"
+                      },
+                      {
+                        "last": "costs.purchase_unit_cost"
+                      }
+                    ]
+                  },
+                  {
+                    "last": "costs.d2"
+                  }
+                ]
+              },
+              "format": "percent"
+            }
+          },
+          "severity": {
+            "otherwise": "warn",
+            "impact": {
+              "mul": [
+                {
+                  "sub": [
+                    {
+                      "last": "costs.purchase_unit_cost"
+                    },
+                    {
+                      "prior": "costs.purchase_unit_cost"
+                    }
+                  ]
+                },
+                {
+                  "coalesce": [
+                    "sold.units_sold",
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          "template": "The cost of **{{product}}** went up {{cost_change}}, from {{old_cost}} to {{new_cost}}. At your price of {{price}}, your margin fell from {{old_margin}} to {{new_margin}}.",
+          "action": {
+            "label": "See product",
+            "records": "product",
+            "search": "key"
+          },
+          "limit": 3,
+          "cooldown_days": 30
+        },
+        {
+          "id": "return_spike",
+          "category": "products",
+          "label": "Products coming back a lot",
+          "description": "Products with a high return rate over the last 60 days.",
+          "enabled": true,
+          "thresholds": {
+            "rate": {
+              "label": "Tell me when {{value}}% or more of a product comes back",
+              "default": 0.1,
+              "min": 0.02,
+              "max": 0.9,
+              "unit": "percent",
+              "editable": true
+            },
+            "min_returns": {
+              "label": "Only once at least {{value}} have come back",
+              "default": 5,
+              "min": 1,
+              "max": 100,
+              "unit": "count",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "ret": {
+              "metrics": [
+                "return_rate",
+                "units_returned"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 60
+              },
+              "having": [
+                {
+                  "metric": "units_returned",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "units_returned",
+                "dir": "desc"
+              }
+            },
+            "reasons": {
+              "metrics": [
+                "units_returned"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                },
+                {
+                  "field": "return.reason"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 60
+              },
+              "having": []
+            },
+            "value": {
+              "metrics": [
+                "net_sales",
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 60
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "all": [
+              {
+                "gte": [
+                  "ret.return_rate",
+                  {
+                    "threshold": "rate"
+                  }
+                ]
+              },
+              {
+                "gte": [
+                  "ret.units_returned",
+                  {
+                    "threshold": "min_returns"
+                  }
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "product": {
+              "text": "key"
+            },
+            "return_rate": {
+              "value": "ret.return_rate",
+              "format": "percent"
+            },
+            "returned": {
+              "value": "ret.units_returned",
+              "format": "integer"
+            },
+            "top_reason": {
+              "text": "reasons.d1",
+              "by": "reasons.units_returned",
+              "fallback": "not recorded"
+            }
+          },
+          "severity": {
+            "warn": {
+              "gte": [
+                "ret.return_rate",
+                {
+                  "mul": [
+                    {
+                      "threshold": "rate"
+                    },
+                    1.5
+                  ]
+                }
+              ]
+            },
+            "otherwise": "info",
+            "impact": {
+              "mul": [
+                "ret.units_returned",
+                {
+                  "coalesce": [
+                    {
+                      "div": [
+                        "value.net_sales",
+                        "value.units_sold"
+                      ]
+                    },
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          "template": "**{{product}}** is being returned a lot: {{return_rate}} of sales in the last two months ({{returned}} {{returned|item|items}}). Top reason: {{top_reason}}.",
+          "action": {
+            "label": "See returns",
+            "ask": "What is the return rate of {{product}} by month?"
+          },
+          "limit": 3,
+          "cooldown_days": 14
+        },
+        {
+          "id": "rising_star",
+          "category": "products",
+          "label": "Products taking off",
+          "description": "Products selling much faster in the last four weeks than the four before.",
+          "enabled": true,
+          "thresholds": {
+            "growth": {
+              "label": "Tell me when sales of a product are up {{value}}% or more",
+              "default": 0.5,
+              "min": 0.1,
+              "max": 10,
+              "unit": "percent",
+              "editable": true
+            },
+            "min_units": {
+              "label": "Only for products that sold at least {{value}} in the last four weeks",
+              "default": 25,
+              "min": 1,
+              "max": 1000,
+              "unit": "count",
+              "editable": true
+            }
+          },
+          "needs_history_days": 56,
+          "queries": {
+            "units": {
+              "metrics": [
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 28
+              },
+              "compare": "previous_period",
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "all": [
+              {
+                "gte": [
+                  "units.units_sold",
+                  {
+                    "threshold": "min_units"
+                  }
+                ]
+              },
+              {
+                "gt": [
+                  "units.units_sold__prev",
+                  0
+                ]
+              },
+              {
+                "gte": [
+                  {
+                    "pct_change": [
+                      "units.units_sold",
+                      "units.units_sold__prev"
+                    ]
+                  },
+                  {
+                    "threshold": "growth"
+                  }
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "product": {
+              "text": "key"
+            },
+            "change": {
+              "value": {
+                "pct_change": [
+                  "units.units_sold",
+                  "units.units_sold__prev"
+                ]
+              },
+              "format": "percent"
+            },
+            "units": {
+              "value": "units.units_sold",
+              "format": "integer"
+            },
+            "before": {
+              "value": "units.units_sold__prev",
+              "format": "integer"
+            }
+          },
+          "severity": {
+            "otherwise": "info",
+            "impact": {
+              "sub": [
+                "units.units_sold",
+                "units.units_sold__prev"
+              ]
+            }
+          },
+          "template": "**{{product}}** is taking off: sales are up {{change}} in the last four weeks.",
+          "context": "{{units}} sold, against {{before}} in the four weeks before.",
+          "action": {
+            "label": "See product",
+            "records": "product",
+            "search": "key"
+          },
+          "limit": 3,
+          "cooldown_days": 14
+        },
+        {
+          "id": "sales_change",
+          "category": "trends",
+          "label": "Big changes in sales",
+          "description": "The last four weeks' sales compared with the four before (orders come in lumps, so not week by week).",
+          "enabled": true,
+          "thresholds": {
+            "change": {
+              "label": "Tell me when four weeks' sales change by {{value}}% or more",
+              "default": 0.25,
+              "min": 0.05,
+              "max": 2,
+              "unit": "percent",
+              "editable": true
+            }
+          },
+          "needs_history_days": 56,
+          "queries": {
+            "week": {
+              "metrics": [
+                "net_sales"
+              ],
+              "dimensions": [],
+              "filters": [],
+              "period": {
+                "last_days": 28
+              },
+              "compare": "previous_period",
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "all": [
+              {
+                "gt": [
+                  "week.net_sales__prev",
+                  0
+                ]
+              },
+              {
+                "gte": [
+                  {
+                    "abs": {
+                      "pct_change": [
+                        "week.net_sales",
+                        "week.net_sales__prev"
+                      ]
+                    }
+                  },
+                  {
+                    "threshold": "change"
+                  }
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "direction": {
+              "choose": {
+                "gt": [
+                  "week.net_sales",
+                  "week.net_sales__prev"
+                ]
+              },
+              "then": "up",
+              "else": "down"
+            },
+            "change": {
+              "value": {
+                "abs": {
+                  "pct_change": [
+                    "week.net_sales",
+                    "week.net_sales__prev"
+                  ]
+                }
+              },
+              "format": "percent"
+            },
+            "this_week": {
+              "value": "week.net_sales",
+              "format": "money"
+            },
+            "last_week": {
+              "value": "week.net_sales__prev",
+              "format": "money"
+            }
+          },
+          "severity": {
+            "warn": {
+              "lt": [
+                "week.net_sales",
+                "week.net_sales__prev"
+              ]
+            },
+            "otherwise": "info",
+            "impact": {
+              "abs": {
+                "sub": [
+                  "week.net_sales",
+                  "week.net_sales__prev"
+                ]
+              }
+            }
+          },
+          "template": "Sales in the last four weeks are {{direction}} {{change}} on the four weeks before ({{this_week}} vs {{last_week}}).",
+          "action": {
+            "label": "See why",
+            "ask": "Net sales by customer in the last 28 days compared with the 28 days before"
+          },
+          "limit": 3,
+          "cooldown_days": 13
+        },
+        {
+          "id": "channel_shift",
+          "category": "trends",
+          "label": "How orders come in",
+          "description": "A way of ordering (rep, portal, phone…) whose share of your sales grew a lot over the last 90 days.",
+          "enabled": true,
+          "thresholds": {
+            "points": {
+              "label": "Tell me when a channel's share grows by {{value}} points or more",
+              "default": 0.1,
+              "min": 0.02,
+              "max": 0.5,
+              "unit": "points",
+              "editable": true
+            }
+          },
+          "needs_history_days": 180,
+          "queries": {
+            "ch": {
+              "metrics": [
+                "net_sales"
+              ],
+              "dimensions": [
+                {
+                  "field": "sale.channel"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 90
+              },
+              "compare": "previous_period",
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "gte": [
+              {
+                "sub": [
+                  {
+                    "share": "ch.net_sales"
+                  },
+                  {
+                    "share": "ch.net_sales__prev"
+                  }
+                ]
+              },
+              {
+                "threshold": "points"
+              }
+            ]
+          },
+          "facts": {
+            "channel": {
+              "text": "key"
+            },
+            "share": {
+              "value": {
+                "share": "ch.net_sales"
+              },
+              "format": "percent"
+            },
+            "prev_share": {
+              "value": {
+                "share": "ch.net_sales__prev"
+              },
+              "format": "percent"
+            }
+          },
+          "severity": {
+            "otherwise": "info",
+            "impact": {
+              "sub": [
+                "ch.net_sales",
+                "ch.net_sales__prev"
+              ]
+            }
+          },
+          "template": "**{{channel}}** now brings in {{share}} of your sales, up from {{prev_share}}.",
+          "context": "Over the last three months, compared with the three months before.",
+          "action": {
+            "label": "See channels",
+            "ask": "Net sales by channel by month this year"
+          },
+          "limit": 2,
+          "cooldown_days": 30
+        },
+        {
+          "id": "overdue_payments",
+          "category": "cash",
+          "label": "Customers who owe you",
+          "description": "Customers with unpaid sales past their due date.",
+          "enabled": true,
+          "thresholds": {
+            "min_amount": {
+              "label": "Tell me when overdue money owed is more than {{value}}",
+              "default": 50,
+              "min": 0,
+              "max": 1000000,
+              "unit": "money",
+              "editable": true
+            },
+            "urgent_days": {
+              "label": "Call it urgent when a payment is {{value}} days late",
+              "default": 60,
+              "min": 7,
+              "max": 365,
+              "unit": "days",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "owed": {
+              "metrics": [
+                "overdue_receivables",
+                "days_overdue"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": [
+                {
+                  "metric": "overdue_receivables",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "overdue_receivables",
+                "dir": "desc"
+              }
+            }
+          },
+          "scope": "summary",
+          "require": {
+            "gt": [
+              {
+                "total": "owed.overdue_receivables"
+              },
+              {
+                "threshold": "min_amount"
+              }
+            ]
+          },
+          "facts": {
+            "count": {
+              "count": true
+            },
+            "amount": {
+              "sum": "owed.overdue_receivables",
+              "format": "money"
+            },
+            "customer": {
+              "top": "key",
+              "by": "owed.overdue_receivables",
+              "format": "text"
+            },
+            "customer_amount": {
+              "top": "owed.overdue_receivables",
+              "by": "owed.overdue_receivables",
+              "format": "money"
+            },
+            "days": {
+              "top": "owed.days_overdue",
+              "by": "owed.overdue_receivables",
+              "format": "integer"
+            },
+            "oldest": {
+              "top": "owed.days_overdue",
+              "by": "owed.days_overdue",
+              "format": "integer"
+            }
+          },
+          "severity": {
+            "urgent": {
+              "gte": [
+                {
+                  "coalesce": [
+                    {
+                      "fact": "oldest"
+                    },
+                    0
+                  ]
+                },
+                {
+                  "threshold": "urgent_days"
+                }
+              ]
+            },
+            "otherwise": "warn",
+            "impact": {
+              "total": "owed.overdue_receivables"
+            }
+          },
+          "template": "{{count}} {{count|customer owes|customers owe}} you {{amount}} that's overdue. The largest is **{{customer}}** ({{customer_amount}}, {{days}} {{days|day|days}} late).",
+          "action": {
+            "label": "See who owes",
+            "ask": "Who owes me money?"
+          },
+          "limit": 3,
+          "cooldown_days": 7
+        },
+        {
+          "id": "over_credit_limit",
+          "category": "cash",
+          "label": "Customers over their credit limit",
+          "description": "Customers who owe you more than the credit limit on their account.",
+          "enabled": true,
+          "thresholds": {
+            "used": {
+              "label": "Tell me when a customer owes {{value}}% or more of their credit limit",
+              "default": 1,
+              "min": 0.5,
+              "max": 3,
+              "unit": "percent",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "credit": {
+              "metrics": [
+                "outstanding_receivables",
+                "credit_limit_total",
+                "credit_used_pct"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": [
+                {
+                  "metric": "credit_limit_total",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "credit_used_pct",
+                "dir": "desc"
+              }
+            }
+          },
+          "scope": "each",
+          "where": {
+            "gte": [
+              "credit.credit_used_pct",
+              {
+                "threshold": "used"
+              }
+            ]
+          },
+          "facts": {
+            "customer": {
+              "text": "key"
+            },
+            "owed": {
+              "value": "credit.outstanding_receivables",
+              "format": "money"
+            },
+            "limit": {
+              "value": "credit.credit_limit_total",
+              "format": "money"
+            },
+            "used": {
+              "value": "credit.credit_used_pct",
+              "format": "percent"
+            }
+          },
+          "severity": {
+            "urgent": {
+              "gte": [
+                "credit.credit_used_pct",
+                {
+                  "mul": [
+                    {
+                      "threshold": "used"
+                    },
+                    1.25
+                  ]
+                }
+              ]
+            },
+            "otherwise": "warn",
+            "impact": {
+              "sub": [
+                "credit.outstanding_receivables",
+                "credit.credit_limit_total"
+              ]
+            }
+          },
+          "template": "**{{customer}}** owes you {{owed}}, {{used}} of their {{limit}} credit limit.",
+          "context": "Consider holding new orders until they pay.",
+          "action": {
+            "label": "View customer",
+            "records": "customer",
+            "search": "key"
+          },
+          "limit": 5,
+          "cooldown_days": 7
+        },
+        {
+          "id": "paying_later",
+          "category": "cash",
+          "label": "Customers paying later than usual",
+          "description": "Customers whose invoices took a lot longer to pay in the last 90 days than before.",
+          "enabled": true,
+          "thresholds": {
+            "days": {
+              "label": "Tell me when a customer takes {{value}} days or more longer to pay",
+              "default": 14,
+              "min": 3,
+              "max": 120,
+              "unit": "days",
+              "editable": true
+            }
+          },
+          "needs_history_days": 180,
+          "queries": {
+            "pay": {
+              "metrics": [
+                "days_to_pay"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 90
+              },
+              "compare": "previous_period",
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "all": [
+              {
+                "gt": [
+                  "pay.days_to_pay__prev",
+                  0
+                ]
+              },
+              {
+                "gte": [
+                  {
+                    "sub": [
+                      "pay.days_to_pay",
+                      "pay.days_to_pay__prev"
+                    ]
+                  },
+                  {
+                    "threshold": "days"
+                  }
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "customer": {
+              "text": "key"
+            },
+            "now": {
+              "value": "pay.days_to_pay",
+              "format": "integer"
+            },
+            "before": {
+              "value": "pay.days_to_pay__prev",
+              "format": "integer"
+            }
+          },
+          "severity": {
+            "otherwise": "warn",
+            "impact": {
+              "sub": [
+                "pay.days_to_pay",
+                "pay.days_to_pay__prev"
+              ]
+            }
+          },
+          "template": "**{{customer}}** is taking longer to pay: {{now}} {{now|day|days}} on average lately, against {{before}} before.",
+          "context": "Over the last three months, compared with the three months before.",
+          "action": {
+            "label": "View customer",
+            "records": "customer",
+            "search": "key"
+          },
+          "limit": 3,
+          "cooldown_days": 14
+        },
+        {
+          "id": "missed_reorder",
+          "category": "customers",
+          "label": "Accounts that missed their usual reorder",
+          "description": "Regular accounts that haven't ordered for well over their usual time between orders.",
+          "enabled": true,
+          "thresholds": {
+            "times": {
+              "label": "Tell me when an account has gone {{value}} times its usual gap without ordering",
+              "default": 1.5,
+              "min": 1.1,
+              "max": 5,
+              "unit": "count",
+              "editable": true
+            },
+            "min_orders": {
+              "label": "Count accounts as regulars after {{value}} orders",
+              "default": 4,
+              "min": 2,
+              "max": 50,
+              "unit": "count",
+              "editable": true
+            }
+          },
+          "needs_history_days": 120,
+          "queries": {
+            "gap": {
+              "metrics": [
+                "days_since_last_order",
+                "usual_order_gap",
+                "lifetime_orders"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "to_date": true
+              },
+              "having": [
+                {
+                  "metric": "usual_order_gap",
+                  "op": "gt",
+                  "value": 0
+                }
+              ]
+            },
+            "spend": {
+              "metrics": [
+                "net_sales"
+              ],
+              "dimensions": [
+                {
+                  "field": "customer.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 365
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "rows": "gap",
+          "where": {
+            "all": [
+              {
+                "gte": [
+                  "gap.lifetime_orders",
+                  {
+                    "threshold": "min_orders"
+                  }
+                ]
+              },
+              {
+                "gte": [
+                  "gap.days_since_last_order",
+                  {
+                    "mul": [
+                      "gap.usual_order_gap",
+                      {
+                        "threshold": "times"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "gte": [
+                  "gap.days_since_last_order",
+                  14
+                ]
+              }
+            ]
+          },
+          "facts": {
+            "customer": {
+              "text": "key"
+            },
+            "usual": {
+              "value": "gap.usual_order_gap",
+              "format": "integer"
+            },
+            "since": {
+              "value": "gap.days_since_last_order",
+              "format": "integer"
+            },
+            "year": {
+              "value": {
+                "coalesce": [
+                  "spend.net_sales",
+                  0
+                ]
+              },
+              "format": "money"
+            }
+          },
+          "severity": {
+            "warn": {
+              "gte": [
+                "gap.days_since_last_order",
+                {
+                  "mul": [
+                    "gap.usual_order_gap",
+                    2
+                  ]
+                }
+              ]
+            },
+            "otherwise": "info",
+            "impact": {
+              "div": [
+                {
+                  "coalesce": [
+                    "spend.net_sales",
+                    0
+                  ]
+                },
+                12
+              ]
+            }
+          },
+          "template": "**{{customer}}** usually orders every {{usual}} {{usual|day|days}}, but hasn't for {{since}} days.",
+          "context": "They spent {{year}} with you in the last year. A call might bring the order in.",
+          "action": {
+            "label": "View customer",
+            "records": "customer",
+            "search": "key"
+          },
+          "limit": 5,
+          "cooldown_days": 14
+        },
+        {
+          "id": "backorders_building",
+          "category": "stock",
+          "label": "Orders you couldn't fill",
+          "description": "Products customers ordered but you couldn't send in the last four weeks.",
+          "enabled": true,
+          "thresholds": {
+            "min_units": {
+              "label": "Tell me when {{value}} or more of a product are still to send",
+              "default": 10,
+              "min": 1,
+              "max": 10000,
+              "unit": "count",
+              "editable": true
+            }
+          },
+          "needs_history_days": 0,
+          "queries": {
+            "bo": {
+              "metrics": [
+                "backordered_units",
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                },
+                {
+                  "field": "supplier.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 28
+              },
+              "having": [
+                {
+                  "metric": "backordered_units",
+                  "op": "gt",
+                  "value": 0
+                }
+              ],
+              "sort": {
+                "by": "backordered_units",
+                "dir": "desc"
+              }
+            },
+            "price": {
+              "metrics": [
+                "net_sales",
+                "units_sold"
+              ],
+              "dimensions": [
+                {
+                  "field": "product.name"
+                }
+              ],
+              "filters": [],
+              "period": {
+                "last_days": 90
+              },
+              "having": []
+            }
+          },
+          "scope": "each",
+          "where": {
+            "gte": [
+              "bo.backordered_units",
+              {
+                "threshold": "min_units"
+              }
+            ]
+          },
+          "facts": {
+            "product": {
+              "text": "key"
+            },
+            "units": {
+              "value": "bo.backordered_units",
+              "format": "integer"
+            },
+            "sent": {
+              "value": "bo.units_sold",
+              "format": "integer"
+            },
+            "supplier": {
+              "text": "bo.d1",
+              "fallback": "your supplier"
+            }
+          },
+          "severity": {
+            "warn": {
+              "gte": [
+                "bo.backordered_units",
+                {
+                  "mul": [
+                    {
+                      "threshold": "min_units"
+                    },
+                    3
+                  ]
+                }
+              ]
+            },
+            "otherwise": "info",
+            "impact": {
+              "mul": [
+                "bo.backordered_units",
+                {
+                  "coalesce": [
+                    {
+                      "div": [
+                        "price.net_sales",
+                        "price.units_sold"
+                      ]
+                    },
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          "template": "{{units}} {{units|unit|units}} of **{{product}}** are still to send to customers from the last four weeks.",
+          "context": "You sent {{sent}}. Consider ordering more from {{supplier}}.",
+          "action": {
+            "label": "See product",
+            "records": "product",
+            "search": "key"
+          },
+          "limit": 3,
+          "cooldown_days": 7
+        }
+      ]
+    },
+    "primer": "Wholesalers and distributors sell to other businesses (shops, cafés, salons, other traders) on account,\nand usually keep these files:\n- An invoice or sales-order export from their accounts software (QuickBooks, Xero, Sage) or a\n  hand-kept invoice sheet: one row per item invoiced, with the invoice number, date, customer and due\n  date repeated on every row or written only on the first row of each invoice. A \"Paid?\" or \"Status\"\n  column says whether it has been paid. \"Backordered\" or \"To follow\" means items still to be sent.\n- A customer (account) list: one row per trade customer, with an account number, contact details,\n  payment terms (like \"30 days\" or \"Net 30\"), a credit limit, the sales rep and the price list.\n- A payments received sheet: date, customer, invoice number and amount.\n- A stock list with product codes, case sizes, costs, trade prices and how many are in the warehouse.\n- Supplier (purchase) orders: one row per product ordered, with the supplier, dates, quantity and cost.\n- An expenses sheet, often with months as columns.\nTotals, subtotals, notes and blank rows are common and are not records. The same customer is often\nspelled several ways (\"Bloom & Co\", \"Bloom and Co Ltd\"). Dates may be day-first or month-first."
   }
 };

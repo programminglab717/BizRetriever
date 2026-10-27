@@ -1,0 +1,27 @@
+# Wholesale & Distribution pack manifest (M14). Full spec: docs/VERTICAL_PACKS.md Part 3.
+# Shares the record and measure ids of the retail pack where they mean the same thing (a sale is an
+# invoice, a customer is a trade account), so the core treats both alike (ADR-064).
+id: wholesale
+version: 1.0.0
+name: Wholesale & Distribution
+description: For businesses that sell to other businesses, like shops, cafés and salons.
+industries_label: I sell to other businesses (wholesale)
+locale_defaults:
+  currency: USD
+  date_order: MDY
+requires_core: '>=0.1.0'
+primary_time_entity: sale
+# What a wholesaler checks first: sales, profit, and the money still owed.
+key_numbers:
+  home: [net_sales, gross_profit, outstanding_receivables]
+  weekly: [net_sales, order_count]
+  activity: order_count
+planning:
+  goals: [net_sales, order_count, gross_profit]
+  forecasts: [net_sales, order_count, units_sold]
+  goal_words:
+    order_count: [order, invoice]
+    gross_profit: [profit]
+    net_sales: [sale, sales, revenue, turnover]
+  reorder:
+    { cover: days_of_cover, rate: daily_sales_rate, stock: stock_on_hand, season: units_sold }

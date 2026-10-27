@@ -38,7 +38,7 @@ const CURRENCY_SYMBOLS = [
 const CURRENCY_CODES =
   /\b(USD|GBP|EUR|CAD|AUD|NZD|INR|PKR|AED|SAR|SGD|ZAR|NGN|KES|PHP|MYR|BDT|MXN|BRL|JPY)\b/i;
 const UNIT_WORDS =
-  /^(pcs?|pieces?|units?|ea|each|items?|boxes|box|bx|packs?|pk|sets?|pairs?|prs?|bottles?|cases?|cartons?|kg|kgs|g|gr|lbs?|oz|l|ltrs?|litres?|liters?|ml|m|cm|mm|dozen|doz)\.?$/i;
+  /^(pcs?|pieces?|units?|ea|each|items?|boxes|box|bx|packs?|pk|sets?|pairs?|prs?|bottles?|cases?|cartons?|kg|kgs|g|gr|lbs?|oz|l|ltrs?|litres?|liters?|ml|m|cm|mm|dozen|doz|days?)\.?$/i;
 
 /** Already-numeric cells pass straight through. */
 export function parseNumber(input: unknown, options: NumberOptions = {}): ParsedNumber | undefined {
@@ -73,6 +73,13 @@ export function parseNumber(input: unknown, options: NumberOptions = {}): Parsed
   if (text.endsWith('%')) {
     result.percent = true;
     text = text.slice(0, -1).trim();
+  }
+
+  // Payment terms written the trade way: "Net 30" is 30 days (M14).
+  const net = /^net\s*(\d{1,3})$/i.exec(text);
+  if (net) {
+    result.unit = 'days';
+    text = net[1]!;
   }
 
   const unitMatch = /^([-+]?[\d.,\s']+)\s*([A-Za-z]+\.?)$/.exec(text);

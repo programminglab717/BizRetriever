@@ -73,3 +73,12 @@ export async function generateNextMonthUpdate(
   writeFileSync(path.join(options.outDir, 'next_month_truth.json'), JSON.stringify(truth, null, 2));
   return truth;
 }
+
+export {
+  generateWholesaleDataset,
+  simulateWholesale,
+  WHOLESALE_STORY,
+  wholesaleTruth,
+  type WholesaleSimulation,
+  type WholesaleTruth,
+} from './wholesale';

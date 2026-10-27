@@ -1,0 +1,84 @@
+# Default dashboard for the wholesale pack (VERTICAL_PACKS Part 3). Tiles follow the dashboard's date
+# range; tiles whose measures aren't available are left out until an import makes them available.
+default_range: { preset: last_90_days, compare: true }
+tiles:
+  - { id: net_sales, title: Net sales, chart: kpi, size: [3, 2], spec: { metrics: [net_sales] } }
+  - {
+      id: gross_profit,
+      title: Gross profit,
+      chart: kpi,
+      size: [3, 2],
+      spec: { metrics: [gross_profit] },
+    }
+  - id: money_owed
+    title: Money owed to you
+    chart: kpi
+    size: [6, 2]
+    spec: { metrics: [outstanding_receivables, overdue_receivables] }
+  - id: sales_over_time
+    title: Sales over time
+    chart: line
+    size: [8, 4]
+    auto_grain: true
+    spec: { metrics: [net_sales], dimensions: [{ time: week }] }
+  - id: days_to_pay
+    title: Days to get paid
+    chart: kpi
+    size: [4, 4]
+    spec: { metrics: [days_to_pay] }
+  - id: top_customers
+    title: Top customers
+    chart: table
+    size: [6, 5]
+    spec:
+      metrics: [net_sales, gross_margin_pct]
+      dimensions: [{ field: customer.name }]
+      orderBy: { by: net_sales, dir: desc }
+      limit: 10
+  - id: who_owes
+    title: Who owes you
+    chart: table
+    size: [6, 5]
+    spec:
+      metrics: [outstanding_receivables, overdue_receivables]
+      dimensions: [{ field: customer.name }]
+      having: [{ metric: outstanding_receivables, op: gt, value: 0 }]
+      orderBy: { by: outstanding_receivables, dir: desc }
+      limit: 10
+  - id: sales_by_rep
+    title: Sales by rep
+    chart: bar_horizontal
+    size: [6, 4]
+    spec: { metrics: [net_sales], dimensions: [{ field: customer.sales_rep }] }
+  - id: top_products_profit
+    title: Top products by profit
+    chart: bar_horizontal
+    size: [6, 4]
+    spec:
+      metrics: [gross_profit]
+      dimensions: [{ field: product.name }]
+      orderBy: { by: gross_profit, dir: desc }
+      limit: 10
+  - id: running_low
+    title: Running low
+    chart: table
+    size: [6, 5]
+    spec:
+      metrics: [days_of_cover]
+      dimensions: [{ field: product.name }]
+      having: [{ metric: days_of_cover, op: lt, value: 21 }]
+      orderBy: { by: days_of_cover, dir: asc }
+  - id: backorders
+    title: Still to send
+    chart: table
+    size: [6, 5]
+    spec:
+      metrics: [backordered_units]
+      dimensions: [{ field: product.name }]
+      having: [{ metric: backordered_units, op: gt, value: 0 }]
+      orderBy: { by: backordered_units, dir: desc }
+  - id: slow_stock_total
+    title: Money tied up in slow stock
+    chart: kpi
+    size: [3, 2]
+    spec: { metrics: [dead_stock_value] }

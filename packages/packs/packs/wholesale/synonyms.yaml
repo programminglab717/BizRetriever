@@ -1,0 +1,240 @@
+# Column-header and value synonyms for the wholesale pack (VERTICAL_PACKS Part 3).
+# Headers are compared after normalising: lowercase, punctuation → space. Hints, not hard rules.
+fields:
+  product.sku:
+    [
+      sku,
+      item code,
+      product code,
+      code,
+      ref,
+      style no,
+      lineitem sku,
+      variant sku,
+      item sku,
+      article no,
+      part no,
+    ]
+  product.name:
+    [
+      product,
+      product name,
+      item,
+      item name,
+      description,
+      product title,
+      title,
+      lineitem name,
+      listing,
+      product description,
+    ]
+  product.variant: [variant, variant title, option, size, colour, color]
+  product.category: [category, type, product type, department, dept, collection, section, group]
+  product.brand: [brand, vendor brand, make, manufacturer brand]
+  product.unit_price:
+    [
+      price,
+      rrp,
+      retail price,
+      sell price,
+      selling price,
+      unit price,
+      srp,
+      sale price,
+      retail,
+      price rrp,
+      variant price,
+    ]
+  product.unit_cost:
+    [
+      cost,
+      unit cost,
+      cost price,
+      buy price,
+      wholesale cost,
+      cogs,
+      landed cost,
+      cost ex vat,
+      cost ex tax,
+      price cost ex tax,
+      cost per item,
+      purchase price,
+    ]
+  product.supplier: [supplier, vendor, maker, manufacturer, made by, supplied by]
+  product.reorder_point:
+    [
+      reorder at,
+      reorder point,
+      reorder level,
+      min stock,
+      minimum stock,
+      stock reorder at,
+      par level,
+    ]
+  product.barcode: [barcode, ean, upc, gtin]
+  product.pack_size: [case size, pack size, units per case, case qty, per case, outer, inner]
+  customer.name:
+    [
+      customer,
+      cust name,
+      customer name,
+      buyer,
+      billing name,
+      client,
+      account,
+      ship to name,
+      bill to,
+      company,
+      stockist,
+      retailer,
+      store name,
+    ]
+  customer.email: [email, e mail, customer email, buyer email, email address]
+  customer.phone: [phone, telephone, tel, mobile, phone number, billing phone]
+  customer.city: [city, town, billing city, ship city, shipping city]
+  customer.region:
+    [state, province, region, county, billing province, ship state, shipping province]
+  customer.country: [country, billing country, ship country]
+  customer.postal_code: [zip, zip code, postcode, postal code, billing zip]
+  customer.account_number:
+    [
+      account no,
+      account number,
+      acct,
+      acct no,
+      account code,
+      account ref,
+      customer code,
+      customer no,
+      cust no,
+      customer id,
+      customer number,
+    ]
+  customer.business_type: [business type, type of business, customer type, segment, sector, type]
+  customer.sales_rep: [rep, sales rep, salesperson, sales person, account manager, agent, territory]
+  customer.price_tier: [price list, price tier, price level, tier, pricing, price band]
+  customer.payment_terms_days:
+    [terms, payment terms, days to pay, credit terms, terms days, net days]
+  customer.credit_limit: [credit limit, limit, credit, max credit, credit line]
+  supplier.name: [supplier, vendor, supplier name, from, manufacturer]
+  supplier.email: [supplier email, vendor email]
+  supplier.lead_time_days: [lead time, lead time days, days to deliver]
+  sale.order_number:
+    [
+      order,
+      order number,
+      order no,
+      order id,
+      name,
+      receipt no,
+      receipt number,
+      receipt,
+      receipt id,
+      transaction no,
+      invoice no,
+      invoice number,
+      invoice,
+      transaction id,
+      sale id,
+    ]
+  sale.sale_date:
+    [
+      date,
+      order date,
+      created at,
+      sale date,
+      paid at,
+      transaction date,
+      invoice date,
+      day,
+      date sold,
+    ]
+  sale.customer_po: [po, po number, customer po, your ref, customer ref, order ref, their ref]
+  sale.channel: [channel, source, ordered via, ordered through, order method, how ordered]
+  sale.status: [order status, invoice status, state]
+  sale.discount_total: [discount amount, discount, order discount, discounts]
+  sale.shipping_charged:
+    [shipping, shipping charged, order shipping, delivery, postage, shipping price]
+  sale.tax_total: [taxes, tax, sales tax, vat, tax total]
+  sale.total: [total, invoice total, order total, invoice value, grand total, amount due]
+  sale.payment_status: [status, paid, paid?, payment status, payment, settled]
+  sale.due_date: [due date, payment due, due, due on, terms date]
+  sale_line.quantity:
+    [qty, quantity, pcs, units, no of items, lineitem quantity, count, qty sold, number of items]
+  sale_line.unit_price: [price, unit price, lineitem price, each, rate, item price]
+  sale_line.discount: [line discount, discount, lineitem discount, item discount, trade discount]
+  sale_line.quantity_backordered:
+    [
+      backordered,
+      back ordered,
+      backorder,
+      back order,
+      to follow,
+      qty to follow,
+      bo,
+      short,
+      owed qty,
+    ]
+  sale_line.line_total: [line total, total, amount, gross, net, value, subtotal, line amount]
+  return.return_date: [return date, date returned, date, credit date, credit note date]
+  return.quantity: [qty, quantity, units returned, qty returned]
+  return.refund_amount: [credit, credit amount, refund, refund amount, credited, amount credited]
+  return.reason: [reason, return reason, why]
+  purchase.po_number: [po number, po, purchase order, po no, order number, order no]
+  purchase.order_date: [order date, ordered, date ordered, date, po date]
+  purchase.received_date: [received, received date, date received, delivered]
+  purchase.total: [total, po total, order total]
+  purchase_line.quantity: [qty, quantity, units, qty ordered]
+  purchase_line.unit_cost: [unit cost, cost, cost each, price, unit price]
+  purchase_line.line_total: [line total, total, amount]
+  stock_count.quantity_on_hand:
+    [
+      in stock,
+      stock,
+      on hand,
+      qty on hand,
+      pcs in stock,
+      stock pcs in stock,
+      inventory,
+      available,
+      stock level,
+      variant inventory qty,
+    ]
+  stock_count.counted_at: [counted, count date, stock date, as of]
+  expense.expense_date: [date, month, expense date, paid on]
+  expense.category: [category, expense, type, account, item]
+  expense.description: [description, details, memo, note]
+  expense.amount: [amount, cost, value, spend, paid, total]
+  expense.vendor: [vendor, paid to, payee, supplier]
+  payment.received_date: [date, received, payment date, date paid, date received]
+  payment.reference: [reference, ref, payment ref, transaction, cheque no]
+  payment.method: [method, payment method, paid with, paid by, how paid]
+  payment.amount: [amount, paid, payment, amount paid]
+
+values:
+  sale.channel:
+    sales_rep: [rep, sales rep, field sales, agent, salesperson]
+    online_portal: [portal, web, website, online, b2b portal, trade portal, online store]
+    phone: [phone, telephone, call, phoned]
+    email: [email, e-mail, emailed]
+    trade_show: [trade show, show, fair, expo, trade fair]
+    marketplace: [faire, ankorstore, marketplace, amazon business]
+  sale.status:
+    completed: [complete, completed, invoiced, sent, shipped, dispatched, delivered, closed, done]
+    cancelled: [cancelled, canceled, void, voided]
+    refunded: [credited, refunded, credit note]
+    pending: [draft, quote, pending, awaiting approval, on hold]
+  sale.payment_status:
+    paid: [y, yes, paid, ✓, ✔, 'true', settled, paid in full, cleared]
+    unpaid: [n, no, unpaid, outstanding, 'false', owing, due, overdue, open, sent, awaiting payment]
+    partial: [part, partial, partly, part paid, partially paid, part payment]
+  purchase.status:
+    ordered: [ordered, open, pending, sent]
+    received: [received, delivered, complete, completed]
+    cancelled: [cancelled, canceled, void]
+
+# Words in file or sheet names that say how a source's orders came in.
+source_channels:
+  online_portal: [portal, web orders, online orders, b2b]
+  marketplace: [faire, ankorstore, marketplace]
+  trade_show: [trade show, fair]

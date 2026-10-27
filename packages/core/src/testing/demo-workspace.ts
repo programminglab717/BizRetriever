@@ -3,7 +3,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { getAppDb, user } from '@bizr/db';
-import { generateDemoDataset, simulateDemo, type Simulation } from '@bizr/demo-data';
+import {
+  generateDemoDataset,
+  generateWholesaleDataset,
+  simulateDemo,
+  type Simulation,
+  type WholesaleTruth,
+} from '@bizr/demo-data';
 import { getPack } from '@bizr/packs';
 import { eq } from 'drizzle-orm';
 
@@ -36,6 +42,78 @@ export interface DemoWorkspace {
   dispose(): Promise<void>;
 }
 
+/** Creates a business for `packId` and brings `files` in the normal way, rules only (no AI). */
+async function loadFilesAsWorkspace(options: {
+  packId: string;
+  name: string;
+  today: string;
+  timezone: string;
+  files: { fileName: string; bytes: Uint8Array }[];
+}): Promise<{ member: MemberWorkspace; ownerId: string; dispose(): Promise<void> }> {
+  const { files, timezone } = options;
+  const pack = getPack(options.packId);
+  const [u] = await getAppDb()
+    .insert(user)
+    .values({ name: 'Demo', email: `demo-${crypto.randomUUID()}@example.test` })
+    .returning({ id: user.id });
+  const ownerId = u!.id;
+  const ws = await createWorkspace(ownerId, {
+    name: options.name,
+    packId: options.packId,
+    currency: 'USD',
+    timezone,
+    dateOrder: 'MDY',
+  });
+  const member = (await getMemberWorkspace(ws.slug, ownerId))!;
+  const tenant = { workspaceId: ws.id, tenantSchema: ws.tenantSchema };
+
+  const analysis = await analyzeFiles(files, { dateOrder: 'MDY', maskPii: true });
+  const { proposal } = proposeHeuristically(analysis.profiled, {
+    pack,
+    dateOrder: 'MDY',
+    today: options.today,
+  });
+  const used = [...new Set(proposal.sources.flatMap((s) => s.targets.map((t) => t.entity)))];
+  await applyChangePlan({
+    workspace: { id: ws.id, tenantSchema: ws.tenantSchema },
+    plan: planFromPack(pack, used),
+    origin: 'system',
+  });
+  const result = materialize(analysis.tables, proposal, entitySpecs(pack), { dateOrder: 'MDY' });
+  const catalog = await loadCatalog(ws.id);
+  await withTenantWriter(
+    tenant,
+    'demo load',
+    (w) =>
+      loadRecords(
+        w,
+        catalog,
+        result,
+        files.map(() => crypto.randomUUID()),
+      ),
+    { timezone },
+  );
+  await analyzeTenant(ws.tenantSchema);
+  await refreshSemanticCatalog(ws);
+  await bumpDataVersion(ws.id);
+  await ensureDefaultDashboard(ws, ownerId);
+  return {
+    member,
+    ownerId,
+    async dispose() {
+      await deleteWorkspace(member, ownerId);
+      await getAppDb().delete(user).where(eq(user.id, ownerId));
+    },
+  };
+}
+
+function readFiles(dir: string) {
+  return readdirSync(dir)
+    .filter((f) => f !== 'ground_truth.json')
+    .sort()
+    .map((fileName) => ({ fileName, bytes: readFileSync(path.join(dir, fileName)) }));
+}
+
 export async function loadDemoWorkspace(options: {
   today: string;
   seed?: number;
@@ -47,8 +125,6 @@ export async function loadDemoWorkspace(options: {
   historyDays?: number;
 }): Promise<DemoWorkspace> {
   const seed = options.seed ?? 42;
-  const timezone = options.timezone ?? 'America/New_York';
-  const pack = getPack('retail');
   const dir = mkdtempSync(path.join(tmpdir(), 'fernwood-'));
   try {
     await generateDemoDataset({
@@ -58,70 +134,55 @@ export async function loadDemoWorkspace(options: {
       stories: options.stories ?? true,
       ...(options.historyDays ? { historyDays: options.historyDays } : {}),
     });
-    const files = readdirSync(dir)
-      .filter((f) => f !== 'ground_truth.json')
-      .sort()
-      .map((fileName) => ({ fileName, bytes: readFileSync(path.join(dir, fileName)) }));
-
-    const [u] = await getAppDb()
-      .insert(user)
-      .values({ name: 'Demo', email: `demo-${crypto.randomUUID()}@example.test` })
-      .returning({ id: user.id });
-    const ownerId = u!.id;
-    const ws = await createWorkspace(ownerId, {
-      name: options.name ?? 'Fernwood Home & Gift',
+    const loaded = await loadFilesAsWorkspace({
       packId: 'retail',
-      currency: 'USD',
-      timezone,
-      dateOrder: 'MDY',
-    });
-    const member = (await getMemberWorkspace(ws.slug, ownerId))!;
-    const tenant = { workspaceId: ws.id, tenantSchema: ws.tenantSchema };
-
-    const analysis = await analyzeFiles(files, { dateOrder: 'MDY', maskPii: true });
-    const { proposal } = proposeHeuristically(analysis.profiled, {
-      pack,
-      dateOrder: 'MDY',
+      name: options.name ?? 'Fernwood Home & Gift',
       today: options.today,
+      timezone: options.timezone ?? 'America/New_York',
+      files: readFiles(dir),
     });
-    const used = [...new Set(proposal.sources.flatMap((s) => s.targets.map((t) => t.entity)))];
-    await applyChangePlan({
-      workspace: { id: ws.id, tenantSchema: ws.tenantSchema },
-      plan: planFromPack(pack, used),
-      origin: 'system',
-    });
-    const result = materialize(analysis.tables, proposal, entitySpecs(pack), { dateOrder: 'MDY' });
-    const catalog = await loadCatalog(ws.id);
-    await withTenantWriter(
-      tenant,
-      'demo load',
-      (w) =>
-        loadRecords(
-          w,
-          catalog,
-          result,
-          files.map(() => crypto.randomUUID()),
-        ),
-      { timezone },
-    );
-    await analyzeTenant(ws.tenantSchema);
-    await refreshSemanticCatalog(ws);
-    await bumpDataVersion(ws.id);
-    await ensureDefaultDashboard(ws, ownerId);
     return {
-      member,
-      ownerId,
+      ...loaded,
       sim: simulateDemo({
         today: options.today,
         seed,
         stories: options.stories ?? true,
         ...(options.historyDays ? { historyDays: options.historyDays } : {}),
       }),
-      async dispose() {
-        await deleteWorkspace(member, ownerId);
-        await getAppDb().delete(user).where(eq(user.id, ownerId));
-      },
     };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** The Harbour & Pine wholesale demo (M14) loaded the same way, with its answer key. */
+export interface WholesaleWorkspace {
+  member: MemberWorkspace;
+  ownerId: string;
+  truth: WholesaleTruth;
+  dispose(): Promise<void>;
+}
+
+export async function loadWholesaleWorkspace(options: {
+  today: string;
+  seed?: number;
+  name?: string;
+}): Promise<WholesaleWorkspace> {
+  const dir = mkdtempSync(path.join(tmpdir(), 'harbour-'));
+  try {
+    const truth = await generateWholesaleDataset({
+      today: options.today,
+      seed: options.seed ?? 42,
+      outDir: dir,
+    });
+    const loaded = await loadFilesAsWorkspace({
+      packId: 'wholesale',
+      name: options.name ?? 'Harbour & Pine Supply Co.',
+      today: options.today,
+      timezone: 'America/New_York',
+      files: readFiles(dir),
+    });
+    return { ...loaded, truth };
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

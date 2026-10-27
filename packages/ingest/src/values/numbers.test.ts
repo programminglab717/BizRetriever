@@ -15,6 +15,8 @@ describe('parseNumber', () => {
     ['12,50', { value: 12.5 }],
     ['1,234', { value: 1234 }],
     ['45 pcs', { value: 45, unit: 'pcs' }],
+    ['30 days', { value: 30, unit: 'days' }],
+    ['Net 30', { value: 30, unit: 'days' }],
     ['12pcs', { value: 12, unit: 'pcs' }],
     ['3 boxes', { value: 3, unit: 'boxes' }],
     ['15%', { value: 15, percent: true }],

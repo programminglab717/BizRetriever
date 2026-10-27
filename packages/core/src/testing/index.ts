@@ -1,1 +1,6 @@
-export { loadDemoWorkspace, type DemoWorkspace } from './demo-workspace';
+export {
+  loadDemoWorkspace,
+  loadWholesaleWorkspace,
+  type DemoWorkspace,
+  type WholesaleWorkspace,
+} from './demo-workspace';
