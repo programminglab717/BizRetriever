@@ -748,14 +748,14 @@ month, worked out fresh each time.
 
 **Depends on:** M4 (answers), M5 (dashboard), M9 (downloads, emails).
 
-- [ ] PDF writer (free library, no service): title, business, dates, the answer's sentence, a simple
+- [x] PDF writer (free library, no service): title, business, dates, the answer's sentence, a simple
   chart drawn by code, the table, how it was worked out, assumptions, page numbers; every number is
   the executed query's, formatted as the app shows it
-- [ ] "Download as PDF" for answers, dashboard tiles and the whole dashboard
-- [ ] Scheduled reports: "Email me this every Monday / on the 1st" for the dashboard and for a
+- [x] "Download as PDF" for answers, dashboard tiles and the whole dashboard
+- [x] Scheduled reports: "Email me this every Monday / on the 1st" for the dashboard and for a
   question; run fresh by the daily job, sent once per period, with an unsubscribe link; anyone in
   the business (viewers too) can schedule reports for themselves
-- [ ] Settings list of my reports (pause, delete); tests, e2e, docs
+- [x] Settings list of my reports (pause, delete); tests, e2e, docs
 
 **Acceptance:**
 
@@ -773,7 +773,7 @@ month, worked out fresh each time.
 |---|---|
 | Connectors | Square/Lightspeed/Clover POS, WooCommerce, Amazon Seller Central, Etsy API, QuickBooks/Xero |
 | Channels | WhatsApp questions and alerts (email digests and alerts: done in M9) |
-| Product | Multilingual UI and questions; multi-currency; estimates handed over by the AI (rules-only now) (season-aware estimates, goals and the reorder list: M11; in Ask and per-product seasons: M12); scheduled reports; PDF export of answers (CSV/Excel: done in M9) |
+| Product | Multilingual UI and questions; multi-currency; estimates handed over by the AI (rules-only now) (season-aware estimates, goals and the reorder list: M11; in Ask and per-product seasons: M12); scheduled reports and PDF export: M15 (CSV/Excel: M9) |
 | Collaboration | Granular per-area permissions; ownership transfer; @mentions (view-only role, notes and handing insights to people: M13) |
 | Platform | Public API and MCP server exposing the semantic layer to other apps and agents; webhooks |
 | Packs | Restaurants/food service, services/agencies, health & beauty salons (wholesale/distribution: M14) |

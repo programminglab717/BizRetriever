@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useCanChange } from '@/components/shell/can-change';
 import { Notes } from '@/components/team/notes';
+import { EmailMe } from '@/components/reports/email-me';
 
 import { AnswerChart, AnswerTable, KpiCards, type NumberStyle } from './answer-chart';
 
@@ -251,6 +252,9 @@ export function AnswerCard({
           </Button>
           {answer.table && (
             <DownloadLinks href={`/api/w/${slug}/answers/${answer.id}/download`} pdf />
+          )}
+          {answer.kind === 'query' && (
+            <EmailMe slug={slug} what={{ kind: 'question', answerId: answer.id }} />
           )}
           <span className="ml-auto flex items-center gap-1">
             <Button

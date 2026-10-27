@@ -8,8 +8,8 @@ import { expect, test, type Download } from '@playwright/test';
 import { chooseFiles } from './upload';
 
 /**
- * M9 downloads (ADR-056): an answer as CSV and Excel, a dashboard tile, and "Download all my data".
- * Files are checked as the browser saved them.
+ * M9 downloads (ADR-056): an answer as CSV and Excel, a dashboard tile, and "Download all my data";
+ * M15: PDFs of an answer and the dashboard, and "Email me this". Files are checked as saved.
  */
 
 const repoRoot = path.resolve(import.meta.dirname, '../../..');
@@ -78,6 +78,18 @@ test('an owner downloads an answer, a tile and all their data', async ({ page },
   ]);
   expect(xlsx.suggestedFilename()).toMatch(/\.xlsx$/);
   expect((await saved(xlsx)).subarray(0, 2).toString()).toBe('PK');
+  const [pdf] = await Promise.all([
+    page.waitForEvent('download'),
+    card.getByRole('link', { name: 'PDF' }).click(),
+  ]);
+  expect(pdf.suggestedFilename()).toMatch(/\.pdf$/);
+  expect((await saved(pdf)).subarray(0, 5).toString()).toBe('%PDF-');
+
+  // M15: email this answer every month.
+  await card.getByRole('button', { name: 'Email me this' }).click();
+  await card.getByLabel('How often').selectOption('monthly');
+  await card.getByRole('button', { name: 'Email me', exact: true }).click();
+  await expect(card.getByTestId('report-set')).toContainText('On the 1st of each month');
 
   // A dashboard tile, from its menu.
   await page.goto(`${base}/dashboard`);
@@ -90,6 +102,33 @@ test('an owner downloads an answer, a tile and all their data', async ({ page },
   ]);
   expect(tileFile.suggestedFilename()).toMatch(/\.csv$/);
   expect((await saved(tileFile)).length).toBeGreaterThan(10);
+
+  // The whole dashboard as a PDF, and emailed every week.
+  const [dash] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByTestId('dashboard-pdf').click(),
+  ]);
+  expect(dash.suggestedFilename()).toMatch(/dashboard\.pdf$/);
+  expect((await saved(dash)).subarray(0, 5).toString()).toBe('%PDF-');
+  await page.getByRole('button', { name: 'Email me this' }).click();
+  await page.getByLabel('On', { exact: true }).selectOption('5');
+  await page.getByRole('button', { name: 'Email me', exact: true }).click();
+  await expect(page.getByTestId('report-set')).toContainText('Every Friday');
+
+  // Both are listed in Alert settings, where they can be paused and deleted.
+  await page.goto(`${base}/insights/settings`);
+  const mine = page.getByRole('list', { name: 'Your reports' });
+  await expect(mine.getByRole('listitem')).toHaveCount(2);
+  const weekly = mine.getByRole('listitem').filter({ hasText: 'dashboard' });
+  await expect(weekly).toContainText('Every Friday');
+  await weekly.getByRole('button', { name: 'Pause' }).click();
+  await expect(weekly).toContainText('Paused');
+  await mine
+    .getByRole('listitem')
+    .filter({ hasText: 'Net sales by channel' })
+    .getByRole('button', { name: 'Delete' })
+    .click();
+  await expect(mine.getByRole('listitem')).toHaveCount(1);
 
   // Everything, as one workbook.
   await page.goto(`${base}/data`);

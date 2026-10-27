@@ -1348,3 +1348,27 @@ Template for new entries:
   - $0, no AI calls.
   - Not shared yet: an industry whose records differ (salons' appointments, restaurants' covers) needs new shape recognisers or the AI. The generic list recogniser covers simple lists only (R43).
 
+## ADR-065 — PDF reports and scheduled report emails
+
+- **Status:** Accepted (2026-10-27). M15.
+- **Context:** owners pass numbers on to accountants, partners and banks, and want the dashboard in their inbox without opening the app. CSV and Excel downloads (ADR-056) don't print well.
+- **Decision:**
+  - **PDFs are laid out by code from the views the screens use** (`TableView`, `KpiView`, the answer's sentence, steps and assumptions). The writer (`export/pdf.ts`) formats nothing and recalculates nothing.
+    - It uses PDFKit (MIT, free) with its built-in Helvetica: no font files or service.
+    - It draws a bar or line chart from the plotting numbers when the answer has a chart; long tables run over pages with their headings repeated (at most 500 rows).
+    - Characters Helvetica can't print are written the nearest plain way ("→" as "->"), never as nonsense (R44).
+  - **Downloads:** `?format=pdf` for answers and tiles, and `/api/w/<slug>/dashboard/download` for the whole dashboard (every tile with its own dates). Same membership checks as the other downloads.
+  - **Scheduled reports** (`app.report_schedule`):
+    - the dashboard or a question, weekly (a weekday) or monthly (day 1–28)
+    - only ever emailed to the person who set it up, while they are part of the business; viewers can set them up too
+    - a question's meaning (its query spec) is re-run each time, so "last month" is the month before the day it's sent
+    - set up after this period's day, the first one goes next period
+    - the daily `reports.daily` job sends each due report once per period: the period ("2026-W44", "2026-11") goes into `email_delivery` under the new kind `report`, so retries (ADR-063) and exactly-once come for free
+    - the PDF is attached; the email has a signed one-click stop link (List-Unsubscribe) that pauses the report; "Your reports" in Alert settings lists them, to pause or delete
+    - demo businesses send nothing
+  - PDFKit stays outside the Next.js bundle (`serverExternalPackages`), so it finds its font metrics.
+- **Consequences:**
+  - $0. Without `RESEND_API_KEY`, report emails are logged with their attachment's name and size.
+  - A dashboard PDF of 12 tiles is about 30 KB; making one takes the same queries as the dashboard.
+  - Not built: reports to other addresses (an accountant without an account), CSV attached instead of PDF, a logo.
+

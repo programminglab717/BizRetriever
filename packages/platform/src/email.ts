@@ -8,6 +8,8 @@ export interface Email {
   html?: string;
   /** Extra headers, such as List-Unsubscribe. */
   headers?: Record<string, string>;
+  /** Files sent with it, such as a report's PDF (M15). */
+  attachments?: { filename: string; content: Uint8Array; contentType: string }[];
 }
 
 /** Where emails go instead of Resend, in tests. */
@@ -33,7 +35,18 @@ export async function sendEmail(email: Email): Promise<'sent' | 'logged'> {
   const log = getLogger('email');
   if (!env.RESEND_API_KEY) {
     log.info(
-      { to: email.to, subject: email.subject, text: email.text },
+      {
+        to: email.to,
+        subject: email.subject,
+        text: email.text,
+        ...(email.attachments
+          ? {
+              attachments: email.attachments.map(
+                (a) => `${a.filename} (${a.content.length} bytes)`,
+              ),
+            }
+          : {}),
+      },
       'email (not sent: no RESEND_API_KEY)',
     );
     return 'logged';
@@ -48,6 +61,15 @@ export async function sendEmail(email: Email): Promise<'sent' | 'logged'> {
       text: email.text,
       ...(email.html ? { html: email.html } : {}),
       ...(email.headers ? { headers: email.headers } : {}),
+      ...(email.attachments
+        ? {
+            attachments: email.attachments.map((a) => ({
+              filename: a.filename,
+              content: Buffer.from(a.content).toString('base64'),
+              content_type: a.contentType,
+            })),
+          }
+        : {}),
     }),
     signal: AbortSignal.timeout(15_000),
   });

@@ -162,7 +162,7 @@ export const digest = app.table(
   (t) => [unique('digest_week_unique').on(t.workspaceId, t.weekOf)],
 );
 
-export const emailKinds = ['weekly_summary', 'urgent_alert'] as const;
+export const emailKinds = ['weekly_summary', 'urgent_alert', 'report'] as const;
 export type EmailKind = (typeof emailKinds)[number];
 
 /**

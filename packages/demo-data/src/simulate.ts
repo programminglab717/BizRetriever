@@ -125,8 +125,26 @@ export interface SimulateOptions {
   historyDays?: number;
 }
 
+/**
+ * Mostly the stockist's own spelling, the others now and then: the 3rd and 5th of every five orders.
+ * The own spelling leads at every count, whatever the date, so the spelling question always offers
+ * it first (the random draw is still made, so every other number stays as it was).
+ */
+function spellingFor(
+  stockist: { spellings: readonly string[] },
+  rng: Rng,
+  counts: Map<object, number>,
+): string {
+  rng.weighted(stockist.spellings, (sp) => (sp === stockist.spellings[0] ? 3 : 1));
+  const n = counts.get(stockist) ?? 0;
+  counts.set(stockist, n + 1);
+  const sp = stockist.spellings;
+  return n % 5 === 2 ? (sp[1] ?? sp[0]!) : n % 5 === 4 ? (sp[2] ?? sp[1] ?? sp[0]!) : sp[0]!;
+}
+
 export function simulate(options: SimulateOptions): Simulation {
   const rng = new Rng(options.seed);
+  const spellingCounts = new Map<object, number>();
   const stories = options.stories ?? true;
   const today = options.today;
   const start = addDays(today, -(options.historyDays ?? 365));
@@ -295,10 +313,7 @@ export function simulate(options: SimulateOptions): Simulation {
         minutes: 9 * 60,
         customer: null,
         stockist,
-        // Mostly the shop's own spelling; the others turn up now and then.
-        stockistSpelling: rng.weighted(stockist.spellings, (sp) =>
-          sp === stockist.spellings[0] ? 3 : 1,
-        ),
+        stockistSpelling: spellingFor(stockist, rng, spellingCounts),
         lines,
         status: 'completed',
         discountCode: null,

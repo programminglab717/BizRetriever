@@ -72,6 +72,13 @@ function unsubscribeSecret(): string {
   return 'bizr-development-only-unsubscribe-secret';
 }
 
+/** A signature for a link in an email, so it works without signing in (M15: report stop links). */
+export function emailLinkToken(purpose: string, ...parts: string[]): string {
+  return createHmac('sha256', unsubscribeSecret())
+    .update(`bizr-${purpose}:${parts.join(':')}`)
+    .digest('base64url');
+}
+
 export function unsubscribeToken(workspaceId: string, userId: string, kind: EmailKind): string {
   return createHmac('sha256', unsubscribeSecret())
     .update(`bizr-unsubscribe:${workspaceId}:${userId}:${kind}`)
@@ -99,7 +106,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Checks the signature only; true when the link is genuine. */
 export function checkUnsubscribe(r: Partial<UnsubscribeRequest>): r is UnsubscribeRequest & {
-  k: EmailKind;
+  k: 'weekly_summary' | 'urgent_alert';
 } {
   if (!r.w || !r.u || !r.t || !UUID.test(r.w) || !UUID.test(r.u)) return false;
   if (r.k !== 'weekly_summary' && r.k !== 'urgent_alert') return false;
@@ -356,7 +363,7 @@ export const MAX_EMAIL_ATTEMPTS = 3;
  * Claims (kind, keys) for one person; returns the keys not sent before. One that failed (the email
  * service was down) is claimed again, up to three tries in all; one sent or being sent never is.
  */
-async function claim(
+export async function claim(
   workspaceId: string,
   userId: string,
   kind: EmailKind,
@@ -383,7 +390,7 @@ async function claim(
   return rows.map((r) => r.key);
 }
 
-async function deliver(
+export async function deliver(
   workspaceId: string,
   userId: string,
   kind: EmailKind,

@@ -2,26 +2,38 @@
 
 ## Current Status
 
-- **Milestone:** M14 (A second industry: Wholesale & Distribution, $0) is **built and checked automatically**. It needs the owner's confirmation. M13 was confirmed on 2026-10-27 ("continue").
+- **Milestone:** M15 (Reports you can send, $0) is **built and checked automatically**. The owner confirmed M14 on 2026-10-27 and asked for everything left that needs no account or key to be built, tested without AI ("we will test once we are done completely"). Build order: M15–M20 in PLAN.md.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M14** (ADR-064):
-  - **"I sell to other businesses (wholesale)"** in onboarding. Wholesalers get their own words (invoices, accounts, credit notes, warehouse), key numbers (sales, profit, money owed), dashboard, example questions and import tips.
-  - **Wholesale alerts:** a customer over their credit limit, a customer paying later than usual, a regular account that missed its usual reorder, and orders that couldn't be filled. Retail's alerts also apply (stock-outs, cost rises, dead stock, overdue invoices, accounts ordering less).
-  - **Import without AI now understands simple lists of any kind** (a customer list with credit limits, a payments sheet) from the pack's own words, keeps extra columns that name a known detail, and reads "Net 30" as 30 days.
-  - **The core reads industry choices from the pack.** A new pack is a folder of YAML: no code change.
-  - **A demo wholesaler,** Harbour & Pine Supply Co.: `pnpm demo:generate --pack wholesale`.
-- **Evals (rules only, $0):** wholesale questions 59 cases, 98.3% (demo subset 100%); retail questions unchanged at 0.929; ingest 12/12 (the wholesale demo added).
-- **Tests:** 887 unit/integration pass; 38 e2e pass (desktop + mobile; 6 desktop-only skipped on mobile).
-- **Waiting on the owner:**
-  - confirm M14
-  - Q29: a wholesale "Try the demo" button?
-  - M10 live checks: a link-shared Google Sheet; Shopify's free app and development store (Q26)
-  - still open: presenter rehearsals (Q24), the Anthropic API key (Q20), Google OAuth, the email account and domain (Q25), goals by month (Q27), notes in downloads and instant hand-off emails (Q28)
+- **New in M15** (ADR-065):
+  - **PDF downloads:** any answer, any dashboard tile, and the whole dashboard, laid out for printing, with the numbers exactly as the app shows them.
+  - **"Email me this":** the dashboard or a question, emailed as a PDF every week or month, worked out fresh each time; "Your reports" in Alert settings to pause or delete; a one-click stop link in each email.
+  - Demo shop fix: Bloom & Co's own spelling now always leads, so the demo reads the same every day.
+- **Tests:** 900 unit/integration pass; 38 e2e pass. Evals unchanged (retail questions 0.929, wholesale 0.983, ingest 12/12).
+- **Waiting on the owner** (testing after everything is built, by their choice): the Anthropic API key (Q20), email domain (Q25), Shopify app (Q26), a live Google Sheet, Google sign-in, rehearsals (Q24); Q27–Q29.
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-27 — Session 19: M15 built (PDF reports, scheduled report emails)
+
+**Completed:**
+
+- **PDF writer** (`export/pdf.ts`, PDFKit): headline, figures, chart, table over pages, steps, assumptions, page numbers. `pdfText` test helper reads text back from compressed files.
+- **Downloads:** answers and tiles (`?format=pdf`), the whole dashboard (`/dashboard/download`); links on answer cards, tile menus and the dashboard.
+- **Scheduled reports:**
+  - `app.report_schedule` (migration 0022), `email_delivery` kind `report`
+  - `reports.daily` job; emails with a PDF attachment and a signed stop link
+  - "Email me this" on the dashboard and answers; "Your reports" in Alert settings
+- **Fixes:** PDFKit kept out of the web bundle (fonts); the demo stockist's own spelling always leads (the demo e2e failed on dates where another spelling won).
+- **Tests:** PDF writer unit tests; answer and dashboard PDFs against the screens' values; reports through time (once per period, fresh "last month", stop link, someone who left, a viewer's own); downloads e2e extended.
+
+**In progress:** nothing.
+
+**Blockers:** none.
+
+**Next steps:** M16 — public API, MCP server and webhooks (PLAN build order).
 
 ### 2026-10-27 — Session 18: M14 built (Wholesale & Distribution pack)
 

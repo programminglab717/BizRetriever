@@ -12,6 +12,7 @@ import type { NumberStyle } from '@/components/ask/answer-chart';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useCanChange } from '@/components/shell/can-change';
+import { EmailMe } from '@/components/reports/email-me';
 
 import { DashboardTile } from './dashboard-tile';
 import { EditBox } from './edit-box';
@@ -122,6 +123,7 @@ export function DashboardBoard({
         >
           Download as PDF
         </a>
+        <EmailMe slug={slug} what={{ kind: 'dashboard' }} />
         {view.canUndo && editor && (
           <Button variant="ghost" size="sm" className="ml-auto" disabled={pending} onClick={undo}>
             <Undo2 /> Undo last change

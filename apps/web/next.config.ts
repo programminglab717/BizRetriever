@@ -20,8 +20,9 @@ const config: NextConfig = {
     '@bizr/packs',
     '@bizr/platform',
   ],
-  // Server-only libraries that must not be bundled (libpg-query loads its WASM from its own folder).
-  serverExternalPackages: ['pg', 'pg-boss', 'pino', 'libpg-query'],
+  // Server-only libraries that must not be bundled (libpg-query loads its WASM and pdfkit its fonts
+  // from their own folders).
+  serverExternalPackages: ['pg', 'pg-boss', 'pino', 'libpg-query', 'pdfkit'],
   turbopack: { root: repoRoot },
   outputFileTracingRoot: repoRoot,
   poweredByHeader: false,

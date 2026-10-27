@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { connectionsDailyJob } from '../connections/jobs';
 import { defineJob, type JobStep } from '../jobs/define';
+import { reportsDailyJob } from '../reports/jobs';
 import type { JobQueue } from '../jobs/queue';
 import { snapshotGcJob } from '../structure/gc';
 
@@ -146,6 +147,7 @@ export async function scheduleDailyJobs(queue: JobQueue, now = new Date()): Prom
               insightsDailyJob.name,
               snapshotGcJob.name,
               connectionsDailyJob.name,
+              reportsDailyJob.name,
             ]),
             gte(jobRun.createdAt, startOfDay),
           ),
@@ -165,6 +167,10 @@ export async function scheduleDailyJobs(queue: JobQueue, now = new Date()): Prom
   if (!already.has(connectionsDailyJob.name)) {
     await queue.enqueue(connectionsDailyJob, { date });
     queued.push(connectionsDailyJob.name);
+  }
+  if (!already.has(reportsDailyJob.name)) {
+    await queue.enqueue(reportsDailyJob, { date });
+    queued.push(reportsDailyJob.name);
   }
   return queued;
 }
