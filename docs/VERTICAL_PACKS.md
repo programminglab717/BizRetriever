@@ -39,12 +39,22 @@ industries_label: "Shop, online store or both"   # shown in the industry picker
 locale_defaults: { currency: USD, date_order: MDY }
 requires_core: ">=0.1.0"      # minimum engine version
 primary_time_entity: sale      # default time axis for dashboards
+helpful_files:                 # M14: "Helpful files to include" on the import page
+  - { what: Sales or orders, detail: 'from your website, Etsy, Amazon or your till' }
+key_numbers:                   # M14 (ADR-064)
+  home: [net_sales, gross_profit, order_count]   # Home's key numbers (up to 4)
+  weekly: [net_sales, order_count]               # the weekly summary's
+  activity: order_count                          # a day with any of it had business (history)
 planning:                      # M11 (ADR-060), optional
   goals: [net_sales, order_count, gross_profit]     # measures that can have a monthly goal
   forecasts: [net_sales, order_count, units_sold]   # measures estimated on Plan ahead
+  goal_words: { order_count: [order] }              # M14: everyday words for a goal's measure
+  reorder: { cover: days_of_cover, rate: daily_sales_rate, stock: stock_on_hand, season: units_sold }
 ```
 
-Planning measures must add up over days: the loader refuses snapshot and percent measures.
+Planning measures must add up over days: the loader refuses snapshot and percent measures. Every
+measure named in `key_numbers` and `planning` must exist in `metrics.yaml`. Without `reorder` there is
+no reorder list.
 
 ### 1.3 `entities.yaml`
 
@@ -130,6 +140,10 @@ Each metric declares:
 - `format`: `money` | `number` | `percent` | `days`
 - `good_direction`
 - optional `unavailable_hint` (plain-language call to action)
+- optional `list` (M14): how a question about it is answered without a breakdown. `by` lists it by a
+  field ("What's about to run out?" → by product); with `totals: true` a "how many/how much" question
+  gets the total instead; `who` lists it by a field for "who" questions ("Who owes me money?");
+  `nonzero` leaves out rows where it's zero
 
 ### 1.7 `dashboard.yaml`
 
@@ -189,7 +203,13 @@ questions the workspace can answer. Each optionally has an `expected_spec`, used
 2. Write the YAML files.
 3. Add fixtures.
 4. Run `pnpm packs:validate` and `pnpm eval --pack <id>`.
-5. Register the pack in `packages/packs/index.ts`. This is the only code change: a one-line import list.
+5. Run `pnpm packs:build`. The build finds every folder in `packages/packs/packs/`, so a new pack
+   needs no code change at all (M14, ADR-064).
+
+Import without AI works for a new pack from its own words: a sheet that is mostly one kind of record
+is recognised from `synonyms.yaml` alone, and extra columns that name a detail of a recognised record
+are kept. Packs share record and measure ids where they mean the same thing (`customer`, `product`,
+`sale`, `net_sales`, `order_count`…), so the core's shape recognisers and Ask rules work for them too.
 
 ---
 
@@ -457,3 +477,62 @@ A short (~300 words) primer injected into AI system prompts. It covers:
 - that sellers often keep one sheet per month or quarter
 
 The primer is reviewed like code and versioned with the pack.
+
+---
+
+## Part 3 — The `wholesale` pack (v1.0.0): Wholesale & Distribution (M14)
+
+**Who it's for.** Businesses that sell to other businesses on account: distributors, importers and
+makers who sell to shops, cafés, salons and other traders, often through sales reps, by phone or
+through a trade portal.
+
+**Typical data:** an invoice or sales-order export from QuickBooks, Xero or Sage (one row per item),
+a customer account list with terms and credit limits, a payments-received sheet, a warehouse stock
+list with case sizes and trade prices, and purchase orders.
+
+### 3.1 Records
+
+The same ids as retail where they mean the same thing, with wholesale labels and details:
+
+| Record | Label | Wholesale details |
+|---|---|---|
+| `sale` | Invoice | invoice number, customer's order number, due date, Paid?, ordered through (rep, portal, phone, email, trade show, marketplace) |
+| `sale_line` | Invoice item | still to send (backordered) |
+| `customer` | Customer | account number, type of business, sales rep, price list, days to pay, credit limit |
+| `product` | Product | units per case |
+| `return` | Credit note | credit |
+| `location` | Warehouse | |
+| `payment` | Payment received | invoice, amount, method, reference |
+| `supplier`, `purchase`, `purchase_line`, `stock_count`, `stock_movement`, `expense` | as retail | |
+
+### 3.2 Measures added to retail's
+
+`backordered_units` (items still to send), `fill_rate` (orders filled), `credit_limit_total`,
+`credit_used_pct`, `over_credit_limit` (customers owing more than their limit), `days_to_pay` (days from
+invoice to payment, for payments in the period), `lifetime_orders`, `usual_order_gap`. Retail's
+`order_count` reads as invoices, `customer_count` as accounts that ordered.
+
+### 3.3 Home, weekly summary, dashboard
+
+Home shows net sales, gross profit and money owed. The dashboard (last 90 days) adds days to get paid,
+top customers with their margin, who owes you, sales by rep, top products by profit, running low,
+still to send, and slow stock.
+
+### 3.4 Insights
+
+Retail's rules, with wholesale wording (accounts ordering less; sales over four weeks rather than one,
+as orders come in lumps), plus:
+
+- `over_credit_limit`: a customer owes at least their credit limit (urgent at 125%)
+- `paying_later`: a customer's days to pay rose by 14 days or more on the three months before
+- `missed_reorder`: a regular account (4+ orders) has gone 1.5× its usual gap without ordering
+- `backorders_building`: 10 or more of a product still to send from the last four weeks
+
+### 3.5 Demo business and evals
+
+`pnpm demo:generate --pack wholesale` writes Harbour & Pine Supply Co., a café-supplies distributor with
+16 accounts and a year of invoices, payments and purchase orders, with nine planted stories (over the
+limit, paying later, a missed reorder, an account ordering less, backorders, a stock-out, a cost rise,
+dead stock, overdue invoices). `wholesale.int.test.ts` checks every story and the totals against the
+answer key; `pnpm eval -- --suite questions --pack wholesale` runs 59 questions (98% with rules only).
+

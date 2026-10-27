@@ -18,6 +18,11 @@ export const packManifestSchema = z
       .strict(),
     requires_core: z.string().min(1),
     primary_time_entity: z.string().regex(/^[a-z0-9_]+$/),
+    /** "Helpful files to include" on the import page, in the industry's words (M14). */
+    helpful_files: z
+      .array(z.object({ what: z.string().min(1), detail: z.string().min(1) }).strict())
+      .max(8)
+      .default([]),
     /**
      * The industry's key numbers (M14, ADR-064): Home's row and the weekly summary's, and the count
      * that says a day had any business (how much history there is, for trend insights).

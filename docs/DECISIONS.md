@@ -1315,3 +1315,36 @@ Template for new entries:
   - **A failed email is tried again** on the next run, up to three times (`email_delivery.attempts`). One that was sent or is being sent never is.
 - **Consequences:** each fix has a test that fails without it. Webhook replay protection (deduping on Shopify's webhook id) stays a nice-to-have: replaying needs a captured signed body.
 
+## ADR-064 — A second industry pack: Wholesale & Distribution; the core reads industry choices from the pack
+
+- **Status:** Accepted (2026-10-27). M14.
+- **Context:**
+  - The pack format promised that a new industry needs only pack files. The core still named retail's measures in a few places: Home's and the weekly summary's key numbers, how much history there is, the reorder list, goal words in Ask, and which measures Ask lists by product or customer.
+  - Without the AI key (Q20), files are mapped by the rules-only proposer. It knew retail's table shapes and nothing else, so a customer list or a payments sheet was ignored.
+- **Decision:**
+  - **The pack says it.** New optional pack settings, every one checked by the loader against the pack's measures:
+    - `key_numbers.home`, `key_numbers.weekly`, `key_numbers.activity`
+    - `planning.goal_words`, `planning.reorder`
+    - `helpful_files` for the import page
+    - per measure, `list` (`by`, `totals`, `who`, `nonzero`)
+  - Retail's values reproduce exactly what the code did: the retail evals are unchanged (questions 0.929, ingest 11/11).
+  - **Shared ids.** Packs reuse the record and measure ids that mean the same thing (`customer`, `product`, `sale`, `net_sales`, `order_count`…). The core's shape recognisers (order lines, product lists, supplier orders) and Ask's rules therefore work for any commerce pack. Labels, words, extra details and new measures are the pack's own.
+  - **Import without AI for any pack.**
+    - A sheet no shape recognises is matched to the record whose fields its headers name best. It needs every required field, at least two fields and half the filled columns explained.
+    - Links to other records match on their single-field keys (account number, email, name, invoice number). Master records (customers, suppliers) are created from the links; dated ones (invoices) are not.
+    - After any shape, leftover columns that name a detail of a record the sheet already fills are kept, using the best-scoring field. They are skipped when two records would take them equally well.
+  - **Numbers:** "30 days" and "Net 30" read as 30, for payment terms.
+  - **The wholesale pack** (VERTICAL_PACKS Part 3):
+    - trade-account details (account number, rep, price list, terms, credit limit), invoices with customer order numbers, backorders, credit notes
+    - eight new measures and four new insights: over the credit limit, paying later than usual, a missed reorder, backorders building
+    - a dashboard on the last 90 days, 16 example questions, and the same planning and reorder settings as retail
+  - **A demo wholesaler** (Harbour & Pine Supply Co.) with an answer key, a `--pack` option on `demo:generate` and on the question eval, an ingest fixture, and its own baseline (`wholesale-rules`).
+- **Consequences:**
+  - **Acceptance met:**
+    - the demo wholesaler's five files come in without AI, every column mapped
+    - all nine planted stories are found, with the answer key's numbers; all 12 dashboard tiles work
+    - the wholesale question eval is 98.3% with rules only (59 cases, demo subset 100%); the retail evals are unchanged
+    - the new pack needed no code change beyond its folder: the build discovers packs
+  - $0, no AI calls.
+  - Not shared yet: an industry whose records differ (salons' appointments, restaurants' covers) needs new shape recognisers or the AI. The generic list recogniser covers simple lists only (R43).
+

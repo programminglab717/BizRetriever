@@ -2,21 +2,19 @@
 
 ## Current Status
 
-- **Milestone:** M13 (Working as a team, $0) is **built and checked automatically**. It needs the owner's confirmation. M12 was confirmed on 2026-10-27 ("continue").
+- **Milestone:** M14 (A second industry: Wholesale & Distribution, $0) is **built and checked automatically**. It needs the owner's confirmation. M13 was confirmed on 2026-10-27 ("continue").
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M13** (ADR-062):
-  - **"Can view":** the owner invites someone who can look at everything, ask questions, download and leave notes, but change nothing. The owner can change anyone's role later in Settings, where each role is described in plain words. Viewers are refused by the server, not only by hidden buttons.
-  - **Notes** on insights and on answers: "Ordered 50 more, arriving Friday", with who wrote it and when. The author or the owner can delete one.
-  - **Handing an insight to someone:** "Hand to Sam" or "I'll deal with it". It shows under "For you" on their Home and in their weekly email; "Mark done" clears it and leaves a note.
-- **Security review of M9–M12** (ADR-063), fixed and tested:
-  - an automatic linked import never merges records or uses a changed mapping without the owner
-  - a check of a source can't undo a pause or run twice at once
-  - a Shopify token refresh can't overwrite a reconnect
-  - a failed email is retried, up to three times
-  - no outside attack was found
-- **Tests:** 875 unit/integration pass; 37 e2e pass (desktop + mobile; 5 desktop-only skipped on mobile). Evals unchanged (questions 0.929).
+- **New in M14** (ADR-064):
+  - **"I sell to other businesses (wholesale)"** in onboarding. Wholesalers get their own words (invoices, accounts, credit notes, warehouse), key numbers (sales, profit, money owed), dashboard, example questions and import tips.
+  - **Wholesale alerts:** a customer over their credit limit, a customer paying later than usual, a regular account that missed its usual reorder, and orders that couldn't be filled. Retail's alerts also apply (stock-outs, cost rises, dead stock, overdue invoices, accounts ordering less).
+  - **Import without AI now understands simple lists of any kind** (a customer list with credit limits, a payments sheet) from the pack's own words, keeps extra columns that name a known detail, and reads "Net 30" as 30 days.
+  - **The core reads industry choices from the pack.** A new pack is a folder of YAML: no code change.
+  - **A demo wholesaler,** Harbour & Pine Supply Co.: `pnpm demo:generate --pack wholesale`.
+- **Evals (rules only, $0):** wholesale questions 59 cases, 98.3% (demo subset 100%); retail questions unchanged at 0.929; ingest 12/12 (the wholesale demo added).
+- **Tests:** 887 unit/integration pass; 38 e2e pass (desktop + mobile; 6 desktop-only skipped on mobile).
 - **Waiting on the owner:**
-  - confirm M13
+  - confirm M14
+  - Q29: a wholesale "Try the demo" button?
   - M10 live checks: a link-shared Google Sheet; Shopify's free app and development store (Q26)
   - still open: presenter rehearsals (Q24), the Anthropic API key (Q20), Google OAuth, the email account and domain (Q25), goals by month (Q27), notes in downloads and instant hand-off emails (Q28)
 - **Spend to date:** $0 infrastructure, $0 AI.
@@ -24,6 +22,38 @@
 ---
 
 ## Session log
+
+### 2026-10-27 — Session 18: M14 built (Wholesale & Distribution pack)
+
+**Completed:**
+
+- **Pack-driven core** (no change for retail):
+  - Home and weekly key numbers, the history count, reorder measures, goal words and how measures are listed in Ask now come from `pack.yaml` and `metrics.yaml`
+  - the import page's helpful-files list is the pack's
+- **Import without AI for any pack:** generic list recogniser, leftover columns by best score, "30 days" and "Net 30" as numbers.
+- **`packs/wholesale`:** entities, synonyms, known formats (QuickBooks, Xero, Sage, Faire), 40 measures (8 new), dashboard, 13 insight rules (4 new), example questions, domain primer.
+- **Demo wholesaler** (`demo-data/src/wholesale`):
+  - simulation, messy files, answer key, `--pack wholesale`
+  - `loadWholesaleWorkspace` for tests
+- **Tests and evals:**
+  - `wholesale.int.test.ts`: totals, Home key numbers, dashboard, all nine stories
+  - wholesale question eval (59 cases) in CI with its own baseline
+  - `demo-harbour` ingest fixture
+  - `wholesale.spec.ts` e2e: onboarding as a wholesaler, import, Home, insights, Ask, dashboard
+- **Docs:** VERTICAL_PACKS Part 3 and format updates, ADR-064, Q29, R42–R43, CLAUDE.md commands.
+
+**In progress:** nothing.
+
+**Blockers:** none.
+
+**Next steps:**
+
+1. Owner: confirm M14 (and Q29), and the open owner items above.
+2. After confirmation, the next roadmap rows the owner prefers. Candidates:
+   - scheduled reports or PDF answers
+   - more connectors once Q26 proves the pattern (QuickBooks or Xero suit wholesalers)
+   - the public API
+   - a third pack with different records (salons), which would need its own recognisers or the AI key
 
 ### 2026-10-27 — Session 17: M13 built (working as a team); security fixes
 

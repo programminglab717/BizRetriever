@@ -15,6 +15,24 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
       },
       "requires_core": ">=0.1.0",
       "primary_time_entity": "sale",
+      "helpful_files": [
+        {
+          "what": "Sales or orders",
+          "detail": "from your website, Etsy, Amazon or your till"
+        },
+        {
+          "what": "A stock or product list",
+          "detail": "with prices, costs and how many you have"
+        },
+        {
+          "what": "Supplier orders",
+          "detail": "what you bought, when and for how much"
+        },
+        {
+          "what": "Expenses",
+          "detail": "rent, postage, packaging and so on"
+        }
+      ],
       "key_numbers": {
         "home": [
           "net_sales",
@@ -5076,6 +5094,28 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
       },
       "requires_core": ">=0.1.0",
       "primary_time_entity": "sale",
+      "helpful_files": [
+        {
+          "what": "Invoices or sales orders",
+          "detail": "from QuickBooks, Xero, Sage or your own sheet"
+        },
+        {
+          "what": "Your customer list",
+          "detail": "with account numbers, payment terms and credit limits"
+        },
+        {
+          "what": "Payments received",
+          "detail": "which invoice each payment was for"
+        },
+        {
+          "what": "A stock list",
+          "detail": "with costs, trade prices and how many are in the warehouse"
+        },
+        {
+          "what": "Purchase orders",
+          "detail": "what you bought from suppliers, when and for how much"
+        }
+      ],
       "key_numbers": {
         "home": [
           "net_sales",

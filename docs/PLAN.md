@@ -697,20 +697,20 @@ industry choices from the pack, and a new pack needs no new core code. The owner
 
 **Depends on:** M2–M7 (import, measures, Ask, dashboard, insights), M11 (planning).
 
-- [ ] The core reads industry choices from the pack, not code: Home's and the weekly summary's key
+- [x] The core reads industry choices from the pack, not code: Home's and the weekly summary's key
   numbers, the reorder list's measures, the goal words in Ask. Retail behaves exactly as before
-- [ ] Import without AI for any pack: a sheet whose columns mostly match one kind of record (a
+- [x] Import without AI for any pack: a sheet whose columns mostly match one kind of record (a
   customer list with credit limits, a payments sheet) is recognised from the pack's own words, and
   extra columns that match details of a recognised record are kept
-- [ ] The `wholesale` pack: trade accounts (terms, credit limit, sales rep), invoices with due dates,
+- [x] The `wholesale` pack: trade accounts (terms, credit limit, sales rep), invoices with due dates,
   payments, backorders, products, stock and suppliers; synonyms and known export formats; measures
   (owed, overdue, days to get paid, credit used, revenue and margin per account, backorders);
   dashboard; insights (over the credit limit, paying later than usual, an account that missed its
   usual reorder, margin squeeze per account, backorders building, stock running out); example
   questions; planning measures
-- [ ] Demo wholesale business with messy files and planted stories (ground truth); ingest fixtures;
+- [x] Demo wholesale business with messy files and planted stories (ground truth); ingest fixtures;
   question and dashboard evals for the pack
-- [ ] Onboarding offers "I sell to other businesses"; pack docs (VERTICAL_PACKS Part 3); tests, e2e
+- [x] Onboarding offers "I sell to other businesses"; pack docs (VERTICAL_PACKS Part 3); tests, e2e
 
 **Acceptance:**
 

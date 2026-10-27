@@ -10,6 +10,12 @@ locale_defaults:
   date_order: MDY
 requires_core: '>=0.1.0'
 primary_time_entity: sale
+# Shown on the import page as "Helpful files to include".
+helpful_files:
+  - { what: Sales or orders, detail: 'from your website, Etsy, Amazon or your till' }
+  - { what: A stock or product list, detail: 'with prices, costs and how many you have' }
+  - { what: Supplier orders, detail: 'what you bought, when and for how much' }
+  - { what: Expenses, detail: 'rent, postage, packaging and so on' }
 # Home's and the weekly summary's key numbers; orders say a day had any business (M14).
 key_numbers:
   home: [net_sales, gross_profit, order_count]

@@ -11,6 +11,13 @@ locale_defaults:
   date_order: MDY
 requires_core: '>=0.1.0'
 primary_time_entity: sale
+# Shown on the import page as "Helpful files to include".
+helpful_files:
+  - { what: Invoices or sales orders, detail: 'from QuickBooks, Xero, Sage or your own sheet' }
+  - { what: Your customer list, detail: 'with account numbers, payment terms and credit limits' }
+  - { what: Payments received, detail: 'which invoice each payment was for' }
+  - { what: A stock list, detail: 'with costs, trade prices and how many are in the warehouse' }
+  - { what: Purchase orders, detail: 'what you bought from suppliers, when and for how much' }
 # What a wholesaler checks first: sales, profit, and the money still owed.
 key_numbers:
   home: [net_sales, gross_profit, outstanding_receivables]

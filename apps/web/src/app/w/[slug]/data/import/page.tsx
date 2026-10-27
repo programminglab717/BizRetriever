@@ -1,5 +1,6 @@
 import { shopifyEnabled } from '@bizr/core/connections';
 import { canChange } from '@bizr/core/workspaces';
+import { getPack } from '@bizr/packs';
 
 import { ConnectShopifyForm } from '@/components/import/connect-shopify-form';
 import { LinkSheetForm } from '@/components/import/link-sheet-form';
@@ -7,13 +8,6 @@ import { UploadForm } from '@/components/import/upload-form';
 import { PageHeader } from '@/components/shell/page-header';
 import { ViewOnlyNote } from '@/components/shell/view-only';
 import { requireWorkspace } from '@/lib/session';
-
-const HELPFUL = [
-  ['Sales or orders', 'from your website, Etsy, Amazon or your till'],
-  ['A stock or product list', 'with prices, costs and how many you have'],
-  ['Supplier orders', 'what you bought, when and for how much'],
-  ['Expenses', 'rent, postage, packaging and so on'],
-] as const;
 
 export default async function ImportPage({
   params,
@@ -23,7 +17,8 @@ export default async function ImportPage({
   searchParams: Promise<{ shopify?: string }>;
 }) {
   const { slug } = await params;
-  const { role } = await requireWorkspace(slug);
+  const { role, workspace } = await requireWorkspace(slug);
+  const helpful = getPack(workspace.packId).manifest.helpful_files;
   const { shopify } = await searchParams;
   if (!canChange(role))
     return (
@@ -44,7 +39,7 @@ export default async function ImportPage({
       <section className="grid gap-2 text-sm">
         <h2 className="font-medium">Helpful files to include</h2>
         <ul className="grid gap-1 text-muted-foreground">
-          {HELPFUL.map(([what, detail]) => (
+          {helpful.map(({ what, detail }) => (
             <li key={what}>
               <span className="text-foreground">{what}</span>, {detail}
             </li>

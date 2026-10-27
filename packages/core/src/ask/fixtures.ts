@@ -37,6 +37,7 @@ export function fixtureCatalog(unavailable: Record<string, string> = {}): AskCat
       ...(unavailable[m.id] ? { reason: unavailable[m.id] } : {}),
       synonyms: [...m.synonyms, m.label.toLowerCase()],
       ...(m.default_time ? { defaultTime: m.default_time } : {}),
+      ...(m.list ? { list: m.list } : {}),
     })),
     dimensions: pack.metrics.dimensions
       .filter((d) => d.field in values)

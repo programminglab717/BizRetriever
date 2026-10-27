@@ -53,7 +53,7 @@ packages/core     tenancy, executor (safe tenant queries), workspaces, jobs, sql
                   ingestion, semantic layer (metrics + query compiler); later: SQL validator, merge
 packages/ingest   parsing, region detection, profiling, cleaning rules, loaders
 packages/ai       provider abstraction, versioned prompts, AI tasks, cost tracking
-packages/packs    pack format schema + loader; packs/retail/
+packages/packs    pack format schema + loader; packs/retail/, packs/wholesale/ (M14)
 evals/            messy fixture files, expected models, question/answer sets, eval runner
 scripts/          demo data generator, seed scripts
 docs/             all planning documentation
@@ -76,8 +76,8 @@ docs/             all planning documentation
 | Validate vertical packs | `pnpm packs:validate` (after editing pack YAML: `pnpm packs:build`) |
 | Queue a test job | `pnpm --filter @bizr/worker enqueue:noop` |
 | Seed dev data (M1) | `pnpm db:seed` |
-| Generate demo dataset (M2) | `pnpm demo:generate` |
-| Eval suite, rules only (free) | `pnpm eval` (one suite: `pnpm eval -- --suite ingest\|questions\|dashboard\|records\|changes`) |
+| Generate demo dataset (M2) | `pnpm demo:generate` (wholesale demo, M14: `--pack wholesale`) |
+| Eval suite, rules only (free) | `pnpm eval` (one suite: `pnpm eval -- --suite ingest\|questions\|dashboard\|records\|changes`; wholesale questions: `--suite questions --pack wholesale`) |
 | Drop expired snapshots | `pnpm --filter @bizr/worker run snapshot:gc` (daily via M7's cron) |
 | Demo re-upload file (M6) | `pnpm demo:generate --next-month <dir>` |
 | AI eval suite (costs money; asks before > $1) | `pnpm eval -- --ai --limit N` |
