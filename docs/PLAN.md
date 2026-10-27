@@ -626,17 +626,17 @@ after M11.
 
 **Depends on:** M4 (Ask), M11.
 
-- [ ] Ask: forward-looking questions recognised by rules before interpretation (the AI's answer
+- [x] Ask: forward-looking questions recognised by rules before interpretation (the AI's answer
   schema is unchanged): estimates for a planning measure and period (next week, next month, the
   next N days or weeks, a named coming month, the rest of this month), goal progress, and what to
   reorder. Answers in the Ask card, with "how I worked it out" and assumptions; downloadable; never
   pinned as a dashboard tile (an estimate isn't a record)
-- [ ] A clear answer for measures that can't be estimated ("I can estimate sales, orders and items
+- [x] A clear answer for measures that can't be estimated ("I can estimate sales, orders and items
   sold")
-- [ ] Reorder list: each product's own season from last year's same weeks, so seasonal products
+- [x] Reorder list: each product's own season from last year's same weeks, so seasonal products
   that aren't selling now appear before their season
-- [ ] Question eval: forward-looking questions added and scored; pack example questions
-- [ ] Tests, e2e, docs
+- [x] Question eval: forward-looking questions added and scored; pack example questions
+- [x] Tests, e2e, docs
 
 **Acceptance:**
 
@@ -656,7 +656,7 @@ after M11.
 |---|---|
 | Connectors | Square/Lightspeed/Clover POS, WooCommerce, Amazon Seller Central, Etsy API, QuickBooks/Xero |
 | Channels | WhatsApp questions and alerts (email digests and alerts: done in M9) |
-| Product | Multilingual UI and questions; multi-currency; estimates in Ask and per-product seasons (season-aware estimates, goals and the reorder list: done in M11); scheduled reports; PDF export of answers (CSV/Excel: done in M9) |
+| Product | Multilingual UI and questions; multi-currency; estimates handed over by the AI (rules-only now) (season-aware estimates, goals and the reorder list: M11; in Ask and per-product seasons: M12); scheduled reports; PDF export of answers (CSV/Excel: done in M9) |
 | Collaboration | Granular roles and permissions; comments on insights |
 | Platform | Public API and MCP server exposing the semantic layer to other apps and agents; webhooks |
 | Packs | Wholesale/distribution, restaurants/food service, services/agencies, health & beauty salons |

@@ -2,25 +2,54 @@
 
 ## Current Status
 
-- **Milestone:** M11 (Planning ahead, $0) is **built and checked automatically**. It needs the owner's confirmation. M10 was confirmed on 2026-10-26 ("keep going"); its live checks are still the owner's (Q26, a Google Sheet link).
+- **Milestone:** M12 (Asking about what's ahead, $0) is **built and checked automatically**. It needs the owner's confirmation. M11 was confirmed on 2026-10-26 ("lets continue").
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M11** (ADR-060):
-  - **Plan ahead** (sidebar; More on phones): net sales for the next 4 weeks, week by week, with a range and one sentence per assumption ("November is usually 43% busier…"). The estimates are worked out by code from the business's own history; they are not AI.
-  - **Monthly goals** for net sales, orders or gross profit: this month so far (exact), where the month is heading (estimate and range), and what each remaining day needs. Shown on Home, on Plan ahead and in the weekly email.
-  - **What to reorder:** every product that won't last its supplier's lead time plus 30 days, with a quantity that allows for the coming season. Grouped by supplier; CSV and Excel.
-  - **Back-test** on a two-year demo shop: November within 15% of what was sold, and closer than the run-rate. It runs in CI.
-- **Tests:** 774 unit/integration pass; 36 e2e pass (desktop + mobile; 4 desktop-only skipped on mobile). Plan ahead and the reorder list pass the phone and accessibility check.
-- **Performance:** goals add about 0.2 s to Home (two goals, demo shop). Everything else is unchanged from M8.
+- **New in M12** (ADR-061):
+  - **Ask about the future:** "How much will I sell next month?", "Forecast orders for the next 4 weeks", "What will sales be for the rest of the month?", "Am I on track for my goal?" and "What should I reorder?" are answered by the planning engine, marked "Estimate", with a range, week-by-week figures, how it was worked out and what it assumed. Estimates can be downloaded but not pinned. A question about a measure that can't be estimated (a margin, stock) gets a plain answer.
+  - **The reorder list knows each product's season:** with 13 months of history, Christmas stock shows up in October from last year's same weeks, marked "Seasonal: sold N in these weeks last year".
+  - **Ask suggestions** include "How much will I sell next month?" and "Am I on track for my goal?".
+- **Evals (rules only, $0):** questions 211 cases, accuracy 0.929 (was 0.919 on 185); estimates 27/27; demo subset 1.0; no historical question taken for an estimate. The other suites are unchanged.
+- **Tests:** 810 unit/integration pass; 36 e2e pass (desktop + mobile; 4 desktop-only skipped on mobile).
 - **Waiting on the owner:**
-  - confirm M11
+  - confirm M12
   - M10 live checks: a link-shared Google Sheet; Shopify's free app and development store (Q26)
-  - still open: presenter rehearsals (Q24), the Anthropic API key (Q20), Google OAuth, the email account and domain (Q25)
-  - a product choice: goals that change by month (Q27)
+  - still open: presenter rehearsals (Q24), the Anthropic API key (Q20), Google OAuth, the email account and domain (Q25), goals by month (Q27)
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-27 — Session 16: M12 built (asking about what's ahead, product seasons)
+
+**Completed:**
+
+- **Recognising questions about the future** (`ask/estimate.ts`, written test-first, 30 unit cases): estimates for planning measures and coming periods, goals, reorder, and measures that can't be estimated. Anything that reads as the past is left alone.
+- **Answers** (`ask/estimate-answer.ts`), in a new answer kind `estimate`:
+  - headline with the range and what's already recorded
+  - week-by-week table and chart, steps and assumptions
+  - goal and reorder answers from M11's wording
+  - an "Estimate" badge in Ask; no "Add to dashboard"
+- **Engine:** forecasts now say their basis (`last_year`, `year_pattern`, `recent`).
+- **Each product's own season** in the reorder list, with 13 months of history or more; seasonal lines on the page and in the download. The demo generator and loader take `historyDays`.
+- **Evals:**
+  - the runner applies the estimate rules first; cases can expect `estimate`
+  - 26 cases added; `estimateAccuracy` 1.0; baseline updated (0.929)
+- **Pack:** two "Ahead" example questions.
+- **Tests:**
+  - integration: Ask answers on the demo shop; Christmas stock on a two-year demo shop in mid-October
+  - e2e: `plan.spec.ts` asks in Ask
+  - full suite: 810 unit/integration, 36 e2e
+
+**In progress:** nothing.
+
+**Blockers:** none.
+
+**Next steps:**
+
+1. Owner: confirm M12, and the open owner items above.
+2. When the API key arrives (Q20): a prompt version so the AI can hand questions about the future over (R39), and the AI eval runs.
+3. After confirmation: the next roadmap rows the owner prefers. Candidates: comments on insights and members' roles (collaboration), more connectors once Q26 proves the pattern, or a second vertical pack.
 
 ### 2026-10-26 — Session 15: M11 built (estimates, goals, reorder list)
 

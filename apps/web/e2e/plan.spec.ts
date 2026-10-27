@@ -7,7 +7,10 @@ import { expect, test } from '@playwright/test';
 
 import { chooseFiles } from './upload';
 
-/** M11 (ADR-060): Plan ahead: the next weeks' estimate, a monthly goal, and the reorder list. */
+/**
+ * M11 (ADR-060): Plan ahead: the next weeks' estimate, a monthly goal, and the reorder list.
+ * M12 (ADR-061): the same, asked in Ask.
+ */
 
 const repoRoot = path.resolve(import.meta.dirname, '../../..');
 const today = new Intl.DateTimeFormat('en-CA', {
@@ -95,4 +98,20 @@ test('an owner sees the weeks ahead, sets a goal and gets a reorder list', async
   const text = readFileSync(await csv.path()).toString('utf8');
   expect(text).toContain('Suggested order');
   expect(text).toContain('Sage Stoneware Mug');
+
+  // Asking about what's ahead (M12): an estimate, labelled as one, that can't be pinned.
+  await page.goto(`${base}/ask`);
+  await page.getByLabel('Your question').fill('How much will I sell next month?');
+  await page.getByLabel('Your question').press('Enter');
+  const card = page.getByTestId('answer-card').last();
+  await expect(card).toContainText('Estimate', { timeout: 30_000 });
+  await expect(card).toContainText(/About \$[\d,]+ for \w+ \d{4}, likely between/);
+  await expect(card.getByRole('button', { name: 'Add to dashboard' })).toHaveCount(0);
+  await card.getByText('How I calculated this').click();
+  await expect(card).toContainText('The range');
+  await page.getByLabel('Your question').fill('Am I on track for my goal?');
+  await page.getByLabel('Your question').press('Enter');
+  await expect(page.getByTestId('answer-card').last()).toContainText('Net sales:', {
+    timeout: 30_000,
+  });
 });

@@ -1234,3 +1234,35 @@ Template for new entries:
   - $0, no AI calls.
   - Home runs about 0.2 s more per business with goals (two goals measured on the demo shop).
   - Not built yet: per-product seasons (a Christmas-only product gets the business-wide factor) and estimates in Ask ("how much will I sell next month?"). Both are on the roadmap.
+
+## ADR-061 — Asking about what's ahead; each product's own season
+
+- **Status:** Accepted (2026-10-27). M12.
+- **Context:**
+  - M11 gave owners estimates, goals and a reorder list on their own pages; owners also ask for them in Ask.
+  - The reorder list used one business-wide season, so products that sell only around Christmas never appeared before Christmas.
+- **Decision:**
+  - **Rules first, AI untouched.** Ask checks `estimateRequestWithRules` before interpretation, and after change requests. The AI's interpretation schema and prompts don't change, so the AI can neither produce nor see an estimate.
+  - **What the rules recognise:**
+    - an estimate for a pack planning measure over a coming period: tomorrow, next week, next month, the next N days, weeks or months, the coming week or month, the rest of this month, this month or week, or a named month still ahead
+    - goal questions ("on track", "hit my target")
+    - "what should I reorder"
+    - a coming period for a measure that can't be estimated, such as a margin or stock: a plain "I can estimate net sales, orders and items sold ahead"
+  - **What they leave alone:** anything that also reads as the past ("did", "last", "ago", "so far") goes to the normal interpretation.
+  - **Answers** are a new answer kind, `estimate`:
+    - the headline: "About $X for November 2026, likely between $L and $H", plus what's already recorded when the period has started
+    - week-by-week (or day-by-day) estimates as the table and chart; "How I calculated this" names the basis and the range; assumptions are the engine's notes plus "estimates, not promises"
+    - goal progress and the reorder list reuse M11's wording
+    - every number comes from the engine or an executed query
+    - estimates can be downloaded but not pinned: a tile is a record, re-run with fresh data
+  - **The eval runner applies the same rules first.** Questions can expect `estimate`, checked for kind, measure and dates, scored as `estimateAccuracy`. 26 cases were added. "What should I reorder this week?" now expects the reorder list.
+  - **Each product's own season** (reorder list, 13 months of history or more): a product's need over its cover window is the larger of two figures:
+    - its recent rate times the business's season factor
+    - its units sold in the same weeks last year, times the business's last 4 weeks against the same weeks a year earlier (between 0.5 and 2)
+
+    Last year's units come from one query per distinct cover length. A product that isn't selling now can be on the list, marked seasonal with last year's figure. A product selling now keeps the alert's own days of stock.
+- **Consequences:**
+  - **Acceptance met:**
+    - all 27 forward-looking eval cases are recognised, and no historical question is taken for an estimate
+    - on a two-year demo shop in mid-October, the Christmas products are on the list, with last year's figures within 10% of what the simulation sold
+  - Phrasings the rules miss fall through to the normal interpretation, which answers about the past (R39). A future prompt version could teach the AI to hand them over; that needs the API key and an eval run (Q20).
