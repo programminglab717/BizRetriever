@@ -66,12 +66,30 @@ locally (Stage 0), on a free preview (Stage 1) and in paid production (Stage 2).
 
 ## 4. File storage (Cloudflare R2 or S3)
 
-1. **Build first:** the `s3` storage driver is not written yet (`packages/db/src/storage`; it throws
-   today). It needs `put`, `get` and `delete` with server-side encryption, plus tests against a local S3
-   emulator (MinIO, free).
-2. Create a private bucket; credentials limited to that bucket.
-3. Move existing uploads: a one-off script that copies every `app.storage_blob` row (Stage 1) or local
-   file (Stage 0) to the bucket under the same key, then switch `STORAGE_DRIVER`.
+The `s3` driver is built (M17, ADR-067). It works with any S3-compatible store, signs requests
+itself, and writes each file once under its fingerprint.
+
+1. Create a **private** bucket and a key that can only read, write, list and delete in that bucket.
+   - R2: an R2 API token with "Object Read & Write" for the one bucket.
+   - AWS: an IAM user with `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject` and `s3:ListBucket` on it.
+   - Both encrypt objects at rest by default; leave that on.
+2. Set the bucket's settings (`.env.example`, File storage) where the move will run, alongside the
+   current `STORAGE_DRIVER`:
+   - R2: `S3_BUCKET`, `S3_REGION=auto`, `S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`,
+     `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`
+   - AWS: `S3_BUCKET`, `S3_REGION`, and the key; no endpoint
+3. Check first, then move the existing uploads:
+   ```
+   pnpm --filter @bizr/worker run storage:move -- --to s3 --dry-run
+   pnpm --filter @bizr/worker run storage:move -- --to s3
+   ```
+   - Every file the uploads point to is copied and checked against its fingerprint.
+   - Nothing is deleted from the old store, and running it again only checks.
+   - It exits with an error if a file is missing or damaged. Look at those before switching.
+4. Set `STORAGE_DRIVER=s3` on the web app and the worker, and redeploy.
+5. Run the move once more: it picks up anything uploaded between the move and the switch.
+6. Keep the old store for a week. Then empty `app.storage_blob` (Stage 1) or the local folder
+   (Stage 0).
 
 ## 5. Errors and monitoring (Sentry)
 

@@ -58,6 +58,16 @@ export const envSchema = z
     // `postgres` (free hosted preview), `s3` (paid production; not built until then, ADR-026).
     STORAGE_DRIVER: z.enum(['local', 'postgres', 's3']).default('local'),
     STORAGE_LOCAL_DIR: z.string().optional(),
+    // S3-compatible storage (M17, ADR-067): AWS S3, Cloudflare R2 (region `auto`, endpoint
+    // https://<account>.r2.cloudflarestorage.com) or MinIO. Needed only with STORAGE_DRIVER=s3 and
+    // for `storage:move`. A key that can only read and write this bucket.
+    S3_BUCKET: z.string().min(3).optional(),
+    S3_REGION: z.string().min(1).default('auto'),
+    S3_ENDPOINT: z.url().optional(),
+    S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+    S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+    // Path-style addresses (host/bucket/key). Default: on when S3_ENDPOINT is set.
+    S3_PATH_STYLE: z.enum(['on', 'off']).optional(),
     // Sign-in/sign-up rate limiting. Only the end-to-end test server turns it off.
     AUTH_RATE_LIMIT: z.enum(['on', 'off']).default('on'),
     // Who can open the internal admin page (/admin): comma-separated emails. Empty: nobody.
@@ -80,6 +90,23 @@ export const envSchema = z
     WEBHOOKS_ALLOW_PRIVATE: z.enum(['on', 'off']).default('off'),
   })
   .superRefine((env, ctx) => {
+    if (
+      env.STORAGE_DRIVER === 's3' &&
+      !(env.S3_BUCKET && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['S3_BUCKET'],
+        message: 'STORAGE_DRIVER=s3 needs S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY',
+      });
+    }
+    if (env.STORAGE_DRIVER === 's3' && env.S3_REGION === 'auto' && !env.S3_ENDPOINT) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['S3_REGION'],
+        message: 'set S3_REGION (AWS) or S3_ENDPOINT (R2, MinIO)',
+      });
+    }
     if (env.NODE_ENV === 'production' && !env.BETTER_AUTH_SECRET) {
       ctx.addIssue({
         code: 'custom',

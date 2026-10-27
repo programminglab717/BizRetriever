@@ -2,20 +2,36 @@
 
 ## Current Status
 
-- **Milestone:** M16 (Connect other apps, $0) is **built and checked automatically**. M15 is done (CI green). The owner asked for everything that needs no account or key to be built and tested without AI ("we will test once we are done completely"). Build order: M15–M20 in PLAN.md; next is M17.
+- **Milestone:** M17 (Production file storage, $0 to build) is **built and checked automatically**. M16 (Connect other apps) is built. The owner asked for everything that needs no account or key to be built and tested without AI ("we will test once we are done completely"). Build order: M15–M20 in PLAN.md; next is M18.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M16** (ADR-066, developer guide `docs/API.md`):
-  - **Keys:** the owner makes a key per app on Settings → Connect other apps. A key reads that business's numbers and can never change anything.
-  - **Public API** (`/api/v1`): the business, its measures, numbers for a typed query, questions in plain words, insights, the dashboard. The numbers are the same as the app's. Description at `/api/v1/openapi.json`.
-  - **AI assistants (MCP)** at `/api/mcp`: the same reads as six read-only tools. Checked with the official MCP client.
-  - **Webhooks:** "new insight" and "import finished" are sent to an https address, signed, retried for about a day and a half, then turned off. Never sent to private addresses. "Send a test" button.
-- **Tests:** 934+ unit/integration pass (21 new for M16); 39 e2e pass, including the new `apps.spec.ts`. Evals unchanged (retail questions 0.929, wholesale 0.983, ingest 12/12).
-- **Waiting on the owner** (testing after everything is built, by their choice): the Anthropic API key (Q20), email domain (Q25), Shopify app (Q26), a live Google Sheet, Google sign-in, rehearsals (Q24); Q27–Q29. New risks R45–R47 (MCP OAuth, all-or-nothing keys, API questions sharing the AI budget).
+- **New in M17** (ADR-067):
+  - **S3-compatible storage** for paid production: Cloudflare R2, AWS S3 or MinIO, chosen by settings, with no new library.
+  - **`storage:move`** copies every uploaded file to the new store and checks each one, without deleting anything. Production runbook step 4 has the steps.
+- **New in M16** (ADR-066, `docs/API.md`): keys for other apps, read-only API (`/api/v1`), MCP server for AI assistants (`/api/mcp`), signed webhooks, Settings → Connect other apps.
+- **Tests:** 941 unit/integration pass; 39 e2e pass. Evals unchanged (retail questions 0.929, wholesale 0.983, ingest 12/12).
+- **Waiting on the owner** (testing after everything is built, by their choice): the Anthropic API key (Q20), email domain (Q25), Shopify app (Q26), a live Google Sheet, Google sign-in, rehearsals (Q24); Q27–Q29. Risks R45–R48 are new.
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-27 — Session 20b: M17 built (production file storage)
+
+**Completed:**
+
+- **Signing:** `packages/db/src/storage/sigv4.ts`, checked against three of AWS's published S3 signature examples.
+- **Driver:** `s3.ts` (client) and `s3Storage` (driver). `exists()` was added to every driver.
+- **Settings:** `S3_*`, validated when `STORAGE_DRIVER=s3`; `.env.example` updated.
+- **Move:** `moveStoredFiles` and `pnpm --filter @bizr/worker run storage:move -- --to s3 [--from] [--dry-run]`.
+- **Tests:** in-process S3 that re-checks signatures and pages its lists; driver behaviour; wrong secret; AWS and R2 addresses; Postgres → S3 move (dry run, copy, re-run, missing, tampered).
+- **Docs:** RUNBOOK_PRODUCTION step 4 rewritten, PLAN M17, ADR-067, R48.
+
+**In progress:** nothing.
+
+**Blockers:** none.
+
+**Next steps:** M18 — QuickBooks, Xero, Square and WooCommerce connectors, built and tested on recorded answers and hidden until keys exist (PLAN build order).
 
 ### 2026-10-27 — Session 20: M16 built (connect other apps: API, MCP server, webhooks)
 

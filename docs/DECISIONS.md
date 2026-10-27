@@ -1411,3 +1411,25 @@ Template for new entries:
   - The per-minute count is a database write per request, which is fine at our scale; a cache would come with paid hosting.
   - Not built: write access, per-key scopes, OAuth, webhook events for record edits, delivery history on the page.
 
+## ADR-067 — S3-compatible storage driver with our own SigV4 signing, and a checked move
+
+- **Status:** Accepted (2026-10-27). M17. Builds out ADR-013's third driver.
+- **Context:** the free preview keeps uploads in Postgres (`app.storage_blob`); paid production (Stage 2) needs object storage. The owner asked for everything that needs no account to be built now. ADR-026 still holds: no bucket is created or paid for until there is revenue.
+- **Decision:**
+  - **`s3Storage`** in `packages/db/src/storage`, behind the same `Storage` interface. `exists()` is added to all three drivers.
+    - Works with AWS S3 (virtual-hosted addresses), Cloudflare R2 and MinIO (path style, `S3_ENDPOINT`).
+    - `put` writes only when the object isn't there (content-addressed, never modified).
+    - `deleteWorkspace` lists `w/<id>/` page by page and deletes eight at a time.
+    - No redirects followed; 60-second timeout.
+  - **Signing written out** (`sigv4.ts`, about 60 lines over `fetch`) instead of the AWS SDK: no dependency, no bundle weight. It is checked against three of AWS's published S3 signature examples (GET with a range, PUT with extra headers, a query-string list), which can't match by luck.
+  - **Settings** `S3_BUCKET`, `S3_REGION` (default `auto`), `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PATH_STYLE`. With `STORAGE_DRIVER=s3`, a missing bucket or key, or `auto` without an endpoint, stops start-up.
+  - **`storage:move`** (`moveStoredFiles`): takes the files every `app.upload` row points to and copies each from the source driver to the target. The upload table is the record of what must exist.
+    - Each file's bytes are checked against the fingerprint in its key, before writing and again after reading it back.
+    - The source is never deleted. A re-run only checks, and `--dry-run` writes nothing.
+    - It exits non-zero if any file is missing or damaged, so it can gate the switch.
+  - Encryption at rest is the provider's default (R2 always; AWS SSE-S3 by default since 2023). We send no encryption headers that some S3-compatible stores reject.
+- **Consequences:**
+  - $0 now. Tests use an in-process S3 that re-checks every signature.
+  - Not tested against a real bucket until Stage 2 (R48). The runbook's dry run is the first real check.
+  - Not built: multipart upload (files are capped at 25 MB, well under S3's 5 GB single-PUT limit), presigned downloads (files go through our server, which checks membership).
+

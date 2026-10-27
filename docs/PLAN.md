@@ -801,6 +801,33 @@ change records or the set-up, so the M6 rule that changes need a person's approv
 
 ---
 
+## M17 — Production file storage ($0 to build)
+
+**Goal:** when the product moves to paid hosting (Stage 2 runbook), uploaded files can live in an
+S3-compatible bucket (Cloudflare R2 or AWS S3) and existing files can be moved there safely, without
+writing code on the day. Building it costs nothing; using it waits for revenue (ADR-026).
+
+**Depends on:** M2 (storage drivers, uploads).
+
+- [x] `s3` storage driver for AWS S3, Cloudflare R2 and MinIO: write once, read, check, delete a
+  business's files by prefix; requests signed with AWS Signature V4 by our own code (checked against
+  AWS's published examples), no SDK
+- [x] Settings in the environment (`S3_*`), checked at start-up when the driver is `s3`
+- [x] `storage:move`: copies every upload's file from the current store to another, checks each by
+  its fingerprint, never deletes the source, safe to re-run, dry-run mode, fails on missing or
+  damaged files
+- [x] Tests against an in-process S3 that checks every signature; production runbook step 4
+
+**Acceptance:**
+
+- With `STORAGE_DRIVER=s3`, uploads, imports, re-uploads and business deletion work as with the
+  other drivers (same `Storage` interface and tests).
+- A move from Postgres storage copies every file exactly, reports anything missing or damaged, and
+  can be run again.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |
@@ -812,5 +839,5 @@ change records or the set-up, so the M6 rule that changes need a person's approv
 | Platform | Write access and per-key scopes for the API; OAuth for MCP clients (read-only API keys, MCP server and webhooks: M16) |
 | Packs | Restaurants/food service, services/agencies, health & beauty salons (wholesale/distribution: M14) |
 | Business | Billing and plans (usage-based AI cost informs pricing); onboarding concierge |
-| Production upgrade (after revenue) | Execute the Stage 2 runbook: paid web plan, dedicated worker (`JOB_RUNNER=worker`), S3/R2 storage + migration of blobs, Sentry, custom domain, backups/PITR |
+| Production upgrade (after revenue) | Execute the Stage 2 runbook: paid web plan, dedicated worker (`JOB_RUNNER=worker`), S3/R2 storage (driver and move built: M17), Sentry, custom domain, backups/PITR |
 | Hardening | Tenant sharding across databases; SOC 2 readiness; data residency (EU) |

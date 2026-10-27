@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "demo:up": "tsx src/cli/demo-up.ts",
     "preview:check": "tsx src/cli/preview-check.ts",
-    "tenant-logins": "tsx src/cli/tenant-logins.ts"
+    "tenant-logins": "tsx src/cli/tenant-logins.ts",
+    "storage:move": "tsx src/cli/storage-move.ts"
   },
   "dependencies": {
     "@bizr/core": "workspace:*",
