@@ -378,7 +378,7 @@ that case the tile shows a 📅 badge, and the user can choose "Follow dashboard
 - business name; industry (read-only in the MVP)
 - currency; date order; timezone; fiscal year start
 - alert settings
-- members: invite by email (owner only), designed in M1 and wired in M6+
+- members: invite by email (owner only), designed in M1 and wired in M6+; each person is a member or "can view" (M13: looks, asks, downloads and leaves notes, changes nothing), chosen when inviting and changeable by the owner
 - "Hide personal details from AI": on by default
 - export all my data (CSV zip) — M8 nice-to-have
 - delete workspace: typed confirmation

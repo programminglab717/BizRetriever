@@ -2,23 +2,56 @@
 
 ## Current Status
 
-- **Milestone:** M12 (Asking about what's ahead, $0) is **built and checked automatically**. It needs the owner's confirmation. M11 was confirmed on 2026-10-26 ("lets continue").
+- **Milestone:** M13 (Working as a team, $0) is **built and checked automatically**. It needs the owner's confirmation. M12 was confirmed on 2026-10-27 ("continue").
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M12** (ADR-061):
-  - **Ask about the future:** "How much will I sell next month?", "Forecast orders for the next 4 weeks", "What will sales be for the rest of the month?", "Am I on track for my goal?" and "What should I reorder?" are answered by the planning engine, marked "Estimate", with a range, week-by-week figures, how it was worked out and what it assumed. Estimates can be downloaded but not pinned. A question about a measure that can't be estimated (a margin, stock) gets a plain answer.
-  - **The reorder list knows each product's season:** with 13 months of history, Christmas stock shows up in October from last year's same weeks, marked "Seasonal: sold N in these weeks last year".
-  - **Ask suggestions** include "How much will I sell next month?" and "Am I on track for my goal?".
-- **Evals (rules only, $0):** questions 211 cases, accuracy 0.929 (was 0.919 on 185); estimates 27/27; demo subset 1.0; no historical question taken for an estimate. The other suites are unchanged.
-- **Tests:** 810 unit/integration pass; 36 e2e pass (desktop + mobile; 4 desktop-only skipped on mobile).
+- **New in M13** (ADR-062):
+  - **"Can view":** the owner invites someone who can look at everything, ask questions, download and leave notes, but change nothing. The owner can change anyone's role later in Settings, where each role is described in plain words. Viewers are refused by the server, not only by hidden buttons.
+  - **Notes** on insights and on answers: "Ordered 50 more, arriving Friday", with who wrote it and when. The author or the owner can delete one.
+  - **Handing an insight to someone:** "Hand to Sam" or "I'll deal with it". It shows under "For you" on their Home and in their weekly email; "Mark done" clears it and leaves a note.
+- **Security review of M9–M12** (ADR-063), fixed and tested:
+  - an automatic linked import never merges records or uses a changed mapping without the owner
+  - a check of a source can't undo a pause or run twice at once
+  - a Shopify token refresh can't overwrite a reconnect
+  - a failed email is retried, up to three times
+  - no outside attack was found
+- **Tests:** 875 unit/integration pass; 37 e2e pass (desktop + mobile; 5 desktop-only skipped on mobile). Evals unchanged (questions 0.929).
 - **Waiting on the owner:**
-  - confirm M12
+  - confirm M13
   - M10 live checks: a link-shared Google Sheet; Shopify's free app and development store (Q26)
-  - still open: presenter rehearsals (Q24), the Anthropic API key (Q20), Google OAuth, the email account and domain (Q25), goals by month (Q27)
+  - still open: presenter rehearsals (Q24), the Anthropic API key (Q20), Google OAuth, the email account and domain (Q25), goals by month (Q27), notes in downloads and instant hand-off emails (Q28)
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-27 — Session 17: M13 built (working as a team); security fixes
+
+**Completed:**
+
+- **Security review** of the M9–M12 code by an independent reviewer. It found two medium and three low issues, all consent or race problems; no outside attack. All five are fixed with tests (ADR-063, migrations 0019 and 0020):
+  - linked imports wait when records would be merged or a mapping changed (`changedFromApproved`)
+  - a source check holds a 30-minute lease and never overwrites a pause or disconnect
+  - the Shopify token is stored compare-and-swap
+  - failed emails are retried
+- **Viewer role** (migration 0018):
+  - `requireEditor` in 32 core services and in every changing server action; `canChange` in the upload and Shopify routes and the callback
+  - `role-guards.test.ts` fails CI on any unguarded new action; `roles.int.test.ts` calls every core service as a viewer
+  - the UI hides change controls through `CanChangeProvider`; viewer notes on pages that are only for changing things
+  - a linked source whose creator becomes a viewer stops with a clear message
+- **Roles in Settings:** a role picker when inviting, a per-person role switch, plain-words role list; invitation emails and the invite page say what the person will be able to do.
+- **Notes** (`app.note`, `team/notes.ts`) on insights and answers; `Notes` component (loads on open, or from the page).
+- **Handing insights to people** (`team/assign.ts`): "For you" on Home, "Handed to you" in the weekly email, "Mark done".
+- **Tests:** team integration (isolation between businesses, who can delete, who can be given what), email unit test, `team.spec.ts` e2e (invite a viewer, note, hand off, mark done, promote). Full suite: 875 unit/integration, 37 e2e.
+
+**In progress:** nothing.
+
+**Blockers:** none.
+
+**Next steps:**
+
+1. Owner: confirm M13, and the open owner items above.
+2. After confirmation: the next roadmap rows the owner prefers. Candidates: a second vertical pack (wholesale or salons), more connectors once Q26 proves the pattern, scheduled reports or PDF answers, or the public API.
 
 ### 2026-10-27 — Session 16: M12 built (asking about what's ahead, product seasons)
 

@@ -661,18 +661,18 @@ accounts.
 
 **Depends on:** M4 (saved answers), M6 (invites and roles), M7 (insights), M9 (emails).
 
-- [ ] A "can view" role next to owner and member: sees everything, asks questions, downloads, leaves
+- [x] A "can view" role next to owner and member: sees everything, asks questions, downloads, leaves
   notes; cannot bring in files, change records or the set-up, link sources, approve imports, edit
   the dashboard, set goals or alerts. Enforced in the core services, not only hidden in the UI;
   a test lists every server action and changing route and fails if one isn't either guarded or
   explicitly allowed for viewers
-- [ ] The owner picks the role when inviting and can change a person's role later; settings show
+- [x] The owner picks the role when inviting and can change a person's role later; settings show
   what each role can do in plain words
-- [ ] Notes on insights and on saved answers: short plain text with who and when; the author or the
+- [x] Notes on insights and on saved answers: short plain text with who and when; the author or the
   owner can delete one; shown only inside the business; recorded in the activity log
-- [ ] Hand an insight to a person: "For you" on their Home, a line in their weekly email, and the
+- [x] Hand an insight to a person: "For you" on their Home, a line in their weekly email, and the
   insight shows who has it; marking it done clears it
-- [ ] Tests (role matrix, isolation of notes between businesses), e2e, copy, docs
+- [x] Tests (role matrix, isolation of notes between businesses), e2e, copy, docs
 
 **Acceptance:**
 

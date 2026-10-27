@@ -1266,3 +1266,52 @@ Template for new entries:
     - all 27 forward-looking eval cases are recognised, and no historical question is taken for an estimate
     - on a two-year demo shop in mid-October, the Christmas products are on the list, with last year's figures within 10% of what the simulation sold
   - Phrasings the rules miss fall through to the normal interpretation, which answers about the past (R39). A future prompt version could teach the AI to hand them over; that needs the API key and an eval run (Q20).
+
+## ADR-062 — Working as a team: a view-only role, notes, handing insights to people
+
+- **Status:** Accepted (2026-10-27). M13.
+- **Context:**
+  - Small businesses have helpers who should see the numbers but not change them: a bookkeeper, an investor, a part-time assistant.
+  - People who share a business want to say what they did about an alert ("ordered 50 more") and who is dealing with it.
+  - Until now there were two roles: the owner, and members who can change everything except people and deleting the business.
+- **Decision:**
+  - **A third role, `viewer` ("Can view").**
+    - Viewers can open every page, ask questions, download, leave notes, and choose their own email settings. They change nothing else.
+    - The owner picks the role when inviting and can change it later. Roles are listed in Settings in plain words.
+    - The owner's own role never changes here, and there is still exactly one owner.
+  - **Enforced in two layers.**
+    - Every core service that changes data starts with `requireEditor(member)`: imports, records, set-up, sources, dashboard, goals, alerts, renames and business details (32 services, each refused for a viewer in `roles.int.test.ts`).
+    - Every server action starts with the web `requireEditor(slug)`, or is on a short list of actions viewers may use, each with its reason.
+    - `role-guards.test.ts` reads every action file and every business route. A new action that is neither guarded nor listed fails CI.
+    - Routes that change something (upload, Shopify connect) check `canChange`; the Shopify callback refuses a viewer too.
+    - The UI hides what a viewer can't use (`CanChangeProvider`). This is a convenience; the server is the guard.
+    - A linked source whose creator becomes a viewer stops updating, with a "please link it again" message, as when they leave.
+  - **Notes** (`app.note`) on insights and on answers (Ask conversations are shared by the business):
+    - plain text, control characters removed, 1 to 1,000 characters, at most 200 per item
+    - shown with the author's name and time, rendered as text
+    - only the author or the owner can delete one
+    - the activity log records that a note was added or removed, not its words
+    - notes are never given to the AI and never read as facts
+  - **Handing an insight to a person** (`insight.assigned_to`, `assigned_by`, `assigned_at`):
+    - owners and members hand open insights to an owner or member (not a viewer, who couldn't act on it)
+    - the person sees it under "For you" on Home and in a "Handed to you" list in their weekly email
+    - they (or anyone who can change things) mark it done, which clears it and leaves a "Marked done." note
+- **Consequences:**
+  - $0, no AI calls, no new accounts.
+  - Two migrations: the viewer role (0018), notes and hand-offs (0021). 0019 and 0020 are the security fixes (ADR-063).
+  - Not built (roadmap): permissions per area, transferring ownership, @mentions and email notifications for notes.
+
+## ADR-063 — Linked imports carry on only with exactly the approved mappings; checks hold a lease
+
+- **Status:** Accepted (2026-10-27). Security review of M9–M12; amends ADR-057, ADR-058 and ADR-059.
+- **Context:** an independent review of the M9–M12 code found two medium and three low issues (no outside attack: all were consent or race problems).
+- **Decision:**
+  - **An automatic re-import is only what the owner approved** (`changedFromApproved`). It waits for the owner if:
+    - the proposal would treat any records as one (the AI may propose that without asking a question)
+    - any mapped sheet's mapping differs from the one saved when the owner approved it (the AI's check can revise one)
+  - **A check holds the source** (`connection.syncing_until`, 30 minutes, cleared when done), so "Update now" and the daily job never read and import the same source twice at once.
+  - **A check never undoes a pause or a disconnect** made while it was reading: its status updates apply only while the source is still `active` or `needs_attention`, and it re-reads the status before starting an import.
+  - **A refreshed Shopify token is stored only over the pair it replaced.** If the store was connected again meanwhile, the newer tokens win.
+  - **A failed email is tried again** on the next run, up to three times (`email_delivery.attempts`). One that was sent or is being sent never is.
+- **Consequences:** each fix has a test that fails without it. Webhook replay protection (deduping on Shopify's webhook id) stays a nice-to-have: replaying needs a captured signed body.
+
