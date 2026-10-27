@@ -15,6 +15,7 @@ export { noopJob } from './system-jobs';
 import { connectionsDailyJob, connectionSyncJob } from '../connections/jobs';
 import { ingestionJobs } from '../ingestion/jobs';
 import { insightsDailyJob, insightsRunJob } from '../insights/jobs';
+import { webhooksDeliverJob } from '../platform/jobs';
 import { reportsDailyJob } from '../reports/jobs';
 import { snapshotGcJob } from '../structure/gc';
 import { JobRegistry } from './define';
@@ -31,5 +32,6 @@ export function createDefaultRegistry(): JobRegistry {
     connectionSyncJob,
     connectionsDailyJob,
     reportsDailyJob,
+    webhooksDeliverJob,
   ]);
 }

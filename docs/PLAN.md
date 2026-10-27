@@ -767,6 +767,40 @@ month, worked out fresh each time.
 
 ---
 
+## M16 — Connect other apps ($0)
+
+**Goal:** a business's numbers can be read by the other tools it uses (a spreadsheet script, an
+accounting add-on, an AI assistant such as Claude) without anyone copying figures by hand, and those
+tools can be told when something new happens. Everything is read-only: nothing from outside can
+change records or the set-up, so the M6 rule that changes need a person's approval still holds.
+
+**Depends on:** M3 (measures), M4 (Ask), M5 (dashboard), M7 (insights), M13 (roles).
+
+- [x] API keys: the owner creates and revokes keys for the business on "Connect other apps"; a key
+  is shown once, stored only as a hash, reads like a "can view" member (M13), and has a per-minute
+  limit; not offered for demo businesses
+- [x] Public API (`/api/v1`, JSON): the business, its measures and details, a query in the same typed
+  form Ask uses (validated and compiled by our code, never SQL), a question in plain words, the
+  insights, the dashboard; every number from an executed query; an OpenAPI description
+- [x] MCP server (`/api/mcp`, Streamable HTTP, no sessions): the same reads as tools for AI
+  assistants, marked read-only; the business's values are labelled as data, not instructions
+- [x] Webhooks: the owner adds an https address and picks events (new insight, import finished);
+  each delivery is signed (HMAC-SHA256 with a secret shown once), sent by a background job with
+  retries, never to private or internal addresses, and turned off after repeated failures
+- [x] Tests (key auth, isolation between businesses, rate limit, MCP protocol with the official
+  client, signatures, blocked addresses, retries), e2e, developer docs (`docs/API.md`)
+
+**Acceptance:**
+
+- A key reads only its own business, can't change anything, stops working the moment it is revoked,
+  and the numbers it gets match what the app shows for the same question.
+- An MCP client lists and calls the tools and gets the same numbers.
+- A webhook is delivered once per event with a valid signature, retried when the receiver fails, and
+  never sent to a private address.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |
@@ -775,7 +809,7 @@ month, worked out fresh each time.
 | Channels | WhatsApp questions and alerts (email digests and alerts: done in M9) |
 | Product | Multilingual UI and questions; multi-currency; estimates handed over by the AI (rules-only now) (season-aware estimates, goals and the reorder list: M11; in Ask and per-product seasons: M12); scheduled reports and PDF export: M15 (CSV/Excel: M9) |
 | Collaboration | Granular per-area permissions; ownership transfer; @mentions (view-only role, notes and handing insights to people: M13) |
-| Platform | Public API and MCP server exposing the semantic layer to other apps and agents; webhooks |
+| Platform | Write access and per-key scopes for the API; OAuth for MCP clients (read-only API keys, MCP server and webhooks: M16) |
 | Packs | Restaurants/food service, services/agencies, health & beauty salons (wholesale/distribution: M14) |
 | Business | Billing and plans (usage-based AI cost informs pricing); onboarding concierge |
 | Production upgrade (after revenue) | Execute the Stage 2 runbook: paid web plan, dedicated worker (`JOB_RUNNER=worker`), S3/R2 storage + migration of blobs, Sentry, custom domain, backups/PITR |

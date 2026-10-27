@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 import { connectionsDailyJob } from '../connections/jobs';
 import { defineJob, type JobStep } from '../jobs/define';
+import { queueDueWebhooks } from '../platform/jobs';
+import { deliverDueWebhooks, recordInsightEvents } from '../platform/webhooks';
 import { reportsDailyJob } from '../reports/jobs';
 import type { JobQueue } from '../jobs/queue';
 import { snapshotGcJob } from '../structure/gc';
@@ -36,6 +38,13 @@ async function runAndEmail(target: InsightTarget, trigger: InsightTrigger) {
     await sendInsightEmails(target);
   } catch (err) {
     getLogger('insight-email').error({ err, workspaceId: target.workspace.id }, 'emails failed');
+  }
+  // Webhooks that asked about new insights (M16), sent now: this is background work already.
+  try {
+    if (await recordInsightEvents(target.workspace.id, summary.createdIds))
+      await deliverDueWebhooks({ workspaceId: target.workspace.id, deadline: Date.now() + 20_000 });
+  } catch (err) {
+    getLogger('webhooks').error({ err, workspaceId: target.workspace.id }, 'webhooks failed');
   }
   return summary;
 }
@@ -172,6 +181,8 @@ export async function scheduleDailyJobs(queue: JobQueue, now = new Date()): Prom
     await queue.enqueue(reportsDailyJob, { date });
     queued.push(reportsDailyJob.name);
   }
+  // Not daily: webhook retries whenever this runs (hourly in the worker) and one is due (M16).
+  if (await queueDueWebhooks(queue)) queued.push('webhooks.deliver');
   return queued;
 }
 

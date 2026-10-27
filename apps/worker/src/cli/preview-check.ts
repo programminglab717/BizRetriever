@@ -59,6 +59,11 @@ async function main() {
     'STORAGE_DRIVER must be postgres (serverless disks are temporary)',
   );
   check(
+    env.WEBHOOKS_ALLOW_PRIVATE === 'off',
+    'webhooks go to public addresses only',
+    'WEBHOOKS_ALLOW_PRIVATE must be off outside local development',
+  );
+  check(
     env.JOB_STEP_BUDGET_MS <= 45_000,
     `JOB_STEP_BUDGET_MS=${env.JOB_STEP_BUDGET_MS}`,
     'JOB_STEP_BUDGET_MS should stay under the host’s function time limit',

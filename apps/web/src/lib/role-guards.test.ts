@@ -98,3 +98,24 @@ describe('viewers can’t change anything', () => {
       );
   });
 });
+
+describe('the public API and MCP server only read (M16, ADR-066)', () => {
+  const routes = [
+    ...files(join(appDir, 'api', 'v1'), (n) => n === 'route.ts'),
+    join(appDir, 'api', 'mcp', 'route.ts'),
+  ].filter((f) => !f.includes('openapi.json'));
+
+  it('finds the routes', () => {
+    expect(routes.length).toBeGreaterThanOrEqual(7);
+  });
+
+  it.each(routes.map((f) => [relative(appDir, f), f] as const))(
+    '%s needs a key and offers no way to change anything',
+    (_, file) => {
+      const source = readFileSync(file, 'utf8');
+      expect(source).toMatch(/withApiKey\(request,/);
+      expect(source).not.toMatch(/export (async function|const) (PUT|PATCH)\b/);
+      expect(source).not.toMatch(/requireWorkspace|getSession/);
+    },
+  );
+});

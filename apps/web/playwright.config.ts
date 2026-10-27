@@ -34,6 +34,9 @@ export default defineConfig({
       JOB_RUNNER: 'inline',
       AI_REPLAY_MODE: 'replay',
       ANTHROPIC_API_KEY: '',
+      // Webhooks (M16): sealed secrets, and a test receiver on localhost.
+      CONNECTOR_SECRET: process.env.CONNECTOR_SECRET || 'e2e-connector-secret-0123456789abcdef',
+      WEBHOOKS_ALLOW_PRIVATE: 'on',
     },
     timeout: 60_000,
   },

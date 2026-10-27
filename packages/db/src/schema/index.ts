@@ -9,3 +9,4 @@ export * from './ask';
 export * from './insights';
 export * from './team';
 export * from './reports';
+export * from './platform';

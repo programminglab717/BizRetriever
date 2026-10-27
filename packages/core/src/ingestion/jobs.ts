@@ -18,6 +18,7 @@ import { planFromPack } from '../change-plan/from-pack';
 import { withTenantWriter } from '../executor/write';
 import { defineJob } from '../jobs/define';
 import { refreshInsightsStep } from '../insights/jobs';
+import { importWebhookStep } from '../platform/jobs';
 import { bumpDataVersion, ensureDefaultDashboard } from '../dashboard/service';
 import { refreshSemanticCatalog } from '../semantic/service';
 import { analyzeTenant } from '../tenancy/provision';
@@ -523,6 +524,7 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
         return { state };
       },
     },
+    importWebhookStep(),
     refreshInsightsStep('import'),
   ],
 });

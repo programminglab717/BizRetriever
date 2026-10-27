@@ -50,7 +50,8 @@ apps/worker       background job worker
 packages/platform env config (Zod), logging (pino + correlation ids); no other @bizr deps
 packages/db       control-plane Drizzle schema + migrations, db roles/pools
 packages/core     tenancy, executor (safe tenant queries), workspaces, jobs, sql/ident, change plans,
-                  ingestion, semantic layer (metrics + query compiler); later: SQL validator, merge
+                  ingestion, semantic layer (metrics + query compiler), SQL validator, merge,
+                  platform (public API, MCP server, webhooks: docs/API.md)
 packages/ingest   parsing, region detection, profiling, cleaning rules, loaders
 packages/ai       provider abstraction, versioned prompts, AI tasks, cost tracking
 packages/packs    pack format schema + loader; packs/retail/, packs/wholesale/ (M14)

@@ -54,6 +54,8 @@ export interface InsightRunSummary {
   historyDays: number | null;
   rules: InsightRunRule[];
   created: number;
+  /** The new insights' ids (webhooks, M16). */
+  createdIds: string[];
   updated: number;
   resolved: number;
 }
@@ -289,6 +291,7 @@ export async function runInsights(
     historyDays: history,
     rules,
     created: newIds.length,
+    createdIds: newIds.map((n) => n.id),
     ...counts,
   };
 }

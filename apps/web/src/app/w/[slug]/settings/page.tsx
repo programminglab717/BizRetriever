@@ -1,11 +1,13 @@
 import { canChange, COMMON_CURRENCIES, listMembers } from '@bizr/core/workspaces';
+import type { Route } from 'next';
+import Link from 'next/link';
 
 import { BusinessForm } from '@/components/settings/business-form';
 import { DeleteBusiness } from '@/components/settings/delete-business';
 import { Members } from '@/components/settings/members';
 import { BusinessesSection } from '@/components/demo/businesses-section';
 import { PageHeader } from '@/components/shell/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireWorkspace } from '@/lib/session';
 
 import { deleteBusiness, updateBusiness } from './actions';
@@ -60,6 +62,25 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
           <Members slug={slug} list={people} isOwner={role === 'owner'} me={member.user.id} />
         </CardContent>
       </Card>
+      {role === 'owner' && !workspace.isDemo ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Connect other apps</CardTitle>
+            <CardDescription>
+              Let a spreadsheet, an accounting tool or an AI assistant read your numbers, and tell
+              other apps when something new happens.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link
+              className="text-sm font-medium underline"
+              href={`/w/${slug}/settings/apps` as Route}
+            >
+              Keys, AI assistants and webhooks
+            </Link>
+          </CardContent>
+        </Card>
+      ) : null}
       {/* On phones this lives on More. */}
       <div className="hidden md:block">
         <BusinessesSection userId={member.user.id} currentSlug={slug} />

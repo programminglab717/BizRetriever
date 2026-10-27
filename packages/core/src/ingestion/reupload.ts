@@ -15,6 +15,7 @@ import { bumpDataVersion, ensureDefaultDashboard } from '../dashboard/service';
 import { withTenantWriter } from '../executor/write';
 import { defineJob } from '../jobs/define';
 import { refreshInsightsStep } from '../insights/jobs';
+import { importWebhookStep } from '../platform/jobs';
 import {
   applyUpload,
   diffUpload,
@@ -200,6 +201,7 @@ export const ingestMergeJob = defineJob<z.infer<typeof mergeInput>, Record<strin
         return { state };
       },
     },
+    importWebhookStep(),
     refreshInsightsStep('reupload'),
   ],
 });

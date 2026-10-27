@@ -74,6 +74,10 @@ export const envSchema = z
       .string()
       .regex(/^\d{4}-\d{2}$/)
       .default('2026-07'),
+    // Webhooks (M16, ADR-066) are never sent to private or internal addresses. Only local
+    // development and the end-to-end tests turn this on (a receiver on localhost); never a real
+    // deployment (`pnpm preview:check` refuses it).
+    WEBHOOKS_ALLOW_PRIVATE: z.enum(['on', 'off']).default('off'),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && !env.BETTER_AUTH_SECRET) {

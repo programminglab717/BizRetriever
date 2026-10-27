@@ -2,19 +2,50 @@
 
 ## Current Status
 
-- **Milestone:** M15 (Reports you can send, $0) is **built and checked automatically**. The owner confirmed M14 on 2026-10-27 and asked for everything left that needs no account or key to be built, tested without AI ("we will test once we are done completely"). Build order: M15–M20 in PLAN.md.
+- **Milestone:** M16 (Connect other apps, $0) is **built and checked automatically**. M15 is done (CI green). The owner asked for everything that needs no account or key to be built and tested without AI ("we will test once we are done completely"). Build order: M15–M20 in PLAN.md; next is M17.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M15** (ADR-065):
-  - **PDF downloads:** any answer, any dashboard tile, and the whole dashboard, laid out for printing, with the numbers exactly as the app shows them.
-  - **"Email me this":** the dashboard or a question, emailed as a PDF every week or month, worked out fresh each time; "Your reports" in Alert settings to pause or delete; a one-click stop link in each email.
-  - Demo shop fix: Bloom & Co's own spelling now always leads, so the demo reads the same every day.
-- **Tests:** 900 unit/integration pass; 38 e2e pass. Evals unchanged (retail questions 0.929, wholesale 0.983, ingest 12/12).
-- **Waiting on the owner** (testing after everything is built, by their choice): the Anthropic API key (Q20), email domain (Q25), Shopify app (Q26), a live Google Sheet, Google sign-in, rehearsals (Q24); Q27–Q29.
+- **New in M16** (ADR-066, developer guide `docs/API.md`):
+  - **Keys:** the owner makes a key per app on Settings → Connect other apps. A key reads that business's numbers and can never change anything.
+  - **Public API** (`/api/v1`): the business, its measures, numbers for a typed query, questions in plain words, insights, the dashboard. The numbers are the same as the app's. Description at `/api/v1/openapi.json`.
+  - **AI assistants (MCP)** at `/api/mcp`: the same reads as six read-only tools. Checked with the official MCP client.
+  - **Webhooks:** "new insight" and "import finished" are sent to an https address, signed, retried for about a day and a half, then turned off. Never sent to private addresses. "Send a test" button.
+- **Tests:** 934+ unit/integration pass (21 new for M16); 39 e2e pass, including the new `apps.spec.ts`. Evals unchanged (retail questions 0.929, wholesale 0.983, ingest 12/12).
+- **Waiting on the owner** (testing after everything is built, by their choice): the Anthropic API key (Q20), email domain (Q25), Shopify app (Q26), a live Google Sheet, Google sign-in, rehearsals (Q24); Q27–Q29. New risks R45–R47 (MCP OAuth, all-or-nothing keys, API questions sharing the AI budget).
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-27 — Session 20: M16 built (connect other apps: API, MCP server, webhooks)
+
+**Completed:**
+
+- **M15 closed:** CI green on the scheduled-reports commit.
+- **Keys** (`app.api_key`, migration 0023): owner only, shown once, stored as SHA-256, read as a viewer, 60 a minute, revoke takes effect at once.
+- **`packages/core/src/platform`:**
+  - `api.ts`: business, measures, a typed query (Ask's own spec, `query_run.origin = 'api'`), plain-words questions (no one's history), insights, dashboard
+  - `mcp.ts`: sessionless Streamable HTTP JSON-RPC, six read-only tools
+  - `openapi.ts`
+  - `webhooks.ts` and `net.ts`: outbox, HMAC signatures, retries and turning off, public addresses only (checked at connect time)
+  - `jobs.ts`: `webhooks.deliver`, the import step, queued by the hourly check
+- **Web:**
+  - `/api/v1/*` and `/api/mcp` through `withApiKey`
+  - Settings → Connect other apps (`settings/apps`): keys, AI assistant, webhooks with "Send a test"
+- **Wiring:** imports and new insights record webhook events and send them straight away.
+- **Env:** `WEBHOOKS_ALLOW_PRIVATE` (local and e2e only; `preview:check` refuses it).
+- **Tests:**
+  - unit: blocked addresses, signatures, URL checks, MCP protocol
+  - integration on the demo shop: keys, viewer refusal, same numbers as Ask, MCP, rate limit, revoke, signed delivery once, retries, turn-off
+  - guard test that every API and MCP route needs a key and offers no writes
+  - `apps.spec.ts` e2e with the official MCP client and a real receiver
+- **Docs:** `docs/API.md`, ADR-066, R45–R47, PLAN M16 ticked, roadmap row, CLAUDE.md layout.
+
+**In progress:** nothing.
+
+**Blockers:** none.
+
+**Next steps:** M17 — S3/R2 storage driver and moving files to it (PLAN build order).
 
 ### 2026-10-27 — Session 19: M15 built (PDF reports, scheduled report emails)
 

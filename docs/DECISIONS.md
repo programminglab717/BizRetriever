@@ -1372,3 +1372,42 @@ Template for new entries:
   - A dashboard PDF of 12 tiles is about 30 KB; making one takes the same queries as the dashboard.
   - Not built: reports to other addresses (an accountant without an account), CSV attached instead of PDF, a logo.
 
+## ADR-066 — Connect other apps: read-only API keys, a sessionless MCP server, signed webhooks
+
+- **Status:** Accepted (2026-10-27). M16.
+- **Context:** owners use other tools (spreadsheet scripts, accounting add-ons, AI assistants such as Claude) and want them to read the business's numbers without copying figures, and to hear when something new happens. Whatever comes in from outside must not weaken the safety rules: no free-form SQL, tenant isolation, no change without a person's approval, never invented numbers.
+- **Decision:**
+  - **Keys** (`app.api_key`):
+    - per business; made and revoked by the owner only; shown once, stored as SHA-256
+    - a key reads as a `viewer` member (M13), so every core service that changes something refuses it (ADR-062); there is no write call at all
+    - one statement checks the key and counts the request: 60 per key per fixed minute (`window_start`, `window_count`), then 429 with Retry-After
+    - not for demo businesses; created and revoked keys go in the audit log
+  - **Public API** (`/api/v1`, `platform/api.ts`):
+    - business, measures and details, a query, a plain-words question, insights, dashboard
+    - the query is Ask's own typed form (`questionSpecSchema` with defaults: no breakdown, no filters, all time), resolved with the business's calendar and compiled by the semantic layer; unknown measures or details are refused (422)
+    - runs as the business's reader with `query_run.origin = 'api'` (new origin)
+    - results give raw values (money as exact strings) and the app's formatted text; `period.to` is the last day included
+    - questions go through `askQuestion` with no person (`userId` null), so they appear in no one's Ask history and use the same AI budget caps
+    - OpenAPI 3.1 at `/api/v1/openapi.json`, generated from the Zod inputs
+    - no cookies are read on these routes and no CORS headers are sent: a key is the only way in
+  - **MCP server** (`/api/mcp`, `platform/mcp.ts`):
+    - Streamable HTTP without sessions: each POST is one JSON-RPC message (batches accepted) with a JSON answer; GET and DELETE are 405
+    - written by hand (about 200 lines) rather than with the SDK's server, so it runs inside a Next route handler with no session state; the official SDK client checks it end to end in e2e
+    - the six tools are the API's reads, annotated read-only; inputs are the same Zod schemas as JSON Schema
+    - results start with a line saying the values are the business's records, data rather than instructions (safety rule 4 for the assistant on the other end)
+    - an `Origin` header other than our own is refused (DNS rebinding)
+  - **Webhooks** (`app.webhook`, `app.webhook_delivery`):
+    - owner only, at most 5 per business; https only; events `insight.created` and `import.completed`, plus a `ping` test
+    - the signing secret is shown once and stored sealed (AES-GCM under `CONNECTOR_SECRET`, ADR-059), so webhooks need it set
+    - events go to an outbox, unique per webhook and event key (`insight:<id>`, `import:<run>`), so a step that runs twice queues nothing new
+    - sent straight after the import or insight run (already background work); retried by `webhooks.deliver`, queued by the hourly check when something is due: 1 min, 10 min, 1 h, 6 h, 24 h; off after the 6th failure until the owner turns it back on
+    - a minute's lease (`locked_until`, `FOR UPDATE SKIP LOCKED`) stops two runs sending the same delivery
+    - signed like Stripe: `t=<unix>,v1=HMAC-SHA256("t.body")`; receivers refuse timestamps over 5 minutes old
+    - **No private addresses (SSRF):** refused when saved (loopback, RFC 1918, link-local and metadata, CGNAT, multicast, IPv6 ULA/link-local, IPv4-mapped, `localhost`/`.local`/`.internal`/dotless names). At send time the connection's own `lookup` refuses any private address the name resolves to (so a name re-pointed later is still caught), numeric hosts are checked directly, redirects aren't followed, and there's a 10-second timeout and a 4 KB read cap. `WEBHOOKS_ALLOW_PRIVATE=on` lifts this for local development and e2e only; `pnpm preview:check` refuses it
+  - **"Connect other apps"** (Settings → `/w/<slug>/settings/apps`): keys, how to connect an AI assistant, webhooks with "Send a test". Owner only; others see who to ask.
+- **Consequences:**
+  - $0: no new service. The MCP SDK is a dev dependency for the e2e client only.
+  - Keys can't be scoped (all reads or none), and there is no OAuth for MCP clients that expect it: a client must let you set a header (R45).
+  - The per-minute count is a database write per request, which is fine at our scale; a cache would come with paid hosting.
+  - Not built: write access, per-key scopes, OAuth, webhook events for record edits, delivery history on the page.
+

@@ -142,7 +142,7 @@ export const auditEvent = app.table(
   (t) => [index('audit_event_workspace_idx').on(t.workspaceId, t.createdAt)],
 );
 
-export const queryOrigins = ['ask', 'dashboard', 'insight', 'records', 'system'] as const;
+export const queryOrigins = ['ask', 'dashboard', 'insight', 'records', 'system', 'api'] as const;
 export type QueryOrigin = (typeof queryOrigins)[number];
 export const queryPaths = ['spec', 'sql_fallback', 'system'] as const;
 export type QueryPath = (typeof queryPaths)[number];
