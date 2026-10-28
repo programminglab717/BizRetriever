@@ -15,7 +15,7 @@ import { useCanChange } from '@/components/shell/can-change';
 
 export interface LinkedSource {
   id: string;
-  kind: 'google_sheet' | 'shopify';
+  kind: 'google_sheet' | 'shopify' | 'quickbooks' | 'xero' | 'square' | 'woocommerce';
   name: string;
   status: 'active' | 'paused' | 'needs_attention' | 'disconnected';
   autoUpdate: boolean;
@@ -26,7 +26,14 @@ export interface LinkedSource {
   link: string | null;
 }
 
-const KIND = { google_sheet: 'Google Sheet', shopify: 'Shopify store' } as const;
+const KIND = {
+  google_sheet: 'Google Sheet',
+  shopify: 'Shopify store',
+  quickbooks: 'QuickBooks',
+  xero: 'Xero',
+  square: 'Square',
+  woocommerce: 'WooCommerce store',
+} as const;
 const when = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
 function Source({ slug, source }: { slug: string; source: LinkedSource }) {

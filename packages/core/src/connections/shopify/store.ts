@@ -3,8 +3,9 @@ import { getEnv, getLogger } from '@bizr/platform';
 import { and, eq } from 'drizzle-orm';
 
 import { toXlsx } from '../../export/write';
-import type { Sheet, SheetCell } from '../../export/sheet';
+import type { Sheet } from '../../export/sheet';
 import { safeFetch, SourceError } from '../fetch';
+import { shopSheets, type ShopCustomer, type ShopOrderLine, type ShopProduct } from '../workbook';
 import { openSecret, sealSecret } from '../secret';
 import { isShopDomain, refreshTokens, type ShopifyTokens } from './oauth';
 
@@ -225,7 +226,7 @@ interface OrderNode {
 const utc = (iso: string | null | undefined): string | null =>
   iso && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(iso) ? iso.slice(0, 19) : null;
 
-function status(o: OrderNode): string {
+function status(o: OrderNode): ShopOrderLine['status'] {
   if (o.cancelledAt) return 'cancelled';
   const s = (o.displayFinancialStatus ?? '').toLowerCase();
   if (s === 'refunded') return 'refunded';
@@ -256,7 +257,7 @@ export async function readStore(
     SHOP_QUERY,
   );
 
-  const products: SheetCell[][] = [];
+  const products: ShopProduct[] = [];
   for await (const nodes of pages((cursor) =>
     shopifyGraphql<{ products: Page<ProductNode> }>(shop, token, PRODUCTS_QUERY, { cursor }).then(
       (d) => d.products,
@@ -265,38 +266,38 @@ export async function readStore(
     for (const p of nodes)
       for (const v of p.variants.nodes) {
         const variant = text(v.title);
-        products.push([
-          variant && variant !== 'Default Title' ? `${p.title} - ${variant}` : p.title,
-          text(v.sku),
-          text(p.productType),
-          text(p.vendor),
-          money({ amount: v.price ?? undefined }),
-          money(v.inventoryItem?.unitCost),
-          typeof v.inventoryQuantity === 'number' ? v.inventoryQuantity : null,
-          (p.status ?? '').toLowerCase() === 'active' ? 'active' : 'inactive',
-        ]);
+        products.push({
+          name: variant && variant !== 'Default Title' ? `${p.title} - ${variant}` : p.title,
+          sku: text(v.sku),
+          category: text(p.productType),
+          supplier: text(p.vendor),
+          price: money({ amount: v.price ?? undefined }),
+          cost: money(v.inventoryItem?.unitCost),
+          inStock: typeof v.inventoryQuantity === 'number' ? v.inventoryQuantity : null,
+          active: (p.status ?? '').toLowerCase() === 'active',
+        });
       }
 
-  const customers: SheetCell[][] = [];
+  const customers: ShopCustomer[] = [];
   for await (const nodes of pages((cursor) =>
     shopifyGraphql<{ customers: Page<CustomerNode> }>(shop, token, CUSTOMERS_QUERY, {
       cursor,
     }).then((d) => d.customers),
   ))
     for (const c of nodes)
-      customers.push([
-        text(c.displayName),
-        text(c.email),
-        text(c.phone),
-        utc(c.createdAt)?.slice(0, 10) ?? null,
-      ]);
+      customers.push({
+        name: text(c.displayName),
+        email: text(c.email),
+        phone: text(c.phone),
+        since: utc(c.createdAt)?.slice(0, 10) ?? null,
+      });
 
   // Orders changed since a day before the last check (or the last year), newest kept if capped.
   const from = since
     ? new Date(Date.parse(since) - 24 * 3600_000)
     : new Date(now.getTime() - FIRST_ORDERS_DAYS * 24 * 3600_000);
   const ordersFrom = from.toISOString();
-  const orders: SheetCell[][] = [];
+  const orders: ShopOrderLine[] = [];
   let count = 0;
   let truncated = false;
   for await (const nodes of pages((cursor) =>
@@ -309,19 +310,19 @@ export async function readStore(
       count += 1;
       const st = status(o);
       for (const li of o.lineItems.nodes)
-        orders.push([
-          o.name,
-          utc(o.createdAt),
-          st,
-          text(o.customer?.displayName),
-          text(o.customer?.email),
-          text(li.sku),
-          text(li.name),
-          typeof li.quantity === 'number' ? li.quantity : null,
-          money(li.originalUnitPriceSet?.shopMoney),
-          money(li.discountedTotalSet?.shopMoney),
-          text(o.sourceName) === 'pos' ? 'Shopify POS' : 'Online store',
-        ]);
+        orders.push({
+          order: o.name,
+          date: utc(o.createdAt),
+          status: st,
+          customer: text(o.customer?.displayName),
+          email: text(o.customer?.email),
+          sku: text(li.sku),
+          item: text(li.name),
+          quantity: typeof li.quantity === 'number' ? li.quantity : null,
+          unitPrice: money(li.originalUnitPriceSet?.shopMoney),
+          lineTotal: money(li.discountedTotalSet?.shopMoney),
+          channel: text(o.sourceName) === 'pos' ? 'Shopify POS' : 'Online store',
+        });
     }
     if (count >= MAX_ORDERS) {
       truncated = true;
@@ -330,56 +331,13 @@ export async function readStore(
   }
 
   const cur = info.shop.currencyCode ?? null;
-  const m = (label: string) => (cur ? `${label} (${cur})` : label);
   return {
     name: info.shop.name,
     currency: cur,
     ordersFrom,
     orders: count,
     truncated,
-    sheets: [
-      {
-        name: 'Products',
-        columns: [
-          { label: 'Product', type: 'text' },
-          { label: 'SKU', type: 'text' },
-          { label: 'Category', type: 'text' },
-          { label: 'Supplier', type: 'text' },
-          { label: m('Price'), type: 'money' },
-          { label: m('Cost'), type: 'money' },
-          { label: 'In stock', type: 'number' },
-          { label: 'Status', type: 'text' },
-        ],
-        rows: products,
-      },
-      {
-        name: 'Customers',
-        columns: [
-          { label: 'Customer', type: 'text' },
-          { label: 'Email', type: 'text' },
-          { label: 'Phone', type: 'text' },
-          { label: 'Customer since', type: 'date' },
-        ],
-        rows: customers,
-      },
-      {
-        name: 'Orders',
-        columns: [
-          { label: 'Order', type: 'text' },
-          { label: 'Date (UTC)', type: 'datetime' },
-          { label: 'Status', type: 'text' },
-          { label: 'Customer', type: 'text' },
-          { label: 'Email', type: 'text' },
-          { label: 'SKU', type: 'text' },
-          { label: 'Item', type: 'text' },
-          { label: 'Quantity', type: 'number' },
-          { label: m('Unit price'), type: 'money' },
-          { label: m('Line total'), type: 'money' },
-          { label: 'Channel', type: 'text' },
-        ],
-        rows: orders,
-      },
-    ],
+    sheets: shopSheets({ products, customers, orders }, cur),
   };
 }
 

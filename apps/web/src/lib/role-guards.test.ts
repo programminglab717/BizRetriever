@@ -34,7 +34,11 @@ const VIEWER_ALLOWED: Record<string, string> = {
 };
 
 /** Routes that change something although they answer GET. */
-const CHANGING_GET = new Set(['api/w/[slug]/connect/shopify/route.ts']);
+const CHANGING_GET = new Set([
+  'api/w/[slug]/connect/shopify/route.ts',
+  'api/w/[slug]/connect/[source]/route.ts',
+  'api/w/[slug]/connect/woocommerce/route.ts',
+]);
 
 const appDir = join(__dirname, '..', 'app');
 

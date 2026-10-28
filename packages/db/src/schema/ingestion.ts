@@ -52,7 +52,14 @@ export const ingestionRunStatus = [
 ] as const;
 export type IngestionRunStatus = (typeof ingestionRunStatus)[number];
 
-export const connectionKinds = ['google_sheet', 'shopify'] as const;
+export const connectionKinds = [
+  'google_sheet',
+  'shopify',
+  'quickbooks',
+  'xero',
+  'square',
+  'woocommerce',
+] as const;
 export type ConnectionKind = (typeof connectionKinds)[number];
 export const connectionStatus = ['active', 'paused', 'needs_attention', 'disconnected'] as const;
 export type ConnectionStatus = (typeof connectionStatus)[number];

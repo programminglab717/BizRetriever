@@ -828,11 +828,39 @@ writing code on the day. Building it costs nothing; using it waits for revenue (
 
 ---
 
+## M18 — More sources: QuickBooks, Xero, Square, WooCommerce ($0)
+
+**Goal:** owners whose sales live in an accounting tool, a till system or their own store connect
+it once and have it update by itself, like Shopify. Built and tested on recorded answers; each
+stays hidden until its keys exist (WooCommerce needs none).
+
+**Depends on:** M10 (linked sources, Shopify), M14 (wholesale records: invoices, payments).
+
+- [x] One sign-in flow shared by QuickBooks, Xero and Square: signed state, every check on the
+  way back, sealed tokens, refresh that never loses a newer pair
+- [x] Readers into the two workbook layouts the import knows without AI (shop; accounting), money
+  kept exact, payments only where the industry keeps them
+- [x] WooCommerce through the store's own approval page; the store's address checked as public
+  https and every request kept off private networks
+- [x] Buttons on Bring in your files, hidden without keys; linked sources and messages name them
+- [x] Tests on recorded answers in each API's shapes (connect, import, money, refresh, refusals);
+  runbook for the developer apps
+
+**Acceptance:**
+
+- With recorded answers, each source connects, its first import is reviewed and brings in its
+  products, customers and sales without AI, with the right counts and amounts, and a later check
+  refreshes its token.
+- Nothing is shown or reachable for a source whose keys aren't set.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |
 |---|---|
-| Connectors | Square/Lightspeed/Clover POS, WooCommerce, Amazon Seller Central, Etsy API, QuickBooks/Xero |
+| Connectors | Lightspeed/Clover POS, Amazon Seller Central, Etsy API (QuickBooks, Xero, Square, WooCommerce: M18) |
 | Channels | WhatsApp questions and alerts (email digests and alerts: done in M9) |
 | Product | Multilingual UI and questions; multi-currency; estimates handed over by the AI (rules-only now) (season-aware estimates, goals and the reorder list: M11; in Ask and per-product seasons: M12); scheduled reports and PDF export: M15 (CSV/Excel: M9) |
 | Collaboration | Granular per-area permissions; ownership transfer; @mentions (view-only role, notes and handing insights to people: M13) |

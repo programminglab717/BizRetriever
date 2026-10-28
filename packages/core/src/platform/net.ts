@@ -76,3 +76,64 @@ export function publicOnlyLookup(allowPrivate: boolean): LookupFunction {
     });
   };
 }
+
+/**
+ * One request to an address a person typed (a WooCommerce store, M18), as a `Response`: public
+ * addresses only (checked on the address connected to), no redirects followed here, at most
+ * `maxBytes` read.
+ */
+export async function requestPublic(
+  url: string,
+  init: { method: string; headers: Record<string, string>; body?: string; timeoutMs: number },
+  maxBytes: number,
+  allowPrivate = false,
+): Promise<Response> {
+  const { default: https } = await import('node:https');
+  const target = new URL(url);
+  const host = target.hostname.replace(/^\[|\]$/g, '');
+  if (target.protocol !== 'https:') throw new BlockedAddressError(host);
+  if (isIP(host) !== 0 && !isPublicAddress(host) && !allowPrivate)
+    throw new BlockedAddressError(host);
+  return new Promise<Response>((resolve, reject) => {
+    const req = https.request(
+      target,
+      {
+        method: init.method,
+        headers: {
+          ...init.headers,
+          ...(init.body !== undefined
+            ? { 'content-length': String(Buffer.byteLength(init.body)) }
+            : {}),
+        },
+        lookup: publicOnlyLookup(allowPrivate),
+        timeout: init.timeoutMs,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        let size = 0;
+        res.on('data', (c: Buffer) => {
+          size += c.length;
+          if (size > maxBytes + 1) return res.destroy();
+          chunks.push(c);
+        });
+        res.on('close', () => {
+          const headers = new Headers();
+          for (const [k, v] of Object.entries(res.headers))
+            if (v !== undefined) headers.set(k, Array.isArray(v) ? v.join(', ') : v);
+          const status = res.statusCode ?? 502;
+          const body = Buffer.concat(chunks);
+          resolve(
+            new Response(status === 204 || status === 304 || body.length === 0 ? null : body, {
+              status,
+              headers,
+            }),
+          );
+        });
+        res.on('error', () => {});
+      },
+    );
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+    req.end(init.body);
+  });
+}

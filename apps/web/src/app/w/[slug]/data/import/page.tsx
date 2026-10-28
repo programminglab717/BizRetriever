@@ -1,8 +1,9 @@
-import { shopifyEnabled } from '@bizr/core/connections';
+import { oauthProviders, shopifyEnabled, wooEnabled } from '@bizr/core/connections';
 import { canChange } from '@bizr/core/workspaces';
 import { getPack } from '@bizr/packs';
 
 import { ConnectShopifyForm } from '@/components/import/connect-shopify-form';
+import { ConnectSources } from '@/components/import/connect-sources';
 import { LinkSheetForm } from '@/components/import/link-sheet-form';
 import { UploadForm } from '@/components/import/upload-form';
 import { PageHeader } from '@/components/shell/page-header';
@@ -14,12 +15,12 @@ export default async function ImportPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ shopify?: string }>;
+  searchParams: Promise<{ shopify?: string; woocommerce?: string }>;
 }) {
   const { slug } = await params;
   const { role, workspace } = await requireWorkspace(slug);
   const helpful = getPack(workspace.packId).manifest.helpful_files;
-  const { shopify } = await searchParams;
+  const { shopify, woocommerce } = await searchParams;
   if (!canChange(role))
     return (
       <div className="grid gap-6">
@@ -36,6 +37,14 @@ export default async function ImportPage({
       <UploadForm slug={slug} />
       <LinkSheetForm slug={slug} />
       {shopifyEnabled() && <ConnectShopifyForm slug={slug} badShop={shopify === 'bad_shop'} />}
+      <ConnectSources
+        slug={slug}
+        providers={Object.values(oauthProviders)
+          .filter((p) => p.enabled())
+          .map((p) => ({ kind: p.kind, label: p.label }))}
+        woo={wooEnabled()}
+        badStore={woocommerce === 'bad_store'}
+      />
       <section className="grid gap-2 text-sm">
         <h2 className="font-medium">Helpful files to include</h2>
         <ul className="grid gap-1 text-muted-foreground">

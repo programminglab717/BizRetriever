@@ -1433,3 +1433,36 @@ Template for new entries:
   - Not tested against a real bucket until Stage 2 (R48). The runbook's dry run is the first real check.
   - Not built: multipart upload (files are capped at 25 MB, well under S3's 5 GB single-PUT limit), presigned downloads (files go through our server, which checks membership).
 
+## ADR-068 — More sources: one sign-in flow for QuickBooks, Xero and Square, and WooCommerce's own approval
+
+- **Status:** Accepted (2026-10-28). M18. Extends ADR-058/059 (linked sources, Shopify).
+- **Context:** owners keep their sales in accounting tools (QuickBooks, Xero), till systems (Square) and their own stores (WooCommerce). The owner asked for these to be built now and kept hidden until keys exist, tested without the real services.
+- **Decision:**
+  - **One OAuth flow** (`connections/oauth/`) for QuickBooks, Xero and Square:
+    - each provider supplies its addresses, the code swap, the refresh and a reader
+    - the shared code keeps the random state in a sealed, ten-minute cookie (per provider, path `/api/connect/<kind>`) naming the person and the business
+    - on return it checks the state (constant time), the provider, the time, the signed-in person, and that they can still change things; a refusal on the provider's page says so
+    - tokens are sealed (ADR-059); refreshing stores the new pair before using it, only over the pair refreshed (ADR-063); the first check is queued and its import reviewed like a file
+    - routes: `/api/w/<slug>/connect/<kind>` and `/api/connect/<kind>/callback`
+  - **Readers turn each service into one of two workbooks** (`connections/workbook.ts`), so the import recognises them without AI and later updates match:
+    - shops (Square, WooCommerce, and now Shopify through the same builder): Products, Customers, Orders
+    - accounting (QuickBooks, Xero): Invoices, Customers, Payments, Products, in the headers the wholesale demo uses
+    - the Payments tab is left out for industries without payment records (retail), because it would otherwise be read as invoice totals (wrong for part payments)
+    - an invoice is Paid or Unpaid; overdue comes from the due date, so the file changes only when the invoice does
+    - money stays decimal strings; Square's smallest units become decimals by the currency's own places
+  - **Per provider:**
+    - **QuickBooks:** query endpoint, 1000 a page, `minorversion=75`. Basic-auth token calls; rotating refresh tokens. Payments for invoices older than the fetch have their invoice numbers looked up.
+    - **Xero:** granular read scopes (apps since March 2026). The organisation just approved is the newest in `/connections`. `xero-tenant-id` on every call, calls one at a time, `If-Modified-Since` for updates; sales invoices that are AUTHORISED or PAID only.
+    - **Square:** code flow (30-day access, a refresh token that doesn't expire). Catalog with categories, stock summed over locations, customers, and completed orders ten locations a search, sorted on the date the filter uses. `Square-Version` from settings.
+    - **WooCommerce:** no app to register.
+      - The owner types the store's address and approves read access on the store's own page. The store posts a read-only key to `/api/connect/woocommerce/keys` with the sealed token we gave it (store, business, person, ten minutes).
+      - The key is kept only if it works on that very store.
+      - The store's address is the one a person types, so it must be public https (no IPs on private networks, internal names, ports or passwords), and every request goes out through `safeFetch({ publicOnly })`: the connection's own lookup refuses private addresses (as webhooks, ADR-066).
+      - Products with options are listed as their variations.
+  - **Hidden until switched on:** each button shows only with its keys and `CONNECTOR_SECRET`; WooCommerce with `CONNECTOR_SECRET` and an https `APP_URL`.
+  - **Tests** play every provider back from recorded answers in its documented shapes (`connectors.int.test.ts`): connect, import without AI, counts and money, token refresh and rotation, refusals (forged state, another person, another provider's cookie, the owner saying no, a Woo key that doesn't work, an expired token).
+- **Consequences:**
+  - $0 to build; free developer tiers to use (Xero's allows 5 organisations, R49).
+  - Not met the real services yet (R50, Q30).
+  - Left out for now: refunds, returns and credit notes; Woo costs (R51); disconnect webhooks from QuickBooks, Xero and Square (a revoked token shows as "needs attention" at the next check instead).
+

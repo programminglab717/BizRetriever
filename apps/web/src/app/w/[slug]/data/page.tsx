@@ -28,6 +28,14 @@ const STATUS: Record<string, string> = {
 const count = new Intl.NumberFormat('en-US');
 const when = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
+const CONNECTED: Record<string, string> = {
+  shopify: 'Your Shopify store',
+  quickbooks: 'QuickBooks',
+  xero: 'Xero',
+  square: 'Square',
+  woocommerce: 'Your WooCommerce store',
+};
+
 export default async function DataPage({
   params,
   searchParams,
@@ -78,10 +86,10 @@ export default async function DataPage({
         </div>
       </div>
       {shown.length > 0 && editor ? <DataChat slug={slug} initial={prefill} /> : null}
-      {connected === 'shopify' && (
+      {connected && CONNECTED[connected] && (
         <p role="status" className="rounded-md border bg-muted px-4 py-3 text-sm">
-          Your Shopify store is connected. We’re reading it now; in a minute you’ll be able to check
-          what we found, the same way as for a file.
+          {CONNECTED[connected]} is connected. We’re reading it now; in a minute you’ll be able to
+          check what we found, the same way as for a file.
         </p>
       )}
       <LinkedSources slug={slug} sources={sources} />

@@ -21,7 +21,10 @@ import {
 import { SourceError } from './fetch';
 import { contentFingerprint } from './fingerprint';
 import { externalIdOf, fetchSheet, parseSheetLink, refOf } from './sheets';
+import { oauthProviders } from './oauth/registry';
+import { fetchOAuth } from './oauth/service';
 import { fetchStore } from './shopify/store';
+import { readWooStore } from './woocommerce';
 
 /**
  * Linked sources (M10, ADR-058). Linking fetches once and starts an ordinary import, which the owner
@@ -59,6 +62,10 @@ const fetchers: Record<ConnectionKind, (c: Connection, now: Date) => Promise<Fet
     return { name: sheet.title, files: [sheet.file] };
   },
   shopify: (c, now) => fetchStore(c, now),
+  quickbooks: (c, now) => fetchOAuth(oauthProviders.quickbooks, c, now),
+  xero: (c, now) => fetchOAuth(oauthProviders.xero, c, now),
+  square: (c, now) => fetchOAuth(oauthProviders.square, c, now),
+  woocommerce: (c, now) => readWooStore(c, now),
 };
 
 function fetchConnection(c: Connection, now = new Date()): Promise<Fetched> {
@@ -391,7 +398,9 @@ export async function listConnections(member: MemberWorkspace): Promise<Connecti
           })()
         : r.kind === 'shopify'
           ? `https://${r.externalId}/admin`
-          : null,
+          : r.kind === 'woocommerce'
+            ? `${r.externalId}/wp-admin/`
+            : (oauthProviders[r.kind].link?.(r) ?? null),
   }));
 }
 

@@ -84,6 +84,20 @@ export const envSchema = z
       .string()
       .regex(/^\d{4}-\d{2}$/)
       .default('2026-07'),
+    // More sources (M18, ADR-068): each is shown only when its free developer app's keys are set
+    // (and CONNECTOR_SECRET). WooCommerce needs no keys, only an https APP_URL.
+    QUICKBOOKS_CLIENT_ID: z.string().min(1).optional(),
+    QUICKBOOKS_CLIENT_SECRET: z.string().min(1).optional(),
+    QUICKBOOKS_ENVIRONMENT: z.enum(['production', 'sandbox']).default('production'),
+    XERO_CLIENT_ID: z.string().min(1).optional(),
+    XERO_CLIENT_SECRET: z.string().min(1).optional(),
+    SQUARE_APPLICATION_ID: z.string().min(1).optional(),
+    SQUARE_APPLICATION_SECRET: z.string().min(1).optional(),
+    SQUARE_ENVIRONMENT: z.enum(['production', 'sandbox']).default('production'),
+    SQUARE_API_VERSION: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .default('2026-09-16'),
     // Webhooks (M16, ADR-066) are never sent to private or internal addresses. Only local
     // development and the end-to-end tests turn this on (a receiver on localhost); never a real
     // deployment (`pnpm preview:check` refuses it).

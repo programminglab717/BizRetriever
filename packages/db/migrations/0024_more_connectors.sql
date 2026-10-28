@@ -1,0 +1,2 @@
+ALTER TABLE "app"."connection" DROP CONSTRAINT "connection_kind_check";--> statement-breakpoint
+ALTER TABLE "app"."connection" ADD CONSTRAINT "connection_kind_check" CHECK (kind in ('google_sheet', 'shopify', 'quickbooks', 'xero', 'square', 'woocommerce'));

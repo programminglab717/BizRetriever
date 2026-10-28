@@ -30,3 +30,21 @@ export {
   SHOPIFY_STATE_COOKIE,
   ShopifyConnectError,
 } from './shopify/service';
+export { oauthProvider, oauthProviders } from './oauth/registry';
+export type { OAuthKind, OAuthProvider } from './oauth/provider';
+export {
+  beginConnect,
+  callbackUrl,
+  completeConnect,
+  ConnectError,
+  connectCookiePath,
+  connectStateCookie,
+} from './oauth/service';
+export {
+  beginWooConnect,
+  normalizeStore,
+  receiveWooKeys,
+  WooConnectError,
+  wooEnabled,
+  wooReturnPath,
+} from './woocommerce';

@@ -1,7 +1,10 @@
+import { requestPublic } from '../platform/net';
+
 /**
- * Fetching from a linked source (ADR-058). Never fetches an address a person typed: callers build
- * the URL from an id they parsed, and every hop (redirects included) must be on an allowed host,
- * over https. Responses are size-capped and time-limited. Tests swap the transport.
+ * Fetching from a linked source (ADR-058). Callers build the URL from an id they parsed, and every
+ * hop (redirects included) must be on an allowed host, over https. The one address a person
+ * types, a WooCommerce store's, also goes out with `publicOnly` (M18). Responses are size-capped
+ * and time-limited. Tests swap the transport.
  */
 
 export class SourceError extends Error {
@@ -30,6 +33,11 @@ export interface SafeFetchOptions {
   headers?: Record<string, string>;
   body?: string;
   maxRedirects?: number;
+  /**
+   * The address came from a person (a WooCommerce store, M18): every hop must connect to a public
+   * internet address. Other sources' hosts are fixed by our code (`allowHost`).
+   */
+  publicOnly?: boolean;
 }
 
 export interface SafeResponse {
@@ -74,7 +82,21 @@ async function readCapped(res: Response, maxBytes: number): Promise<Uint8Array> 
 }
 
 export async function safeFetch(url: string, o: SafeFetchOptions): Promise<SafeResponse> {
-  const impl: FetchImpl = transport ?? ((u, init) => fetch(u, init));
+  const impl: FetchImpl =
+    transport ??
+    (o.publicOnly
+      ? (u, init) =>
+          requestPublic(
+            u,
+            {
+              method: init.method ?? 'GET',
+              headers: init.headers as Record<string, string>,
+              ...(typeof init.body === 'string' ? { body: init.body } : {}),
+              timeoutMs: o.timeoutMs ?? 30_000,
+            },
+            o.maxBytes,
+          )
+      : (u, init) => fetch(u, init));
   let current = new URL(url);
   for (let hop = 0; hop <= (o.maxRedirects ?? 5); hop += 1) {
     if (current.protocol !== 'https:' || !o.allowHost(current.hostname.toLowerCase()))
