@@ -3,11 +3,14 @@
 import {
   addNote,
   assignInsight,
+  dismissMention,
   listNotes,
+  mentionable,
   markInsightDone,
   removeNote,
   TeamError,
   type NoteView,
+  type Person,
 } from '@bizr/core/team';
 import { NotAllowedError } from '@bizr/core/workspaces';
 import { getLogger } from '@bizr/platform';
@@ -99,6 +102,23 @@ export async function doneAction(slug: string, insightId: string): Promise<Resul
     await markInsightDone(member, member.user.id, insightId);
     revalidatePath(`/w/${slug}/home`);
     revalidatePath(`/w/${slug}/insights`);
+    return null;
+  });
+}
+
+/** Who can be mentioned in a note (M19): everyone in the business. */
+export async function mentionablePeople(slug: string): Promise<Result<Person[]>> {
+  const member = await requireWorkspace(slug);
+  return guard(() => mentionable(member));
+}
+
+/** "Got it" on a mention in For you. Only the signed-in person's own. */
+export async function dismissMentionAction(slug: string, noteId: string): Promise<Result<null>> {
+  const member = await requireWorkspace(slug);
+  if (!z.uuid().safeParse(noteId).success) return { ok: false, error: 'This page is out of date.' };
+  return guard(async () => {
+    await dismissMention(member, member.user.id, noteId);
+    revalidatePath(`/w/${slug}/home`);
     return null;
   });
 }

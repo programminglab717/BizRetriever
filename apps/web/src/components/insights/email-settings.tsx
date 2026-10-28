@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 
 import { saveEmailPrefs } from '@/app/w/[slug]/insights/actions';
 
-type Prefs = { weeklySummary: boolean; urgentAlerts: boolean };
+type Prefs = { weeklySummary: boolean; urgentAlerts: boolean; mentions: boolean };
 
 const ROWS: { key: keyof Prefs; label: string; description: string }[] = [
   {
@@ -16,6 +16,12 @@ const ROWS: { key: keyof Prefs; label: string; description: string }[] = [
     key: 'urgentAlerts',
     label: 'Urgent alerts',
     description: 'When something needs you soon, like a best seller about to run out.',
+  },
+  {
+    key: 'mentions',
+    label: 'When someone mentions you',
+    description:
+      'When someone in the business writes your name in a note, like “@Sam, can you check?”',
   },
 ];
 

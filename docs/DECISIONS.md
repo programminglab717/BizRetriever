@@ -1466,3 +1466,27 @@ Template for new entries:
   - Not met the real services yet (R50, Q30).
   - Left out for now: refunds, returns and credit notes; Woo costs (R51); disconnect webhooks from QuickBooks, Xero and Square (a revoked token shows as "needs attention" at the next check instead).
 
+## ADR-069 — Handing a business over by offer and acceptance; @mentions read from the note's text
+
+- **Status:** Accepted (2026-10-28). M19.
+- **Context:** businesses change hands (a sale, a partner taking over, a founder stepping back), and people want to point a teammate at a note. Until now the owner was fixed for good, and a note couldn't name anyone.
+- **Decision:**
+  - **Handing over** (`team/ownership.ts`, `app.ownership_transfer`):
+    - the owner picks someone already in the business (viewers too) and types its name, as for deleting it
+    - nothing changes until the person accepts; one offer waits at a time (a partial unique index), a new one replaces it, and it lapses after seven days
+    - the person sees it in Settings and on Home; it is also emailed to them, and the old owner hears the outcome (kind `ownership` in the email ledger; confirmed addresses only)
+    - on acceptance, in one transaction with the offer row locked: the offer must still be waiting and for this person, the old owner must still be the owner, the person must still be in the business. The old owner becomes a member first, then the person the owner.
+    - **one owner per business is now a database rule** (partial unique index on `workspace_member` where role is owner). The migration first demotes any extra owners, keeping the earliest; a test-script artefact in the dev database had two.
+    - demo businesses can't be handed over; everything belongs to the business, so keys, webhooks, sources and reports keep working
+  - **@mentions** (`app.note_mention`):
+    - the note's own text decides who is named: "@" plus a person's full name in the business, not followed by more letters, longest names first, never the author. No hidden ids travel with the note, and what you see is what was sent.
+    - the notes box offers names after "@"; saved notes show mentions highlighted
+    - a mention appears under "For you" on the person's Home until they choose "Got it"
+    - it is emailed once per note (the note id is the ledger key), quoting the note as written (plain text, escaped in HTML), with its own one-click stop link and a "When someone mentions you" switch in Alert settings
+    - viewers can mention and be mentioned, as they can leave notes
+- **Consequences:**
+  - $0.
+  - Two people with exactly the same name are both mentioned by "@Name" (R52).
+  - Not built: mentions in the weekly summary, mentioning people outside the business, handing over to someone by email who isn't in the business yet (invite them first).
+- **Found on the way:** the SQL validator's CTE scan was recursive and ran before its depth limit, so a very long expression could overflow the stack instead of being refused. It now walks with its own stack, and a stack overflow anywhere in validation counts as a refusal (tested with a 100,000-level tree).
+

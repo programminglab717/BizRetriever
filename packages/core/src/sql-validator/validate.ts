@@ -284,15 +284,26 @@ function checkNode(
   }
 }
 
-function collectCtes(n: unknown, out: Set<string>) {
-  if (Array.isArray(n)) return n.forEach((x) => collectCtes(x, out));
-  if (!n || typeof n !== 'object') return;
-  for (const [k, v] of Object.entries(n)) {
-    if (k === 'CommonTableExpr') {
-      const name = (v as { ctename?: string }).ctename;
-      if (name) out.add(name.toLowerCase());
+/**
+ * The names of every CTE in the tree. A loop with its own stack, not recursion: it runs before the
+ * depth limit is checked, so a very deep expression must not be able to overflow the call stack.
+ */
+export function collectCtes(root: unknown, out: Set<string>): void {
+  const todo: unknown[] = [root];
+  while (todo.length > 0) {
+    const n = todo.pop();
+    if (Array.isArray(n)) {
+      todo.push(...(n as unknown[]));
+      continue;
     }
-    collectCtes(v, out);
+    if (!n || typeof n !== 'object') continue;
+    for (const [k, v] of Object.entries(n)) {
+      if (k === 'CommonTableExpr') {
+        const name = (v as { ctename?: string }).ctename;
+        if (name) out.add(name.toLowerCase());
+      }
+      todo.push(v);
+    }
   }
 }
 
@@ -376,6 +387,8 @@ export async function validateFallbackSql(sql: string, scope: SqlScope): Promise
     return { ok: true, sql: rewritten, relations: [...used].sort() };
   } catch (err) {
     if (err instanceof Rejected) return { ok: false, reason: err.message };
+    // Fail closed: anything too deep to look at is refused, never run.
+    if (err instanceof RangeError) return { ok: false, reason: 'too complex' };
     throw err;
   }
 }

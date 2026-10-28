@@ -121,12 +121,20 @@ describe.skipIf(!hasDb)('insight emails (integration)', () => {
     expect(await getEmailPreferences(demo.member.workspace.id, demo.ownerId)).toEqual({
       weeklySummary: true,
       urgentAlerts: true,
+      mentions: true,
     });
     expect(await unsubscribe(q)).toBe(true);
     expect(await getEmailPreferences(demo.member.workspace.id, demo.ownerId)).toEqual({
       weeklySummary: true,
       urgentAlerts: false,
+      mentions: true,
     });
+    // M19: the mention emails' own link turns only those off.
+    const m = new URL(unsubscribeUrl(demo.member.workspace.id, demo.ownerId, 'mention'));
+    expect(await unsubscribe(Object.fromEntries(m.searchParams))).toBe(true);
+    expect((await getEmailPreferences(demo.member.workspace.id, demo.ownerId)).mentions).toBe(
+      false,
+    );
   });
 
   it('sends nothing from a demo shop', async () => {

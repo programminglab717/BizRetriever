@@ -2,9 +2,14 @@
 
 import type { NoteView } from '@bizr/core/team';
 import { Loader2, MessageSquare, Trash2 } from 'lucide-react';
-import { useState, useTransition } from 'react';
+import { Fragment, useRef, useState, useTransition } from 'react';
 
-import { addNoteAction, loadNotesAction, removeNoteAction } from '@/app/w/[slug]/team-actions';
+import {
+  addNoteAction,
+  loadNotesAction,
+  mentionablePeople,
+  removeNoteAction,
+} from '@/app/w/[slug]/team-actions';
 import { Button } from '@/components/ui/button';
 
 const when = new Intl.DateTimeFormat('en-GB', {
@@ -14,6 +19,35 @@ const when = new Intl.DateTimeFormat('en-GB', {
   minute: '2-digit',
 });
 const MAX = 1000;
+
+/** The "@na" being typed just before the cursor, if any (names can have one space in them). */
+function typedMention(text: string, caret: number): { start: number; query: string } | null {
+  const m = /(^|\s)@([^\s@]{0,30}(?: [^\s@]{0,30})?)$/u.exec(text.slice(0, caret));
+  return m ? { start: caret - m[2]!.length - 1, query: m[2]!.toLowerCase() } : null;
+}
+
+/** The note as written, with "@Name" shown as a mention for the people it names. */
+function NoteBody({ body, mentions }: { body: string; mentions: string[] }) {
+  if (mentions.length === 0) return <>{body}</>;
+  const names = [...mentions].sort((a, b) => b.length - a.length);
+  const re = new RegExp(
+    `(${names.map((n) => `@${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).join('|')})`,
+    'giu',
+  );
+  return (
+    <>
+      {body.split(re).map((part, i) =>
+        i % 2 === 1 ? (
+          <span key={i} className="rounded bg-primary/10 px-0.5 font-medium text-primary">
+            {part}
+          </span>
+        ) : (
+          <Fragment key={i}>{part}</Fragment>
+        ),
+      )}
+    </>
+  );
+}
 
 /**
  * Notes on an insight or an answer (M13): what people in the business wrote, as they wrote it
@@ -33,6 +67,24 @@ export function Notes({
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
+  const [typing, setTyping] = useState<{ start: number; query: string } | null>(null);
+  const box = useRef<HTMLTextAreaElement>(null);
+  const matches = typing
+    ? people.filter((p) => p.name.toLowerCase().includes(typing.query)).slice(0, 5)
+    : [];
+  const pick = (name: string) => {
+    if (!typing) return;
+    const caret = box.current?.selectionStart ?? text.length;
+    const next = `${text.slice(0, typing.start)}@${name} ${text.slice(caret)}`.slice(0, MAX);
+    setText(next);
+    setTyping(null);
+    requestAnimationFrame(() => {
+      const at = typing.start + name.length + 2;
+      box.current?.focus();
+      box.current?.setSelectionRange(at, at);
+    });
+  };
   const label = `Notes${notes?.length ? ` (${notes.length})` : ''}`;
 
   const run = (fn: () => ReturnType<typeof loadNotesAction>, then?: () => void) =>
@@ -48,6 +100,8 @@ export function Notes({
     const next = !open;
     setOpen(next);
     if (next && !notes) run(() => loadNotesAction(slug, subject));
+    if (next && people.length === 0)
+      void mentionablePeople(slug).then((r) => r.ok && setPeople(r.data));
   };
 
   return (
@@ -93,7 +147,9 @@ export function Notes({
                       </Button>
                     )}
                   </span>
-                  <p className="whitespace-pre-wrap break-words">{n.body}</p>
+                  <p className="whitespace-pre-wrap break-words">
+                    <NoteBody body={n.body} mentions={n.mentions} />
+                  </p>
                 </li>
               ))}
             </ul>
@@ -112,14 +168,44 @@ export function Notes({
             }}
           >
             <textarea
+              ref={box}
               value={text}
-              onChange={(e) => setText(e.target.value.slice(0, MAX))}
+              onChange={(e) => {
+                const value = e.target.value.slice(0, MAX);
+                setText(value);
+                setTyping(typedMention(value, e.target.selectionStart ?? value.length));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setTyping(null);
+                if (e.key === 'Enter' && matches.length > 0 && typing) {
+                  e.preventDefault();
+                  pick(matches[0]!.name);
+                }
+              }}
               rows={2}
               maxLength={MAX}
-              placeholder="Add a note for your team, e.g. “Ordered 50 more, arriving Friday”"
+              placeholder="Add a note for your team, e.g. “Ordered 50 more, arriving Friday”. Type @ to mention someone."
               aria-label="Add a note"
               className="w-full rounded-md border bg-background px-3 py-2 shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
+            {matches.length > 0 && (
+              <ul
+                className="grid gap-0.5 rounded-md border bg-background p-1"
+                aria-label="Mention someone"
+              >
+                {matches.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      className="w-full rounded px-2 py-1 text-left hover:bg-muted"
+                      onClick={() => pick(p.name)}
+                    >
+                      @{p.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             <div>
               <Button type="submit" size="sm" disabled={pending || !text.trim()}>
                 Add note

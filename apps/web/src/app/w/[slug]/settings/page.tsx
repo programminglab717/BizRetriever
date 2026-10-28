@@ -1,3 +1,4 @@
+import { currentTransfer } from '@bizr/core/team';
 import { canChange, COMMON_CURRENCIES, listMembers } from '@bizr/core/workspaces';
 import type { Route } from 'next';
 import Link from 'next/link';
@@ -5,6 +6,7 @@ import Link from 'next/link';
 import { BusinessForm } from '@/components/settings/business-form';
 import { DeleteBusiness } from '@/components/settings/delete-business';
 import { Members } from '@/components/settings/members';
+import { HandOver, TakeOver } from '@/components/settings/ownership';
 import { BusinessesSection } from '@/components/demo/businesses-section';
 import { PageHeader } from '@/components/shell/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,10 +18,16 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const member = await requireWorkspace(slug);
   const { workspace, settings, role } = member;
-  const people = await listMembers(member);
+  const [people, transfer] = await Promise.all([
+    listMembers(member),
+    currentTransfer(member, member.user.id),
+  ]);
   return (
     <div className="grid gap-6">
       <PageHeader title="Settings" />
+      {transfer?.forMe && (
+        <TakeOver slug={slug} transfer={transfer} businessName={workspace.name} />
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Business details</CardTitle>
@@ -85,6 +93,16 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
       <div className="hidden md:block">
         <BusinessesSection userId={member.user.id} currentSlug={slug} />
       </div>
+      {role === 'owner' && !workspace.isDemo ? (
+        <HandOver
+          slug={slug}
+          businessName={workspace.name}
+          people={people.members
+            .filter((p) => p.userId !== member.user.id)
+            .map((p) => ({ id: p.userId, name: p.name }))}
+          waiting={transfer}
+        />
+      ) : null}
       {role === 'owner' ? (
         <Card className="border-destructive/40">
           <CardHeader>

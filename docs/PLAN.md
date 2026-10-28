@@ -856,6 +856,32 @@ stays hidden until its keys exist (WooCommerce needs none).
 
 ---
 
+## M19 — Team extras: handing over and @mentions ($0)
+
+**Goal:** an owner can hand the business to someone else in it (selling it, a partner taking over),
+safely, and people can draw a teammate's attention to a note by writing their name.
+
+**Depends on:** M6 (members and roles), M9 (emails), M13 (notes, "For you").
+
+- [x] Hand over the business: the owner picks someone already in it and types the business's name;
+  nothing changes until that person accepts (in Settings, with a note on their Home and an email);
+  then they become the owner and the old owner a member, in one step; the owner can cancel, the
+  person can decline, and it lapses after seven days; the database allows only one owner
+- [x] @mentions in notes: type @ to pick someone in the business; the note names them, shown
+  highlighted; it appears under "For you" on their Home until dismissed, and is emailed to them
+  unless they turned that off (Alert settings, or the email's own link)
+- [x] Tests (who may hand over and answer, the swap in one step, lapsing, one owner; mention
+  parsing, For you, email once, preference), e2e, docs
+
+**Acceptance:**
+
+- Ownership changes only when the person asked accepts, and the business always has exactly one
+  owner.
+- A mention reaches the person named, and only them, once; turning mention emails off stops them.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |
@@ -863,7 +889,7 @@ stays hidden until its keys exist (WooCommerce needs none).
 | Connectors | Lightspeed/Clover POS, Amazon Seller Central, Etsy API (QuickBooks, Xero, Square, WooCommerce: M18) |
 | Channels | WhatsApp questions and alerts (email digests and alerts: done in M9) |
 | Product | Multilingual UI and questions; multi-currency; estimates handed over by the AI (rules-only now) (season-aware estimates, goals and the reorder list: M11; in Ask and per-product seasons: M12); scheduled reports and PDF export: M15 (CSV/Excel: M9) |
-| Collaboration | Granular per-area permissions; ownership transfer; @mentions (view-only role, notes and handing insights to people: M13) |
+| Collaboration | Granular per-area permissions (view-only role, notes and handing insights to people: M13; ownership transfer and @mentions: M19) |
 | Platform | Write access and per-key scopes for the API; OAuth for MCP clients (read-only API keys, MCP server and webhooks: M16) |
 | Packs | Restaurants/food service, services/agencies, health & beauty salons (wholesale/distribution: M14) |
 | Business | Billing and plans (usage-based AI cost informs pricing); onboarding concierge |

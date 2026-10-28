@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: 'Email settings · BizRetriever' };
 const KIND = {
   weekly_summary: { name: 'weekly summaries', stop: 'Stop weekly summaries' },
   urgent_alert: { name: 'urgent alerts', stop: 'Stop urgent alerts' },
+  mention: { name: 'emails when someone mentions you', stop: 'Stop these emails' },
 } as const;
 
 type Params = Partial<Record<'w' | 'u' | 'k' | 't' | 'done' | 'bad', string>>;
@@ -17,7 +18,10 @@ type Params = Partial<Record<'w' | 'u' | 'k' | 't' | 'done' | 'bad', string>>;
 /** Where the "Stop …" link in an email lands: one button, no sign-in. */
 export default async function UnsubscribePage({ searchParams }: { searchParams: Promise<Params> }) {
   const p = await searchParams;
-  const done = p.done === 'weekly_summary' || p.done === 'urgent_alert' ? KIND[p.done] : null;
+  const done =
+    p.done === 'weekly_summary' || p.done === 'urgent_alert' || p.done === 'mention'
+      ? KIND[p.done]
+      : null;
   const valid = !done && !p.bad && checkUnsubscribe(p);
   const action = valid
     ? `/api/email/unsubscribe?${new URLSearchParams({ w: p.w, u: p.u, k: p.k, t: p.t, from: 'page' }).toString()}`

@@ -87,6 +87,15 @@ test('a viewer looks and leaves notes; insights are handed to people and marked 
   await expect(mug.getByRole('list', { name: 'Notes' })).toContainText(
     'Supplier says the next batch ships Friday.',
   );
+  // M19: they mention the owner by picking the name after typing @.
+  await mug.getByLabel('Add a note').pressSequentially('Can we order more? @Oli');
+  await mug
+    .getByRole('list', { name: 'Mention someone' })
+    .getByRole('button', { name: '@Olive Owner' })
+    .click();
+  await expect(mug.getByLabel('Add a note')).toHaveValue('Can we order more? @Olive Owner ');
+  await mug.getByRole('button', { name: 'Add note' }).click();
+  await expect(mug.getByRole('list', { name: 'Notes' }).getByText('@Olive Owner')).toBeVisible();
 
   // Nothing to change for them elsewhere.
   await viewer.goto(`${base}/data/import`);
@@ -96,13 +105,20 @@ test('a viewer looks and leaves notes; insights are handed to people and marked 
   await expect(viewer.getByTestId('dashboard-tile').first()).toBeVisible({ timeout: 30_000 });
   await expect(viewer.getByRole('region', { name: 'Dashboard changes' })).toHaveCount(0);
 
-  // The owner sees the note, takes the insight on, and marks it done.
+  // The owner sees the mention under For you, and says they've seen it.
   await page.goto(`${base}/home`);
+  const mentions = page.getByRole('list', { name: 'Mentions' });
+  await expect(mentions).toContainText('Vera Viewer mentioned you');
+  await expect(mentions).toContainText('Can we order more? @Olive Owner');
+  await mentions.getByRole('button', { name: 'Got it' }).click();
+  await expect(mentions).toHaveCount(0);
+
+  // The owner sees the notes, takes the insight on, and marks it done.
   const ownersMug = page
     .getByRole('list', { name: 'Insights' })
     .getByRole('listitem')
     .filter({ hasText: 'Sage Stoneware Mug will run out' });
-  await ownersMug.getByRole('button', { name: 'Notes (1)' }).click();
+  await ownersMug.getByRole('button', { name: 'Notes (2)' }).click();
   await expect(ownersMug).toContainText('Vera Viewer');
   await ownersMug.getByRole('button', { name: 'More options' }).click();
   await page.getByRole('menuitem', { name: 'I’ll deal with it' }).click();
@@ -115,7 +131,7 @@ test('a viewer looks and leaves notes; insights are handed to people and marked 
     .getByRole('list', { name: 'Insights' })
     .getByRole('listitem')
     .filter({ hasText: 'Sage Stoneware Mug will run out' })
-    .getByRole('button', { name: 'Notes (2)' })
+    .getByRole('button', { name: 'Notes (3)' })
     .click();
   await expect(page.getByText('Marked done.')).toBeVisible();
 

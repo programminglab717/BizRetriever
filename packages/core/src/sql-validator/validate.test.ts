@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { compileChangePlan } from '../change-plan/compile';
 import { planFromPack } from '../change-plan/from-pack';
 import { queryableRelations } from '../change-plan/views';
-import { validateFallbackSql, type SqlScope } from './validate';
+import { collectCtes, validateFallbackSql, type SqlScope } from './validate';
 
 const pack = getPack('retail');
 const SCHEMA = 't_abcdefghij';
@@ -202,6 +202,8 @@ const ATTACKS: string[] = [
   // Size and depth
   `select ${'abs('.repeat(40)}1${')'.repeat(40)}`,
   `select ${Array.from({ length: 2500 }, (_, i) => i).join(' + ')}`,
+  // About 10,000 levels deep within the length limit: refused, never a crash (M19 fix).
+  `select ${'1+'.repeat(9_900)}1`,
   `select ${'x'.repeat(21000)}`,
 ];
 
@@ -279,5 +281,15 @@ describe('validateFallbackSql accepts ordinary analysis', () => {
   it('handles non-ASCII text before the WITH', async () => {
     const r = await check("/* Café */ WITH x AS (SELECT 'é' a FROM products) SELECT a FROM x");
     expect(r.ok, r.ok ? '' : r.reason).toBe(true);
+  });
+});
+
+describe('collectCtes', () => {
+  it('reads a tree far deeper than the call stack allows without overflowing', () => {
+    let tree: unknown = { CommonTableExpr: { ctename: 'Deep' } };
+    for (let i = 0; i < 100_000; i++) tree = { A_Expr: { lexpr: tree } };
+    const out = new Set<string>();
+    collectCtes(tree, out);
+    expect([...out]).toEqual(['deep']);
   });
 });

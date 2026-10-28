@@ -162,7 +162,13 @@ export const digest = app.table(
   (t) => [unique('digest_week_unique').on(t.workspaceId, t.weekOf)],
 );
 
-export const emailKinds = ['weekly_summary', 'urgent_alert', 'report'] as const;
+export const emailKinds = [
+  'weekly_summary',
+  'urgent_alert',
+  'report',
+  'mention',
+  'ownership',
+] as const;
 export type EmailKind = (typeof emailKinds)[number];
 
 /**
@@ -180,6 +186,8 @@ export const emailPreference = app.table(
       .references(() => user.id, { onDelete: 'cascade' }),
     weeklySummary: boolean('weekly_summary').notNull().default(true),
     urgentAlerts: boolean('urgent_alerts').notNull().default(true),
+    /** When someone names them in a note (M19). */
+    mentions: boolean('mentions').notNull().default(true),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.workspaceId, t.userId] })],

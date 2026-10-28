@@ -10,6 +10,7 @@ import {
   smallint,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -71,6 +72,10 @@ export const workspaceMember = app.table(
   (t) => [
     primaryKey({ columns: [t.workspaceId, t.userId] }),
     index('workspace_member_user_idx').on(t.userId),
+    // Exactly one owner (M19: handing the business over swaps them in one transaction).
+    uniqueIndex('workspace_member_one_owner_idx')
+      .on(t.workspaceId)
+      .where(sql`${t.role} = 'owner'`),
     check('workspace_member_role_check', inList(t.role.name, memberRoles)),
     check('workspace_member_status_check', inList(t.status.name, memberStatus)),
   ],

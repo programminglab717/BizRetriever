@@ -34,6 +34,8 @@ const ALERTS_PER_EMAIL = 5;
 export interface EmailPreferences {
   weeklySummary: boolean;
   urgentAlerts: boolean;
+  /** Someone named them in a note (M19). */
+  mentions: boolean;
 }
 
 export async function getEmailPreferences(
@@ -44,7 +46,11 @@ export async function getEmailPreferences(
     .select()
     .from(emailPreference)
     .where(and(eq(emailPreference.workspaceId, workspaceId), eq(emailPreference.userId, userId)));
-  return { weeklySummary: row?.weeklySummary ?? true, urgentAlerts: row?.urgentAlerts ?? true };
+  return {
+    weeklySummary: row?.weeklySummary ?? true,
+    urgentAlerts: row?.urgentAlerts ?? true,
+    mentions: row?.mentions ?? true,
+  };
 }
 
 export async function saveEmailPreferences(
@@ -106,10 +112,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Checks the signature only; true when the link is genuine. */
 export function checkUnsubscribe(r: Partial<UnsubscribeRequest>): r is UnsubscribeRequest & {
-  k: 'weekly_summary' | 'urgent_alert';
+  k: 'weekly_summary' | 'urgent_alert' | 'mention';
 } {
   if (!r.w || !r.u || !r.t || !UUID.test(r.w) || !UUID.test(r.u)) return false;
-  if (r.k !== 'weekly_summary' && r.k !== 'urgent_alert') return false;
+  if (r.k !== 'weekly_summary' && r.k !== 'urgent_alert' && r.k !== 'mention') return false;
   const want = Buffer.from(unsubscribeToken(r.w, r.u, r.k));
   const got = Buffer.from(r.t);
   return want.length === got.length && timingSafeEqual(want, got);
@@ -127,7 +133,11 @@ export async function unsubscribe(r: Partial<UnsubscribeRequest>): Promise<boole
   await saveEmailPreferences(
     r.w,
     r.u,
-    r.k === 'weekly_summary' ? { weeklySummary: false } : { urgentAlerts: false },
+    r.k === 'weekly_summary'
+      ? { weeklySummary: false }
+      : r.k === 'mention'
+        ? { mentions: false }
+        : { urgentAlerts: false },
   );
   return true;
 }
@@ -330,6 +340,7 @@ async function recipients(workspaceId: string): Promise<Recipient[]> {
       email: user.email,
       weekly: emailPreference.weeklySummary,
       urgent: emailPreference.urgentAlerts,
+      mentions: emailPreference.mentions,
     })
     .from(workspaceMember)
     .innerJoin(user, eq(user.id, workspaceMember.userId))
@@ -353,7 +364,11 @@ async function recipients(workspaceId: string): Promise<Recipient[]> {
     userId: r.userId,
     name: r.name,
     email: r.email,
-    prefs: { weeklySummary: r.weekly ?? true, urgentAlerts: r.urgent ?? true },
+    prefs: {
+      weeklySummary: r.weekly ?? true,
+      urgentAlerts: r.urgent ?? true,
+      mentions: r.mentions ?? true,
+    },
   }));
 }
 

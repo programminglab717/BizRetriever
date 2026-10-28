@@ -2,23 +2,51 @@
 
 ## Current Status
 
-- **Milestone:** M18 (More sources, $0) is **built and checked automatically**. M15–M17 are done (CI green). The owner asked for everything that needs no account or key to be built and tested without AI ("we will test once we are done completely"). Build order: M15–M20 in PLAN.md; next is M19.
+- **Milestone:** M19 (Team extras, $0) is **built and checked automatically**. M15–M18 are done (CI green). The owner asked for everything that needs no account or key to be built and tested without AI ("we will test once we are done completely"). Build order: M15–M20 in PLAN.md; next and last is M20.
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M18** (ADR-068, `docs/RUNBOOK_CONNECTORS.md`):
-  - **QuickBooks, Xero and Square:** connect through each one's own sign-in. Invoices, customers, payments, products, stock and orders come in without AI, reviewed like a file, then update daily.
-  - **WooCommerce:** connect by typing the store's address and approving on the store. No developer account is needed, only the https preview address.
-  - Each button stays hidden until its keys are set. All four only read.
-- **Tests:** 953 unit/integration pass, including every connector played back from recorded answers. 39 e2e pass: a full run had 2 desktop sign-up tests time out on a cold server, and both passed on a re-run. Evals unchanged (retail questions 0.929, wholesale 0.983, ingest 12/12).
+- **New in M19** (ADR-069):
+  - **Hand over this business** (Settings): the owner offers it to someone in it, who accepts or declines. Only then do the two swap roles. The database now allows exactly one owner.
+  - **@mentions in notes:** type @ to pick someone. They see it under "For you" on Home and get an email, which they can turn off.
+  - **Safety fix:** the SQL check's CTE scan can no longer overflow on a very deep expression; it refuses it.
+- **Tests:** 968 unit/integration pass; 40 e2e pass (new: handing over; mentions inside the team journey). Evals unchanged (retail questions 0.929, wholesale 0.983, ingest 12/12).
 - **Waiting on the owner** (testing after everything is built, by their choice):
   - the Anthropic API key (Q20), email domain (Q25), Shopify app (Q26)
-  - **developer apps for QuickBooks, Xero and Square (Q30, new)**
+  - developer apps for QuickBooks, Xero and Square (Q30)
   - a live Google Sheet, Google sign-in, rehearsals (Q24); Q27–Q29
-  - risks R49–R51 are new (Xero's free tier allows 5 organisations)
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-28 — Session 22: M19 built (handing over, @mentions)
+
+**Completed:**
+
+- **Schema** (migration 0025):
+  - `ownership_transfer` (one waiting per business) and `note_mention`
+  - `email_preference.mentions`; email kinds `mention` and `ownership`
+  - one-owner partial unique index, with a data fix for any extra owners
+- **Core:**
+  - `team/ownership.ts`: start, cancel, answer (an atomic swap), current; emails
+  - `team/notes.ts`: `findMentions`, mentions stored with the note, `mentionable`, `myMentions`, `dismissMention`, mention names on each note
+  - `team/mention-email.ts`
+  - unsubscribe links and preferences now cover mentions
+- **Web:**
+  - Settings: "Hand over this business" and the person's "Become the owner / No thanks"
+  - Home: the handover notice, and mentions under For you
+  - Notes: an @ picker and highlighted mentions
+  - Alert settings: "When someone mentions you"
+  - role guards list the new actions with reasons
+- **Fix:** the SQL validator's CTE collection is iterative, and a stack overflow counts as a refusal. Found by an adversarial test that had passed only just under the stack limit.
+- **Tests:** `ownership.int.test.ts` (rules, decline, lapse, cancel, swap, one owner, mentions with emails and dismissal), `mentions.test.ts`, validator deep-tree test, email preference test, `ownership.spec.ts` e2e, team e2e extended with a mention.
+- **Docs:** PLAN M19, ADR-069, R52.
+
+**In progress:** nothing.
+
+**Blockers:** none.
+
+**Next steps:** M20 — multi-currency and a second language (PLAN build order).
 
 ### 2026-10-28 — Session 21: M18 built (QuickBooks, Xero, Square, WooCommerce)
 

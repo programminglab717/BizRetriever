@@ -31,6 +31,11 @@ const VIEWER_ALLOWED: Record<string, string> = {
   removePerson: 'owner only, checked in the service',
   changePersonRole: 'owner only, checked in the service',
   deleteBusiness: 'owner only, checked in the action and the service',
+  offerOwnership: 'owner only, checked in the service',
+  cancelOwnership: 'owner only, checked in the service',
+  answerOwnership: 'only the person asked, checked in the service (a viewer can be asked)',
+  mentionablePeople: 'reads',
+  dismissMentionAction: 'their own mentions only',
 };
 
 /** Routes that change something although they answer GET. */

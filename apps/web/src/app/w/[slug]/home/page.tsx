@@ -3,7 +3,7 @@ import { listRuns } from '@bizr/core/ingestion';
 import { currentDigest, getInsights, homeKpis } from '@bizr/core/insights';
 import { localeFor } from '@bizr/core/ask';
 import { goalProgress } from '@bizr/core/planning';
-import { listNotes } from '@bizr/core/team';
+import { currentTransfer, listNotes, myMentions } from '@bizr/core/team';
 import type { Route } from 'next';
 import Link from 'next/link';
 
@@ -11,6 +11,7 @@ import { KpiCards } from '@/components/ask/answer-chart';
 import { DigestCard } from '@/components/insights/digest-card';
 import { GoalProgressView } from '@/components/plan/goal-progress';
 import { InsightFeed } from '@/components/insights/insight-feed';
+import { Mentions } from '@/components/team/mentions';
 import { PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +22,11 @@ import { requireWorkspace } from '@/lib/session';
 export default async function HomePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const member = await requireWorkspace(slug);
-  const [[latest], sources] = await Promise.all([listRuns(member, 1), listConnections(member)]);
+  const [[latest], sources, transfer] = await Promise.all([
+    listRuns(member, 1),
+    listConnections(member),
+    currentTransfer(member, member.user.id),
+  ]);
   const waiting = latest && ['review', 'merge_review'].includes(latest.status);
   // A linked source updating by itself isn't news; one waiting for the owner is.
   const inProgress =
@@ -39,6 +44,21 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       title={`Welcome, ${member.user.name.split(' ')[0]}`}
       description={member.workspace.name}
     />
+  );
+  // Someone asked this person to take the business over (M19).
+  const takeover = transfer?.forMe && (
+    <Card data-testid="takeover-home">
+      <CardHeader>
+        <CardTitle>
+          {transfer.fromName} wants to make you the owner of {member.workspace.name}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Button asChild>
+          <Link href={`/w/${slug}/settings`}>Answer in Settings</Link>
+        </Button>
+      </CardContent>
+    </Card>
   );
   const sourceCards = troubled.map((c) => (
     <Card key={c.id} data-testid="source-problem">
@@ -76,6 +96,7 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
     return (
       <div className="grid grid-cols-1 gap-6">
         {header}
+        {takeover}
         {progressCard || (
           <Card>
             <CardHeader>
@@ -103,9 +124,10 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       </div>
     );
 
-  const [overview, forYou] = await Promise.all([
+  const [overview, forYou, mentions] = await Promise.all([
     getInsights(member, { limit: 5 }),
     getInsights(member, { assignedTo: member.user.id, limit: 20 }),
+    myMentions(member, member.user.id),
   ]);
   const notes = await listNotes(member, member.user.id, 'insight', [
     ...forYou.insights.map((i) => i.id),
@@ -176,17 +198,21 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       {digest && (
         <DigestCard slug={slug} id={digest.id} content={digest.content} weekLabel={weekLabel} />
       )}
-      {forYou.insights.length > 0 && (
+      {takeover}
+      {(forYou.insights.length > 0 || mentions.length > 0) && (
         <section className="grid gap-3" aria-labelledby="for-you" data-testid="for-you">
           <h2 id="for-you" className="text-lg font-semibold">
             For you
           </h2>
-          <InsightFeed
-            slug={slug}
-            insights={forYou.insights.map(card)}
-            notes={notes}
-            label="For you"
-          />
+          <Mentions slug={slug} initial={mentions} />
+          {forYou.insights.length > 0 && (
+            <InsightFeed
+              slug={slug}
+              insights={forYou.insights.map(card)}
+              notes={notes}
+              label="For you"
+            />
+          )}
         </section>
       )}
       <section className="grid gap-3" aria-labelledby="attention">

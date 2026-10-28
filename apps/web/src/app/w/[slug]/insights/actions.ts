@@ -76,14 +76,14 @@ export async function saveAlert(slug: string, input: unknown): Promise<Result> {
 }
 
 const emailPrefsSchema = z
-  .object({ weeklySummary: z.boolean(), urgentAlerts: z.boolean() })
+  .object({ weeklySummary: z.boolean(), urgentAlerts: z.boolean(), mentions: z.boolean() })
   .partial()
   .strict();
 
 /** Which insight emails the signed-in person gets from this business. */
 export async function saveEmailPrefs(
   slug: string,
-  prefs: { weeklySummary?: boolean; urgentAlerts?: boolean },
+  prefs: { weeklySummary?: boolean; urgentAlerts?: boolean; mentions?: boolean },
 ): Promise<Result> {
   const member = await requireWorkspace(slug);
   const parsed = emailPrefsSchema.safeParse(prefs);
