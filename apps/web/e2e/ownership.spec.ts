@@ -57,9 +57,9 @@ test('the owner hands the business over, and it changes only when accepted', asy
     `Olive Owner wants to make you the owner of ${business}`,
   );
   await member.getByRole('button', { name: 'Become the owner' }).click();
-  await expect(member.getByRole('status')).toHaveText(`You’re now the owner of ${business}.`);
-  await member.reload();
+  // The page refreshes into the owner's Settings.
   await expect(member.getByRole('heading', { name: 'Delete this business' })).toBeVisible();
+  await expect(member.getByTestId('takeover')).toHaveCount(0);
   await expect(member.getByRole('heading', { name: 'Hand over this business' })).toBeVisible();
 
   // Olive is a member now: no owner's settings.

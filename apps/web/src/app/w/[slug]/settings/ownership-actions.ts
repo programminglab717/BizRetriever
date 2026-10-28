@@ -18,10 +18,14 @@ import { requireWorkspace } from '@/lib/session';
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 
-async function guard<T>(slug: string, fn: () => Promise<T>): Promise<Result<T>> {
+async function guard<T>(
+  slug: string,
+  fn: () => Promise<T>,
+  refresh: (data: T) => boolean = () => true,
+): Promise<Result<T>> {
   try {
     const data = await fn();
-    revalidatePath(`/w/${slug}`, 'layout');
+    if (refresh(data)) revalidatePath(`/w/${slug}`, 'layout');
     return { ok: true, data };
   } catch (err) {
     if (err instanceof TeamError || err instanceof NotAllowedError)
@@ -60,5 +64,11 @@ export async function answerOwnership(
 ): Promise<Result<'accepted' | 'declined'>> {
   const member = await requireWorkspace(slug);
   if (!z.uuid().safeParse(transferId).success || typeof accept !== 'boolean') return stale;
-  return guard(slug, () => answerTransfer(member, member.user.id, transferId, accept));
+  // Accepting changes what the person can do: the page refreshes into the owner's Settings.
+  // Declining changes nothing, so the card stays to say so.
+  return guard(
+    slug,
+    () => answerTransfer(member, member.user.id, transferId, accept),
+    (r) => r === 'accepted',
+  );
 }
