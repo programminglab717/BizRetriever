@@ -17,11 +17,13 @@ export function BusinessForm({
   name,
   settings,
   currencies,
+  currencyLocked,
 }: {
   action: (state: SettingsState, formData: FormData) => Promise<SettingsState>;
   name: string;
   settings: SettingsValues;
   currencies: readonly { code: string; label: string }[];
+  currencyLocked: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   return (
@@ -35,6 +37,7 @@ export function BusinessForm({
         currencies={currencies}
         initial={settings}
         errors={state.fieldErrors}
+        currencyLocked={currencyLocked}
       />
       <Button type="submit" disabled={pending} className="justify-self-start">
         {pending ? 'Saving…' : 'Save changes'}

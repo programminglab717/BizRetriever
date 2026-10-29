@@ -1,6 +1,7 @@
 import { isDateValue, type CleanValue } from '@bizr/ingest';
 import type { PackData } from '@bizr/packs';
 
+import { conversionNotes, type ConversionSummary } from '../currency/convert';
 import type { Facts } from '../narration';
 import type { DryRunProblem } from './dry-run';
 import type { ProfiledSource } from './heuristic';
@@ -150,6 +151,9 @@ export function buildReview(input: {
   problems: readonly DryRunProblem[];
   spotted: string[];
   aiNote?: string;
+  /** Amounts converted from other currencies (M20). */
+  conversion?: ConversionSummary;
+  currency?: string;
 }): ProposalReview {
   const { result, proposal, specs, sources } = input;
   const entities: ProposalReview['entities'] = [];
@@ -227,7 +231,10 @@ export function buildReview(input: {
     entities,
     skipped,
     ignored,
-    warnings: userWarnings(input.problems, specs, result),
+    warnings: [
+      ...(input.conversion ? conversionNotes(input.conversion, input.currency ?? 'USD') : []),
+      ...userWarnings(input.problems, specs, result),
+    ],
     spotted: input.spotted,
     ...(input.aiNote ? { aiNote: input.aiNote } : {}),
   };

@@ -882,6 +882,56 @@ safely, and people can draw a teammate's attention to a note by writing their na
 
 ---
 
+## M20 — Other currencies, and Spanish ($0)
+
+**Goal:** a business whose files or sources mix currencies (an online store selling in euros, a
+supplier invoicing in pounds) gets correct totals in its own currency, and a Spanish-speaking owner
+or team member can use the whole product in Spanish. The owner chose Spanish, covering everything
+people read (2026-10-29).
+
+**Depends on:** M2 (import), M3 (measures), M4 (Ask), M7 (insights), M9 (emails), M15 (PDFs).
+
+### Part 1 — Other currencies
+
+- [ ] Each amount's currency found from its column header ("Price (EUR)"), the value itself
+  ("€12.50", "12.50 GBP") or a Currency column, else the business's own; "$" is the business's
+  dollar when it has one, otherwise US dollars
+- [ ] Amounts converted to the business's currency at the European Central Bank's published rate
+  (free, no key) for the record's own date, in exact decimals, before loading; measures, Ask, the
+  dashboard and insights then need no change
+- [ ] Rates kept in `app.fx_rate`, fetched daily (and history once), played back in tests
+- [ ] Honest about it: the import's review and report say what was converted and from what; an
+  answer about money says amounts in other currencies were converted; a currency with no published
+  rate is never mixed in (its amounts are left out and listed); the uploaded file keeps the originals
+- [ ] The business's own currency can't be changed once amounts are in it (they'd be mislabelled)
+
+### Part 2 — Spanish
+
+- [ ] Language choice: the business has a default (asked at sign-up from the browser), each person
+  can pick their own; English stays the fallback for anything not yet translated
+- [ ] Every screen, button, message and error in Spanish (one catalog, checked by a test that every
+  English string shown has a Spanish one)
+- [ ] The packs in Spanish: measure, record and detail names, insight wording, dashboard titles,
+  example questions, helpful files
+- [ ] Ask in Spanish: questions in Spanish understood by the rules (measures, breakdowns, periods,
+  "top 10", estimates), answers written in Spanish, with a Spanish question eval
+- [ ] Emails, PDFs and downloads' headings in the reader's language; dates and numbers in Spanish
+  format
+- [ ] AI prompts take the language (new prompt versions, never edited in place)
+- [ ] Tests, e2e in Spanish, docs; a native speaker's read-through left to the owner (Q31)
+
+**Acceptance:**
+
+- A file with amounts in two currencies gives the same totals as the same sales converted by hand
+  at the published rates, and nothing in a currency without a rate is added in.
+- A Spanish-speaking person can sign up, bring in files, ask "¿Cuánto vendí el mes pasado?" and get
+  the right number with a Spanish sentence, and see Home, insights, the dashboard, emails and PDFs in
+  Spanish, without AI.
+- The Spanish question eval scores at least 85% with rules only; the English evals are unchanged.
+- All earlier acceptance criteria still hold; CI green; $0 spend.
+
+---
+
 ## Roadmap (later — documented, not built now)
 
 | Area | Item |

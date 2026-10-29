@@ -51,6 +51,29 @@ export const workspace = app.table(
  * Owners do everything; members everything except managing people and deleting the business;
  * viewers (M13) look, ask, download and leave notes, and change nothing.
  */
+/** Languages the product speaks (M20). */
+export const languages = ['en', 'es'] as const;
+export type Language = (typeof languages)[number];
+
+/** A person's own choices that follow them across businesses (M20: their language). */
+export const userPreference = app.table(
+  'user_preference',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    /** Null: the business's language. */
+    language: text('language', { enum: languages }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check(
+      'user_preference_language_check',
+      sql`${t.language} is null or ${inList(t.language.name, languages)}`,
+    ),
+  ],
+);
+
 export const memberRoles = ['owner', 'member', 'viewer'] as const;
 export type MemberRole = (typeof memberRoles)[number];
 export const memberStatus = ['active', 'invited'] as const;
@@ -122,10 +145,18 @@ export const workspaceSettings = app.table(
     /** ISO weekday: 1 = Monday … 7 = Sunday. */
     weekStart: smallint('week_start').notNull().default(1),
     piiMasking: boolean('pii_masking').notNull().default(true),
+    /** Currencies amounts were converted from on import (M20), for answers to say so. */
+    convertedCurrencies: text('converted_currencies')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    /** The business's default language (M20); each person can choose their own. */
+    language: text('language', { enum: languages }).notNull().default('en'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     check('workspace_settings_date_order_check', inList(t.dateOrder.name, dateOrders)),
+    check('workspace_settings_language_check', inList(t.language.name, languages)),
     check('workspace_settings_fy_check', sql`${t.fiscalYearStartMonth} between 1 and 12`),
     check('workspace_settings_week_check', sql`${t.weekStart} between 1 and 7`),
   ],

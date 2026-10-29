@@ -27,10 +27,17 @@ import {
 } from '../merge/service';
 import { ensureEditLog, undoBatch } from '../records/edits';
 import { refreshSemanticCatalog } from '../semantic/service';
+import { rememberConverted } from '../currency/rates';
 import { analyzeTenant } from '../tenancy/provision';
 import type { MaterializedRecord } from './materialize';
-import { closeLinkNotes, materialize } from './materialize';
-import { analyzeRun, entitySpecs, getProposal, loadRunContext, type RunContext } from './pipeline';
+import { closeLinkNotes } from './materialize';
+import {
+  analyzeRun,
+  getProposal,
+  loadRunContext,
+  materializeRun,
+  type RunContext,
+} from './pipeline';
 
 /**
  * Re-upload (ADR-043): after review, the new files are diffed against the records already there
@@ -46,16 +53,14 @@ async function prepared(ctx: RunContext, proposalId: string) {
   const stored = await getProposal(ctx.run.id, proposalId);
   if (!stored) throw new Error('proposal not found');
   const analysis = await analyzeRun(ctx);
-  const result = materialize(analysis.tables, stored.proposal, entitySpecs(ctx.pack), {
-    dateOrder: ctx.settings.dateOrder,
-  });
+  const { result, conversion } = await materializeRun(ctx, analysis.tables, stored.proposal);
   const { matches } = await reuseKnownMappings(
     ctx.workspace.id,
     analysis.profiled,
     stored.proposal,
   );
   const scope = new Set(await uploadsOfMatchedSources(ctx.workspace.id, matches));
-  return { stored, analysis, result, matches, scope };
+  return { stored, analysis, result, conversion, matches, scope };
 }
 
 /** Builds and stores the merge preview, and hands the run back to the owner (`merge_review`). */
@@ -107,7 +112,10 @@ export const ingestMergeJob = defineJob<z.infer<typeof mergeInput>, Record<strin
         await reportProgress('Updating your records', 30);
         const ctx = await loadRunContext(input.runId);
         if (ctx.run.status === 'done') return { state }; // already merged (step re-run)
-        const { stored, analysis, result, scope } = await prepared(ctx, input.proposalId);
+        const { stored, analysis, result, conversion, scope } = await prepared(
+          ctx,
+          input.proposalId,
+        );
         const catalog = await loadCatalog(ctx.workspace.id);
         await ensureEditLog(ctx.workspace.tenantSchema);
         const stats = await withTenantWriter(
@@ -137,6 +145,7 @@ export const ingestMergeJob = defineJob<z.infer<typeof mergeInput>, Record<strin
           uploadIdOf(ctx),
         );
 
+        if (stats) await rememberConverted(ctx.workspace.id, conversion);
         await reportProgress('Working out what we can measure', 80);
         await afterDataChange(ctx, input.userId ?? null);
         const db = getAppDb();

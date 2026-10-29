@@ -2,15 +2,20 @@ import { createHash } from 'node:crypto';
 
 import {
   buildRecords,
+  cellCurrency,
   cleanValue,
+  currencyColumn,
+  headerCurrency,
   evalExpr,
   isDateValue,
   normalizeKey,
   normalizeLoose,
   parseNumber,
   readColumn,
+  toCurrencyCode,
   type CleanValue,
   type DateOrder,
+  type Expr,
   type RawSheet,
   type Region,
   type SkippedRow,
@@ -66,6 +71,11 @@ export interface MaterializedRecord {
   naturalKey: string | null;
   rowHash: string;
   lineage: Lineage[];
+  /**
+   * Money fields in a currency other than the business's (M20): field → ISO code, as found in the
+   * column header, a Currency column or the value itself. Converted before loading.
+   */
+  currencies?: Record<string, string>;
 }
 
 export type IssueCode = 'unreadable_value' | 'missing_required' | 'unmatched_reference';
@@ -112,6 +122,16 @@ export interface MaterializeResult {
 
 export interface MaterializeContext {
   dateOrder: DateOrder;
+  /** The business's currency; amounts found in others are marked for conversion (M20). */
+  currency?: string;
+}
+
+/** The fields an expression reads. */
+function exprFields(e: Expr): string[] {
+  if ('field' in e) return [e.field];
+  if ('args' in e) return e.args.flatMap(exprFields);
+  if ('coalesce' in e) return e.coalesce.flatMap(exprFields);
+  return [];
 }
 
 const keyText = (v: CleanValue): string | null => {
@@ -261,6 +281,29 @@ export function materialize(
         fileName: table.fileName,
         sheet: table.sheet.name,
       });
+    const business = ctx.currency ?? 'USD';
+    const headerOf = new Map(table.region.columns.map((c) => [c.index, c.header]));
+    const currencyCol = table.region.columns.find((c) => currencyColumn(c.header))?.index;
+    /** Which currency a money value is in: its header, the row's Currency column, the value. */
+    const currencyOf = (m: FieldMapping, r: SourceRecord, raw: unknown): string | null => {
+      const cols =
+        m.source.kind === 'column'
+          ? [m.source.column]
+          : m.source.kind === 'first_of'
+            ? m.source.columns
+            : [];
+      for (const c of cols) {
+        const h = typeof c === 'number' ? headerOf.get(c) : undefined;
+        const fromHeader = h ? headerCurrency(h, business) : null;
+        if (fromHeader) return fromHeader;
+      }
+      if (currencyCol !== undefined) {
+        const v = readColumn(r, currencyCol);
+        const code = typeof v === 'string' ? toCurrencyCode(v, business) : null;
+        if (code) return code;
+      }
+      return cellCurrency(raw, business);
+    };
     const stat = {
       sourceId: table.sourceId,
       fileName: table.fileName,
@@ -344,12 +387,8 @@ export function materialize(
           } else {
             // For groups, use the first row that has a value.
             for (const r of group) {
-              const result = cleanValue(
-                rawFor(m, r) as never,
-                toValueRules(m.rules),
-                targetType(def),
-                ctx,
-              );
+              const raw = rawFor(m, r);
+              const result = cleanValue(raw as never, toValueRules(m.rules), targetType(def), ctx);
               if (!result.ok) {
                 issues.push({
                   code: 'unreadable_value',
@@ -365,6 +404,10 @@ export function materialize(
               }
               if (result.value !== null) {
                 value = result.value;
+                if (def.type === 'money') {
+                  const cur = currencyOf(m, r, raw);
+                  if (cur && cur !== business) (rec.currencies ??= {})[def.key] = cur;
+                }
                 break;
               }
             }
@@ -395,7 +438,16 @@ export function materialize(
           if (m.source.kind !== 'derive') continue;
           if (rec.fields[m.field] === null || rec.fields[m.field] === undefined) {
             const numeric: Record<string, CleanValue> = { ...rec.fields };
-            rec.fields[m.field] = evalExpr(toExpr(m.source.expr), numeric);
+            const expr = toExpr(m.source.expr);
+            rec.fields[m.field] = evalExpr(expr, numeric);
+            // Worked out from amounts in another currency: it is in that currency too (M20).
+            const from = rec.currencies && exprFields(expr).find((f) => rec.currencies![f]);
+            if (
+              from &&
+              spec.fields.find((f) => f.key === m.field)?.type === 'money' &&
+              rec.fields[m.field] !== null
+            )
+              rec.currencies![m.field] = rec.currencies![from]!;
           }
         }
         // Required details.
@@ -457,7 +509,12 @@ export function materialize(
       if (target >= 0) {
         const existing = merged[target]!;
         for (const [f, v] of Object.entries(rec.fields))
-          if ((existing.fields[f] ?? null) === null && v !== null) existing.fields[f] = v;
+          if ((existing.fields[f] ?? null) === null && v !== null) {
+            existing.fields[f] = v;
+            // The value's currency comes with it (M20).
+            const cur = rec.currencies?.[f];
+            if (cur) (existing.currencies ??= {})[f] = cur;
+          }
         for (const [f, v] of Object.entries(rec.refs)) {
           if ((existing.refs[f] ?? null) === null && v !== null) {
             existing.refs[f] = v;

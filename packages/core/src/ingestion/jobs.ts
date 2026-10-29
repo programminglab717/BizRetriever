@@ -21,6 +21,7 @@ import { refreshInsightsStep } from '../insights/jobs';
 import { importWebhookStep } from '../platform/jobs';
 import { bumpDataVersion, ensureDefaultDashboard } from '../dashboard/service';
 import { refreshSemanticCatalog } from '../semantic/service';
+import { rememberConverted } from '../currency/rates';
 import { analyzeTenant } from '../tenancy/provision';
 import { proposeDataModel, refineWithDryRun, reviseDataModel } from './ai-proposal';
 import { describeChanges } from './changes';
@@ -36,6 +37,8 @@ import {
   getProposal,
   latestProposal,
   loadRunContext,
+  materializeContext,
+  materializeRun,
   promptSettings,
   saveProposalVersion,
   type RunContext,
@@ -69,8 +72,7 @@ async function testProposal(
   },
 ): Promise<ProposalReview> {
   const specs = entitySpecs(ctx.pack);
-  const result =
-    options.result ?? materialize(tables, proposal, specs, { dateOrder: ctx.settings.dateOrder });
+  const { result, conversion } = await materializeRun(ctx, tables, proposal, specs, options.result);
   const facts = proposalFacts(result, proposal, ctx.pack, ctx.uploads.length);
   // Re-use the previous wording when it still fits the facts (no AI call for every correction).
   const summary =
@@ -89,6 +91,8 @@ async function testProposal(
     sources,
     summary: { ...summary, facts: facts.facts },
     problems: dryRunProblems(result),
+    conversion,
+    currency: ctx.settings.currency,
     spotted: options.spotted,
     ...(options.aiNote ? { aiNote: options.aiNote } : {}),
   });
@@ -195,7 +199,7 @@ export const ingestAnalyzeJob = defineJob<z.infer<typeof runInput>, AnalyzeState
             provider: getAiProvider(),
             workspaceId: ctx.workspace.id,
           },
-          (p) => materialize(analysis.tables, p, specs, { dateOrder: ctx.settings.dateOrder }),
+          (p) => materialize(analysis.tables, p, specs, materializeContext(ctx)),
         );
         await reportProgress('Writing up what we found', 90);
         const review = await testProposal(
@@ -380,9 +384,12 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
         if (!stored) throw new Error('proposal not found');
         const analysis = await analyzeRun(ctx);
         const specs = entitySpecs(ctx.pack);
-        const result = materialize(analysis.tables, stored.proposal, specs, {
-          dateOrder: ctx.settings.dateOrder,
-        });
+        const { result, conversion } = await materializeRun(
+          ctx,
+          analysis.tables,
+          stored.proposal,
+          specs,
+        );
         const catalog = await loadCatalog(ctx.workspace.id);
         const uploadIds = ctx.uploads.map((u) => u.id);
         const keys = [...result.entities.keys()].filter(
@@ -408,6 +415,7 @@ export const ingestApplyJob = defineJob<z.infer<typeof applyInput>, Record<strin
           (sourceId) => ctx.uploads[Number(/^f(\d+):/.exec(sourceId)?.[1] ?? 0)]!.id,
         );
 
+        if (stats) await rememberConverted(ctx.workspace.id, conversion);
         await reportProgress('Working out what we can measure', 80);
         await analyzeTenant(ctx.workspace.tenantSchema);
         await refreshSemanticCatalog({

@@ -183,6 +183,13 @@
       "when": 1793182895416,
       "tag": "0025_ownership_mentions",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793264237483,
+      "tag": "0026_currencies_languages",
+      "breakpoints": true
     }
   ]
 }

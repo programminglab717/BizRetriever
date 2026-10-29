@@ -27,6 +27,10 @@ const CURRENCY_SYMBOLS = [
   '₱',
   '৳',
   'R$',
+  'US$',
+  'HK$',
+  'CA$',
+  'AU$',
   'A$',
   'C$',
   'NZ$',
@@ -34,9 +38,14 @@ const CURRENCY_SYMBOLS = [
   'Rs',
   'RM',
   'KSh',
+  '₩',
+  '₺',
+  '₪',
+  'zł',
 ];
+// The codes `values/currency.ts` knows (M20 added the rest).
 const CURRENCY_CODES =
-  /\b(USD|GBP|EUR|CAD|AUD|NZD|INR|PKR|AED|SAR|SGD|ZAR|NGN|KES|PHP|MYR|BDT|MXN|BRL|JPY)\b/i;
+  /\b(USD|EUR|GBP|CAD|AUD|NZD|CHF|JPY|CNY|HKD|SGD|INR|PKR|BDT|LKR|NPR|AED|SAR|QAR|KWD|BHD|OMR|ZAR|NGN|KES|GHS|EGP|MAD|MXN|BRL|ARS|CLP|COP|PEN|UYU|SEK|NOK|DKK|ISK|PLN|CZK|HUF|RON|BGN|TRY|ILS|KRW|TWD|THB|MYR|IDR|PHP|VND)\b/i;
 const UNIT_WORDS =
   /^(pcs?|pieces?|units?|ea|each|items?|boxes|box|bx|packs?|pk|sets?|pairs?|prs?|bottles?|cases?|cartons?|kg|kgs|g|gr|lbs?|oz|l|ltrs?|litres?|liters?|ml|m|cm|mm|dozen|doz|days?)\.?$/i;
 

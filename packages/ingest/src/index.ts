@@ -4,6 +4,13 @@ export * from './profile';
 export * from './regions';
 export { excelSerialToDate, parseDate, type DateOrder, type ParsedDate } from './values/dates';
 export { parseNumber, type ParsedNumber } from './values/numbers';
+export {
+  cellCurrency,
+  currencyColumn,
+  headerCurrency,
+  KNOWN_CURRENCIES,
+  toCurrencyCode,
+} from './values/currency';
 export { detectPii, maskIfPii, maskPii, type PiiKind } from './values/pii';
 export {
   isNullSentinel,

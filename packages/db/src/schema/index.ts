@@ -10,3 +10,4 @@ export * from './insights';
 export * from './team';
 export * from './reports';
 export * from './platform';
+export * from './fx';

@@ -2,6 +2,7 @@ import {
   auditEvent,
   getAppDb,
   getStorage,
+  ingestionRun,
   type MemberRole,
   type Workspace,
   workspace,
@@ -149,6 +150,11 @@ export async function updateWorkspaceDetails(
   requireEditor(member);
   const name = newWorkspaceSchema.shape.name.parse(input.name);
   const settings = businessSettingsSchema.parse(input);
+  if (settings.currency !== member.settings.currency && (await hasRecords(member.workspace.id)))
+    throw new SettingsLockedError(
+      'Your records are kept in this currency, so it can’t change now.',
+      'currency',
+    );
   const db = getAppDb();
   await db.transaction(async (tx) => {
     await tx
@@ -169,6 +175,28 @@ export async function updateWorkspaceDetails(
 }
 
 export class NotAllowedError extends Error {}
+
+export class SettingsLockedError extends Error {
+  constructor(
+    message: string,
+    readonly field: 'currency',
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * Whether any import has finished. Amounts are stored in the business's currency (M20), so it is
+ * fixed from then on.
+ */
+export async function hasRecords(workspaceId: string): Promise<boolean> {
+  const [row] = await getAppDb()
+    .select({ id: ingestionRun.id })
+    .from(ingestionRun)
+    .where(and(eq(ingestionRun.workspaceId, workspaceId), eq(ingestionRun.status, 'done')))
+    .limit(1);
+  return Boolean(row);
+}
 
 /** Whether a role can change anything in the business (M13: viewers can't). */
 export function canChange(role: MemberRole): boolean {

@@ -48,6 +48,8 @@ export function toParam(def: FieldDef, v: CleanValue): string | boolean | null {
       return typeof v === 'number' && Number.isFinite(v) ? Math.round(v).toString() : null;
     case 'decimal':
     case 'money':
+      // Converted amounts (M20) arrive as exact decimal strings.
+      if (typeof v === 'string') return /^-?\d+(\.\d+)?$/.test(v) ? v : null;
       return typeof v === 'number' && Number.isFinite(v) ? v.toFixed(4) : null;
     case 'percent':
       return typeof v === 'number' && Number.isFinite(v) ? v.toFixed(6) : null;

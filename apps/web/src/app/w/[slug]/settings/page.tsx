@@ -1,5 +1,5 @@
 import { currentTransfer } from '@bizr/core/team';
-import { canChange, COMMON_CURRENCIES, listMembers } from '@bizr/core/workspaces';
+import { canChange, COMMON_CURRENCIES, hasRecords, listMembers } from '@bizr/core/workspaces';
 import type { Route } from 'next';
 import Link from 'next/link';
 
@@ -18,9 +18,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const member = await requireWorkspace(slug);
   const { workspace, settings, role } = member;
-  const [people, transfer] = await Promise.all([
+  const [people, transfer, currencyLocked] = await Promise.all([
     listMembers(member),
     currentTransfer(member, member.user.id),
+    hasRecords(workspace.id),
   ]);
   return (
     <div className="grid gap-6">
@@ -43,6 +44,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
                 dateOrder: settings.dateOrder,
               }}
               currencies={COMMON_CURRENCIES}
+              currencyLocked={currencyLocked}
             />
           ) : (
             <dl className="grid gap-1 text-sm">

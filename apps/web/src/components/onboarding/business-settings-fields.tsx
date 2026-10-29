@@ -29,10 +29,13 @@ export function BusinessSettingsFields({
   currencies,
   initial,
   errors,
+  currencyLocked = false,
 }: {
   currencies: readonly { code: string; label: string }[];
   initial?: SettingsValues;
   errors?: Partial<Record<keyof SettingsValues, string>> | undefined;
+  /** Records are already in this currency (M20): it can't change any more. */
+  currencyLocked?: boolean;
 }) {
   const [values, setValues] = useState<SettingsValues>(
     initial ?? { currency: 'USD', timezone: 'UTC', dateOrder: 'MDY' },
@@ -53,11 +56,23 @@ export function BusinessSettingsFields({
 
   return (
     <>
-      <Field id="currency" label="Currency" error={errors?.currency}>
+      <Field
+        id="currency"
+        label="Currency"
+        error={errors?.currency}
+        hint={
+          currencyLocked
+            ? 'Your records are kept in this currency, so it can’t change now. Amounts in other currencies are converted when they come in.'
+            : 'Amounts in other currencies are converted to this one when they come in.'
+        }
+      >
+        {currencyLocked ? <input type="hidden" name="currency" value={values.currency} /> : null}
         <Select
           id="currency"
-          name="currency"
+          name={currencyLocked ? undefined : 'currency'}
           value={values.currency}
+          disabled={currencyLocked}
+          aria-describedby="currency-hint"
           onChange={(e) => setValues((v) => ({ ...v, currency: e.target.value }))}
         >
           {currencyOptions.map((c) => (

@@ -17,9 +17,16 @@ import { getPack, type PackData } from '@bizr/packs';
 import { and, asc, desc, eq, ne } from 'drizzle-orm';
 
 import { planFromPack } from '../change-plan/from-pack';
+import type { ConversionSummary } from '../currency/convert';
+import { convertToBusinessCurrency } from '../currency/rates';
 import { analyzeFiles, type Analysis } from './analyze';
 import type { Correction } from './corrections';
-import type { EntitySpec } from './materialize';
+import {
+  materialize,
+  type EntitySpec,
+  type MaterializeContext,
+  type MaterializeResult,
+} from './materialize';
 import type { ModelProposal } from './proposal';
 import type { ProposalReview } from './review';
 
@@ -66,6 +73,30 @@ export function promptSettings(ctx: RunContext): WorkspaceSettings {
     dateOrder: ctx.settings.dateOrder,
     today: todayIn(ctx.settings.timezone, ctx.run.createdAt),
   };
+}
+
+export function materializeContext(ctx: RunContext): MaterializeContext {
+  return { dateOrder: ctx.settings.dateOrder, currency: ctx.settings.currency };
+}
+
+/**
+ * The records a run would load, with amounts in other currencies already converted into the
+ * business's (M20, ADR-070). Used by the review's test run, the first load and updates alike.
+ */
+export async function materializeRun(
+  ctx: RunContext,
+  tables: Parameters<typeof materialize>[0],
+  proposal: ModelProposal,
+  specs: readonly EntitySpec[] = entitySpecs(ctx.pack),
+  result: MaterializeResult = materialize(tables, proposal, specs, materializeContext(ctx)),
+): Promise<{ result: MaterializeResult; conversion: ConversionSummary }> {
+  const conversion = await convertToBusinessCurrency(
+    result,
+    specs,
+    ctx.settings.currency,
+    todayIn(ctx.settings.timezone, ctx.run.createdAt),
+  );
+  return { result, conversion };
 }
 
 /** Parse → tables → profiles for the run's files (deterministic, so safe to repeat in any step). */

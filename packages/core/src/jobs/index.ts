@@ -13,6 +13,7 @@ export { advanceRun, type AdvanceResult, type AdvanceStatus } from './runner';
 export { noopJob } from './system-jobs';
 
 import { connectionsDailyJob, connectionSyncJob } from '../connections/jobs';
+import { fxDailyJob } from '../currency/jobs';
 import { ingestionJobs } from '../ingestion/jobs';
 import { insightsDailyJob, insightsRunJob } from '../insights/jobs';
 import { webhooksDeliverJob } from '../platform/jobs';
@@ -33,5 +34,6 @@ export function createDefaultRegistry(): JobRegistry {
     connectionsDailyJob,
     reportsDailyJob,
     webhooksDeliverJob,
+    fxDailyJob,
   ]);
 }

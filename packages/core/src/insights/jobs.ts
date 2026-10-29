@@ -4,6 +4,7 @@ import { and, eq, gt, gte, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { connectionsDailyJob } from '../connections/jobs';
+import { fxDailyJob } from '../currency/jobs';
 import { defineJob, type JobStep } from '../jobs/define';
 import { queueDueWebhooks } from '../platform/jobs';
 import { deliverDueWebhooks, recordInsightEvents } from '../platform/webhooks';
@@ -139,7 +140,7 @@ export async function requestInsightRun(
 
 /**
  * The daily jobs (ARCHITECTURE §jobs): insight catch-up plus digests, expired-backup clean-up, and
- * checking linked sources.
+ * checking linked sources, exchange rates (M20).
  * Safe to call many times a day: each is queued at most once per UTC day.
  */
 export async function scheduleDailyJobs(queue: JobQueue, now = new Date()): Promise<string[]> {
@@ -157,6 +158,7 @@ export async function scheduleDailyJobs(queue: JobQueue, now = new Date()): Prom
               snapshotGcJob.name,
               connectionsDailyJob.name,
               reportsDailyJob.name,
+              fxDailyJob.name,
             ]),
             gte(jobRun.createdAt, startOfDay),
           ),
@@ -176,6 +178,10 @@ export async function scheduleDailyJobs(queue: JobQueue, now = new Date()): Prom
   if (!already.has(connectionsDailyJob.name)) {
     await queue.enqueue(connectionsDailyJob, { date });
     queued.push(connectionsDailyJob.name);
+  }
+  if (!already.has(fxDailyJob.name)) {
+    await queue.enqueue(fxDailyJob, { date });
+    queued.push(fxDailyJob.name);
   }
   if (!already.has(reportsDailyJob.name)) {
     await queue.enqueue(reportsDailyJob, { date });

@@ -160,6 +160,16 @@ export interface QueryResult {
   previousPeriod?: CompiledQuery['previousPeriod'];
 }
 
+/** Money answers say when some amounts came in other currencies and were converted (M20). */
+function convertedNote(member: MemberWorkspace, columns: CompiledQuery['columns']): string[] {
+  const from = member.settings.convertedCurrencies ?? [];
+  if (from.length === 0 || !columns.some((c) => c.kind === 'metric' && c.format === 'money'))
+    return [];
+  return [
+    `Some amounts were in ${from.join(', ')}: they were converted to ${member.settings.currency} at the European Central Bank’s rate for each record’s date.`,
+  ];
+}
+
 /** Compiles and runs a query spec for a member's workspace, as its reader role. */
 export async function runQuery(
   member: MemberWorkspace,
@@ -183,7 +193,7 @@ export async function runQuery(
     columns: q.columns,
     rows: r.rows,
     truncated: r.truncated,
-    assumptions: q.assumptions,
+    assumptions: [...q.assumptions, ...convertedNote(member, q.columns)],
     period: q.period,
     ...(q.previousPeriod ? { previousPeriod: q.previousPeriod } : {}),
   };

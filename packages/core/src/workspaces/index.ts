@@ -5,6 +5,8 @@ export {
   listUserWorkspaces,
   canChange,
   NotAllowedError,
+  hasRecords,
+  SettingsLockedError,
   requireEditor,
   retryProvisioning,
   updateWorkspaceDetails,

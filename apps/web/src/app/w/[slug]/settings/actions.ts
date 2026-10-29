@@ -4,6 +4,7 @@ import {
   businessSettingsSchema,
   deleteWorkspace,
   newWorkspaceSchema,
+  SettingsLockedError,
   updateWorkspaceDetails,
 } from '@bizr/core/workspaces';
 import { getLogger } from '@bizr/platform';
@@ -39,7 +40,12 @@ export async function updateBusiness(
     }
     return { fieldErrors };
   }
-  await updateWorkspaceDetails(member, member.user.id, parsed.data);
+  try {
+    await updateWorkspaceDetails(member, member.user.id, parsed.data);
+  } catch (err) {
+    if (err instanceof SettingsLockedError) return { fieldErrors: { [err.field]: err.message } };
+    throw err;
+  }
   revalidatePath(`/w/${slug}`, 'layout');
   return { saved: true };
 }
