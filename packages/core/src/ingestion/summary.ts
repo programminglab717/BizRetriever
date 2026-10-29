@@ -1,5 +1,6 @@
 import { AiError, type LLMProvider } from '@bizr/ai';
-import { summarizeProposal as summaryPrompt } from '@bizr/ai/prompts';
+import { summarizeProposal as summaryPromptEn, summarizeProposalEs } from '@bizr/ai/prompts';
+import type { Language } from '@bizr/i18n';
 import type { PackData } from '@bizr/packs';
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
@@ -29,7 +30,12 @@ export function proposalFacts(
   proposal: ModelProposal,
   pack: PackData,
   fileCount: number,
+  /** The words counts come with, in the business's language (M20). */
+  lang: Language = 'en',
 ): SummaryFacts {
+  const es = lang === 'es';
+  const tr = es ? pack.translations.es : undefined;
+  const word = (en: [string, string], sp: [string, string]) => (es ? sp : en);
   const facts: Facts = {};
   const meanings: SummaryFacts['meanings'] = [];
   const add = (name: string, meaning: string, value: number, one: string, other: string) => {
@@ -49,8 +55,8 @@ export function proposalFacts(
       `${e.id}_count`,
       `number of ${e.label.plural.toLowerCase()}, with the word`,
       n,
-      e.label.singular.toLowerCase(),
-      e.label.plural.toLowerCase(),
+      (tr?.entities[e.id]?.singular ?? e.label.singular).toLowerCase(),
+      (tr?.entities[e.id]?.plural ?? e.label.plural).toLowerCase(),
     );
   }
   const channels = new Set(
@@ -64,8 +70,7 @@ export function proposalFacts(
       'channel_count',
       'number of places they sell, with the word',
       channels.size,
-      'channel',
-      'channels',
+      ...word(['channel', 'channels'], ['canal', 'canales']),
     );
   const skipped = result.skipped.filter((s) => SKIP_REASONS.has(s.reason)).length;
   if (skipped > 0)
@@ -73,28 +78,32 @@ export function proposalFacts(
       'skipped_count',
       'number of lines we’ll skip because they are totals, notes or blank, with the word',
       skipped,
-      'line',
-      'lines',
+      ...word(['line', 'lines'], ['línea', 'líneas']),
     );
-  add('file_count', 'number of files uploaded, with the word', fileCount, 'file', 'files');
+  add(
+    'file_count',
+    'number of files uploaded, with the word',
+    fileCount,
+    ...word(['file', 'files'], ['archivo', 'archivos']),
+  );
   if (proposal.questions.length > 0)
     add(
       'question_count',
       'number of things the owner should check, with the word',
       proposal.questions.length,
-      'thing',
-      'things',
+      ...word(['thing', 'things'], ['cosa', 'cosas']),
     );
   return { facts, meanings };
 }
 
-const joinList = (items: string[]) =>
+const joinList = (items: string[], and = 'and') =>
   items.length <= 1
     ? (items[0] ?? '')
-    : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+    : `${items.slice(0, -1).join(', ')} ${and} ${items[items.length - 1]}`;
 
 /** The fallback template. Always valid for the facts it was built from. */
-export function deterministicSummary(facts: Facts): string {
+export function deterministicSummary(facts: Facts, lang: Language = 'en'): string {
+  if (lang === 'es') return deterministicSummaryEs(facts);
   const found = ORDER.map((e) => `${e}_count`)
     .filter((k) => facts[k])
     .slice(0, 4)
@@ -114,14 +123,41 @@ export function deterministicSummary(facts: Facts): string {
   return parts.join(' ');
 }
 
+function deterministicSummaryEs(facts: Facts): string {
+  const found = ORDER.map((e) => `${e}_count`)
+    .filter((k) => facts[k])
+    .slice(0, 4)
+    .map((k) => `{{${k}}}`);
+  const parts: string[] = [];
+  if (found.length > 0) {
+    const where = facts.channel_count ? ' en {{channel_count}}' : '';
+    parts.push(`Encontramos ${joinList(found, 'y')}${where} en tus {{file_count}}.`);
+  } else {
+    parts.push(
+      'Revisamos tus {{file_count}}, pero todavía no encontramos registros que podamos traer.',
+    );
+  }
+  if (facts.skipped_count)
+    parts.push('Omitiremos {{skipped_count}} que parecen totales, notas o filas vacías.');
+  if (facts.question_count) parts.push('Revisa {{question_count}} más abajo.');
+  return parts.join(' ');
+}
+
 const outputSchema = z.object({ template: z.string().max(MAX_TEMPLATE_LENGTH) }).strict();
 
 export async function summarizeProposal(
   summary: SummaryFacts,
   proposal: ModelProposal,
-  ctx: { provider: LLMProvider; workspaceId?: string | null; aiMode?: 'auto' | 'always' | 'never' },
+  ctx: {
+    provider: LLMProvider;
+    workspaceId?: string | null;
+    aiMode?: 'auto' | 'always' | 'never';
+    /** The business's language (M20): the review is read by whoever opens it. */
+    lang?: Language;
+  },
 ): Promise<{ template: string; origin: 'ai' | 'template' }> {
-  const fallback = deterministicSummary(summary.facts);
+  const summaryPrompt = ctx.lang === 'es' ? summarizeProposalEs : summaryPromptEn;
+  const fallback = deterministicSummary(summary.facts, ctx.lang);
   if (ctx.aiMode === 'never') return { template: fallback, origin: 'template' };
   try {
     const prompt = summaryPrompt.build({

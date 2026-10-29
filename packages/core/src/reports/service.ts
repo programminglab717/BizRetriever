@@ -1,3 +1,4 @@
+import { translator, type Language } from '@bizr/i18n';
 import { timingSafeEqual } from 'node:crypto';
 
 import { answer, getAppDb, reportSchedule, user, workspace, type ReportSchedule } from '@bizr/db';
@@ -9,6 +10,7 @@ import { z } from 'zod';
 import { toAnswerData } from '../ask/answer';
 import { interpretationSchema, periodOf, toQuerySpec } from '../ask/interpretation';
 import { periodLabel } from '../ask/time';
+import { readerLanguage, userLanguage } from '../workspaces/language';
 import { kpiViews, localeFor, tableView } from '../ask/view';
 import { fileNameFor } from '../export/sheet';
 import { dashboardPdf } from '../export/service';
@@ -237,13 +239,15 @@ export async function reportPdf(
   member: MemberWorkspace,
   r: ReportSchedule,
   now = new Date(),
+  lang: Language = 'en',
 ): Promise<{ fileName: string; body: Uint8Array; summary: string }> {
+  const t = translator(lang);
   if (r.kind === 'dashboard') {
-    const pdf = await dashboardPdf(member, undefined, now);
+    const pdf = await dashboardPdf(member, undefined, now, lang);
     return {
       fileName: pdf.fileName,
       body: pdf.body,
-      summary: 'Your dashboard, with today’s numbers.',
+      summary: t('Your dashboard, with today’s numbers.'),
     };
   }
   const [a] = await getAppDb()
@@ -260,14 +264,18 @@ export async function reportPdf(
     fiscalYearStartMonth: cc.fiscalYearStartMonth,
   };
   const spec = i.data.spec;
-  const data = toAnswerData(await runQuery(member, toQuerySpec(spec, cal), 'system'));
+  const raw = toAnswerData(await runQuery(member, toQuerySpec(spec, cal), 'system'));
+  const data =
+    lang === 'en'
+      ? raw
+      : { ...raw, columns: raw.columns.map((c) => ({ ...c, label: t.text(c.label) })) };
   const o = {
     pack: getPack(member.workspace.packId),
-    locale: localeFor(member.settings),
+    locale: localeFor(member.settings, lang),
     currency: member.settings.currency,
     fiscalYearStartMonth: member.settings.fiscalYearStartMonth,
   };
-  const dates = periodLabel(periodOf(spec.timeRange, cal)) || 'All time';
+  const dates = periodLabel(periodOf(spec.timeRange, cal), lang) || t('All time');
   const kpis = kpiViews(data, o);
   const table = tableView(data, o);
   const single = data.rows.length <= 1;
@@ -281,11 +289,12 @@ export async function reportPdf(
         ...(!single ? { table } : {}),
       },
     ],
+    lang,
     about: [
-      { label: 'Dates', value: dates },
+      { label: t('Dates'), value: dates },
       {
-        label: 'Made',
-        value: new Intl.DateTimeFormat('en-GB', {
+        label: t('Made'),
+        value: new Intl.DateTimeFormat(lang === 'es' ? 'es-ES' : 'en-GB', {
           timeZone: member.settings.timezone,
           dateStyle: 'medium',
           timeStyle: 'short',
@@ -326,7 +335,10 @@ export async function sendDueReports(workspaceId: string, now = new Date()): Pro
     const key = `${r.id}:${period.key}`;
     if ((await claim(workspaceId, r.userId, 'report', [key])).length === 0) continue;
     try {
-      const { fileName, body, summary } = await reportPdf(member, r, now);
+      // In the language of the person it's for (M20).
+      const lang = readerLanguage(await userLanguage(r.userId), member.settings);
+      const t = translator(lang);
+      const { fileName, body, summary } = await reportPdf(member, r, now, lang);
       const [person] = await db
         .select({ email: user.email })
         .from(user)
@@ -334,19 +346,28 @@ export async function sendDueReports(workspaceId: string, now = new Date()): Pro
       if (!person) continue;
       const stop = reportStopUrl(r.id, r.userId);
       const open = `${getEnv().APP_URL}/w/${ws.slug}/${r.kind === 'dashboard' ? 'dashboard' : 'ask'}`;
-      const when = whenText(r.cadence, r.day).toLowerCase();
+      const when = t.text(whenText(r.cadence, r.day)).toLowerCase();
+      const title = t.text(r.title);
+      const lead = t('Here’s your report for {business}: “{title}”.', {
+        business: '\u0000',
+        title,
+      });
+      const [leadBefore = '', leadAfter = ''] = lead.split('\u0000');
+      const attached = t('It’s attached as a PDF, worked out from your data today.');
+      const seeIt = t('See it in BizRetriever');
+      const youGet = t('You get this {when}.', { when });
       const ok = await deliver(workspaceId, r.userId, 'report', [key], {
         to: person.email,
-        subject: `${ws.name}: ${r.title}`,
+        subject: `${ws.name}: ${title}`,
         text: [
-          `Here’s your report for ${ws.name}: “${r.title}”. ${summary}`,
+          `${leadBefore}${ws.name}${leadAfter} ${summary}`,
           '',
-          'It’s attached as a PDF, worked out from your data today.',
-          `See it in BizRetriever: ${open}`,
+          attached,
+          `${seeIt}: ${open}`,
           '',
-          `You get this ${when}. Stop it: ${stop}`,
+          `${youGet} ${t('Stop it:')} ${stop}`,
         ].join('\n'),
-        html: `<p>Here’s your report for <strong>${escapeHtml(ws.name)}</strong>: “${escapeHtml(r.title)}”. ${escapeHtml(summary)}</p><p>It’s attached as a PDF, worked out from your data today. <a href="${escapeHtml(open)}">See it in BizRetriever</a>.</p><p style="color:#59636e;font-size:12px">You get this ${escapeHtml(when)}. <a href="${escapeHtml(stop)}">Stop this report</a>.</p>`,
+        html: `<p>${escapeHtml(leadBefore)}<strong>${escapeHtml(ws.name)}</strong>${escapeHtml(leadAfter)} ${escapeHtml(summary)}</p><p>${escapeHtml(attached)} <a href="${escapeHtml(open)}">${escapeHtml(seeIt)}</a>.</p><p style="color:#59636e;font-size:12px">${escapeHtml(youGet)} <a href="${escapeHtml(stop)}">${escapeHtml(t('Stop this report'))}</a>.</p>`,
         headers: {
           'List-Unsubscribe': `<${stop}>`,
           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',

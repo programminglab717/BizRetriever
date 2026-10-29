@@ -2,6 +2,7 @@ import { allDataDownload } from '@bizr/core/export';
 import { withLogContext } from '@bizr/platform';
 
 import { fileResponse, notFound } from '@/lib/download';
+import { getLanguage } from '@/lib/i18n';
 import { getSession, workspaceForApi } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,6 @@ export async function GET(
   const session = await getSession();
   if (!member || !session) return notFound();
   return withLogContext({ workspaceId: member.workspace.id }, async () =>
-    fileResponse(await allDataDownload(member, session.user.id)),
+    fileResponse(await allDataDownload(member, session.user.id, new Date(), await getLanguage())),
   );
 }

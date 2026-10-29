@@ -6,7 +6,18 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
 
+import { userLanguage } from '@bizr/core/workspaces';
+import { pickLanguage, translator, type Language } from '@bizr/i18n';
+
 import { sendEmail } from './email';
+
+/** A person's own language, else their browser's (M20): account emails come before any business. */
+async function emailLanguage(userId: string, request?: Request): Promise<Language> {
+  return (
+    (await userLanguage(userId).catch(() => null)) ??
+    pickLanguage(request?.headers.get('accept-language'))
+  );
+}
 
 export function isGoogleEnabled(): boolean {
   const env = getEnv();
@@ -32,22 +43,30 @@ function createAuth() {
       // Verification is encouraged but never blocks getting to the "wow" moment (PRODUCT_SPEC §1.1).
       requireEmailVerification: false,
       revokeSessionsOnPasswordReset: true,
-      sendResetPassword: async ({ user: u, url }) => {
+      sendResetPassword: async ({ user: u, url }, request) => {
+        const t = translator(await emailLanguage(u.id, request));
         await sendEmail({
           to: u.email,
-          subject: 'Reset your BizRetriever password',
-          text: `Hi ${u.name},\n\nUse this link to choose a new password:\n${url}\n\nIf you didn't ask for this, you can ignore this email.`,
+          subject: t('Reset your BizRetriever password'),
+          text: t(
+            "Hi {name},\n\nUse this link to choose a new password:\n{url}\n\nIf you didn't ask for this, you can ignore this email.",
+            { name: u.name, url },
+          ),
         });
       },
     },
     emailVerification: {
       sendOnSignUp: true,
       autoSignInAfterVerification: true,
-      sendVerificationEmail: async ({ user: u, url }) => {
+      sendVerificationEmail: async ({ user: u, url }, request) => {
+        const t = translator(await emailLanguage(u.id, request));
         await sendEmail({
           to: u.email,
-          subject: 'Confirm your email for BizRetriever',
-          text: `Hi ${u.name},\n\nPlease confirm your email address:\n${url}\n\nThanks!`,
+          subject: t('Confirm your email for BizRetriever'),
+          text: t('Hi {name},\n\nPlease confirm your email address:\n{url}\n\nThanks!', {
+            name: u.name,
+            url,
+          }),
         });
       },
     },

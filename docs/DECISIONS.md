@@ -1490,3 +1490,61 @@ Template for new entries:
   - Not built: mentions in the weekly summary, mentioning people outside the business, handing over to someone by email who isn't in the business yet (invite them first).
 - **Found on the way:** the SQL validator's CTE scan was recursive and ran before its depth limit, so a very long expression could overflow the stack instead of being refused. It now walks with its own stack, and a stack overflow anywhere in validation counts as a refusal (tested with a 100,000-level tree).
 
+
+## ADR-070 — Other currencies converted at load, at the European Central Bank's rate for each record's date
+
+- **Status:** Accepted (2026-10-29). M20 part 1.
+- **Context:** businesses sell and buy in more than one currency (euro sales on a US shop, a supplier invoicing in pounds). Adding those amounts as if they were the business's own currency gives wrong totals everywhere. The zero-cost rule (ADR-026) rules out paid rate services.
+- **Decision:**
+  - **Finding the currency** (`ingest/values/currency.ts`, `materialize`):
+    - in this order: the column header ("Total (EUR)", "Amount €"), the row's Currency column ("currency", "moneda", "divisa"…), the value itself ("€12.50", "12.50 GBP")
+    - otherwise the business's own currency. "$" means the business's dollar when it has one, else US dollars; "¥" is yen unless the business uses yuan; "Rs" is the business's rupee, else Indian rupees
+    - only money fields are marked. A derived amount (a unit price worked out from a total) takes its inputs' currency, and a merged record keeps each value's currency.
+  - **Converting** (`core/currency`):
+    - before loading, in exact decimals (BigInt), rounded half away from zero to 4 places: amount × rate(to) ÷ rate(from)
+    - the rate is the ECB reference rate for the record's own date (its first date, else the date of the record it's linked to, so an order line takes its order's date; else today). A weekend or holiday uses the latest earlier rate within a week.
+    - ECB rates (about 30 currencies, free, no key) are kept in `app.fx_rate`, shared by every business; `fx.daily` stores the last 90 days each day, and the whole history since 1999 is fetched once when an older record needs it. The ECB host is the only one allowed.
+    - an amount in a currency the ECB doesn't publish (or with no rate that week) is **left empty and reported**, never added in unconverted
+    - the same conversion runs for the review's test run, the first load and updates, so what the owner approves is what loads
+  - **Honest about it:** the review and the data report list what was converted and from which currencies, and what was left empty; `workspace_settings.converted_currencies` remembers the currencies, and every answer with a money measure carries the assumption "Some amounts were in EUR: they were converted to USD at the ECB's rate for each record's date". The uploaded file keeps the originals.
+  - **The business's own currency is fixed once an import has finished** (records are kept in it); the settings page says why.
+- **Consequences:**
+  - Measures, Ask, the dashboard, insights and the API need no change: everything is in one currency.
+  - $0. One small request to the ECB a day.
+  - Not stored per row: the original amount and currency (the file has them). Re-converting at a later rate isn't possible without re-importing.
+  - Currencies without an ECB rate (for example AED, NGN, PKR) can't be converted (R53, Q32).
+  - A business that wants to change its currency starts a new business.
+
+## ADR-071 — Languages: English text as the key, one catalog per language, the reader's language everywhere
+
+- **Status:** Accepted (2026-10-29). M20 parts 2–4.
+- **Context:** the owner chose Spanish as the second language, covering everything people read: screens, Ask (questions understood and answered), insights, emails and PDFs; each person picks their language and the business has a default.
+- **Decision:**
+  - **`@bizr/i18n`** (no dependencies): gettext style, the English text is the key and code stays English.
+    - `t('…', vars)`, `t.plural(n, one, many)`, `t.ctx('button', 'Change')` when one English word needs two translations
+    - `t.text(stored)` for English written earlier (a stored warning, a service's message): exact entry, else the catalog's templates matched as patterns, with captured values translated too (lower-case labels, counts, "a, b and c" lists, templates inside templates), sentence by sentence
+    - `msg()` marks text written before it's shown
+    - the Spanish catalog is one file per app area (`packages/i18n/src/es/*.ts`); `packs.ts` is generated from the packs
+  - **Whose language:**
+    - the person's own choice (`app.user_preference.language`, follows them to every business; "Same as the business" clears it)
+    - else the business's default (`workspace_settings.language`, chosen at onboarding, defaulting to the browser's language)
+    - else the browser's `Accept-Language`; English last
+    - `proxy.ts` tells the server which business a page is in, so `getLanguage()` works anywhere: `await getT()` in server code, `useT()` in the browser, which gets only the reader's catalog
+    - emails, report PDFs and their emails use the recipient's language; downloads use the reader's; an invite uses the business's; account emails the person's own or their browser's
+  - **Checked by tests:**
+    - `apps/web/src/i18n.test.ts` fails on visible text that isn't translated (JSX text, shown attributes, sentences, strings shown straight from JSX) and on any `t()`/`msg()` key (in the web app and in core) without a Spanish entry
+    - `packages/i18n/src/catalog.test.ts`: placeholders kept, the same English translated the same everywhere, no Spanish jargon
+  - **Packs** get `i18n/es.yaml`, validated against the pack and required to be complete: names, measures (with Spanish words for questions), breakdowns and value names, tiles, insight sentences (same placeholders, no digits), example questions, and Spanish column headers and value words, which are added to the pack's synonyms so Spanish files are read whatever language the reader uses. Headers are compared without accents.
+  - **Ask in Spanish:**
+    - the rule-based reader takes its words from `rules-es.ts` (time phrases, rankings, comparisons, breakdown words, top-N, months, follow-ups, accent-free comparison) and the pack's Spanish synonyms; English synonyms still work
+    - forecasts, goals and reordering have Spanish recognisers
+    - answers, steps, titles, period labels and estimate answers are written by code in Spanish
+    - numbers and dates use a Spanish locale matching the business's currency (es-US for dollars, es-ES for euros, es-MX for pesos…)
+  - **Insights** keep their facts; a Spanish reader gets the pack's Spanish sentence filled from the same facts by the same code (numbers unchanged), including text-fact words like up/down.
+  - **AI:** each released English prompt stays as it is (with its recordings); Spanish readers get a v2 that adds Spanish rules: answers (Task E), how a custom calculation worked (F), what a question means (D: assumptions, clarifying questions, messages), the import summary. Task J phrasings are English-only, so Spanish readers get the pack's own sentence.
+- **Consequences:**
+  - Spanish question eval (`--lang es`, 211 cases, rules only): 0.953; English evals unchanged (0.929 retail, 0.983 wholesale, ingest 12/12). The questions were written separately, but some Spanish words were added after seeing which ones failed, so new questions will score lower; the native-speaker review should bring fresh ones.
+  - Answers are stored in the language they were asked in; changing language doesn't rewrite them.
+  - The public API, MCP server and `/admin` stay English (developers).
+  - Still English: the data chat's own rule-based reader (Spanish requests go to the AI), the dashboard-edit rules, and AI-written insight phrasings.
+  - A native speaker's read-through is still to come (Q31). Adding a language means a catalog, pack files, a `rules-<lang>.ts` and prompt versions.

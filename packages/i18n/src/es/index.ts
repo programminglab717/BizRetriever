@@ -3,6 +3,8 @@ import { ask } from './ask';
 import { common } from './common';
 import { core } from './core';
 import { data } from './data';
+import { emails } from './emails';
+import { estimates } from './estimates';
 import { insights } from './insights';
 import { packs } from './packs';
 import { settings } from './settings';
@@ -23,6 +25,8 @@ export const parts: Record<string, Catalog> = {
   insights,
   settings,
   core,
+  emails,
+  estimates,
   packs,
 };
 

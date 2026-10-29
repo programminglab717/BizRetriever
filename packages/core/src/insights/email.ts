@@ -12,7 +12,13 @@ import {
 import { getEnv, getLogger, sendEmail, type Email } from '@bizr/platform';
 import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
 
+import { translator, type Language } from '@bizr/i18n';
+
 import { localeFor } from '../ask/view';
+import { shortMonth } from '../ask/time';
+import { readerLanguage, userLanguages } from '../workspaces/language';
+import type { MemberWorkspace } from '../workspaces/service';
+import { localizeInsights } from './localize';
 import { goalProgress } from '../planning/goals';
 import { goalLines } from '../planning/text';
 import { currentDigest, type DigestContent } from './digest';
@@ -159,13 +165,14 @@ const htmlText = (s: string) =>
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** "19–25 Oct 2026" for a week whose `to` is exclusive. */
-export function weekLabel(period: { from: string; to: string }): string {
+/** "19–25 Oct 2026" for a week whose `to` is exclusive ("19–25 oct 2026" in Spanish). */
+export function weekLabel(period: { from: string; to: string }, lang: Language = 'en'): string {
   const last = new Date(`${period.to}T00:00:00Z`);
   last.setUTCDate(last.getUTCDate() - 1);
   const first = new Date(`${period.from}T00:00:00Z`);
   const day = (d: Date) => d.getUTCDate();
-  const mon = (d: Date) => MONTHS[d.getUTCMonth()]!;
+  const mon = (d: Date) =>
+    lang === 'en' ? MONTHS[d.getUTCMonth()]! : shortMonth(d.getUTCMonth(), lang);
   if (first.getUTCFullYear() !== last.getUTCFullYear())
     return `${day(first)} ${mon(first)} ${first.getUTCFullYear()} – ${day(last)} ${mon(last)} ${last.getUTCFullYear()}`;
   if (first.getUTCMonth() !== last.getUTCMonth())
@@ -179,6 +186,8 @@ export interface EmailContext {
   /** The business's pages, e.g. https://app/w/fernwood. */
   baseUrl: string;
   unsubscribeUrl: string;
+  /** The reader's language (M20). */
+  lang?: Language;
 }
 
 function layout(
@@ -186,30 +195,38 @@ function layout(
   kind: EmailKind,
   body: { text: string[]; html: string[] },
 ): Pick<Email, 'text' | 'html' | 'headers'> {
+  const t = translator(ctx.lang ?? 'en');
+  const business = ctx.businessName;
   const why =
     kind === 'weekly_summary'
-      ? `You get this weekly summary because you’re part of ${ctx.businessName} on BizRetriever.`
-      : `You get these alerts because you’re part of ${ctx.businessName} on BizRetriever.`;
-  const stop = kind === 'weekly_summary' ? 'Stop weekly summaries' : 'Stop urgent alerts';
+      ? t('You get this weekly summary because you’re part of {business} on BizRetriever.', {
+          business,
+        })
+      : t('You get these alerts because you’re part of {business} on BizRetriever.', {
+          business,
+        });
+  const stop = kind === 'weekly_summary' ? t('Stop weekly summaries') : t('Stop urgent alerts');
+  const choose = t('Choose which emails you get');
   const settings = `${ctx.baseUrl}/insights/settings`;
+  const hi = t('Hi {name},', { name: ctx.personName });
   const text = [
-    `Hi ${ctx.personName},`,
+    hi,
     '',
     ...body.text,
     '',
     '—',
     why,
     `${stop}: ${ctx.unsubscribeUrl}`,
-    `Choose which emails you get: ${settings}`,
+    `${choose}: ${settings}`,
     '',
   ].join('\n');
-  const html = `<!doctype html><html><body style="margin:0;padding:24px;background:#f6f6f6;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a">
+  const html = `<!doctype html><html lang="${ctx.lang ?? 'en'}"><body style="margin:0;padding:24px;background:#f6f6f6;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a">
 <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;line-height:1.5">
-<p>Hi ${escapeHtml(ctx.personName)},</p>
+<p>${escapeHtml(hi)}</p>
 ${body.html.join('\n')}
 </div>
 <p style="max-width:560px;margin:16px auto 0;font-size:12px;color:#666666;line-height:1.5">${escapeHtml(why)}<br>
-<a href="${escapeHtml(ctx.unsubscribeUrl)}" style="color:#666666">${stop}</a> · <a href="${escapeHtml(settings)}" style="color:#666666">Choose which emails you get</a></p>
+<a href="${escapeHtml(ctx.unsubscribeUrl)}" style="color:#666666">${escapeHtml(stop)}</a> · <a href="${escapeHtml(settings)}" style="color:#666666">${escapeHtml(choose)}</a></p>
 </body></html>`;
   return {
     text,
@@ -234,12 +251,19 @@ export function weeklySummaryEmail(
   /** Insights handed to this person (M13), as stored. */
   forYou: readonly string[] = [],
 ): Email {
-  const week = weekLabel(digest.period);
+  const t = translator(ctx.lang ?? 'en');
+  const week = weekLabel(digest.period, ctx.lang);
+  const before = (change: string) => t('({change} on the week before)', { change });
   const kpiLine = (k: DigestContent['kpis'][number]) =>
-    `${k.label}: ${k.value}${k.change ? ` (${k.change} on the week before)` : ''}`;
-  const text: string[] = [`Here’s how ${ctx.businessName} did in the week of ${week}:`, ''];
+    `${t.text(k.label)}: ${k.value}${k.change ? ` ${before(k.change)}` : ''}`;
+  const intro = t('Here’s how {business} did in the week of {week}:', {
+    business: '\u0000',
+    week,
+  });
+  const [introBefore = '', introAfter = ''] = intro.split('\u0000');
+  const text: string[] = [`${introBefore}${ctx.businessName}${introAfter}`, ''];
   const html: string[] = [
-    `<p>Here’s how <strong>${escapeHtml(ctx.businessName)}</strong> did in the week of ${escapeHtml(week)}:</p>`,
+    `<p>${escapeHtml(introBefore)}<strong>${escapeHtml(ctx.businessName)}</strong>${escapeHtml(introAfter)}</p>`,
   ];
   if (digest.kpis.length) {
     text.push(...digest.kpis.map(kpiLine));
@@ -247,44 +271,49 @@ export function weeklySummaryEmail(
       `<ul style="padding-left:20px">${digest.kpis
         .map(
           (k) =>
-            `<li><strong>${escapeHtml(k.label)}: ${escapeHtml(k.value)}</strong>${k.change ? ` (${escapeHtml(k.change)} on the week before)` : ''}</li>`,
+            `<li><strong>${escapeHtml(t.text(k.label))}: ${escapeHtml(k.value)}</strong>${k.change ? ` ${escapeHtml(before(k.change))}` : ''}</li>`,
         )
         .join('')}</ul>`,
     );
   }
   if (goals.length) {
-    text.push('', 'Your goals:', ...goals.map((g) => `• ${g}`));
+    const heading = t('Your goals:');
+    text.push('', heading, ...goals.map((g) => `• ${t.text(g)}`));
     html.push(
-      '<p style="margin-bottom:4px">Your goals:</p>',
-      `<ul style="padding-left:20px;margin-top:0">${goals.map((g) => `<li>${escapeHtml(g)}</li>`).join('')}</ul>`,
+      `<p style="margin-bottom:4px">${escapeHtml(heading)}</p>`,
+      `<ul style="padding-left:20px;margin-top:0">${goals.map((g) => `<li>${escapeHtml(t.text(g))}</li>`).join('')}</ul>`,
     );
   }
   if (forYou.length) {
-    text.push('', 'Handed to you:', ...forYou.map((t) => `• ${plainText(t)}`));
+    const heading = t('Handed to you:');
+    text.push('', heading, ...forYou.map((x) => `• ${plainText(x)}`));
     html.push(
-      '<p style="margin-bottom:4px">Handed to you:</p>',
-      `<ul style="padding-left:20px;margin-top:0">${forYou.map((t) => `<li>${htmlText(t)}</li>`).join('')}</ul>`,
+      `<p style="margin-bottom:4px">${escapeHtml(heading)}</p>`,
+      `<ul style="padding-left:20px;margin-top:0">${forYou.map((x) => `<li>${htmlText(x)}</li>`).join('')}</ul>`,
     );
   }
   if (digest.insights.length) {
-    text.push('', 'Worth a look:', ...digest.insights.map((i) => `• ${plainText(i.text)}`));
+    const heading = t('Worth a look:');
+    text.push('', heading, ...digest.insights.map((i) => `• ${plainText(i.text)}`));
     html.push(
-      '<p style="margin-bottom:4px">Worth a look:</p>',
+      `<p style="margin-bottom:4px">${escapeHtml(heading)}</p>`,
       `<ul style="padding-left:20px;margin-top:0">${digest.insights.map((i) => `<li>${htmlText(i.text)}</li>`).join('')}</ul>`,
     );
   }
   if (digest.question) {
-    const ask = `${ctx.baseUrl}/ask?q=${encodeURIComponent(digest.question)}`;
-    text.push('', `Try asking: “${digest.question}”`, ask);
+    const question = t.text(digest.question);
+    const ask = `${ctx.baseUrl}/ask?q=${encodeURIComponent(question)}`;
+    const tryAsking = t('Try asking:');
+    text.push('', `${tryAsking} “${question}”`, ask);
     html.push(
-      `<p>Try asking: <a href="${escapeHtml(ask)}">“${escapeHtml(digest.question)}”</a></p>`,
+      `<p>${escapeHtml(tryAsking)} <a href="${escapeHtml(ask)}">“${escapeHtml(question)}”</a></p>`,
     );
   }
-  text.push('', `See everything: ${ctx.baseUrl}/home`);
-  html.push(button(`${ctx.baseUrl}/home`, 'Open BizRetriever'));
+  text.push('', `${t('See everything:')} ${ctx.baseUrl}/home`);
+  html.push(button(`${ctx.baseUrl}/home`, t('Open BizRetriever')));
   return {
     to,
-    subject: `${ctx.businessName}: your week of ${week}`,
+    subject: t('{business}: your week of {week}', { business: ctx.businessName, week }),
     ...layout(ctx, 'weekly_summary', { text, html }),
   };
 }
@@ -299,26 +328,29 @@ export function urgentAlertEmail(
   items: readonly AlertItem[],
   ctx: EmailContext,
 ): Email {
+  const t = translator(ctx.lang ?? 'en');
   const shown = items.slice(0, ALERTS_PER_EMAIL);
   const more = items.length - shown.length;
   const subject =
     items.length === 1
       ? `${ctx.businessName}: ${plainText(items[0]!.text)}`.slice(0, 140)
-      : `${ctx.businessName}: ${items.length} things need a look`;
+      : t('{business}: {n} things need a look', { business: ctx.businessName, n: items.length });
   const link = `${ctx.baseUrl}/insights`;
+  const lead = items.length === 1 ? t('This needs a look:') : t('These need a look:');
+  const andMore = t('…and {n} more.', { n: more });
   const text = [
-    items.length === 1 ? 'This needs a look:' : 'These need a look:',
+    lead,
     '',
     ...shown.map((i) => `• ${plainText(i.text)}`),
-    ...(more > 0 ? [`…and ${more} more.`] : []),
+    ...(more > 0 ? [andMore] : []),
     '',
-    `See the details: ${link}`,
+    `${t('See the details:')} ${link}`,
   ];
   const html = [
-    `<p>${items.length === 1 ? 'This needs a look:' : 'These need a look:'}</p>`,
+    `<p>${escapeHtml(lead)}</p>`,
     `<ul style="padding-left:20px">${shown.map((i) => `<li>${htmlText(i.text)}</li>`).join('')}</ul>`,
-    ...(more > 0 ? [`<p>…and ${more} more.</p>`] : []),
-    button(link, 'See the details'),
+    ...(more > 0 ? [`<p>${escapeHtml(andMore)}</p>`] : []),
+    button(link, t('See the details')),
   ];
   return { to, subject, ...layout(ctx, 'urgent_alert', { text, html }) };
 }
@@ -330,9 +362,13 @@ interface Recipient {
   name: string;
   email: string;
   prefs: EmailPreferences;
+  lang: Language;
 }
 
-async function recipients(workspaceId: string): Promise<Recipient[]> {
+async function recipients(
+  workspaceId: string,
+  business: { language: Language },
+): Promise<Recipient[]> {
   const rows = await getAppDb()
     .select({
       userId: user.id,
@@ -360,7 +396,9 @@ async function recipients(workspaceId: string): Promise<Recipient[]> {
       ),
     )
     .orderBy(asc(user.createdAt));
+  const own = await userLanguages(rows.map((r) => r.userId));
   return rows.map((r) => ({
+    lang: readerLanguage(own.get(r.userId), business),
     userId: r.userId,
     name: r.name,
     email: r.email,
@@ -433,9 +471,12 @@ export async function deliver(
 }
 
 /** What's been handed to this person and is still open (M13), most important first. */
-async function handedTo(workspaceId: string, userId: string): Promise<string[]> {
+async function handedTo(
+  workspaceId: string,
+  userId: string,
+): Promise<{ id: string; text: string }[]> {
   const rows = await getAppDb()
-    .select({ text: insight.text })
+    .select({ id: insight.id, text: insight.text })
     .from(insight)
     .where(
       and(
@@ -446,13 +487,48 @@ async function handedTo(workspaceId: string, userId: string): Promise<string[]> 
     )
     .orderBy(desc(insight.score))
     .limit(10);
-  return rows.map((r) => r.text);
+  return rows;
+}
+
+/**
+ * Insight sentences in a reader's language (M20): re-filled from their stored facts with the
+ * pack's sentence in that language (see localize.ts); English as stored otherwise.
+ */
+async function insightTexts(
+  target: InsightTarget,
+  ids: readonly string[],
+  lang: Language,
+): Promise<Map<string, string>> {
+  if (lang === 'en' || ids.length === 0) return new Map();
+  const rows = await getAppDb()
+    .select({
+      id: insight.id,
+      ruleId: insight.ruleId,
+      category: insight.category,
+      level: insight.level,
+      headline: insight.headline,
+      context: insight.context,
+      text: insight.text,
+      action: insight.action,
+      status: insight.status,
+      firstSeenAt: insight.firstSeenAt,
+      lastSeenAt: insight.lastSeenAt,
+      assignedTo: insight.assignedTo,
+      facts: insight.facts,
+    })
+    .from(insight)
+    .where(and(eq(insight.workspaceId, target.workspace.id), inArray(insight.id, [...ids])));
+  const member = { ...target, role: 'owner' } as unknown as MemberWorkspace;
+  return new Map(localizeInsights(member, rows, lang).map((r) => [r.id, r.text]));
 }
 
 /** This month's goals as sentences for the summary. A problem here never stops the email. */
-async function goalText(target: InsightTarget, now: Date): Promise<string[]> {
+async function goalText(target: InsightTarget, now: Date, lang: Language): Promise<string[]> {
   try {
-    const style = { locale: localeFor(target.settings), currency: target.settings.currency };
+    const style = {
+      locale: localeFor(target.settings, lang),
+      currency: target.settings.currency,
+    };
     // Goals belong to the business, not to a person: read them as its owner would see them.
     const progress = await goalProgress({ ...target, role: 'owner' }, { now });
     return progress.map((g) => {
@@ -481,7 +557,7 @@ export async function sendInsightEmails(
   const ws = target.workspace;
   const summary: EmailRunSummary = { weeklySummaries: 0, urgentAlerts: 0 };
   if (ws.isDemo || ws.status !== 'active') return summary;
-  const people = await recipients(ws.id);
+  const people = await recipients(ws.id, target.settings);
   if (people.length === 0) return summary;
   const now = options.now ?? new Date();
   const baseUrl = new URL(`/w/${ws.slug}`, getEnv().APP_URL).toString();
@@ -490,7 +566,18 @@ export async function sendInsightEmails(
     personName: p.name,
     baseUrl,
     unsubscribeUrl: unsubscribeUrl(ws.id, p.userId, kind),
+    lang: p.lang,
   });
+  /** Insight sentences in this person's language. */
+  const inTheirs = async <T extends { id: string; text: string }>(p: Recipient, list: T[]) => {
+    const texts = await insightTexts(
+      target,
+      list.map((x) => x.id),
+      p.lang,
+    );
+    return list.map((x) => ({ ...x, text: texts.get(x.id) ?? x.text }));
+  };
+  const goalsIn = new Map<Language, string[]>();
 
   const urgent = await getAppDb()
     .select({ id: insight.id, text: insight.text })
@@ -506,7 +593,6 @@ export async function sendInsightEmails(
     )
     .orderBy(desc(insight.score));
   const digest = await currentDigest(target, { now });
-  const goals = digest ? await goalText(target, now) : [];
 
   for (const p of people) {
     if (p.prefs.urgentAlerts && urgent.length) {
@@ -516,7 +602,10 @@ export async function sendInsightEmails(
         'urgent_alert',
         urgent.map((u) => u.id),
       );
-      const items = urgent.filter((u) => fresh.includes(u.id));
+      const items = await inTheirs(
+        p,
+        urgent.filter((u) => fresh.includes(u.id)),
+      );
       if (
         items.length &&
         (await deliver(
@@ -541,10 +630,11 @@ export async function sendInsightEmails(
           fresh,
           weeklySummaryEmail(
             p.email,
-            digest.content,
+            { ...digest.content, insights: await inTheirs(p, digest.content.insights) },
             ctxFor(p, 'weekly_summary'),
-            goals,
-            await handedTo(ws.id, p.userId),
+            goalsIn.get(p.lang) ??
+              goalsIn.set(p.lang, await goalText(target, now, p.lang)).get(p.lang)!,
+            (await inTheirs(p, await handedTo(ws.id, p.userId))).map((x) => x.text),
           ),
         ))
       )

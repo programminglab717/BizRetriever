@@ -5,7 +5,7 @@ import { getLogger } from '@bizr/platform';
 import type { Route } from 'next';
 import { redirect } from 'next/navigation';
 
-import { getT } from '@/lib/i18n';
+import { getLanguage, getT } from '@/lib/i18n';
 import { kickJobs } from '@/lib/imports';
 import { getJobQueue } from '@/lib/jobs';
 import { requireUser } from '@/lib/session';
@@ -22,7 +22,11 @@ export async function tryDemoShop(_previous: DemoState, _form: FormData): Promis
   const user = await requireUser('/onboarding');
   let target: Route;
   try {
-    const { member, runId } = await startDemoShop({ userId: user.id, queue: await getJobQueue() });
+    const { member, runId } = await startDemoShop({
+      userId: user.id,
+      queue: await getJobQueue(),
+      language: await getLanguage(),
+    });
     kickJobs();
     target = `/w/${member.workspace.slug}/data/import/${runId}` as Route;
   } catch (err) {

@@ -75,6 +75,8 @@ export function answerSheet(
 export function fieldColumn(
   f: FieldMeta,
   currency: string,
+  /** Yes and No in the reader's language (M20). */
+  [yes, no]: [string?, string?] = [],
 ): SheetColumn & {
   cell: (v: string | null) => SheetCell;
 } {
@@ -94,7 +96,7 @@ export function fieldColumn(
       return {
         label: f.label,
         type: 'text',
-        cell: (v) => (v === null ? null : v === 'true' ? 'Yes' : 'No'),
+        cell: (v) => (v === null ? null : v === 'true' ? (yes ?? 'Yes') : (no ?? 'No')),
       };
     default:
       return {

@@ -1,3 +1,4 @@
+import type { Language } from '@bizr/i18n';
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -112,6 +113,8 @@ export async function startDemoShop(input: {
   queue: JobQueue;
   name?: string;
   now?: Date;
+  /** The person's language (M20): the demo shop reads in it. */
+  language?: Language;
 }): Promise<{ member: MemberWorkspace; runId: string }> {
   await removeDemoShops(input.userId);
   const ws = await createWorkspace(
@@ -122,6 +125,7 @@ export async function startDemoShop(input: {
       currency: 'USD',
       timezone: DEMO_TIMEZONE,
       dateOrder: 'MDY',
+      ...(input.language ? { language: input.language } : {}),
     },
     { isDemo: true },
   );

@@ -33,7 +33,7 @@ export default async function DashboardPage({
   const { slug } = await params;
   const member = await requireWorkspace(slug);
   const t = await getT();
-  const view = await dashboardView(member, rangeFromParams(await searchParams));
+  const view = await dashboardView(member, rangeFromParams(await searchParams), t.lang);
   const style = { locale: localeFor(member.settings, t.lang), currency: member.settings.currency };
   return (
     <div className="grid gap-6">

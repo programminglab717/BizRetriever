@@ -18,15 +18,30 @@ import type { AnswerContent, AskResult } from './service';
  * numbers for plotting only. Plain JSON, so it can cross from server to client components.
  */
 
+/** Where each currency is at home, for Spanish number style ("$22,489.20" in es-US). */
+const SPANISH_BY_CURRENCY: Record<string, string> = {
+  USD: 'es-US',
+  EUR: 'es-ES',
+  MXN: 'es-MX',
+  COP: 'es-CO',
+  ARS: 'es-AR',
+  CLP: 'es-CL',
+  PEN: 'es-PE',
+  UYU: 'es-UY',
+  DOP: 'es-DO',
+  GTQ: 'es-GT',
+  CRC: 'es-CR',
+};
+
 /**
- * Number and date style for a workspace's settings, in the reader's language (M20): Spanish uses
- * Spain's style for euro businesses and Latin America's otherwise.
+ * Number and date style for a workspace's settings, in the reader's language (M20): in Spanish,
+ * the style of a country whose money it is (dollars as in the US, euros as in Spain).
  */
 export function localeFor(
   settings: { dateOrder: string; currency?: string },
   lang: Language = 'en',
 ): string {
-  if (lang === 'es') return settings.currency === 'EUR' ? 'es-ES' : 'es-MX';
+  if (lang === 'es') return SPANISH_BY_CURRENCY[settings.currency ?? ''] ?? 'es-US';
   return settings.dateOrder === 'DMY' ? 'en-GB' : settings.dateOrder === 'YMD' ? 'en-CA' : 'en-US';
 }
 
@@ -80,7 +95,7 @@ export interface AnswerView {
 }
 
 export interface ViewOptions {
-  pack: Pick<PackData, 'metrics'>;
+  pack: Pick<PackData, 'metrics'> & Partial<Pick<PackData, 'translations'>>;
   locale: string;
   currency: string;
   fiscalYearStartMonth: number;
@@ -100,6 +115,7 @@ export function formatValue(format: MetricFormat | undefined, cell: Cell, o: Vie
       return n(Number(cell), { style: 'percent', maximumFractionDigits: 1 });
     case 'days': {
       const d = Math.round(Number(cell));
+      if (langOf(o) === 'es') return `${n(d)} ${d === 1 ? 'día' : 'días'}`;
       return `${n(d)} ${d === 1 ? 'day' : 'days'}`;
     }
     default:
@@ -107,19 +123,25 @@ export function formatValue(format: MetricFormat | undefined, cell: Cell, o: Vie
   }
 }
 
+/** The reader's language follows from the locale `localeFor` gave (M20). */
+const langOf = (o: ViewOptions): Language => (o.locale.startsWith('es') ? 'es' : 'en');
+
 function displayContext(o: ViewOptions): DisplayContext {
+  const lang = langOf(o);
+  const tr = lang === 'es' ? o.pack.translations?.es?.dimensions : undefined;
   return {
     catalog: {
       calendar: { today: '', weekStart: 1, fiscalYearStartMonth: o.fiscalYearStartMonth },
       dimensions: o.pack.metrics.dimensions.map((d) => ({
         field: d.field,
-        label: d.label,
+        label: tr?.[d.field]?.label ?? d.label,
         synonyms: d.synonyms,
         values: [],
         valueSynonyms: {},
-        valueLabels: d.value_labels,
-        noun: d.noun ?? ['result', 'results'],
+        valueLabels: { ...d.value_labels, ...(tr?.[d.field]?.value_labels ?? {}) },
+        noun: tr?.[d.field]?.noun ?? d.noun ?? ['result', 'results'],
       })),
+      lang,
     },
   };
 }

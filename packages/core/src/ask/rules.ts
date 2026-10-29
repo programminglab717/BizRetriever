@@ -368,7 +368,8 @@ function entries(catalog: AskCatalog): Entry[] {
 
 interface Parsed {
   /** Every measure phrase found, in question order (a measure can appear more than once). */
-  metrics: { id: string; phrase: string; at: number }[];
+  /** `typed`: the words as the owner wrote them (with their accents). */
+  metrics: { id: string; phrase: string; at: number; typed: string }[];
   dims: string[];
   grain?: TimeGrain;
   values: { field: string; value: string; at: number }[];
@@ -386,6 +387,10 @@ function parse(question: string, catalog: AskCatalog): Parsed {
   const L = languageOf(catalog);
   const norm = (w: string) => (L.fold ? foldAccents(w) : w);
   let text = normalizeQuestion(question, L.fold);
+  // Folding accents keeps every position, so the words as typed sit at the same place here.
+  const asTyped = normalizeQuestion(question);
+  const typedAt = (at: number, len: number) =>
+    asTyped.length === text.length ? asTyped.slice(at + 1, at + 1 + len) : '';
   const p: Parsed = { metrics: [], dims: [], values: [], table: false, who: false, leftover: [] };
   // Matched words are blanked out with bars of the same length, so positions stay put.
   const blank = (at: number, len: number) => {
@@ -442,7 +447,12 @@ function parse(question: string, catalog: AskCatalog): Parsed {
       if (rank) p.rank ??= rank[1];
       switch (e.kind) {
         case 'metric':
-          p.metrics.push({ id: e.id, phrase: e.phrase, at });
+          p.metrics.push({
+            id: e.id,
+            phrase: e.phrase,
+            at,
+            typed: typedAt(at, e.phrase.length) || e.phrase,
+          });
           break;
         case 'dim':
           if (!p.dims.includes(e.field)) p.dims.push(e.field);
@@ -588,9 +598,9 @@ export function interpretWithRules(
   for (const m of p.metrics) {
     const label = (metric(m.id)?.label ?? m.id).toLowerCase();
     if (L.genericSales.has(m.phrase) && m.id === 'net_sales')
-      assumptions.push(L.text.salesMeans(m.phrase, label));
+      assumptions.push(L.text.salesMeans(m.typed, label));
     if (L.genericProfit.has(m.phrase) && m.id === 'gross_profit')
-      assumptions.push(L.text.profitMeans(m.phrase, label));
+      assumptions.push(L.text.profitMeans(m.typed, label));
   }
 
   // Breakdowns.

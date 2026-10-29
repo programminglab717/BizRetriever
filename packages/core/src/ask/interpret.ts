@@ -1,5 +1,9 @@
 import { AiError, type LLMProvider, type ModelTier } from '@bizr/ai';
-import { interpretQuestion as prompt, type AskPackCatalog } from '@bizr/ai/prompts';
+import {
+  interpretQuestion as promptEn,
+  interpretQuestionEs,
+  type AskPackCatalog,
+} from '@bizr/ai/prompts';
 import type { PackData } from '@bizr/packs';
 import { getLogger } from '@bizr/platform';
 
@@ -154,6 +158,8 @@ async function callAi(
   const relations = Object.fromEntries(
     [...queryableRelations(input.model.entities)].map(([name, r]) => [name, r.columns]),
   );
+  // Spanish readers (M20): the Spanish version of the prompt.
+  const prompt = input.catalog.lang === 'es' ? interpretQuestionEs : promptEn;
   const built = prompt.build({
     primer: pack.primer,
     catalog: askCatalog,

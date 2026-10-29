@@ -1,3 +1,4 @@
+import { translator, type Language, type Translator } from '@bizr/i18n';
 import {
   dashboard,
   dashboardTile,
@@ -379,12 +380,20 @@ async function rangeFor(
   return { range: { preset: d.preset }, compare: d.compare };
 }
 
+/** Column names in the reader's language (M20): measure and detail names from the catalog. */
+function inLanguage(data: AnswerData, t: Translator): AnswerData {
+  if (t.lang === 'en') return data;
+  return { ...data, columns: data.columns.map((c) => ({ ...c, label: t.text(c.label) })) };
+}
+
 /** Runs tiles for a date range, each as the tenant reader, with results cached by data version. */
 export async function renderTiles(
   member: MemberWorkspace,
   tiles: readonly Tile[],
   range: DashboardRange,
+  lang: Language = 'en',
 ): Promise<TileView[]> {
+  const t = translator(lang);
   const ws = member.workspace;
   if (tiles.length === 0) return [];
   const db = getAppDb();
@@ -397,7 +406,7 @@ export async function renderTiles(
   };
   const options = {
     pack,
-    locale: localeFor(member.settings),
+    locale: localeFor(member.settings, lang),
     currency: member.settings.currency,
     fiscalYearStartMonth: cc.fiscalYearStartMonth,
   };
@@ -409,44 +418,47 @@ export async function renderTiles(
   const isSnapshot = (id: string) => model.metrics.get(id)?.snapshot ?? false;
 
   return Promise.all(
-    tiles.map(async (t): Promise<TileView> => {
+    tiles.map(async (tile): Promise<TileView> => {
       const base = {
-        id: t.id,
-        title: t.title,
-        size: t.size,
-        fixedDates: t.fixedDates,
-        packKey: t.packKey,
+        id: tile.id,
+        title: tile.title,
+        size: tile.size,
+        fixedDates: tile.fixedDates,
+        packKey: tile.packKey,
       };
-      const spec: QuestionSpec = tileSpec(t, range, cal, isSnapshot);
+      const spec: QuestionSpec = tileSpec(tile, range, cal, isSnapshot);
       const key = JSON.stringify([
         ws.id,
         version?.dataVersion ?? 0,
         cc.today,
         spec,
-        t.chart,
+        tile.chart,
         options.locale,
+        lang,
       ]);
       const hit = cached(key);
       if (hit) return { ...base, ...hit };
       try {
         const r = await runQuery(member, toQuerySpec(spec, cal), 'dashboard', model);
-        const { data, note } = withoutBlankGroups(toAnswerData(r), pack);
-        const own = t.fixedDates ? periodOf(spec.timeRange, cal) : undefined;
+        const blank = withoutBlankGroups(toAnswerData(r), pack);
+        const data = inLanguage(blank.data, t);
+        const note = blank.note;
+        const own = tile.fixedDates ? periodOf(spec.timeRange, cal) : undefined;
         const view = {
-          chart: chooseChart(data, spec, t.chart),
+          chart: chooseChart(data, spec, tile.chart),
           charts: fittingCharts(data),
           table: tableView(data, options),
           kpis: kpiViews(data, options),
-          ...(t.fixedDates ? { datesLabel: periodLabel(own) } : {}),
+          ...(tile.fixedDates ? { datesLabel: periodLabel(own, lang) } : {}),
           ...(note ? { note } : {}),
-          ...(r.previousPeriod ? { comparedWith: periodLabel(r.previousPeriod) } : {}),
+          ...(r.previousPeriod ? { comparedWith: periodLabel(r.previousPeriod, lang) } : {}),
         };
         remember(key, view);
         return { ...base, ...view };
       } catch (err) {
         if (err instanceof SemanticError || err instanceof QueryExecutionError) {
-          log().warn({ err, tile: t.id }, 'tile failed');
-          return { ...base, chart: t.chart, error: 'Couldn’t load this.' };
+          log().warn({ err, tile: tile.id }, 'tile failed');
+          return { ...base, chart: tile.chart, error: t('Couldn’t load this.') };
         }
         throw err;
       }
@@ -462,6 +474,7 @@ export async function tileData(
   member: MemberWorkspace,
   tileId: string,
   requested?: DashboardRange,
+  lang: Language = 'en',
 ): Promise<{
   title: string;
   chart: ChartType;
@@ -486,12 +499,13 @@ export async function tileData(
   const spec = tileSpec(tile, range, cal, (id) => model.metrics.get(id)?.snapshot ?? false);
   const r = await runQuery(member, toQuerySpec(spec, cal), 'dashboard', model);
   const { data, note } = withoutBlankGroups(toAnswerData(r), getPack(ws.packId));
+  const t = translator(lang);
   return {
-    title: tile.title,
+    title: t.text(tile.title),
     chart: tile.chart,
-    data,
-    datesLabel: periodLabel(periodOf(spec.timeRange, cal)),
-    ...(r.previousPeriod ? { comparedWith: periodLabel(r.previousPeriod) } : {}),
+    data: inLanguage(data, t),
+    datesLabel: periodLabel(periodOf(spec.timeRange, cal), lang),
+    ...(r.previousPeriod ? { comparedWith: periodLabel(r.previousPeriod, lang) } : {}),
     ...(note ? { note } : {}),
   };
 }
@@ -499,6 +513,7 @@ export async function tileData(
 export async function dashboardView(
   member: MemberWorkspace,
   requested?: DashboardRange,
+  lang: Language = 'en',
 ): Promise<DashboardView> {
   const ws = member.workspace;
   const db = getAppDb();
@@ -509,7 +524,7 @@ export async function dashboardView(
   }
   const snapshot = await loadSnapshot(db, row);
   const range = await rangeFor(row, ws.packId, requested);
-  const tiles = await renderTiles(member, snapshot.tiles, range);
+  const tiles = await renderTiles(member, snapshot.tiles, range, lang);
 
   const { reasons } = await availableMeasures(db, ws.id);
   const removed = new Set(snapshot.removedPackTiles);
@@ -535,7 +550,7 @@ export async function dashboardView(
   };
   return {
     range,
-    rangeLabel: periodLabel(periodOf(range.range, cal)),
+    rangeLabel: periodLabel(periodOf(range.range, cal), lang),
     tiles,
     unlock,
     canUndo: versions.length > 1,

@@ -1,3 +1,4 @@
+import { translator, type Language, type Translator } from '@bizr/i18n';
 import PDFDocument from 'pdfkit';
 
 import type { ChartType } from '../ask/interpretation';
@@ -30,6 +31,8 @@ export interface PdfReport {
   subtitle: string;
   blocks: PdfBlock[];
   about: AboutLine[];
+  /** The words the layout adds ("How it was worked out"), M20. */
+  lang?: Language;
 }
 
 const MARGIN = 48;
@@ -109,7 +112,7 @@ function kpiRow(doc: Doc, kpis: readonly KpiView[]) {
 }
 
 /** A bar or line chart of the first measure, when the table has one breakdown and few rows. */
-function chartFor(doc: Doc, chart: ChartType | undefined, table: TableView) {
+function chartFor(doc: Doc, chart: ChartType | undefined, table: TableView, t: Translator) {
   if (!chart || chart === 'table' || chart === 'kpi') return;
   const metric = table.columns.findIndex((c) => c.kind === 'metric');
   const rows = table.rows.filter((r) => r.cells[metric]?.value !== null).slice(0, 40);
@@ -165,7 +168,9 @@ function chartFor(doc: Doc, chart: ChartType | undefined, table: TableView) {
   doc
     .fontSize(7)
     .text(
-      pdfSafe(`Highest: ${rows[values.indexOf(max)]?.cells[metric]?.text ?? ''}`),
+      pdfSafe(
+        t('Highest: {value}', { value: rows[values.indexOf(max)]?.cells[metric]?.text ?? '' }),
+      ),
       left,
       top - 2,
       {
@@ -179,7 +184,7 @@ function chartFor(doc: Doc, chart: ChartType | undefined, table: TableView) {
   doc.y = top + h + 20;
 }
 
-function tableOf(doc: Doc, table: TableView) {
+function tableOf(doc: Doc, table: TableView, t: Translator) {
   const cols = table.columns;
   if (cols.length === 0) return;
   const w = width(doc);
@@ -235,7 +240,13 @@ function tableOf(doc: Doc, table: TableView) {
     doc
       .fontSize(8)
       .fillColor(MUTED)
-      .text(`Shows ${shown} of ${table.totalRows} rows. The Excel download has more.`, MARGIN);
+      .text(
+        t('Shows {shown} of {total} rows. The Excel download has more.', {
+          shown,
+          total: table.totalRows,
+        }),
+        MARGIN,
+      );
   doc.moveDown(0.5);
 }
 
@@ -266,6 +277,7 @@ export async function toPdf(
     compress: options.compress ?? true,
     info: { Title: pdfSafe(report.title), Producer: 'BizRetriever', Creator: 'BizRetriever' },
   });
+  const t = translator(report.lang ?? 'en');
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
   const done = new Promise<void>((resolve) => doc.on('end', () => resolve()));
@@ -297,11 +309,11 @@ export async function toPdf(
         .moveDown(0.4);
     if (b.kpis?.length) kpiRow(doc, b.kpis);
     if (b.table) {
-      chartFor(doc, b.chart, b.table);
-      if (!b.kpis?.length || b.table.rows.length > 1) tableOf(doc, b.table);
+      chartFor(doc, b.chart, b.table, t);
+      if (!b.kpis?.length || b.table.rows.length > 1) tableOf(doc, b.table, t);
     }
-    if (b.steps?.length) list(doc, 'How it was worked out', b.steps, true);
-    if (b.notes?.length) list(doc, 'Good to know', b.notes, false);
+    if (b.steps?.length) list(doc, t('How it was worked out'), b.steps, true);
+    if (b.notes?.length) list(doc, t('Good to know'), b.notes, false);
     doc.moveDown(0.6);
   }
 

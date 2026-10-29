@@ -96,7 +96,7 @@ const hasLetters = (s: string) => /\p{L}/u.test(s);
 /** The string arguments of `t(…)`, `t.plural(n, …, …)` and `msg(…)`. */
 function keyArgs(call: ts.CallExpression): ts.Expression[] {
   const c = call.expression;
-  if (ts.isIdentifier(c) && (c.text === 't' || c.text === 'msg')) return call.arguments.slice(0, 1);
+  if (ts.isIdentifier(c) && ['t', 'tr', 'msg'].includes(c.text)) return call.arguments.slice(0, 1);
   if (ts.isPropertyAccessExpression(c) && c.name.text === 'plural' && ts.isIdentifier(c.expression))
     return call.arguments.slice(1, 3);
   return [];
@@ -206,7 +206,12 @@ describe('translations', () => {
 
   it('has a Spanish entry for every string the app translates', () => {
     const es = catalogs.es;
-    const missing = all.flatMap((f) =>
+    // Core services write emails, files and answers with the same translator (M20).
+    const core = path.join(SRC, '../../../packages/core/src');
+    const coreKeys = files(core)
+      .filter((f) => !/\.test\.ts$/.test(f))
+      .map((file) => ({ rel: path.relative(SRC, file), ...scan(file) }));
+    const missing = [...all, ...coreKeys].flatMap((f) =>
       f.keys.filter((k) => es[k.text] === undefined).map((k) => `${f.rel}:${k.line} "${k.text}"`),
     );
     expect(missing).toEqual([]);

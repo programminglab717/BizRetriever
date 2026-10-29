@@ -13,6 +13,8 @@ import { getEnv, getLogger } from '@bizr/platform';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { translator } from '@bizr/i18n';
+
 import { sendEmail } from '@/lib/email';
 import { getT } from '@/lib/i18n';
 import { requireWorkspace } from '@/lib/session';
@@ -49,11 +51,22 @@ export async function inviteMember(
     const invite = await createInvite(member, member.user.id, String(email).slice(0, 254), r.data);
     const env = getEnv();
     const link = `${env.APP_URL}/invite/${invite.token}`;
-    const what = r.data === 'viewer' ? 'see' : 'help run';
+    // The person invited has no language yet: the business's (M20).
+    const tr = translator(member.settings.language);
+    const vars = { who: member.user.name, business: member.workspace.name, link };
     await sendEmail({
       to: invite.email,
-      subject: `${member.user.name} invited you to ${member.workspace.name} on BizRetriever`,
-      text: `${member.user.name} invited you to ${what} ${member.workspace.name} on BizRetriever.\n\nJoin here (the link works for 7 days):\n${link}\n`,
+      subject: tr('{who} invited you to {business} on BizRetriever', vars),
+      text:
+        r.data === 'viewer'
+          ? tr(
+              '{who} invited you to see {business} on BizRetriever.\n\nJoin here (the link works for 7 days):\n{link}\n',
+              vars,
+            )
+          : tr(
+              '{who} invited you to help run {business} on BizRetriever.\n\nJoin here (the link works for 7 days):\n{link}\n',
+              vars,
+            ),
     });
     return { link, emailed: Boolean(env.RESEND_API_KEY) };
   });

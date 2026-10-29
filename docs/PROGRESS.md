@@ -2,22 +2,58 @@
 
 ## Current Status
 
-- **Milestone:** M19 (Team extras, $0) is **built and checked automatically**. M15–M18 are done (CI green). The owner asked for everything that needs no account or key to be built and tested without AI ("we will test once we are done completely"). Build order: M15–M20 in PLAN.md; next and last is M20.
+- **Milestone:** M20 (Other currencies, and Spanish, $0) is **built and checked automatically**. With it, every milestone in PLAN.md's build order (M15–M20) is done. The owner asked for everything that needs no account or key to be built and tested without AI ("we will test once we are done completely").
 - **Branch:** `claude/elegant-hopper-dtc9gi`.
-- **New in M19** (ADR-069):
-  - **Hand over this business** (Settings): the owner offers it to someone in it, who accepts or declines. Only then do the two swap roles. The database now allows exactly one owner.
-  - **@mentions in notes:** type @ to pick someone. They see it under "For you" on Home and get an email, which they can turn off.
-  - **Safety fix:** the SQL check's CTE scan can no longer overflow on a very deep expression; it refuses it.
-- **Tests:** 968 unit/integration pass; 40 e2e pass (new: handing over; mentions inside the team journey). Evals unchanged (retail questions 0.929, wholesale 0.983, ingest 12/12).
+- **New in M20** (ADR-070, ADR-071):
+  - **Other currencies:** amounts in another currency (from the header, a Currency column or the value) are converted to the business's currency at the European Central Bank's rate for each record's date, before loading. Amounts with no published rate are left empty and listed. The review, data report and money answers say so. The business's currency is fixed once records are in.
+  - **Spanish, everywhere people read:** every screen; the packs (names, measures, tiles, insight sentences, example questions); Ask (Spanish questions understood by the rules, answers written in Spanish); insights; emails; PDFs and downloads; Spanish files' column headers. AI prompts have Spanish versions.
+  - **Who reads what:** each person picks their language in Settings ("You"); the business has a default (asked at onboarding, from the browser); else the browser's.
+- **Tests:** 1,000 unit/integration pass; 41 e2e pass (new: the Spanish journey). Evals: Spanish questions 0.953 (new, rules only); English unchanged (retail 0.929, wholesale 0.983, ingest 12/12).
 - **Waiting on the owner** (testing after everything is built, by their choice):
   - the Anthropic API key (Q20), email domain (Q25), Shopify app (Q26)
   - developer apps for QuickBooks, Xero and Square (Q30)
+  - a native speaker's read-through of the Spanish (Q31); currencies the ECB doesn't publish (Q32)
   - a live Google Sheet, Google sign-in, rehearsals (Q24); Q27–Q29
 - **Spend to date:** $0 infrastructure, $0 AI.
 
 ---
 
 ## Session log
+
+### 2026-10-29 — Session 23: M20 built (other currencies, Spanish)
+
+**Completed:**
+
+- **Part 1, currencies** (commit 40b0343, migration 0026):
+  - detection in `@bizr/ingest` (`values/currency.ts`); `materialize` marks money fields in another currency (header, Currency column, value); derived amounts and merged records carry it
+  - `core/currency`: exact BigInt conversion, rate book with a week's look-back, ECB XML parser and fetch (host allow-listed), `app.fx_rate`, `fx.daily` job in the daily schedule
+  - conversion before load in the review's test run, first load and updates; lines take their order's date
+  - review and report notes, `converted_currencies`, an assumption on money answers, the business currency locked after the first import
+  - tests on a sample in the ECB's published format (no network): the arithmetic, weekends, missing rates, and an import of euro, dollar and dirham orders end to end
+- **Part 2, the language layer** (commit a3b60c3):
+  - `@bizr/i18n`: `t`, `t.plural`, `t.ctx`, `t.text` (stored English matched to the catalog's templates, values inside translated too), `msg`, `pickLanguage`
+  - `user_preference.language`, `workspace_settings.language`; `getLanguage()`/`getT()` on the server (proxy passes the business), `useT()` in the browser with only the reader's catalog
+  - every web file translated (about 900 strings across ~110 files, done by area in parallel), a Spanish catalog per area plus core service text (528 entries)
+  - the coverage test (`i18n.test.ts`) and the catalog test (placeholders, clashes, Spanish jargon)
+  - Settings: "Your language"; Business details and onboarding: the business's language
+- **Part 3, packs, Ask and insights:**
+  - `packs/*/i18n/es.yaml` for retail and wholesale, validated as complete; a generated catalog for pack labels; Spanish headers and value words added to the synonyms; accent-free header matching
+  - `rules-es.ts` plus Spanish estimate rules; the Ask catalog in Spanish (labels, synonyms in both languages); Spanish answer sentences, steps, titles, period and time labels, estimate answers; numbers and dates in a Spanish locale matching the currency
+  - insights re-filled from stored facts with the pack's Spanish sentence; alert settings in Spanish
+  - Spanish question eval: `evals/questions/retail.es.yaml` (211 cases written separately from the rules), `pnpm eval -- --suite questions --lang es`: 0.678 at first, 0.953 after the fixes (baseline saved)
+- **Part 4:**
+  - emails in the recipient's language: weekly summary, urgent alerts, mentions, handovers, report emails, invites (the business's), sign-up and reset (the person's own or their browser's)
+  - PDFs, Excel and CSV downloads (headings, about lines, dashboard, records) in the reader's language; report PDFs in the recipient's
+  - Spanish v2 of four prompts (answers, custom-calculation steps, question meaning, import summary), used only for Spanish readers; v1 and its recordings unchanged
+  - the demo shop takes the person's language; e2e `spanish.spec.ts`
+  - docs: ADR-070, ADR-071, PLAN M20 ticked, Q31, Q32, R53, R54, CLAUDE.md eval command
+
+**Found on the way:** an inverted-question-mark "¿" wasn't stripped from questions; pack translation needed `words` for text facts (up/down); a field label and a button shared the English "Change" (now `t.ctx`).
+
+**Left in English on purpose:** the public API, MCP server and `/admin`; AI-phrased insight sentences (Spanish readers get the pack's); the data chat's and dashboard-edit's own rules (Spanish goes to the AI); answers already asked keep their language.
+
+**Next steps:** none in the build order. The owner's items: Q20, Q24–Q32. When the API key is available, run the AI evals including Spanish (`pnpm eval -- --ai --limit N`, and `--lang es`).
+
 
 ### 2026-10-28 — Session 22: M19 built (handing over, @mentions)
 

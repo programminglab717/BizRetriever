@@ -73,7 +73,13 @@ async function testProposal(
 ): Promise<ProposalReview> {
   const specs = entitySpecs(ctx.pack);
   const { result, conversion } = await materializeRun(ctx, tables, proposal, specs, options.result);
-  const facts = proposalFacts(result, proposal, ctx.pack, ctx.uploads.length);
+  const facts = proposalFacts(
+    result,
+    proposal,
+    ctx.pack,
+    ctx.uploads.length,
+    ctx.settings.language,
+  );
   // Re-use the previous wording when it still fits the facts (no AI call for every correction).
   const summary =
     options.previousTemplate &&
@@ -82,6 +88,7 @@ async function testProposal(
       : await summarizeProposal(facts, proposal, {
           provider: getAiProvider(),
           workspaceId: ctx.workspace.id,
+          lang: ctx.settings.language,
         });
   return buildReview({
     result,

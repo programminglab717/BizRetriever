@@ -354,13 +354,14 @@ async function render(
           assumptions,
           ...ai,
           workspaceId: ws.id,
+          lang,
         });
         return {
           kind: 'query',
           aiCalls: narration.aiCalls,
           content: {
             title,
-            headline: renderTemplate(narration.template, facts.facts, fmt),
+            headline: sentenceCase(renderTemplate(narration.template, facts.facts, fmt), lang),
             narration: narration.origin,
             data,
             chart: chooseChart(data, spec, i.chart),
@@ -412,8 +413,9 @@ async function render(
           assumptions: i.assumptions,
           ...ai,
           workspaceId: ws.id,
+          lang,
         }),
-        explainFallbackSql({ sql: run.sql, records, ...ai, workspaceId: ws.id }),
+        explainFallbackSql({ sql: run.sql, records, ...ai, workspaceId: ws.id, lang }),
       ]);
       return {
         kind: 'sql',
@@ -458,6 +460,16 @@ function inLanguage(data: AnswerData, ctx: AskContext): AnswerData {
       return label ? { ...c, label } : c;
     }),
   };
+}
+
+/** Spanish month names are lower case: a sentence starting with one starts with a capital (M20). */
+function sentenceCase(segments: Segment[], lang: Language): Segment[] {
+  const first = segments[0];
+  if (lang === 'en' || !first?.text) return segments;
+  return [
+    { ...first, text: `${first.text[0]!.toUpperCase()}${first.text.slice(1)}` },
+    ...segments.slice(1),
+  ];
 }
 
 function failed(err: unknown, title: string): Rendered {

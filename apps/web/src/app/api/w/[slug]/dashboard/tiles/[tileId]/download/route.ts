@@ -2,6 +2,7 @@ import { dashboardRangeSchema } from '@bizr/core/dashboard';
 import { tileDownload } from '@bizr/core/export';
 
 import { fileResponse, formatParam, notFound } from '@/lib/download';
+import { getLanguage } from '@/lib/i18n';
 import { workspaceForApi } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,13 @@ export async function GET(
         compare: url.searchParams.get('compare') !== '0',
       })
     : undefined;
-  const file = await tileDownload(member, tileId, format, range?.success ? range.data : undefined);
+  const file = await tileDownload(
+    member,
+    tileId,
+    format,
+    range?.success ? range.data : undefined,
+    new Date(),
+    await getLanguage(),
+  );
   return file ? fileResponse(file) : notFound();
 }

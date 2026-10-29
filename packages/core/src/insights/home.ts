@@ -1,3 +1,4 @@
+import type { Language } from '@bizr/i18n';
 import { getAppDb, metric } from '@bizr/db';
 import { getPack } from '@bizr/packs';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -22,8 +23,9 @@ export interface HomeKpis {
 
 export async function homeKpis(
   member: MemberWorkspace,
-  options: { now?: Date } = {},
+  options: { now?: Date; lang?: Language } = {},
 ): Promise<HomeKpis> {
+  const lang = options.lang ?? 'en';
   const ws = member.workspace;
   const homeKpis = getPack(ws.packId).manifest.key_numbers.home;
   if (homeKpis.length === 0) return { kpis: [], comparedWith: null };
@@ -58,11 +60,11 @@ export async function homeKpis(
     return {
       kpis: kpiViews(toAnswerData(r), {
         pack: getPack(ws.packId),
-        locale: localeFor(member.settings),
+        locale: localeFor(member.settings, lang),
         currency: member.settings.currency,
         fiscalYearStartMonth: member.settings.fiscalYearStartMonth,
       }),
-      comparedWith: r.previousPeriod ? periodLabel(r.previousPeriod) : null,
+      comparedWith: r.previousPeriod ? periodLabel(r.previousPeriod, lang) : null,
     };
   } catch (err) {
     if (err instanceof SemanticError || err instanceof QueryExecutionError)

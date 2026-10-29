@@ -11,6 +11,12 @@ export { phraseInsightsV1 as phraseInsights } from './phrase_insights/v1';
 export { reviseDataModelV1 as reviseDataModel } from './revise_data_model/v1';
 export { summarizeProposalV1 as summarizeProposal } from './summarize_proposal/v1';
 
+// For Spanish readers (M20): v1 plus Spanish rules. English readers keep v1 (and its recordings).
+export { explainSqlV2 as explainSqlEs } from './explain_sql/v2';
+export { interpretQuestionV2 as interpretQuestionEs } from './interpret_question/v2';
+export { narrateAnswerV2 as narrateAnswerEs } from './narrate_answer/v2';
+export { summarizeProposalV2 as summarizeProposalEs } from './summarize_proposal/v2';
+
 export type { ProposeDataModelInput } from './propose_data_model/v1';
 export type { ExplainSqlInput } from './explain_sql/v1';
 export type { AskPackCatalog, InterpretQuestionInput } from './interpret_question/v1';

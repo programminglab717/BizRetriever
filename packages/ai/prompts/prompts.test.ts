@@ -102,3 +102,21 @@ describe('prompts', () => {
     }
   });
 });
+
+describe('Spanish prompts (M20)', () => {
+  it('are new versions of the released English ones, with the Spanish rules added', async () => {
+    const es = await import('./active');
+    for (const [en, sp] of [
+      [es.narrateAnswer, es.narrateAnswerEs],
+      [es.explainSql, es.explainSqlEs],
+      [es.interpretQuestion, es.interpretQuestionEs],
+      [es.summarizeProposal, es.summarizeProposalEs],
+    ] as const) {
+      expect(sp.task).toBe(en.task);
+      expect(sp.version).not.toBe(en.version);
+      expect(sp.version.endsWith('@v2')).toBe(true);
+      expect(sp.system.startsWith(en.system)).toBe(true);
+      expect(sp.system).toContain('Spanish');
+    }
+  });
+});

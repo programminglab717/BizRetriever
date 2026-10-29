@@ -146,7 +146,7 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
   // The data changed or a new day began since the last check: look again (one run per business).
   if (overview.stale) await queueInsights(member.workspace.id, 'home');
   const [kpis, digest, goals] = await Promise.all([
-    homeKpis(member),
+    homeKpis(member, { lang: t.lang }),
     currentDigest(member),
     goalProgress(member),
   ]);

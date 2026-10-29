@@ -108,14 +108,16 @@ export interface AboutLine {
  * An Excel workbook: one tab per sheet with a bold, frozen header and number formats, plus an
  * "About this file" tab (the question, dates, assumptions, what was left out).
  */
-export async function toXlsx(sheets: readonly Sheet[], about: readonly AboutLine[] = []) {
+export async function toXlsx(
+  sheets: readonly Sheet[],
+  about: readonly AboutLine[] = [],
+  /** "About this file", in the reader's language (M20). */
+  aboutName = 'About this file',
+) {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'BizRetriever';
   wb.created = new Date();
-  const names = sheetNames([
-    ...sheets.map((s) => s.name),
-    ...(about.length ? ['About this file'] : []),
-  ]);
+  const names = sheetNames([...sheets.map((s) => s.name), ...(about.length ? [aboutName] : [])]);
   sheets.forEach((s, n) => {
     const ws = wb.addWorksheet(names[n] ?? s.name, { views: [{ state: 'frozen', ySplit: 1 }] });
     ws.columns = s.columns.map((c, i) => {
@@ -134,7 +136,7 @@ export async function toXlsx(sheets: readonly Sheet[], about: readonly AboutLine
     for (const r of s.rows) ws.addRow(s.columns.map((c, i) => xlsxCell(c.type, r[i] ?? null)));
   });
   if (about.length) {
-    const ws = wb.addWorksheet(names.at(-1) ?? 'About this file');
+    const ws = wb.addWorksheet(names.at(-1) ?? aboutName);
     ws.columns = [{ width: 18 }, { width: 90 }];
     for (const line of about) {
       const row = ws.addRow([line.label, line.value.slice(0, XLSX_TEXT_MAX)]);

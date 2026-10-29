@@ -6,10 +6,12 @@ import {
   workspaceMember,
   type OwnershipTransfer,
 } from '@bizr/db';
+import { translator, type Translator } from '@bizr/i18n';
 import { getEnv, getLogger } from '@bizr/platform';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 
 import { claim, deliver } from '../insights/email';
+import { readerLanguage, userLanguage } from '../workspaces/language';
 import { NotAllowedError, type MemberWorkspace } from '../workspaces/service';
 import { TeamError } from './notes';
 
@@ -64,12 +66,14 @@ async function tell(
   member: MemberWorkspace,
   to: { userId: string; email: string; verified: boolean },
   key: string,
-  subject: string,
-  text: string,
+  /** Subject and text, in the reader's language (M20). */
+  write: (t: Translator) => { subject: string; text: string },
 ): Promise<void> {
   // Only to addresses the person has confirmed are theirs; Settings shows it either way.
   if (!to.verified) return;
   try {
+    const t = translator(readerLanguage(await userLanguage(to.userId), member.settings));
+    const { subject, text } = write(t);
     const fresh = await claim(member.workspace.id, to.userId, 'ownership', [key]);
     if (fresh.length === 0) return;
     const link = new URL(`/w/${member.workspace.slug}/settings`, getEnv().APP_URL).toString();
@@ -157,8 +161,20 @@ export async function startTransfer(
     member,
     { userId: input.toUserId, email: to.email, verified: to.verified },
     t.id,
-    `${me?.name ?? 'The owner'} wants to make you the owner of ${member.workspace.name}`,
-    `${me?.name ?? 'The owner'} has asked you to become the owner of ${member.workspace.name} on BizRetriever. As the owner you'd decide who is part of the business, and could delete it. Nothing changes until you accept, within ${TRANSFER_DAYS} days, in Settings:`,
+    (tr) => {
+      const vars = {
+        who: me?.name ?? tr('The owner'),
+        business: member.workspace.name,
+        days: TRANSFER_DAYS,
+      };
+      return {
+        subject: tr('{who} wants to make you the owner of {business}', vars),
+        text: tr(
+          "{who} has asked you to become the owner of {business} on BizRetriever. As the owner you'd decide who is part of the business, and could delete it. Nothing changes until you accept, within {days} days, in Settings:",
+          vars,
+        ),
+      };
+    },
   );
   return (await currentTransfer(member, userId, now))!;
 }
@@ -258,12 +274,21 @@ export async function answerTransfer(
       member,
       { userId: done.fromUserId, email: from.email, verified: from.verified },
       `${done.id}:${accept ? 'accepted' : 'declined'}`,
-      accept
-        ? `${to?.name ?? 'They'} is now the owner of ${member.workspace.name}`
-        : `${to?.name ?? 'They'} didn’t take over ${member.workspace.name}`,
-      accept
-        ? `${to?.name ?? 'They'} accepted, and is now the owner of ${member.workspace.name}. You're still part of the business, as a member.`
-        : `${to?.name ?? 'They'} said no, so you're still the owner of ${member.workspace.name}.`,
+      (tr) => {
+        const vars = { who: to?.name ?? tr('They'), business: member.workspace.name };
+        return accept
+          ? {
+              subject: tr('{who} is now the owner of {business}', vars),
+              text: tr(
+                "{who} accepted, and is now the owner of {business}. You're still part of the business, as a member.",
+                vars,
+              ),
+            }
+          : {
+              subject: tr('{who} didn’t take over {business}', vars),
+              text: tr("{who} said no, so you're still the owner of {business}.", vars),
+            };
+      },
     );
   return accept ? 'accepted' : 'declined';
 }

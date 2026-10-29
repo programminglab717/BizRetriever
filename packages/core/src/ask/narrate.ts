@@ -1,5 +1,11 @@
 import { AiError, type LLMProvider } from '@bizr/ai';
-import { explainSql as explainPrompt, narrateAnswer as narratePrompt } from '@bizr/ai/prompts';
+import {
+  explainSql as explainPromptEn,
+  explainSqlEs,
+  narrateAnswer as narratePromptEn,
+  narrateAnswerEs,
+} from '@bizr/ai/prompts';
+import type { Language } from '@bizr/i18n';
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
@@ -21,6 +27,8 @@ export interface NarrateInput {
   assumptions: readonly string[];
   provider: LLMProvider | null;
   aiMode?: 'auto' | 'never';
+  /** The reader's language (M20): Spanish readers get the Spanish prompt. */
+  lang?: Language;
   workspaceId?: string | null;
 }
 
@@ -60,6 +68,7 @@ export async function narrate(input: NarrateInput): Promise<Narration> {
   });
   if (!input.provider || input.aiMode === 'never' || input.data.rows.length === 0)
     return template(0);
+  const narratePrompt = input.lang === 'es' ? narrateAnswerEs : narratePromptEn;
   const names = Object.keys(input.facts.facts);
   if (names.length === 0) return template(0);
 
@@ -121,6 +130,8 @@ export async function explainFallbackSql(input: {
   records: Record<string, string>;
   provider: LLMProvider | null;
   aiMode?: 'auto' | 'never';
+  /** The reader's language (M20): Spanish readers get the Spanish prompt. */
+  lang?: Language;
   workspaceId?: string | null;
 }): Promise<SqlExplanation> {
   const used = Object.entries(input.records)
@@ -135,6 +146,7 @@ export async function explainFallbackSql(input: {
     ],
   };
   if (!input.provider || input.aiMode === 'never') return generic;
+  const explainPrompt = input.lang === 'es' ? explainSqlEs : explainPromptEn;
   try {
     const built = explainPrompt.build({ sql: input.sql, records: input.records });
     const res = await input.provider.generate({

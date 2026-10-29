@@ -1,6 +1,7 @@
 import { answerDownload } from '@bizr/core/export';
 
 import { fileResponse, formatParam, notFound } from '@/lib/download';
+import { getLanguage } from '@/lib/i18n';
 import { workspaceForApi } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,6 @@ export async function GET(
   const member = await workspaceForApi(slug);
   const format = formatParam(new URL(request.url));
   if (!member || !format) return notFound();
-  const file = await answerDownload(member, answerId, format);
+  const file = await answerDownload(member, answerId, format, new Date(), await getLanguage());
   return file ? fileResponse(file) : notFound();
 }

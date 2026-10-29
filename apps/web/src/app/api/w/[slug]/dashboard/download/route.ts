@@ -2,6 +2,7 @@ import { dashboardRangeSchema } from '@bizr/core/dashboard';
 import { dashboardPdf } from '@bizr/core/export';
 
 import { fileResponse, notFound } from '@/lib/download';
+import { getLanguage } from '@/lib/i18n';
 import { workspaceForApi } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -22,5 +23,12 @@ export async function GET(
         compare: url.searchParams.get('compare') !== '0',
       })
     : undefined;
-  return fileResponse(await dashboardPdf(member, range?.success ? range.data : undefined));
+  return fileResponse(
+    await dashboardPdf(
+      member,
+      range?.success ? range.data : undefined,
+      new Date(),
+      await getLanguage(),
+    ),
+  );
 }
