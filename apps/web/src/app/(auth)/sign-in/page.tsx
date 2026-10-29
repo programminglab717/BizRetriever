@@ -5,10 +5,14 @@ import { redirect } from 'next/navigation';
 import { SignInForm } from '@/components/auth/sign-in-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isGoogleEnabled } from '@/lib/auth';
+import { getT } from '@/lib/i18n';
 import { safeNextPath } from '@/lib/redirects';
 import { getSession, homePathFor } from '@/lib/session';
 
-export const metadata: Metadata = { title: 'Sign in · BizRetriever' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t('Sign in · BizRetriever') };
+}
 
 export default async function SignInPage({
   searchParams,
@@ -18,20 +22,22 @@ export default async function SignInPage({
   const session = await getSession();
   if (session) redirect(await homePathFor(session.user.id));
   const next = safeNextPath((await searchParams).next);
+  const t = await getT();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Welcome back</CardTitle>
+        <CardTitle>{t('Welcome back')}</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-6">
         <SignInForm googleEnabled={isGoogleEnabled()} {...(next ? { next } : {})} />
         <p className="text-center text-sm text-muted-foreground">
-          New here?{' '}
+          {t('New here?')}{' '}
           <Link
+            // i18n-skip: a path
             href={next ? `/sign-up?next=${encodeURIComponent(next)}` : '/sign-up'}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
-            Create a free account
+            {t('Create a free account')}
           </Link>
         </p>
       </CardContent>

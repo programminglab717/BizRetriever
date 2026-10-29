@@ -5,6 +5,7 @@ import { getLogger } from '@bizr/platform';
 import type { Route } from 'next';
 import { redirect } from 'next/navigation';
 
+import { getT } from '@/lib/i18n';
 import { kickJobs } from '@/lib/imports';
 import { getJobQueue } from '@/lib/jobs';
 import { requireUser } from '@/lib/session';
@@ -26,7 +27,8 @@ export async function tryDemoShop(_previous: DemoState, _form: FormData): Promis
     target = `/w/${member.workspace.slug}/data/import/${runId}` as Route;
   } catch (err) {
     getLogger('demo').error({ err, userId: user.id }, 'demo shop failed');
-    return { error: 'We couldn’t set up the demo shop just now. Please try again.' };
+    const t = await getT();
+    return { error: t('We couldn’t set up the demo shop just now. Please try again.') };
   }
   redirect(target);
 }

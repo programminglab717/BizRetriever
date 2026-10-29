@@ -12,6 +12,7 @@ import {
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
+import { getT } from '@/lib/i18n';
 import { kickJobs } from '@/lib/imports';
 import { getJobQueue } from '@/lib/jobs';
 import { requireEditor } from '@/lib/session';
@@ -61,9 +62,10 @@ async function run(slug: string, fn: () => Promise<void>): Promise<ActionResult>
     kickJobs();
     return {};
   } catch (err) {
-    if (err instanceof IngestionRequestError) return { error: err.message };
+    const t = await getT();
+    if (err instanceof IngestionRequestError) return { error: t.text(err.message) };
     getLogger('imports').error({ err, slug }, 'review action failed');
-    return { error: 'Something went wrong. Please try again.' };
+    return { error: t('Something went wrong. Please try again.') };
   }
 }
 
@@ -74,13 +76,14 @@ export async function reviewAction(
   action: ReviewAction,
 ): Promise<ActionResult> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const parsed = actionSchema.safeParse(action);
   if (
     !parsed.success ||
     !idSchema.safeParse(runId).success ||
     !idSchema.safeParse(proposalId).success
   )
-    return { error: 'That change isn’t possible here.' };
+    return { error: t('That change isn’t possible here.') };
   return run(slug, async () =>
     reviseRun({
       member,
@@ -99,8 +102,9 @@ export async function approveImport(
   proposalId: string,
 ): Promise<ActionResult> {
   const member = await requireEditor(slug);
+  const t = await getT();
   if (!idSchema.safeParse(runId).success || !idSchema.safeParse(proposalId).success)
-    return { error: 'This page is out of date. Please reload it.' };
+    return { error: t('This page is out of date. Please reload it.') };
   return run(slug, async () =>
     approveRun({ member, userId: member.user.id, runId, proposalId, queue: await getJobQueue() }),
   );
@@ -108,7 +112,8 @@ export async function approveImport(
 
 export async function cancelImport(slug: string, runId: string): Promise<ActionResult> {
   const member = await requireEditor(slug);
-  if (!idSchema.safeParse(runId).success) return { error: 'We couldn’t find that import.' };
+  const t = await getT();
+  if (!idSchema.safeParse(runId).success) return { error: t('We couldn’t find that import.') };
   return run(slug, () => cancelRun(member, runId));
 }
 
@@ -124,9 +129,10 @@ export async function mergeImport(
   resolutions: Record<string, 'mine' | 'theirs'>,
 ): Promise<ActionResult> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const parsed = resolutionsSchema.safeParse(resolutions);
   if (!idSchema.safeParse(runId).success || !parsed.success)
-    return { error: 'This page is out of date. Please reload it.' };
+    return { error: t('This page is out of date. Please reload it.') };
   return run(slug, async () =>
     mergeRun({
       member,
@@ -141,7 +147,8 @@ export async function mergeImport(
 /** "Undo this update": new records are hidden and changed details get their old values back. */
 export async function undoImport(slug: string, runId: string): Promise<ActionResult> {
   const member = await requireEditor(slug);
-  if (!idSchema.safeParse(runId).success) return { error: 'We couldn’t find that import.' };
+  const t = await getT();
+  if (!idSchema.safeParse(runId).success) return { error: t('We couldn’t find that import.') };
   return run(slug, async () => {
     await undoRun(member, member.user.id, runId);
   });

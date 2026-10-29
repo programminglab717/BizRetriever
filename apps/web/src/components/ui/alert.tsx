@@ -10,6 +10,7 @@ export function Alert({
 }: React.ComponentProps<'div'> & { tone?: 'info' | 'error' | 'success' }) {
   return (
     <div
+      // i18n-skip: ARIA roles
       role={tone === 'error' ? 'alert' : 'status'}
       className={cn(
         'rounded-md border px-4 py-3 text-sm',

@@ -3,10 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/lib/auth-client';
 
 export function SignOutButton({ className }: { className?: string }) {
+  const t = useT();
   const router = useRouter();
   const [pending, setPending] = useState(false);
   return (
@@ -24,7 +26,7 @@ export function SignOutButton({ className }: { className?: string }) {
         });
       }}
     >
-      Sign out
+      {t('Sign out')}
     </Button>
   );
 }

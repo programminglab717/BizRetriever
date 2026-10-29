@@ -8,6 +8,7 @@ import {
   cancelOwnership,
   offerOwnership,
 } from '@/app/w/[slug]/settings/ownership-actions';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
@@ -28,6 +29,7 @@ export function HandOver({
   people: { id: string; name: string }[];
   waiting: TransferView | null;
 }) {
+  const t = useT();
   const [to, setTo] = useState(people[0]?.id ?? '');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -36,24 +38,31 @@ export function HandOver({
     start(async () => {
       setError(null);
       const r = await fn();
-      if (!r.ok) setError(r.error ?? 'Please try again.');
+      if (!r.ok) setError(r.error ?? t('Please try again.'));
       else setConfirm('');
     });
+  const [waitingBefore, waitingAfter] = waiting
+    ? t('Waiting for {name} to accept, until {date}.', {
+        date: day.format(new Date(waiting.expiresAt)),
+      }).split('{name}')
+    : [];
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Hand over this business</CardTitle>
+        <CardTitle>{t('Hand over this business')}</CardTitle>
         <CardDescription>
-          Make someone already in the business its owner. Nothing changes until they accept. Then
-          you stay in it as a member.
+          {t(
+            'Make someone already in the business its owner. Nothing changes until they accept. Then you stay in it as a member.',
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 text-sm">
         {waiting ? (
           <div className="grid gap-2" data-testid="handover-waiting">
             <p>
-              Waiting for <span className="font-medium">{waiting.toName}</span> to accept, until{' '}
-              {day.format(new Date(waiting.expiresAt))}.
+              {waitingBefore}
+              <span className="font-medium">{waiting.toName}</span>
+              {waitingAfter}
             </p>
             <div>
               <Button
@@ -61,13 +70,13 @@ export function HandOver({
                 disabled={pending}
                 onClick={() => act(() => cancelOwnership(slug))}
               >
-                Cancel the handover
+                {t('Cancel the handover')}
               </Button>
             </div>
           </div>
         ) : people.length === 0 ? (
           <p className="text-muted-foreground">
-            Invite the person first: they need to be part of the business.
+            {t('Invite the person first: they need to be part of the business.')}
           </p>
         ) : (
           <form
@@ -77,7 +86,7 @@ export function HandOver({
               act(() => offerOwnership(slug, to, confirm));
             }}
           >
-            <Field id="handover-to" label="New owner">
+            <Field id="handover-to" label={t('New owner')}>
               <Select id="handover-to" value={to} onChange={(e) => setTo(e.target.value)}>
                 {people.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -86,7 +95,10 @@ export function HandOver({
                 ))}
               </Select>
             </Field>
-            <Field id="handover-confirm" label={`Type “${businessName}” to hand it over`}>
+            <Field
+              id="handover-confirm"
+              label={t('Type “{name}” to hand it over', { name: businessName })}
+            >
               <Input
                 id="handover-confirm"
                 value={confirm}
@@ -96,7 +108,7 @@ export function HandOver({
             </Field>
             <div>
               <Button type="submit" disabled={pending || confirm.trim() !== businessName}>
-                Ask them to take over
+                {t('Ask them to take over')}
               </Button>
             </div>
           </form>
@@ -117,6 +129,7 @@ export function TakeOver({
   transfer: TransferView;
   businessName: string;
 }) {
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -127,20 +140,25 @@ export function TakeOver({
       if (!r.ok) return setError(r.error);
       setDone(
         r.data === 'accepted'
-          ? `You’re now the owner of ${businessName}.`
-          : 'You said no. Nothing changed.',
+          ? t('You’re now the owner of {name}.', { name: businessName })
+          : t('You said no. Nothing changed.'),
       );
     });
   return (
     <Card className="border-primary/40" data-testid="takeover">
       <CardHeader>
         <CardTitle>
-          {transfer.fromName} wants to make you the owner of {businessName}
+          {t('{from} wants to make you the owner of {name}', {
+            from: transfer.fromName,
+            name: businessName,
+          })}
         </CardTitle>
         <CardDescription>
-          As the owner you decide who is part of the business, connect other apps, and can delete
-          it. {transfer.fromName} stays in it as a member. Answer by{' '}
-          {day.format(new Date(transfer.expiresAt))}.
+          {t(
+            'As the owner you decide who is part of the business, connect other apps, and can delete it.',
+          )}{' '}
+          {t('{name} stays in it as a member.', { name: transfer.fromName })}{' '}
+          {t('Answer by {date}.', { date: day.format(new Date(transfer.expiresAt)) })}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-2 text-sm">
@@ -149,10 +167,10 @@ export function TakeOver({
         ) : (
           <div className="flex flex-wrap gap-2">
             <Button disabled={pending} onClick={() => answer(true)}>
-              Become the owner
+              {t('Become the owner')}
             </Button>
             <Button variant="outline" disabled={pending} onClick={() => answer(false)}>
-              No thanks
+              {t('No thanks')}
             </Button>
           </div>
         )}

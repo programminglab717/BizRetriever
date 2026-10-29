@@ -106,6 +106,7 @@ describe('bundled packs', () => {
       dashboard: retail.dashboard,
       insights: retail.insights,
       primer: retail.primer,
+      translations: retail.translations,
     });
   });
 

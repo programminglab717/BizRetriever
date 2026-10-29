@@ -1,10 +1,12 @@
 import type { FieldMeta } from '@bizr/core/records';
+import type { Translator } from '@bizr/i18n/translate';
 
 /** How a stored value reads in the records browser. Values arrive as text from the server. */
 export function formatValue(
   field: FieldMeta,
   value: string | null,
   currency: string,
+  t: Translator,
   locale = 'en-US',
 ): string {
   if (value === null || value === '') return '';
@@ -46,18 +48,18 @@ export function formatValue(
       }).format(new Date(Date.UTC(+m[1]!, +m[2]! - 1, +m[3]!, +m[4]!, +m[5]!)));
     }
     case 'boolean':
-      return value === 'true' ? 'Yes' : value === 'false' ? 'No' : value;
+      return value === 'true' ? t('Yes') : value === 'false' ? t('No') : value;
     case 'text':
-      return field.allowedValues?.length ? valueLabel(field, value) : value;
+      return field.allowedValues?.length ? valueLabel(field, value, t) : value;
     default:
       return value;
   }
 }
 
 /** "online_store" → the pack's label ("Website"), else "Online store". */
-export function valueLabel(field: FieldMeta, value: string): string {
+export function valueLabel(field: FieldMeta, value: string, t: Translator): string {
   const named = field.valueLabels?.[value];
-  if (named) return named;
+  if (named) return t.text(named);
   const s = value.replace(/_/g, ' ');
   return s.charAt(0).toUpperCase() + s.slice(1);
 }

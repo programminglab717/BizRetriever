@@ -1,0 +1,1595 @@
+# Spanish for the Retail & Ecommerce pack (M20, ADR-071). Keyed by the English ids; the English
+# files stay the source. Neutral Spanish, "tú". Shared English text uses the same Spanish as the
+# wholesale pack (`pnpm packs:build` checks it).
+
+manifest:
+  name: Tiendas y comercio electrónico
+  description: Para tiendas físicas y online que venden productos físicos.
+  industries_label: Tienda física, tienda online o ambas
+  helpful_files:
+    - { what: Ventas o pedidos, detail: 'de tu sitio web, Etsy, Amazon o tu caja registradora' }
+    - {
+        what: Una lista de inventario o de productos,
+        detail: 'con precios, costos y cuántas unidades tienes',
+      }
+    - { what: Pedidos a proveedores, detail: 'qué compraste, cuándo y por cuánto' }
+    - { what: Gastos, detail: 'alquiler, envíos, embalaje, etc.' }
+  goal_words:
+    order_count: [pedido, pedidos]
+    gross_profit: [ganancia, ganancias, beneficio, beneficios, utilidad, utilidades]
+    net_sales: [venta, ventas, ingresos, facturación, recaudación]
+
+entities:
+  product:
+    singular: Producto
+    plural: Productos
+    description: Algo que vendes.
+    fields:
+      sku: Código del producto
+      name: Nombre
+      variant: { label: Variante, description: 'Talla, color u otra opción.' }
+      category: Categoría
+      brand: Marca
+      unit_price: Precio de venta
+      unit_cost: Costo por unidad
+      supplier: Proveedor
+      reorder_point: Reponer cuando el inventario llegue a
+      is_active: Se sigue vendiendo
+      barcode: Código de barras
+
+  customer:
+    singular: Cliente
+    plural: Clientes
+    description: Alguien que te compra.
+    fields:
+      name: Nombre
+      email: Correo
+      phone: Teléfono
+      city: Ciudad
+      region: Estado o provincia
+      country: País
+      postal_code: Código postal
+      customer_type: Tipo de cliente
+      payment_terms_days: Días para pagar
+
+  supplier:
+    singular: Proveedor
+    plural: Proveedores
+    description: Alguien a quien le compras inventario.
+    fields:
+      name: Nombre
+      contact_name: Contacto
+      email: Correo
+      phone: Teléfono
+      lead_time_days: Días de entrega
+
+  location:
+    singular: Punto de venta
+    plural: Puntos de venta
+    description: Donde vendes o guardas inventario, como tu sitio web, tu tienda o tu almacén.
+    fields:
+      name: Nombre
+      location_type: Tipo
+
+  sale:
+    singular: Venta
+    plural: Ventas
+    description: Un pedido o un recibo. Una venta puede incluir varios productos.
+    fields:
+      order_number: Número de pedido
+      sale_date: Fecha
+      customer: Cliente
+      channel: Canal de venta
+      location: Punto de venta
+      status: Estado
+      discount_total: Descuento
+      shipping_charged: Envío cobrado
+      tax_total: Impuestos
+      total: Total del pedido
+      payment_status: ¿Pagado?
+      due_date: Vencimiento del pago
+
+  sale_line:
+    singular: Línea de venta
+    plural: Líneas de venta
+    description: Un producto de una venta, con cuántas unidades y a qué precio.
+    fields:
+      sale: Venta
+      line_number: Línea
+      product: Producto
+      product_name_raw: Producto tal como está escrito
+      quantity: Cantidad
+      unit_price: Precio por unidad
+      discount: Descuento
+      line_total: Total de la línea
+      unit_cost_at_sale: Costo por unidad en ese momento
+
+  return:
+    singular: Devolución
+    plural: Devoluciones
+    description: Productos que un cliente te devolvió.
+    fields:
+      sale: Venta
+      product: Producto
+      return_date: Fecha
+      quantity: Cantidad
+      refund_amount: Reembolso
+      reason: Motivo
+
+  purchase:
+    singular: Pedido a proveedor
+    plural: Pedidos a proveedores
+    description: Inventario que le pediste a un proveedor.
+    fields:
+      po_number: Número de pedido
+      supplier: Proveedor
+      order_date: Pedido el
+      received_date: Recibido el
+      status: Estado
+      total: Total
+      shipping_cost: Costo de envío
+
+  purchase_line:
+    singular: Línea de pedido a proveedor
+    plural: Líneas de pedido a proveedor
+    description: Un producto de un pedido a proveedor.
+    fields:
+      purchase: Pedido a proveedor
+      product: Producto
+      quantity: Cantidad
+      unit_cost: Costo por unidad
+      line_total: Total de la línea
+
+  stock_count:
+    singular: Nivel de inventario
+    plural: Niveles de inventario
+    description: Cuántas unidades de un producto tenías en un día concreto.
+    fields:
+      product: Producto
+      location: Punto de venta
+      counted_at: Contado el
+      quantity_on_hand: En inventario
+
+  stock_movement:
+    singular: Movimiento de inventario
+    plural: Movimientos de inventario
+    description: Inventario que entra o sale, como una entrega, una rotura o una corrección.
+    fields:
+      product: Producto
+      moved_at: Fecha
+      quantity_change: Cambio
+      reason: Motivo
+
+  expense:
+    singular: Gasto
+    plural: Gastos
+    description: Dinero que gastaste para mantener el negocio.
+    fields:
+      expense_date: Fecha
+      category: Categoría
+      description: Descripción
+      amount: Importe
+      vendor: Pagado a
+      payment_method: Forma de pago
+
+  payment:
+    singular: Pago recibido
+    plural: Pagos recibidos
+    description: Dinero que te pagó un cliente, normalmente por una factura mayorista.
+    fields:
+      reference: Referencia
+      received_date: Fecha
+      customer: Cliente
+      sale: Venta
+      amount: Importe
+      method: Forma de pago
+
+metrics:
+  gross_sales:
+    label: Ventas antes de descuentos
+    description: Precio × cantidad de cada producto en las ventas completadas, antes de descuentos.
+    unavailable_hint: Añade el precio de cada producto vendido para ver las ventas antes de descuentos.
+    synonyms:
+      [
+        ventas brutas,
+        ventas antes de descuentos,
+        ventas sin descuentos,
+        ventas a precio completo,
+        ventas a precio lleno,
+        facturación bruta,
+      ]
+
+  discounts:
+    label: Descuentos aplicados
+    description: Descuentos en las ventas completadas, tanto de productos como de pedidos.
+    unavailable_hint: Incluye la columna de descuentos de tu exportación de ventas para ver los descuentos.
+    synonyms:
+      [
+        descuentos,
+        descuento,
+        rebajas,
+        rebaja,
+        promociones,
+        promoción,
+        ofertas,
+        cupones,
+        descontado,
+        descontamos,
+      ]
+
+  refunds:
+    label: Reembolsos
+    description: Dinero reembolsado por devoluciones, según la fecha de la devolución.
+    unavailable_hint: Sube tus devoluciones o reembolsos para ver los reembolsos.
+    synonyms:
+      [
+        reembolsos,
+        reembolso,
+        reembolsado,
+        reembolsé,
+        reembolse,
+        dinero devuelto,
+        devolví dinero,
+        devolvimos dinero,
+      ]
+
+  net_sales:
+    label: Ventas netas
+    description: >-
+      Dinero de las ventas completadas después de descuentos y reembolsos. No incluye impuestos ni
+      el envío cobrado. Los reembolsos cuentan el día de la devolución.
+    assumptions:
+      - Los descuentos de un pedido se reparten entre sus productos en proporción a su precio.
+    unavailable_hint: Sube tus ventas con el importe de cada producto para ver las ventas netas.
+    synonyms:
+      [
+        ventas,
+        venta,
+        ventas netas,
+        ingresos,
+        facturación,
+        facturacion,
+        facturé,
+        facture,
+        facturado,
+        facturamos,
+        recaudación,
+        recaudado,
+        volumen de ventas,
+        vendí,
+        vendi,
+        vendimos,
+        vendido,
+        vendidos,
+        vendió,
+        vendio,
+        vender,
+        vendo,
+        vende,
+        venden,
+        venderé,
+        vendere,
+        venderemos,
+        se vende,
+        se venden,
+        se vendió,
+        lo que más se vende,
+        lo que mas se vende,
+        lo que más vendo,
+        lo más vendido,
+        lo mas vendido,
+        más vendido,
+        más vendidos,
+        mas vendido,
+        mas vendidos,
+        el más vendido,
+        se vende mejor,
+        se venden mejor,
+        superventas,
+        dinero que entra,
+        dinero que entró,
+        ganar dinero,
+        gané,
+        gane,
+        ingresé,
+        ingrese,
+        caja,
+        de caja,
+        hicimos de caja,
+        hice de caja,
+        plata,
+        plata entro,
+        plata entró,
+        dinero entro,
+        dinero entró,
+        entro,
+        entró,
+        llevamos de caja,
+        vendemos,
+        facturar,
+        facturaremos,
+        facturare,
+        facturaré,
+      ]
+
+  units_sold:
+    label: Unidades vendidas
+    description: Número de unidades vendidas en las ventas completadas, menos las devueltas.
+    synonyms:
+      [
+        unidades vendidas,
+        artículos vendidos,
+        articulos vendidos,
+        productos vendidos,
+        piezas vendidas,
+        unidades,
+        piezas,
+        cantidad vendida,
+        cuántas unidades,
+        cuantas unidades,
+        cuántos artículos,
+        cuántos vendí,
+        cuantos vendi,
+        cuántas vendí,
+        cuantas vendi,
+      ]
+
+  order_count:
+    label: Pedidos
+    description: Número de pedidos completados.
+    synonyms:
+      [
+        pedidos,
+        número de pedidos,
+        numero de pedidos,
+        cantidad de pedidos,
+        cuántos pedidos,
+        cuantos pedidos,
+        órdenes,
+        ordenes,
+        transacciones,
+        compras,
+        tickets,
+        movimiento,
+        mas movimiento,
+        más movimiento,
+      ]
+
+  average_order_value:
+    label: Valor promedio por pedido
+    description: Ventas netas ÷ pedidos.
+    synonyms:
+      [
+        valor promedio por pedido,
+        valor promedio del pedido,
+        valor medio del pedido,
+        pedido promedio,
+        pedido medio,
+        ticket medio,
+        ticket promedio,
+        venta promedio,
+        venta media,
+        compra promedio,
+        compra media,
+        tamaño de la cesta,
+        cesta media,
+        cesta promedio,
+        carrito medio,
+        carrito promedio,
+        gasto medio por pedido,
+      ]
+
+  items_per_order:
+    label: Unidades por pedido
+    description: Unidades vendidas ÷ pedidos.
+    synonyms:
+      [
+        unidades por pedido,
+        artículos por pedido,
+        articulos por pedido,
+        productos por pedido,
+        artículos en la cesta,
+      ]
+
+  cogs:
+    label: Costo de la mercancía vendida
+    description: >-
+      Unidades vendidas × su costo (el costo en el momento de la venta si se conoce; si no, el costo
+      actual del producto), menos el costo de las unidades devueltas.
+    assumptions:
+      - Cuando no sabemos cuánto costaba un producto al venderlo, usamos su costo actual.
+    unavailable_hint:
+      Añade lo que te cuesta cada producto (por ejemplo, en tu lista de inventario) para
+      ver la ganancia.
+    synonyms:
+      [
+        costo de la mercancía vendida,
+        coste de la mercancía vendida,
+        costo de lo vendido,
+        costo de ventas,
+        coste de ventas,
+        costo de los productos,
+        coste de los productos,
+        costo de mercancía,
+        cmv,
+      ]
+
+  gross_profit:
+    label: Ganancia bruta
+    description: Ventas netas − costo de la mercancía vendida.
+    unavailable_hint:
+      Añade lo que te cuesta cada producto (por ejemplo, en tu lista de inventario) para
+      ver la ganancia.
+    synonyms:
+      [
+        ganancia,
+        ganancias,
+        ganancia bruta,
+        beneficio,
+        beneficios,
+        beneficio bruto,
+        utilidad,
+        utilidades,
+        utilidad bruta,
+        más ganancia,
+        mas ganancia,
+        más beneficio,
+        rentable,
+        rentables,
+        más rentable,
+        más rentables,
+        me dejó,
+        me dejaron,
+        me dejan,
+        ganar más,
+        gané más,
+      ]
+
+  gross_margin_pct:
+    label: Margen de ganancia
+    description: Ganancia bruta ÷ ventas netas.
+    unavailable_hint:
+      Añade lo que te cuesta cada producto (por ejemplo, en tu lista de inventario) para
+      ver tu margen.
+    synonyms:
+      [
+        margen,
+        márgenes,
+        margenes,
+        margen de ganancia,
+        margen de beneficio,
+        margen bruto,
+        margen comercial,
+        recargo,
+        mejor margen,
+        mejores márgenes,
+      ]
+
+  customer_count:
+    label: Clientes que compraron
+    description: Clientes distintos con al menos una venta completada en el periodo.
+    unavailable_hint: Incluye los nombres o correos de los clientes en tus ventas para ver los clientes.
+    synonyms:
+      [
+        número de clientes,
+        numero de clientes,
+        cantidad de clientes,
+        cuántos clientes,
+        cuantos clientes,
+        cuánta gente compró,
+        cuántas personas compraron,
+        cuanta gente compro,
+      ]
+
+  new_customers:
+    label: Clientes nuevos
+    description: Clientes cuyo primer pedido completado fue en el periodo.
+    unavailable_hint: Incluye los nombres o correos de los clientes en tus ventas para ver los clientes nuevos.
+    synonyms:
+      [
+        clientes nuevos,
+        nuevos clientes,
+        compradores nuevos,
+        nuevos compradores,
+        clientes por primera vez,
+        primera compra,
+        primer pedido,
+        cuantos clientes nuevos,
+        cuántos clientes nuevos,
+        cuantos nuevos clientes,
+        cuántos nuevos clientes,
+      ]
+
+  repeat_customer_rate:
+    label: Clientes que repiten
+    description: Parte de los clientes que compraron en el periodo y ya habían comprado antes.
+    unavailable_hint: Incluye los nombres o correos de los clientes en tus ventas para ver los clientes que repiten.
+    synonyms:
+      [
+        clientes que repiten,
+        clientes recurrentes,
+        clientes que vuelven,
+        vuelve a comprar,
+        vuelven a comprar,
+        volvieron a comprar,
+        vuelven,
+        volvieron,
+        repiten,
+        repitieron,
+        tasa de repetición,
+        tasa de recompra,
+        recompra,
+        clientes fieles,
+        fieles,
+        fidelidad,
+        repite,
+      ]
+
+  customer_revenue:
+    label: Gasto por cliente
+    description: Ventas netas ÷ clientes que compraron.
+    synonyms:
+      [
+        gasto por cliente,
+        gasto medio por cliente,
+        gasto promedio por cliente,
+        ingresos por cliente,
+        cuánto gasta cada cliente,
+        cuanto gasta cada cliente,
+      ]
+
+  lapsed_customers:
+    label: Clientes que dejaron de comprar
+    description: >-
+      Clientes con al menos tres pedidos anteriores cuyo tiempo desde el último pedido es más del
+      doble de su intervalo habitual entre pedidos, y de más de treinta días.
+    unavailable_hint: Incluye los nombres o correos de los clientes en tus ventas para ver quién dejó de comprar.
+    synonyms:
+      [
+        dejaron de comprar,
+        dejó de comprar,
+        dejo de comprar,
+        dejaron de pedir,
+        dejó de pedir,
+        ya no compran,
+        ya no compra,
+        ya no piden,
+        ya no pide,
+        clientes perdidos,
+        no han vuelto,
+        no han vuelto a pedir,
+        no han pedido,
+        no ha pedido,
+        se están alejando,
+        clientes inactivos,
+        inactivos,
+        dejaron de hacerme pedidos,
+        dejado de comprarme,
+        han dejado de comprar,
+        han dejado de comprarme,
+        dejaron de comprarme,
+        dejado de aparecer,
+        dejaron de aparecer,
+        dejado de pedir,
+        dejado de hacerme pedidos,
+      ]
+
+  stock_on_hand:
+    label: Unidades en inventario
+    description: Cuántas unidades tienes, según tu último recuento de cada producto.
+    assumptions:
+      - El inventario es el de tu último recuento; las ventas posteriores todavía no se descuentan.
+    unavailable_hint: Sube una lista de inventario con cuántas unidades tienes de cada producto.
+    synonyms:
+      [
+        inventario,
+        existencias,
+        stock,
+        en inventario,
+        en stock,
+        en existencia,
+        niveles de inventario,
+        nivel de inventario,
+        cuántos tengo,
+        cuantos tengo,
+        cuántas tengo,
+        cuántos me quedan,
+        cuantos me quedan,
+        cuántas me quedan,
+        qué me queda,
+      ]
+
+  stock_value:
+    label: Valor del inventario (al costo)
+    description: Unidades en inventario × lo que te cuesta cada una.
+    unavailable_hint: Sube una lista de inventario con cuántas unidades tienes y lo que te cuesta cada producto.
+    synonyms:
+      [
+        valor del inventario,
+        valor de inventario,
+        valor del stock,
+        valor de las existencias,
+        inmovilizado en inventario,
+        dinero inmovilizado,
+        parado en inventario,
+        dinero en inventario,
+        dinero en stock,
+        cuánto vale mi inventario,
+        cuanto vale mi inventario,
+        cuánto vale el inventario,
+        vale el inventario,
+        vale mi inventario,
+        parado en stock,
+        tengo parado,
+        dinero parado,
+        valen mis existencias,
+        valor de mis existencias,
+        valen las existencias,
+        vale mi stock,
+        valor de mi stock,
+      ]
+
+  daily_sales_rate:
+    label: Promedio de unidades vendidas al día
+    description: Unidades vendidas en los últimos 28 días ÷ 28.
+    synonyms:
+      [
+        vendidas al día,
+        vendidos al día,
+        vendidas por día,
+        vendidos por día,
+        ventas al día,
+        unidades al día,
+        unidades por día,
+        ritmo de ventas,
+        ritmo de venta,
+      ]
+
+  days_of_cover:
+    label: Días de inventario restantes
+    description: Unidades en inventario ÷ promedio de unidades vendidas al día.
+    unavailable_hint: Sube una lista de inventario y tus ventas para ver cuántos días de inventario te quedan.
+    synonyms:
+      [
+        agotarse,
+        se agota,
+        se agotan,
+        agotar,
+        quedarme sin,
+        quedarse sin,
+        me quedo sin,
+        quedando sin,
+        días de inventario,
+        dias de inventario,
+        días de cobertura,
+        días de stock,
+        reponer,
+        reposición,
+        reposicion,
+        reabastecer,
+        volver a pedir,
+        se va a acabar,
+        se van a acabar,
+        se acaba,
+        se acaban,
+        a punto de agotarse,
+        a punto de acabarse,
+        agotando,
+        se estan agotando,
+        se están agotando,
+        por acabar,
+        esta por acabar,
+        está por acabar,
+        se me esta por acabar,
+        se me está por acabar,
+        acabando,
+        se me acaba,
+        deberia reponer,
+        debería reponer,
+      ]
+
+  dead_stock_value:
+    label: Dinero parado en inventario sin vender
+    description:
+      Valor del inventario (al costo) de los productos que tienes en inventario pero no has
+      vendido en 90 días.
+    unavailable_hint: Sube una lista de inventario con costos y tus ventas para ver el inventario sin vender.
+    synonyms:
+      [
+        no se vende,
+        no se venden,
+        no se está vendiendo,
+        no se están vendiendo,
+        no se vendió,
+        no se vendieron,
+        inventario muerto,
+        stock muerto,
+        inventario sin vender,
+        sin vender,
+        no vendido,
+        no vendidos,
+        baja rotación,
+        poca rotación,
+        se mueve lento,
+        se mueven lento,
+        acumulando polvo,
+        parado en la estantería,
+      ]
+
+  sell_through_rate:
+    label: Porcentaje vendido
+    description: Unidades vendidas ÷ (unidades vendidas + unidades en inventario).
+    synonyms:
+      [
+        porcentaje vendido,
+        porcentaje de venta,
+        tasa de venta,
+        sell through,
+        sell-through,
+        tasa de sell-through,
+      ]
+
+  return_rate:
+    label: Tasa de devolución
+    description: Unidades devueltas ÷ unidades vendidas.
+    unavailable_hint: Sube tus devoluciones con cuántas unidades volvieron para ver tu tasa de devolución.
+    synonyms:
+      [
+        tasa de devolución,
+        tasa de devoluciones,
+        porcentaje de devoluciones,
+        devoluciones,
+        devuelto,
+        devueltos,
+        se devuelven,
+        se devuelve,
+        cuánto se devuelve,
+        con qué frecuencia devuelven,
+        devuelven,
+        me devuelven,
+        devuelven mas,
+        devuelven más,
+      ]
+
+  units_returned:
+    label: Unidades devueltas
+    description: Unidades que volvieron, contadas el día de la devolución.
+    unavailable_hint: Sube tus devoluciones con cuántas unidades volvieron.
+    synonyms:
+      [
+        unidades devueltas,
+        artículos devueltos,
+        articulos devueltos,
+        productos devueltos,
+        cuántas devolvieron,
+        cuántos devolvieron,
+        cuántas unidades volvieron,
+        cuántos volvieron,
+      ]
+
+  purchase_unit_cost:
+    label: Costo del proveedor por unidad
+    description: Lo que pagaste a los proveedores por unidad, según tus pedidos a proveedores.
+    unavailable_hint: Sube tus pedidos a proveedores con cantidades y precios.
+    synonyms:
+      [
+        costo del proveedor,
+        coste del proveedor,
+        precio del proveedor,
+        lo que pago por,
+        lo que me cobra el proveedor,
+        precio de compra,
+        costo de compra,
+        coste de compra,
+      ]
+
+  days_since_last_order:
+    label: Días desde el último pedido
+    description: Días desde el pedido completado más reciente hasta hoy.
+    unavailable_hint: Sube tus ventas con fechas para ver cuándo pidieron los clientes por última vez.
+    synonyms:
+      [
+        días desde el último pedido,
+        dias desde el ultimo pedido,
+        último pedido,
+        pidió por última vez,
+        desde su último pedido,
+      ]
+
+  days_overdue:
+    label: Días de retraso
+    description: Cuántos días lleva vencida la venta sin pagar más antigua.
+    assumptions:
+      - Las ventas sin fecha de vencimiento se consideran vencidas a los treinta días de la venta.
+    unavailable_hint:
+      Incluye las fechas de vencimiento y una columna “¿Pagado?” en tus facturas para
+      ver cuánto se retrasan los pagos.
+    synonyms:
+      [
+        días de retraso,
+        dias de retraso,
+        días vencido,
+        cuánto retraso,
+        qué tan atrasado,
+        cuán atrasado,
+        vencido hace,
+      ]
+
+  expenses_total:
+    label: Gastos
+    description: Todo lo que registraste como gasto.
+    unavailable_hint: Sube tus gastos para ver lo que te cuesta mantener el negocio.
+    synonyms:
+      [
+        gastos,
+        gasto,
+        gasté,
+        gaste,
+        gastado en,
+        gasté en,
+        gastamos en,
+        gastos generales,
+        gastos fijos,
+        gastos de operación,
+        costos de operación,
+        recibos,
+        servicios,
+        anuncios,
+        publicidad,
+        alquiler,
+        renta,
+        sueldos,
+        salarios,
+        nóminas,
+      ]
+
+  net_profit_estimate:
+    label: Ganancia después de gastos (estimación)
+    description: Ganancia bruta − gastos. Es una estimación, porque no incluye lo que no esté registrado.
+    unavailable_hint: Añade los costos de los productos y sube tus gastos para ver la ganancia después de gastos.
+    synonyms:
+      [
+        ganancia después de gastos,
+        ganancia despues de gastos,
+        ganancia neta,
+        beneficio neto,
+        utilidad neta,
+        resultado final,
+        ganancia real,
+        beneficio real,
+        después de gastos,
+        quedo limpio,
+        quedó limpio,
+        me quedo limpio,
+        me quedó limpio,
+        lo que me queda,
+        despues de gastos,
+      ]
+
+  outstanding_receivables:
+    label: Dinero que te deben
+    description: Ventas marcadas como sin pagar o pagadas en parte, menos los pagos recibidos por ellas.
+    assumptions:
+      - Sin registros de pagos, las facturas pagadas en parte se cuentan como debidas por completo.
+    unavailable_hint: Incluye una columna “¿Pagado?” en tus facturas para ver el dinero que te deben.
+    synonyms:
+      [
+        me debe,
+        me deben,
+        nos debe,
+        nos deben,
+        debe,
+        deben,
+        adeudado,
+        adeuda,
+        sin pagar,
+        sin cobrar,
+        por cobrar,
+        pendiente de cobro,
+        pendientes de pago,
+        dinero que me deben,
+        cuentas por cobrar,
+        deudores,
+      ]
+
+  overdue_receivables:
+    label: Dinero vencido que te deben
+    description: Dinero que te deben por ventas que ya pasaron su fecha de vencimiento.
+    assumptions:
+      - Sin registros de pagos, las facturas pagadas en parte se cuentan como debidas por completo.
+      - Las ventas sin fecha de vencimiento se consideran vencidas a los treinta días de la venta.
+    unavailable_hint:
+      Incluye las fechas de vencimiento y una columna “¿Pagado?” en tus facturas para
+      ver los pagos vencidos.
+    synonyms:
+      [
+        vencido,
+        vencidos,
+        vencidas,
+        pagos vencidos,
+        pagos atrasados,
+        atrasado,
+        atrasados,
+        pagó tarde,
+        pagaron tarde,
+        paga tarde,
+        pagan tarde,
+        morosos,
+        moroso,
+        morosidad,
+        pagando tarde,
+        me estan pagando tarde,
+        me están pagando tarde,
+        no me han pagado a tiempo,
+        no han pagado a tiempo,
+        pagado a tiempo,
+      ]
+
+  supplier_spend:
+    label: Gastado con proveedores
+    description: Total de tus pedidos a proveedores, según la fecha del pedido.
+    unavailable_hint: Sube tus pedidos a proveedores para ver lo que gastas con ellos.
+    synonyms:
+      [
+        gastado con proveedores,
+        gasto con proveedores,
+        gasté con proveedores,
+        gastamos con proveedores,
+        compras a proveedores,
+        compré a proveedores,
+        comprado a proveedores,
+        total de pedidos a proveedores,
+        gasto por proveedor,
+        gasté con,
+        gastado con,
+        gasto con,
+        gastado en proveedores,
+        gasto en proveedores,
+        gasté en proveedores,
+        le he comprado,
+        he comprado a,
+        le compre a,
+        le compré a,
+        comprado a,
+      ]
+
+dimensions:
+  product.name:
+    label: Producto
+    synonyms: [producto, productos, artículo, artículos, articulo, articulos]
+    noun: [producto, productos]
+  product.category:
+    label: Categoría
+    synonyms:
+      [
+        categoría,
+        categorías,
+        categoria,
+        categorias,
+        tipo de producto,
+        departamento,
+        sección,
+        familia,
+      ]
+    noun: [categoría, categorías]
+  product.brand:
+    label: Marca
+    synonyms: [marca, marcas]
+    noun: [marca, marcas]
+  customer.name:
+    label: Cliente
+    synonyms: [cliente, clientes, comprador, compradores, revendedor, revendedores]
+    noun: [cliente, clientes]
+  customer.customer_type:
+    label: Tipo de cliente
+    synonyms: [tipo de cliente, tipos de cliente]
+    noun: [tipo de cliente, tipos de cliente]
+  customer.city:
+    label: Ciudad
+    synonyms: [ciudad, ciudades, localidad, localidades, municipio, pueblo]
+    noun: [ciudad, ciudades]
+  customer.region:
+    label: Estado o provincia
+    synonyms: [estado, estados, provincia, provincias, región, regiones, region, zona, zonas]
+    noun: [zona, zonas]
+  sale.channel:
+    label: Canal de venta
+    synonyms:
+      [
+        canal,
+        canales,
+        canal de venta,
+        plataforma,
+        plataformas,
+        marketplace,
+        dónde vendí,
+        donde vendi,
+        dónde se vendió,
+        de donde vienen,
+        de dónde vienen,
+      ]
+    noun: [canal, canales]
+    value_labels:
+      online_store: Sitio web
+      etsy: Etsy
+      amazon: Amazon
+      ebay: eBay
+      social: Redes sociales
+      in_store: En persona
+      wholesale: Mayorista
+      other: Otro
+  location.name:
+    label: Punto de venta
+    synonyms:
+      [
+        tienda,
+        tiendas,
+        local,
+        locales,
+        punto de venta,
+        puntos de venta,
+        sucursal,
+        sucursales,
+        ubicación,
+      ]
+    noun: [punto de venta, puntos de venta]
+  supplier.name:
+    label: Proveedor
+    synonyms: [proveedor, proveedores, fabricante, fabricantes]
+    noun: [proveedor, proveedores]
+  expense.category:
+    label: Tipo de gasto
+    synonyms:
+      [tipo de gasto, tipos de gasto, categoría de gasto, tipo de costo, concepto, tipo, tipos]
+    noun: [tipo de gasto, tipos de gasto]
+
+dashboard:
+  net_sales: Ventas netas
+  gross_profit: Ganancia bruta
+  orders: Pedidos
+  average_order_value: Valor promedio por pedido
+  sales_over_time: Ventas en el tiempo
+  sales_by_channel: Ventas por canal
+  top_products_profit: Productos con más ganancia
+  running_low: Inventario bajo
+  top_customers: Mejores clientes
+  margin_by_category: Margen de ganancia por categoría
+  slow_stock_total: Dinero parado en inventario de baja rotación
+  slow_stock: Inventario de baja rotación
+  money_owed: Dinero que te deben
+
+insights:
+  stockout_risk:
+    label: Inventario que se agota
+    description: Productos que se agotarán pronto al ritmo al que se venden.
+    thresholds:
+      warn_days: Avísame cuando el inventario vaya a agotarse en menos de {{value}} días
+      urgent_days: Márcalo como urgente cuando falten menos de {{value}} días
+    template: '**{{product}}** se agotará en aproximadamente {{days}} {{days|día|días}} al ritmo de
+      ventas actual ({{rate}} al día). Tienes {{on_hand}} en inventario.'
+    context:
+      Considera pedir alrededor de {{qty}} {{qty|unidad|unidades}} a {{supplier}} para cubrir los
+      próximos {{cover_days}} días.
+    action: { label: Ver producto }
+    fallbacks:
+      supplier: tu proveedor
+
+  dead_stock:
+    label: Inventario que no se vende
+    description: Productos en inventario que no se han vendido en 90 días, y el dinero que inmovilizan.
+    thresholds:
+      min_value: Avísame solo cuando el inventario sin vender valga más de {{value}}
+    template:
+      'Tienes {{value}} de tu dinero parado en {{count}} {{count|producto que no se ha|productos
+      que no se han}} vendido en {{days}} días. El que más: **{{top_product}}**.'
+    action: { label: Ver cuáles, ask: ¿Qué productos no se han vendido en los últimos 90 días? }
+
+  customer_slipping:
+    label: Clientes habituales que compran menos
+    description: Clientes con varios pedidos anteriores cuyo gasto ha bajado mucho respecto a lo habitual.
+    thresholds:
+      drop: Avísame cuando el gasto de un cliente habitual baje un {{value}}% o más
+      min_orders: Considera habituales a los clientes a partir de {{value}} pedidos
+      min_spend: Solo para clientes que suelen gastar {{value}} o más cada dos meses
+    template: 'Los pedidos de **{{customer}}** han bajado un {{drop_pct}} respecto a lo habitual. Su
+      último pedido fue hace {{days_since}} {{days_since|día|días}}.'
+    context: En los últimos dos meses gastó {{recent}}; lo habitual es {{usual}}.
+    action: { label: Ver cliente }
+
+  margin_squeeze:
+    label: Costos que suben
+    description: Productos cuyo último costo de proveedor subió y reduce tu margen.
+    thresholds:
+      rise: Avísame cuando el costo de un proveedor suba un {{value}}% o más
+    template:
+      'El costo de **{{product}}** subió un {{cost_change}}, de {{old_cost}} a {{new_cost}}. Con
+      tu precio de {{price}}, tu margen bajó del {{old_margin}} al {{new_margin}}.'
+    action: { label: Ver producto }
+
+  return_spike:
+    label: Productos que se devuelven mucho
+    description: Productos con una tasa de devolución alta en los últimos 60 días.
+    thresholds:
+      rate: Avísame cuando se devuelva un {{value}}% o más de un producto
+      min_returns: Solo cuando se hayan devuelto al menos {{value}}
+    template:
+      '**{{product}}** se devuelve mucho: {{return_rate}} de las ventas en los últimos dos meses
+      ({{returned}} {{returned|unidad|unidades}}). Motivo principal: {{top_reason}}.'
+    action:
+      { label: Ver devoluciones, ask: '¿Cuál es la tasa de devolución de {{product}} por mes?' }
+    fallbacks:
+      top_reason: sin registrar
+
+  rising_star:
+    label: Productos en auge
+    description: Productos que se venden mucho más rápido en las últimas cuatro semanas que en las
+      cuatro anteriores.
+    thresholds:
+      growth: Avísame cuando las ventas de un producto suban un {{value}}% o más
+      min_units: Solo para productos con al menos {{value}} unidades vendidas en las últimas cuatro semanas
+    template: '**{{product}}** está en auge: sus ventas subieron un {{change}} en las últimas cuatro
+      semanas.'
+    context:
+      '{{units}} {{units|unidad vendida|unidades vendidas}}, frente a {{before}} en las cuatro
+      semanas anteriores.'
+    action: { label: Ver producto }
+
+  sales_change:
+    label: Grandes cambios en las ventas semanales
+    description: Las ventas en tienda y online de esta semana comparadas con las de la semana pasada
+      (sin contar los pedidos mayoristas).
+    thresholds:
+      change: Avísame cuando las ventas semanales cambien un {{value}}% o más
+    template:
+      'Las ventas en tienda y online de la última semana {{direction}} un {{change}} respecto a
+      la semana anterior ({{this_week}} frente a {{last_week}}).'
+    words: { direction: { up: subieron, down: bajaron } }
+    action:
+      {
+        label: Ver por qué,
+        ask: Ventas netas por producto en los últimos 7 días comparadas con los 7 días anteriores,
+      }
+
+  channel_shift:
+    label: De dónde vienen tus ventas
+    description: Un canal de venta cuya parte de tus ventas creció mucho en los últimos 90 días.
+    thresholds:
+      points: Avísame cuando la parte de un canal crezca {{value}} puntos o más
+    template: '**{{channel}}** ya aporta el {{share}} de tus ventas, frente al {{prev_share}} de antes.'
+    context: En los últimos tres meses, comparado con los tres meses anteriores.
+    action: { label: Ver canales, ask: Ventas netas por canal y por mes este año }
+
+  overdue_payments:
+    label: Clientes que te deben
+    description: Clientes con ventas sin pagar que ya pasaron su fecha de vencimiento.
+    thresholds:
+      min_amount: Avísame cuando el dinero vencido que te deben supere {{value}}
+      urgent_days: Márcalo como urgente cuando un pago lleve {{value}} días de retraso
+    template:
+      '{{count}} {{count|cliente te debe|clientes te deben}} {{amount}} con el pago vencido. El
+      que más debe es **{{customer}}** ({{customer_amount}}, {{days}} {{days|día|días}} de
+      retraso).'
+    action: { label: Ver quién debe, ask: ¿Quién me debe dinero? }
+
+questions:
+  - { group: Ventas, text: ¿Cuánto vendí el mes pasado?, needs: [net_sales] }
+  - { group: Ventas, text: ¿Qué canal está creciendo más rápido?, needs: [net_sales] }
+  - { group: Ventas, text: Muestra las ventas por semana de este año., needs: [net_sales] }
+  - { group: Ventas, text: ¿Cuáles fueron mis mejores días de la semana?, needs: [net_sales] }
+  - {
+      group: Productos,
+      text: ¿Qué productos me dejaron más ganancia el mes pasado?,
+      needs: [gross_profit],
+    }
+  - { group: Productos, text: ¿Qué no se está vendiendo?, needs: [dead_stock_value] }
+  - { group: Productos, text: ¿Qué productos tienen mejor margen?, needs: [gross_margin_pct] }
+  - { group: Productos, text: ¿Cuál es mi producto más vendido en Etsy?, needs: [net_sales] }
+  - { group: Inventario, text: ¿Qué está a punto de agotarse?, needs: [days_of_cover] }
+  - {
+      group: Inventario,
+      text: ¿Cuánto dinero tengo inmovilizado en inventario?,
+      needs: [stock_value],
+    }
+  - { group: Inventario, text: ¿Qué debería reponer esta semana?, needs: [days_of_cover] }
+  - { group: Clientes, text: ¿Quiénes son mis mejores clientes?, needs: [net_sales] }
+  - { group: Clientes, text: ¿Qué clientes dejaron de comprar?, needs: [lapsed_customers] }
+  - { group: Clientes, text: ¿Cuántos clientes nuevos conseguí este mes?, needs: [new_customers] }
+  - {
+      group: Clientes,
+      text: ¿Qué parte de los clientes vuelve a comprar?,
+      needs: [repeat_customer_rate],
+    }
+  - { group: Dinero, text: ¿Cuánto gasté en publicidad este año?, needs: [expenses_total] }
+  - {
+      group: Dinero,
+      text: ¿Cuál es mi ganancia después de gastos este trimestre?,
+      needs: [net_profit_estimate],
+    }
+  - { group: Dinero, text: ¿Quién me debe dinero?, needs: [outstanding_receivables] }
+  - { group: Lo que viene, text: ¿Cuánto venderé el mes que viene?, needs: [net_sales] }
+  - { group: Lo que viene, text: ¿Voy bien para llegar a mi objetivo?, needs: [net_sales] }
+
+headers:
+  product.sku:
+    [
+      sku,
+      código,
+      codigo,
+      código de producto,
+      codigo de producto,
+      código del producto,
+      código de artículo,
+      codigo de articulo,
+      cód,
+      cod,
+      referencia,
+      ref,
+      clave,
+      clave del producto,
+      modelo,
+    ]
+  product.name:
+    [
+      producto,
+      nombre del producto,
+      artículo,
+      articulo,
+      nombre del artículo,
+      descripción,
+      descripcion,
+      descripción del producto,
+      título,
+      titulo,
+      concepto,
+      nombre,
+    ]
+  product.variant: [variante, opción, opcion, talla, color, tamaño, tamano, medida]
+  product.category:
+    [
+      categoría,
+      categoria,
+      tipo,
+      tipo de producto,
+      departamento,
+      familia,
+      sección,
+      seccion,
+      colección,
+      coleccion,
+      grupo,
+      línea,
+      linea,
+    ]
+  product.brand: [marca, marca del fabricante]
+  product.unit_price:
+    [
+      precio,
+      precio de venta,
+      precio venta,
+      pvp,
+      precio unitario,
+      precio público,
+      precio al público,
+      precio minorista,
+      precio de lista,
+      precio por unidad,
+    ]
+  product.unit_cost:
+    [
+      costo,
+      coste,
+      costo unitario,
+      coste unitario,
+      precio de costo,
+      precio de coste,
+      precio de compra,
+      costo de compra,
+      costo sin iva,
+      coste sin iva,
+      costo por unidad,
+      costo por artículo,
+    ]
+  product.supplier: [proveedor, fabricante, distribuidor, suministrado por, fabricado por]
+  product.reorder_point:
+    [
+      punto de pedido,
+      punto de reorden,
+      punto de reposición,
+      stock mínimo,
+      stock minimo,
+      inventario mínimo,
+      existencia mínima,
+      mínimo,
+      minimo,
+      reponer en,
+      nivel de reposición,
+    ]
+  product.barcode: [código de barras, codigo de barras, cod barras, ean, upc, gtin]
+  customer.name:
+    [
+      cliente,
+      nombre del cliente,
+      nombre cliente,
+      comprador,
+      razón social,
+      razon social,
+      empresa,
+      cuenta,
+      tienda,
+      nombre de facturación,
+      facturar a,
+      enviar a,
+      revendedor,
+      nombre,
+    ]
+  customer.email:
+    [
+      correo,
+      correo electrónico,
+      correo electronico,
+      email,
+      e mail,
+      mail,
+      correo del cliente,
+      email del cliente,
+    ]
+  customer.phone:
+    [
+      teléfono,
+      telefono,
+      tel,
+      tlf,
+      móvil,
+      movil,
+      celular,
+      número de teléfono,
+      numero de telefono,
+      whatsapp,
+    ]
+  customer.city:
+    [ciudad, localidad, población, poblacion, municipio, ciudad de envío, ciudad de facturación]
+  customer.region:
+    [
+      estado,
+      provincia,
+      región,
+      region,
+      comunidad,
+      comunidad autónoma,
+      provincia de envío,
+      estado de envío,
+    ]
+  customer.country: [país, pais, país de envío, país de facturación]
+  customer.postal_code: [código postal, codigo postal, cp, c p, cód postal, cod postal, zip]
+  supplier.name: [proveedor, nombre del proveedor, fabricante, distribuidor]
+  supplier.email: [correo del proveedor, email del proveedor, correo proveedor]
+  supplier.lead_time_days: [plazo de entrega, días de entrega, dias de entrega, tiempo de entrega]
+  sale.order_number:
+    [
+      pedido,
+      número de pedido,
+      numero de pedido,
+      nº pedido,
+      n pedido,
+      no pedido,
+      núm pedido,
+      num pedido,
+      id pedido,
+      id del pedido,
+      orden,
+      número de orden,
+      folio,
+      ticket,
+      nº ticket,
+      recibo,
+      número de recibo,
+      factura,
+      número de factura,
+      numero de factura,
+      nº factura,
+      transacción,
+      id de venta,
+    ]
+  sale.sale_date:
+    [
+      fecha,
+      fecha del pedido,
+      fecha de pedido,
+      fecha de venta,
+      fecha venta,
+      fecha de creación,
+      fecha de pago,
+      fecha de factura,
+      fecha factura,
+      fecha de emisión,
+      día,
+      dia,
+    ]
+  sale.channel: [canal, canal de venta, origen, plataforma, tienda, marketplace, medio]
+  sale.status: [estado, estado del pedido, estatus, situación]
+  sale.discount_total:
+    [descuento, importe del descuento, descuento del pedido, descuentos, dto, dcto]
+  sale.shipping_charged:
+    [
+      envío,
+      envio,
+      gastos de envío,
+      gastos de envio,
+      costo de envío,
+      coste de envío,
+      entrega,
+      portes,
+      flete,
+    ]
+  sale.tax_total: [impuesto, impuestos, iva, total impuestos, igv]
+  sale.total:
+    [
+      total,
+      total del pedido,
+      importe,
+      importe total,
+      monto,
+      monto total,
+      valor del pedido,
+      total a pagar,
+    ]
+  sale.payment_status: [pagado, ¿pagado?, estado del pago, estado de pago, pago, cobrado, liquidado]
+  sale.due_date: [fecha de vencimiento, vencimiento, vence, fecha límite de pago, vto]
+  sale_line.quantity:
+    [
+      cantidad,
+      cant,
+      uds,
+      unidades,
+      piezas,
+      pzas,
+      cantidad vendida,
+      nº de artículos,
+      número de artículos,
+    ]
+  sale_line.unit_price:
+    [
+      precio,
+      precio unitario,
+      precio por unidad,
+      precio unidad,
+      p unitario,
+      c/u,
+      precio del artículo,
+    ]
+  sale_line.discount: [descuento, descuento de línea, descuento del artículo, dto, dcto]
+  sale_line.line_total:
+    [
+      total de línea,
+      total línea,
+      total,
+      importe,
+      subtotal,
+      monto,
+      valor,
+      importe de línea,
+      neto,
+      bruto,
+    ]
+  return.return_date:
+    [fecha de devolución, fecha devolución, fecha de devolucion, fecha, fecha del reembolso]
+  return.quantity: [cantidad, cant, uds, unidades devueltas, cantidad devuelta]
+  return.refund_amount:
+    [
+      reembolso,
+      importe del reembolso,
+      reembolsado,
+      importe reembolsado,
+      monto reembolsado,
+      devolución,
+    ]
+  return.reason: [motivo, motivo de devolución, razón, razon, causa, por qué]
+  purchase.po_number:
+    [
+      orden de compra,
+      oc,
+      nº oc,
+      número de orden de compra,
+      número de pedido,
+      numero de pedido,
+      nº pedido,
+      pedido,
+    ]
+  purchase.order_date:
+    [fecha de pedido, fecha del pedido, pedido el, fecha, fecha oc, fecha de compra]
+  purchase.received_date:
+    [
+      recibido,
+      recibido el,
+      fecha de recepción,
+      fecha recepción,
+      fecha de recepcion,
+      entregado,
+      fecha de entrega,
+    ]
+  purchase.total: [total, total del pedido, total oc, importe total]
+  purchase_line.quantity: [cantidad, cant, uds, unidades, cantidad pedida]
+  purchase_line.unit_cost:
+    [costo unitario, coste unitario, costo, coste, costo por unidad, precio, precio unitario]
+  purchase_line.line_total: [total de línea, total línea, total, importe, subtotal]
+  stock_count.quantity_on_hand:
+    [
+      inventario,
+      stock,
+      existencias,
+      existencia,
+      en stock,
+      en inventario,
+      disponible,
+      disponibles,
+      cantidad disponible,
+      stock actual,
+      unidades en stock,
+    ]
+  stock_count.counted_at:
+    [fecha del recuento, fecha de recuento, fecha de inventario, contado el, a fecha de]
+  expense.expense_date: [fecha, mes, fecha del gasto, fecha de pago, pagado el]
+  expense.category: [categoría, categoria, concepto, tipo, tipo de gasto, partida, cuenta]
+  expense.description: [descripción, descripcion, detalle, detalles, nota, notas, observaciones]
+  expense.amount: [importe, monto, cantidad, valor, gasto, pagado, total, costo]
+  expense.vendor: [pagado a, proveedor, beneficiario, acreedor]
+  payment.received_date:
+    [fecha, fecha de pago, fecha de cobro, fecha del cobro, recibido, fecha de recepción]
+  payment.amount:
+    [importe, monto, pagado, pago, importe pagado, monto pagado, cobrado, importe cobrado]
+values:
+  sale.channel:
+    online_store:
+      [
+        web,
+        la web,
+        pagina web,
+        página web,
+        sitio web,
+        tienda online,
+        tienda en linea,
+        tienda en línea,
+        online,
+        en linea,
+        en línea,
+      ]
+    in_store:
+      [
+        tienda,
+        en la tienda,
+        tienda fisica,
+        tienda física,
+        local,
+        mostrador,
+        caja,
+        punto de venta,
+        en persona,
+        mercadillo,
+        feria,
+      ]
+    wholesale:
+      [
+        mayorista,
+        mayoristas,
+        al por mayor,
+        mayoreo,
+        revendedor,
+        revendedores,
+        distribuidor,
+        distribuidores,
+      ]
+    social: [redes sociales, redes]
+  sale.status:
+    completed:
+      [pagado, pagada, completado, completada, entregado, entregada, cerrado, cerrada, hecho]
+    cancelled: [cancelado, cancelada, anulado, anulada]
+    refunded: [reembolsado, reembolsada, devuelto, devuelta, reembolso]
+    pending: [pendiente, sin pagar, abierto, abierta]
+  sale.payment_status:
+    paid: [si, sí, pagado, pagada, cobrado, cobrada, liquidado]
+    unpaid: [no, sin pagar, pendiente, impagado, debe, adeudado]
+    partial: [parcial, pago parcial, parcialmente pagado]
+  purchase.status:
+    ordered: [pedido, pendiente, enviado, abierto]
+    received: [recibido, recibida, entregado, completado]
+    cancelled: [cancelado, cancelada, anulado]

@@ -16,6 +16,7 @@ import {
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
+import { getT } from '@/lib/i18n';
 import { withInsights } from '@/lib/insights';
 import { requireEditor, requireWorkspace } from '@/lib/session';
 
@@ -28,9 +29,10 @@ async function guard<T>(slug: string, what: string, fn: () => Promise<T>): Promi
   try {
     return { ok: true, data: await fn() };
   } catch (err) {
-    if (err instanceof RecordsError) return { ok: false, error: err.message };
+    const t = await getT();
+    if (err instanceof RecordsError) return { ok: false, error: t.text(err.message) };
     getLogger('records').error({ err, slug, what }, 'records action failed');
-    return { ok: false, error: 'Something went wrong. Please try again.' };
+    return { ok: false, error: t('Something went wrong. Please try again.') };
   }
 }
 
@@ -53,8 +55,10 @@ const browseSchema = z
 /** More rows as the grid scrolls. */
 export async function loadRecords(slug: string, input: unknown): Promise<Result<BrowseResult>> {
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const parsed = browseSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: 'This page is out of date. Please reload it.' };
+  if (!parsed.success)
+    return { ok: false, error: t('This page is out of date. Please reload it.') };
   return guard(slug, 'browse', () => browseRecords(member, parsed.data));
 }
 
@@ -64,8 +68,9 @@ export async function openRecord(
   recordId: string,
 ): Promise<Result<RecordDetail>> {
   const member = await requireWorkspace(slug);
+  const t = await getT();
   if (!key.safeParse(entity).success || !id.safeParse(recordId).success)
-    return { ok: false, error: 'We couldn’t find that record.' };
+    return { ok: false, error: t('We couldn’t find that record.') };
   return guard(slug, 'open', () => getRecord(member, entity, recordId));
 }
 
@@ -76,7 +81,8 @@ export async function findRecords(
   q: string,
 ): Promise<Result<{ id: string; title: string }[]>> {
   const member = await requireWorkspace(slug);
-  if (!key.safeParse(entity).success) return { ok: false, error: 'That link isn’t available.' };
+  const t = await getT();
+  if (!key.safeParse(entity).success) return { ok: false, error: t('That link isn’t available.') };
   return guard(slug, 'find', () => searchRecords(member, entity, q.slice(0, 100), 10));
 }
 
@@ -94,8 +100,9 @@ export async function saveEdit(
   input: unknown,
 ): Promise<Result<{ batchId: string | null; record: RecordRow | null }>> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const parsed = editSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: 'That change isn’t possible here.' };
+  if (!parsed.success) return { ok: false, error: t('That change isn’t possible here.') };
   return guard(slug, 'edit', () =>
     withInsights(member.workspace.id, 'record_edit', () =>
       editRecord({ member, userId: member.user.id, ...parsed.data }),
@@ -110,8 +117,9 @@ export async function removeRecords(
   input: unknown,
 ): Promise<Result<{ batchId: string | null; count: number }>> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const parsed = idsSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: 'Choose up to 500 records.' };
+  if (!parsed.success) return { ok: false, error: t('Choose up to 500 records.') };
   return guard(slug, 'delete', () =>
     withInsights(member.workspace.id, 'record_edit', () =>
       deleteRecords({ member, userId: member.user.id, ...parsed.data }),
@@ -124,8 +132,9 @@ export async function bringBack(
   input: unknown,
 ): Promise<Result<{ batchId: string | null; count: number }>> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const parsed = idsSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: 'Choose up to 500 records.' };
+  if (!parsed.success) return { ok: false, error: t('Choose up to 500 records.') };
   return guard(slug, 'restore', () =>
     withInsights(member.workspace.id, 'record_edit', () =>
       restoreRecords({ member, userId: member.user.id, ...parsed.data }),
@@ -141,12 +150,13 @@ export async function undoChange(
   recordIds: string[],
 ): Promise<Result<RecordRow[]>> {
   const member = await requireEditor(slug);
+  const t = await getT();
   if (
     !key.safeParse(entity).success ||
     !z.uuid().safeParse(batchId).success ||
     !z.array(id).max(500).safeParse(recordIds).success
   )
-    return { ok: false, error: 'There’s nothing to undo.' };
+    return { ok: false, error: t('There’s nothing to undo.') };
   return guard(slug, 'undo', async () => {
     await withInsights(member.workspace.id, 'record_edit', () => undoRecordEdit(member, batchId));
     const rows: RecordRow[] = [];

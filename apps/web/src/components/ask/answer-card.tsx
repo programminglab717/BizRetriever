@@ -1,12 +1,14 @@
 'use client';
 
 import type { AnswerView } from '@bizr/core/ask';
+import { msg } from '@bizr/i18n/translate';
 import { ChevronDown, Download, Pin, ThumbsDown, ThumbsUp } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 
 import { feedbackAction, pinAction, unpinAction } from '@/app/w/[slug]/ask/actions';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -17,11 +19,11 @@ import { EmailMe } from '@/components/reports/email-me';
 import { AnswerChart, AnswerTable, KpiCards, type NumberStyle } from './answer-chart';
 
 const REASONS: { id: string; label: string }[] = [
-  { id: 'wrong_numbers', label: 'The numbers look wrong' },
-  { id: 'misunderstood', label: 'It misunderstood me' },
-  { id: 'wrong_period', label: 'Wrong dates' },
-  { id: 'hard_to_read', label: 'Hard to read' },
-  { id: 'other', label: 'Something else' },
+  { id: 'wrong_numbers', label: msg('The numbers look wrong') },
+  { id: 'misunderstood', label: msg('It misunderstood me') },
+  { id: 'wrong_period', label: msg('Wrong dates') },
+  { id: 'hard_to_read', label: msg('Hard to read') },
+  { id: 'other', label: msg('Something else') },
 ];
 
 export interface Toast {
@@ -31,11 +33,12 @@ export interface Toast {
 }
 
 function Headline({ answer }: { answer: AnswerView }) {
+  const t = useT();
   if (!answer.headline) return null;
   return (
     <p className="text-lg leading-relaxed">
       {answer.headline.map((s, i) =>
-        s.fact ? <strong key={i}>{s.text}</strong> : <span key={i}>{s.text}</span>,
+        s.fact ? <strong key={i}>{s.text}</strong> : <span key={i}>{t.text(s.text)}</span>,
       )}
     </p>
   );
@@ -60,6 +63,7 @@ export function AnswerCard({
   onToast: (t: Toast) => void;
   busy: boolean;
 }) {
+  const t = useT();
   const editor = useCanChange();
   const [asTable, setAsTable] = useState(false);
   const [feedback, setFeedback] = useState(answer.feedback);
@@ -73,23 +77,23 @@ export function AnswerCard({
       if (r.error) onToast({ text: r.error });
       else {
         setFeedback(value);
-        if (reason || value === 1) onToast({ text: 'Thanks, that helps us get better.' });
+        if (reason || value === 1) onToast({ text: t('Thanks, that helps us get better.') });
       }
     });
 
   const pin = () =>
     start(async () => {
       const r = await pinAction(slug, answer.id);
-      if (!r.tileId) return onToast({ text: r.error ?? 'That couldn’t be added.' });
+      if (!r.tileId) return onToast({ text: r.error ?? t('That couldn’t be added.') });
       setPinned(true);
       const tileId = r.tileId;
       onToast({
-        text: 'Added to your dashboard.',
-        link: { href: `/w/${slug}/dashboard`, label: 'View' },
+        text: t('Added to your dashboard.'),
+        link: { href: `/w/${slug}/dashboard`, label: t('View') },
         undo: () =>
           void unpinAction(slug, tileId).then(() => {
             setPinned(false);
-            onToast({ text: 'Removed from your dashboard.' });
+            onToast({ text: t('Removed from your dashboard.') });
           }),
       });
     });
@@ -98,7 +102,7 @@ export function AnswerCard({
     return (
       <Card data-testid="clarify-card">
         <CardContent className="grid gap-4 pt-6">
-          <p className="text-lg">{answer.clarify.question}</p>
+          <p className="text-lg">{t.text(answer.clarify.question)}</p>
           <div className="flex flex-wrap gap-2">
             {answer.clarify.options.map((label, i) => (
               <Button
@@ -108,7 +112,7 @@ export function AnswerCard({
                 disabled={busy}
                 onClick={() => onChoose(answer.id, i)}
               >
-                {label}
+                {t.text(label)}
               </Button>
             ))}
           </div>
@@ -120,11 +124,11 @@ export function AnswerCard({
     return (
       <Card data-testid="handoff-card">
         <CardContent className="grid gap-4 pt-6">
-          <p className="text-lg">{answer.unanswerable.message}</p>
+          <p className="text-lg">{t.text(answer.unanswerable.message)}</p>
           <div>
             <Button asChild>
               <Link href={`/w/${slug}/data?do=${encodeURIComponent(answer.question)}` as Route}>
-                Do it in My data
+                {t('Do it in My data')}
               </Link>
             </Button>
           </div>
@@ -136,11 +140,11 @@ export function AnswerCard({
     return (
       <Card data-testid="unanswerable-card">
         <CardContent className="grid gap-4 pt-6">
-          <p className="text-lg">{answer.unanswerable.message}</p>
+          <p className="text-lg">{t.text(answer.unanswerable.message)}</p>
           {answer.unanswerable.reason === 'missing_data' && (
             <div>
               <Button asChild variant="outline">
-                <Link href={`/w/${slug}/data/import`}>Add a file</Link>
+                <Link href={`/w/${slug}/data/import`}>{t('Add a file')}</Link>
               </Button>
             </div>
           )}
@@ -152,7 +156,11 @@ export function AnswerCard({
     return (
       <Card data-testid="error-card">
         <CardContent className="pt-6">
-          <p>{answer.error ?? 'That one didn’t work. Please try asking in a different way.'}</p>
+          <p>
+            {answer.error
+              ? t.text(answer.error)
+              : t('That one didn’t work. Please try asking in a different way.')}
+          </p>
         </CardContent>
       </Card>
     );
@@ -163,10 +171,10 @@ export function AnswerCard({
       <CardContent className="grid gap-5 pt-6">
         <div className="grid gap-1">
           <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            {answer.title}
+            {t.text(answer.title)}
             {answer.kind === 'estimate' && (
               <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-900">
-                Estimate
+                {t('Estimate')}
               </span>
             )}
           </p>
@@ -180,9 +188,14 @@ export function AnswerCard({
               {...(answer.comparedWith ? { comparedWith: answer.comparedWith } : {})}
             />
           ) : asTable ? (
-            <AnswerTable table={answer.table} caption={answer.title} />
+            <AnswerTable table={answer.table} caption={t.text(answer.title)} />
           ) : (
-            <AnswerChart chart={chart} table={answer.table} title={answer.title} style={style} />
+            <AnswerChart
+              chart={chart}
+              table={answer.table}
+              title={t.text(answer.title)}
+              style={style}
+            />
           ))}
         {answer.table && chart !== 'table' && (
           <div>
@@ -192,15 +205,17 @@ export function AnswerCard({
               className="h-auto p-0"
               onClick={() => setAsTable((v) => !v)}
             >
-              {asTable ? 'Show as chart' : 'Show as table'}
+              {/* The key is chosen at run time: "table" is fine in this English label, and the
+                  Spanish says "lista". */}
+              {t(asTable ? 'Show as chart' : 'Show as table')}
             </Button>
           </div>
         )}
 
         {answer.assumptions.length > 0 && (
-          <ul className="grid gap-1 text-sm text-muted-foreground" aria-label="What I assumed">
+          <ul className="grid gap-1 text-sm text-muted-foreground" aria-label={t('What I assumed')}>
             {answer.assumptions.map((a) => (
-              <li key={a}>{a}</li>
+              <li key={a}>{t.text(a)}</li>
             ))}
           </ul>
         )}
@@ -208,7 +223,7 @@ export function AnswerCard({
         {answer.steps && (
           <details className="group rounded-lg border px-4 py-3 text-sm">
             <summary className="flex cursor-pointer list-none items-center justify-between font-medium">
-              How I calculated this
+              {t('How I calculated this')}
               <ChevronDown
                 className="size-4 transition-transform group-open:rotate-180"
                 aria-hidden
@@ -217,20 +232,23 @@ export function AnswerCard({
             <div className="mt-3 grid gap-3">
               {answer.details?.custom && (
                 <p className="w-fit rounded-full bg-muted px-2 py-0.5 text-xs">
-                  Custom calculation
+                  {t('Custom calculation')}
                 </p>
               )}
               <ol className="grid list-decimal gap-1 pl-5">
                 {answer.steps.map((s) => (
-                  <li key={s}>{s}</li>
+                  <li key={s}>{t.text(s)}</li>
                 ))}
               </ol>
               {answer.details && (
                 <details>
-                  <summary className="cursor-pointer text-muted-foreground">Details</summary>
+                  <summary className="cursor-pointer text-muted-foreground">{t('Details')}</summary>
                   <p className="mt-2 text-muted-foreground">
-                    {answer.details.rows} {answer.details.rows === 1 ? 'line' : 'lines'} in the
-                    result.
+                    {t.plural(
+                      answer.details.rows,
+                      '{n} line in the result.',
+                      '{n} lines in the result.',
+                    )}
                   </p>
                   <pre className="mt-2 max-h-64 overflow-auto rounded bg-muted p-3 text-xs">
                     {answer.details.sql}
@@ -244,11 +262,11 @@ export function AnswerCard({
         <div className="flex flex-wrap items-center gap-2">
           {answer.kind === 'query' && editor && (
             <Button variant="outline" size="sm" onClick={pin} disabled={pinned || pending}>
-              <Pin /> {pinned ? 'On your dashboard' : 'Add to dashboard'}
+              <Pin /> {pinned ? t('On your dashboard') : t('Add to dashboard')}
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={onFollowUp}>
-            Ask a follow-up
+            {t('Ask a follow-up')}
           </Button>
           {answer.table && (
             <DownloadLinks href={`/api/w/${slug}/answers/${answer.id}/download`} pdf />
@@ -260,7 +278,7 @@ export function AnswerCard({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Good answer"
+              aria-label={t('Good answer')}
               aria-pressed={feedback === 1}
               className={cn(feedback === 1 && 'text-emerald-700')}
               onClick={() => sendFeedback(feedback === 1 ? null : 1)}
@@ -271,7 +289,7 @@ export function AnswerCard({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Not right"
+              aria-label={t('Not right')}
               aria-pressed={feedback === -1}
               className={cn(feedback === -1 && 'text-destructive')}
               onClick={() => (feedback === -1 ? sendFeedback(null) : setAskWhy(true))}
@@ -282,8 +300,8 @@ export function AnswerCard({
           </span>
         </div>
         {askWhy && (
-          <div className="grid gap-2" role="group" aria-label="What was wrong?">
-            <p className="text-sm font-medium">What was wrong?</p>
+          <div className="grid gap-2" role="group" aria-label={t('What was wrong?')}>
+            <p className="text-sm font-medium">{t('What was wrong?')}</p>
             <div className="flex flex-wrap gap-2">
               {REASONS.map((r) => (
                 <Button
@@ -295,7 +313,7 @@ export function AnswerCard({
                     sendFeedback(-1, r.id);
                   }}
                 >
-                  {r.label}
+                  {t(r.label)}
                 </Button>
               ))}
             </div>
@@ -309,10 +327,11 @@ export function AnswerCard({
 
 /** "Download: Excel · CSV" for an answer or a tile. Plain links, so the browser saves the file. */
 export function DownloadLinks({ href, pdf = false }: { href: string; pdf?: boolean }) {
+  const t = useT();
   return (
     <span className="flex items-center gap-1 text-sm text-muted-foreground">
       <Download className="size-4" aria-hidden />
-      <span>Download:</span>
+      <span>{t('Download:')}</span>
       <a
         className="rounded px-1 font-medium text-foreground underline-offset-4 hover:underline"
         href={`${href}?format=xlsx`}

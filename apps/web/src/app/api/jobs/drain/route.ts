@@ -24,9 +24,11 @@ function authorized(request: Request, secret: string): boolean {
 async function handle(request: Request): Promise<Response> {
   const env = getEnv();
   if (!env.JOB_DRAIN_SECRET) {
+    // i18n-skip: internal
     return Response.json({ error: 'Job draining is not enabled' }, { status: 503 });
   }
   if (!authorized(request, env.JOB_DRAIN_SECRET)) {
+    // i18n-skip: internal
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const maintenance = new URL(request.url).searchParams.get('maintenance') === '1';

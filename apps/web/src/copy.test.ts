@@ -19,6 +19,9 @@ const SHOWN_ATTRS = new Set(['placeholder', 'aria-label', 'title', 'alt', 'label
 const ALLOWED_TEXT = [
   // Joining a business (the invite page) is everyday English, not a database join.
   /^Join$/,
+  /^Join \{business\}$/,
+  // A row of the owner's own spreadsheet ("orders.csv › Sheet1 › row 12").
+  /^row \{n\}$/,
 ];
 
 function files(dir: string): string[] {
@@ -50,6 +53,13 @@ function shownText(file: string): { text: string; line: number }[] {
         ts.isStringLiteralLike(init.expression)
       )
         add(init.expression.text, init);
+    } else if (
+      ts.isCallExpression(node) &&
+      ((ts.isIdentifier(node.expression) && ['t', 'msg'].includes(node.expression.text)) ||
+        (ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'plural'))
+    ) {
+      // Translated text (M20): `t('…')`, `msg('…')`, `t.plural(n, '…', '…')`.
+      for (const a of node.arguments) if (ts.isStringLiteralLike(a)) add(a.text, a);
     } else if (
       (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
       !ts.isImportDeclaration(node.parent) &&

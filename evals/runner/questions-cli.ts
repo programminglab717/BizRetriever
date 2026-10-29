@@ -28,6 +28,7 @@ const baselinePath = path.join(root, 'baselines', 'questions.json');
  */
 export async function runQuestionsCli(values: {
   pack?: string | undefined;
+  lang?: string | undefined;
   case?: string | undefined;
   limit?: string | undefined;
   demo?: boolean | undefined;
@@ -44,10 +45,17 @@ export async function runQuestionsCli(values: {
     console.error('--pack is retail or wholesale');
     return 1;
   }
+  const lang = values.lang ?? 'en';
+  if (lang !== 'en' && lang !== 'es') {
+    console.error('--lang is en or es');
+    return 1;
+  }
   const mode = values.ai ? 'ai' : 'rules';
-  // Retail's baselines keep their names; other packs' are "<pack>-<mode>".
-  const baselineKey = pack === 'retail' ? mode : `${pack}-${mode}`;
-  const all = loadQuestionCases(questionsFile(pack));
+  // Retail's baselines keep their names; other packs' are "<pack>-<mode>", other languages'
+  // "<pack>-<lang>-<mode>" (M20).
+  const baselineKey =
+    lang !== 'en' ? `${pack}-${lang}-${mode}` : pack === 'retail' ? mode : `${pack}-${mode}`;
+  const all = loadQuestionCases(questionsFile(pack, lang));
   let cases = all;
   if (values.case) cases = cases.filter((c) => c.id === values.case);
   if (values.demo) cases = cases.filter((c) => c.demo);
@@ -79,7 +87,7 @@ export async function runQuestionsCli(values: {
       ? await loadWholesaleWorkspace({ today: EVAL_TODAY, name: 'Harbour Question Evals' })
       : await loadDemoWorkspace({ today: EVAL_TODAY, name: 'Fernwood Question Evals' });
   try {
-    const env = await evalEnv(demo.member);
+    const env = await evalEnv(demo.member, lang);
     const results = await runQuestionSuite(env, cases, {
       provider,
       ai: values.ai,

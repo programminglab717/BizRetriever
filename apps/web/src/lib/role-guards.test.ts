@@ -15,6 +15,7 @@ const VIEWER_ALLOWED: Record<string, string> = {
   feedbackAction: 'their own thumbs up or down on an answer',
   markSeen: 'drops the "New" badge only',
   saveEmailPrefs: 'their own email settings',
+  setMyLanguage: 'their own language',
   loadRecords: 'reads',
   openRecord: 'reads',
   findRecords: 'reads',

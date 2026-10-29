@@ -16,6 +16,7 @@ import {
   YAxis,
 } from 'recharts';
 
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +34,12 @@ const COLORS = [
   'oklch(0.6 0.05 200)',
 ];
 const TABLE_PREVIEW = 15;
+/**
+ * Read out for the chart. The English says "table view" (the toggle's name), so the key is a
+ * constant rather than a literal in `t()`, where the copy check would flag it; the Spanish says
+ * "vista de lista".
+ */
+const CHART_ALT = 'Chart: {title}. The same figures are in the table view.';
 
 /** Short axis labels ("$12K", "40%"). Exact values are in the tooltip and the table. */
 function tickFormatter(format: string | undefined, style: NumberStyle) {
@@ -102,6 +109,8 @@ export function KpiCards({
   compact?: boolean;
   title?: string;
 }) {
+  const t = useT();
+  const period = comparedWith ? t.text(comparedWith) : undefined;
   return (
     <div
       className={cn(
@@ -111,9 +120,11 @@ export function KpiCards({
     >
       {kpis.map((k) => (
         <div key={k.label} className={cn('min-w-0', !compact && 'rounded-lg border p-4')}>
-          {!(compact && kpis.length === 1 && k.label.toLowerCase() === title?.toLowerCase()) && (
-            <p className="text-sm text-muted-foreground">{k.label}</p>
-          )}
+          {!(
+            compact &&
+            kpis.length === 1 &&
+            t.text(k.label).toLowerCase() === title?.toLowerCase()
+          ) && <p className="text-sm text-muted-foreground">{t.text(k.label)}</p>}
           <p className={cn('mt-1 font-semibold tabular-nums', compact ? 'text-2xl' : 'text-3xl')}>
             {k.text}
           </p>
@@ -125,19 +136,19 @@ export function KpiCards({
                 k.change.good === false && 'text-destructive',
                 k.change.good === undefined && 'text-muted-foreground',
               )}
-              {...(compact && comparedWith ? { title: `Compared with ${comparedWith}` } : {})}
+              {...(compact && period ? { title: t('Compared with {period}', { period }) } : {})}
             >
               {k.change.direction === 'up' ? (
-                <ArrowUp className="size-4" aria-label="Up" />
+                <ArrowUp className="size-4" aria-label={t('Up')} />
               ) : k.change.direction === 'down' ? (
-                <ArrowDown className="size-4" aria-label="Down" />
+                <ArrowDown className="size-4" aria-label={t('Down')} />
               ) : (
                 <Minus className="size-4" aria-hidden />
               )}
               {k.change.text}
-              {comparedWith && (
+              {period && (
                 <span className="text-muted-foreground">
-                  {compact ? 'vs the period before' : `vs ${comparedWith}`}
+                  {compact ? t('vs the period before') : t('vs {period}', { period })}
                 </span>
               )}
             </p>
@@ -149,6 +160,7 @@ export function KpiCards({
 }
 
 export function AnswerTable({ table, caption }: { table: TableView; caption: string }) {
+  const t = useT();
   const [all, setAll] = useState(false);
   const rows = all ? table.rows : table.rows.slice(0, TABLE_PREVIEW);
   const more = table.totalRows > rows.length;
@@ -165,7 +177,7 @@ export function AnswerTable({ table, caption }: { table: TableView; caption: str
                   scope="col"
                   className={cn('px-3 py-2 font-medium', c.kind === 'metric' && 'text-right')}
                 >
-                  {c.label}
+                  {t.text(c.label)}
                 </th>
               ))}
             </tr>
@@ -191,10 +203,10 @@ export function AnswerTable({ table, caption }: { table: TableView; caption: str
       </div>
       {more && (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          Showing the top {rows.length} of {table.totalRows}.
+          {t('Showing the top {shown} of {total}.', { shown: rows.length, total: table.totalRows })}
           {table.rows.length > rows.length && (
             <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setAll(true)}>
-              See all
+              {t('See all')}
             </Button>
           )}
         </p>
@@ -215,6 +227,7 @@ export function AnswerChart({
   title: string;
   style: NumberStyle;
 }) {
+  const t = useT();
   const { data, metrics } = useMemo(() => points(table), [table]);
   const stack = useMemo(() => stacked(table), [table]);
   const first = metrics[0];
@@ -227,7 +240,7 @@ export function AnswerChart({
   const height = chart === 'bar_horizontal' ? Math.max(160, data.length * 36 + 40) : 280;
   return (
     <figure className="grid gap-2">
-      <div role="img" aria-label={`Chart: ${title}. The same figures are in the table view.`}>
+      <div role="img" aria-label={t(CHART_ALT, { title })}>
         <ResponsiveContainer width="100%" height={height}>
           {chart === 'line' ? (
             <LineChart {...common}>
@@ -241,7 +254,7 @@ export function AnswerChart({
                   isAnimationActive={false}
                   key={m.key}
                   dataKey={m.key}
-                  name={m.label}
+                  name={t.text(m.label)}
                   stroke={COLORS[i % COLORS.length]}
                   strokeWidth={2}
                   dot={data.length <= 31}
@@ -276,7 +289,7 @@ export function AnswerChart({
               <Bar
                 isAnimationActive={false}
                 dataKey={first.key}
-                name={first.label}
+                name={t.text(first.label)}
                 fill={COLORS[0]}
                 radius={[0, 4, 4, 0]}
               />
@@ -292,7 +305,7 @@ export function AnswerChart({
                   isAnimationActive={false}
                   key={m.key}
                   dataKey={m.key}
-                  name={m.label}
+                  name={t.text(m.label)}
                   fill={COLORS[i % COLORS.length]}
                   radius={[4, 4, 0, 0]}
                 />

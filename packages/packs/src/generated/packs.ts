@@ -1035,7 +1035,20 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "variant sku",
           "item sku",
           "article no",
-          "part no"
+          "part no",
+          "código",
+          "codigo",
+          "código de producto",
+          "codigo de producto",
+          "código del producto",
+          "código de artículo",
+          "codigo de articulo",
+          "cód",
+          "cod",
+          "referencia",
+          "clave",
+          "clave del producto",
+          "modelo"
         ],
         "product.name": [
           "product",
@@ -1047,7 +1060,19 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "title",
           "lineitem name",
           "listing",
-          "product description"
+          "product description",
+          "producto",
+          "nombre del producto",
+          "artículo",
+          "articulo",
+          "nombre del artículo",
+          "descripción",
+          "descripcion",
+          "descripción del producto",
+          "título",
+          "titulo",
+          "concepto",
+          "nombre"
         ],
         "product.variant": [
           "variant",
@@ -1055,7 +1080,14 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "option",
           "size",
           "colour",
-          "color"
+          "color",
+          "variante",
+          "opción",
+          "opcion",
+          "talla",
+          "tamaño",
+          "tamano",
+          "medida"
         ],
         "product.category": [
           "category",
@@ -1065,13 +1097,28 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "dept",
           "collection",
           "section",
-          "group"
+          "group",
+          "categoría",
+          "categoria",
+          "tipo",
+          "tipo de producto",
+          "departamento",
+          "familia",
+          "sección",
+          "seccion",
+          "colección",
+          "coleccion",
+          "grupo",
+          "línea",
+          "linea"
         ],
         "product.brand": [
           "brand",
           "vendor brand",
           "make",
-          "manufacturer brand"
+          "manufacturer brand",
+          "marca",
+          "marca del fabricante"
         ],
         "product.unit_price": [
           "price",
@@ -1084,7 +1131,17 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "sale price",
           "retail",
           "price rrp",
-          "variant price"
+          "variant price",
+          "precio",
+          "precio de venta",
+          "precio venta",
+          "pvp",
+          "precio unitario",
+          "precio público",
+          "precio al público",
+          "precio minorista",
+          "precio de lista",
+          "precio por unidad"
         ],
         "product.unit_cost": [
           "cost",
@@ -1098,7 +1155,19 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "cost ex tax",
           "price cost ex tax",
           "cost per item",
-          "purchase price"
+          "purchase price",
+          "costo",
+          "coste",
+          "costo unitario",
+          "coste unitario",
+          "precio de costo",
+          "precio de coste",
+          "precio de compra",
+          "costo de compra",
+          "costo sin iva",
+          "coste sin iva",
+          "costo por unidad",
+          "costo por artículo"
         ],
         "product.supplier": [
           "supplier",
@@ -1106,7 +1175,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "maker",
           "manufacturer",
           "made by",
-          "supplied by"
+          "supplied by",
+          "proveedor",
+          "fabricante",
+          "distribuidor",
+          "suministrado por",
+          "fabricado por"
         ],
         "product.reorder_point": [
           "reorder at",
@@ -1115,13 +1189,27 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "min stock",
           "minimum stock",
           "stock reorder at",
-          "par level"
+          "par level",
+          "punto de pedido",
+          "punto de reorden",
+          "punto de reposición",
+          "stock mínimo",
+          "stock minimo",
+          "inventario mínimo",
+          "existencia mínima",
+          "mínimo",
+          "minimo",
+          "reponer en",
+          "nivel de reposición"
         ],
         "product.barcode": [
           "barcode",
           "ean",
           "upc",
-          "gtin"
+          "gtin",
+          "código de barras",
+          "codigo de barras",
+          "cod barras"
         ],
         "customer.name": [
           "customer",
@@ -1136,14 +1224,34 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "company",
           "stockist",
           "retailer",
-          "store name"
+          "store name",
+          "cliente",
+          "nombre del cliente",
+          "nombre cliente",
+          "comprador",
+          "razón social",
+          "razon social",
+          "empresa",
+          "cuenta",
+          "tienda",
+          "nombre de facturación",
+          "facturar a",
+          "enviar a",
+          "revendedor",
+          "nombre"
         ],
         "customer.email": [
           "email",
           "e mail",
           "customer email",
           "buyer email",
-          "email address"
+          "email address",
+          "correo",
+          "correo electrónico",
+          "correo electronico",
+          "mail",
+          "correo del cliente",
+          "email del cliente"
         ],
         "customer.phone": [
           "phone",
@@ -1151,14 +1259,30 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "tel",
           "mobile",
           "phone number",
-          "billing phone"
+          "billing phone",
+          "teléfono",
+          "telefono",
+          "tlf",
+          "móvil",
+          "movil",
+          "celular",
+          "número de teléfono",
+          "numero de telefono",
+          "whatsapp"
         ],
         "customer.city": [
           "city",
           "town",
           "billing city",
           "ship city",
-          "shipping city"
+          "shipping city",
+          "ciudad",
+          "localidad",
+          "población",
+          "poblacion",
+          "municipio",
+          "ciudad de envío",
+          "ciudad de facturación"
         ],
         "customer.region": [
           "state",
@@ -1167,35 +1291,63 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "county",
           "billing province",
           "ship state",
-          "shipping province"
+          "shipping province",
+          "estado",
+          "provincia",
+          "región",
+          "comunidad",
+          "comunidad autónoma",
+          "provincia de envío",
+          "estado de envío"
         ],
         "customer.country": [
           "country",
           "billing country",
-          "ship country"
+          "ship country",
+          "país",
+          "pais",
+          "país de envío",
+          "país de facturación"
         ],
         "customer.postal_code": [
           "zip",
           "zip code",
           "postcode",
           "postal code",
-          "billing zip"
+          "billing zip",
+          "código postal",
+          "codigo postal",
+          "cp",
+          "c p",
+          "cód postal",
+          "cod postal"
         ],
         "supplier.name": [
           "supplier",
           "vendor",
           "supplier name",
           "from",
-          "manufacturer"
+          "manufacturer",
+          "proveedor",
+          "nombre del proveedor",
+          "fabricante",
+          "distribuidor"
         ],
         "supplier.email": [
           "supplier email",
-          "vendor email"
+          "vendor email",
+          "correo del proveedor",
+          "email del proveedor",
+          "correo proveedor"
         ],
         "supplier.lead_time_days": [
           "lead time",
           "lead time days",
-          "days to deliver"
+          "days to deliver",
+          "plazo de entrega",
+          "días de entrega",
+          "dias de entrega",
+          "tiempo de entrega"
         ],
         "sale.order_number": [
           "order",
@@ -1212,7 +1364,30 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "invoice number",
           "invoice",
           "transaction id",
-          "sale id"
+          "sale id",
+          "pedido",
+          "número de pedido",
+          "numero de pedido",
+          "nº pedido",
+          "n pedido",
+          "no pedido",
+          "núm pedido",
+          "num pedido",
+          "id pedido",
+          "id del pedido",
+          "orden",
+          "número de orden",
+          "folio",
+          "ticket",
+          "nº ticket",
+          "recibo",
+          "número de recibo",
+          "factura",
+          "número de factura",
+          "numero de factura",
+          "nº factura",
+          "transacción",
+          "id de venta"
         ],
         "sale.sale_date": [
           "date",
@@ -1223,7 +1398,19 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "transaction date",
           "invoice date",
           "day",
-          "date sold"
+          "date sold",
+          "fecha",
+          "fecha del pedido",
+          "fecha de pedido",
+          "fecha de venta",
+          "fecha venta",
+          "fecha de creación",
+          "fecha de pago",
+          "fecha de factura",
+          "fecha factura",
+          "fecha de emisión",
+          "día",
+          "dia"
         ],
         "sale.channel": [
           "channel",
@@ -1231,19 +1418,35 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "sales channel",
           "platform",
           "store",
-          "marketplace"
+          "marketplace",
+          "canal",
+          "canal de venta",
+          "origen",
+          "plataforma",
+          "tienda",
+          "medio"
         ],
         "sale.status": [
           "status",
           "financial status",
           "order status",
-          "payment status"
+          "payment status",
+          "estado",
+          "estado del pedido",
+          "estatus",
+          "situación"
         ],
         "sale.discount_total": [
           "discount amount",
           "discount",
           "order discount",
-          "discounts"
+          "discounts",
+          "descuento",
+          "importe del descuento",
+          "descuento del pedido",
+          "descuentos",
+          "dto",
+          "dcto"
         ],
         "sale.shipping_charged": [
           "shipping",
@@ -1251,33 +1454,66 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "order shipping",
           "delivery",
           "postage",
-          "shipping price"
+          "shipping price",
+          "envío",
+          "envio",
+          "gastos de envío",
+          "gastos de envio",
+          "costo de envío",
+          "coste de envío",
+          "entrega",
+          "portes",
+          "flete"
         ],
         "sale.tax_total": [
           "taxes",
           "tax",
           "sales tax",
           "vat",
-          "tax total"
+          "tax total",
+          "impuesto",
+          "impuestos",
+          "iva",
+          "total impuestos",
+          "igv"
         ],
         "sale.total": [
           "total",
           "order total",
           "order value",
           "grand total",
-          "amount"
+          "amount",
+          "total del pedido",
+          "importe",
+          "importe total",
+          "monto",
+          "monto total",
+          "valor del pedido",
+          "total a pagar"
         ],
         "sale.payment_status": [
           "paid",
           "paid?",
           "payment status",
           "payment",
-          "settled"
+          "settled",
+          "pagado",
+          "¿pagado?",
+          "estado del pago",
+          "estado de pago",
+          "pago",
+          "cobrado",
+          "liquidado"
         ],
         "sale.due_date": [
           "due date",
           "payment due",
-          "due"
+          "due",
+          "fecha de vencimiento",
+          "vencimiento",
+          "vence",
+          "fecha límite de pago",
+          "vto"
         ],
         "sale_line.quantity": [
           "qty",
@@ -1288,7 +1524,16 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "lineitem quantity",
           "count",
           "qty sold",
-          "number of items"
+          "number of items",
+          "cantidad",
+          "cant",
+          "uds",
+          "unidades",
+          "piezas",
+          "pzas",
+          "cantidad vendida",
+          "nº de artículos",
+          "número de artículos"
         ],
         "sale_line.unit_price": [
           "price",
@@ -1296,13 +1541,25 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "lineitem price",
           "each",
           "rate",
-          "item price"
+          "item price",
+          "precio",
+          "precio unitario",
+          "precio por unidad",
+          "precio unidad",
+          "p unitario",
+          "c/u",
+          "precio del artículo"
         ],
         "sale_line.discount": [
           "line discount",
           "discount",
           "lineitem discount",
-          "item discount"
+          "item discount",
+          "descuento",
+          "descuento de línea",
+          "descuento del artículo",
+          "dto",
+          "dcto"
         ],
         "sale_line.line_total": [
           "line total",
@@ -1312,30 +1569,60 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "net",
           "value",
           "subtotal",
-          "line amount"
+          "line amount",
+          "total de línea",
+          "total línea",
+          "importe",
+          "monto",
+          "valor",
+          "importe de línea",
+          "neto",
+          "bruto"
         ],
         "return.return_date": [
           "return date",
           "date returned",
           "date",
-          "refund date"
+          "refund date",
+          "fecha de devolución",
+          "fecha devolución",
+          "fecha de devolucion",
+          "fecha",
+          "fecha del reembolso"
         ],
         "return.quantity": [
           "qty",
           "quantity",
           "units returned",
-          "qty returned"
+          "qty returned",
+          "cantidad",
+          "cant",
+          "uds",
+          "unidades devueltas",
+          "cantidad devuelta"
         ],
         "return.refund_amount": [
           "refund",
           "refund amount",
           "refunded",
-          "amount refunded"
+          "amount refunded",
+          "reembolso",
+          "importe del reembolso",
+          "reembolsado",
+          "importe reembolsado",
+          "monto reembolsado",
+          "devolución"
         ],
         "return.reason": [
           "reason",
           "return reason",
-          "why"
+          "why",
+          "motivo",
+          "motivo de devolución",
+          "razón",
+          "razon",
+          "causa",
+          "por qué"
         ],
         "purchase.po_number": [
           "po number",
@@ -1343,43 +1630,83 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "purchase order",
           "po no",
           "order number",
-          "order no"
+          "order no",
+          "orden de compra",
+          "oc",
+          "nº oc",
+          "número de orden de compra",
+          "número de pedido",
+          "numero de pedido",
+          "nº pedido",
+          "pedido"
         ],
         "purchase.order_date": [
           "order date",
           "ordered",
           "date ordered",
           "date",
-          "po date"
+          "po date",
+          "fecha de pedido",
+          "fecha del pedido",
+          "pedido el",
+          "fecha",
+          "fecha oc",
+          "fecha de compra"
         ],
         "purchase.received_date": [
           "received",
           "received date",
           "date received",
-          "delivered"
+          "delivered",
+          "recibido",
+          "recibido el",
+          "fecha de recepción",
+          "fecha recepción",
+          "fecha de recepcion",
+          "entregado",
+          "fecha de entrega"
         ],
         "purchase.total": [
           "total",
           "po total",
-          "order total"
+          "order total",
+          "total del pedido",
+          "total oc",
+          "importe total"
         ],
         "purchase_line.quantity": [
           "qty",
           "quantity",
           "units",
-          "qty ordered"
+          "qty ordered",
+          "cantidad",
+          "cant",
+          "uds",
+          "unidades",
+          "cantidad pedida"
         ],
         "purchase_line.unit_cost": [
           "unit cost",
           "cost",
           "cost each",
           "price",
-          "unit price"
+          "unit price",
+          "costo unitario",
+          "coste unitario",
+          "costo",
+          "coste",
+          "costo por unidad",
+          "precio",
+          "precio unitario"
         ],
         "purchase_line.line_total": [
           "line total",
           "total",
-          "amount"
+          "amount",
+          "total de línea",
+          "total línea",
+          "importe",
+          "subtotal"
         ],
         "stock_count.quantity_on_hand": [
           "in stock",
@@ -1391,32 +1718,66 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "inventory",
           "available",
           "stock level",
-          "variant inventory qty"
+          "variant inventory qty",
+          "inventario",
+          "existencias",
+          "existencia",
+          "en stock",
+          "en inventario",
+          "disponible",
+          "disponibles",
+          "cantidad disponible",
+          "stock actual",
+          "unidades en stock"
         ],
         "stock_count.counted_at": [
           "counted",
           "count date",
           "stock date",
-          "as of"
+          "as of",
+          "fecha del recuento",
+          "fecha de recuento",
+          "fecha de inventario",
+          "contado el",
+          "a fecha de"
         ],
         "expense.expense_date": [
           "date",
           "month",
           "expense date",
-          "paid on"
+          "paid on",
+          "fecha",
+          "mes",
+          "fecha del gasto",
+          "fecha de pago",
+          "pagado el"
         ],
         "expense.category": [
           "category",
           "expense",
           "type",
           "account",
-          "item"
+          "item",
+          "categoría",
+          "categoria",
+          "concepto",
+          "tipo",
+          "tipo de gasto",
+          "partida",
+          "cuenta"
         ],
         "expense.description": [
           "description",
           "details",
           "memo",
-          "note"
+          "note",
+          "descripción",
+          "descripcion",
+          "detalle",
+          "detalles",
+          "nota",
+          "notas",
+          "observaciones"
         ],
         "expense.amount": [
           "amount",
@@ -1424,25 +1785,50 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "value",
           "spend",
           "paid",
-          "total"
+          "total",
+          "importe",
+          "monto",
+          "cantidad",
+          "valor",
+          "gasto",
+          "pagado",
+          "costo"
         ],
         "expense.vendor": [
           "vendor",
           "paid to",
           "payee",
-          "supplier"
+          "supplier",
+          "pagado a",
+          "proveedor",
+          "beneficiario",
+          "acreedor"
         ],
         "payment.received_date": [
           "date",
           "received",
           "payment date",
-          "date paid"
+          "date paid",
+          "fecha",
+          "fecha de pago",
+          "fecha de cobro",
+          "fecha del cobro",
+          "recibido",
+          "fecha de recepción"
         ],
         "payment.amount": [
           "amount",
           "paid",
           "payment",
-          "amount paid"
+          "amount paid",
+          "importe",
+          "monto",
+          "pagado",
+          "pago",
+          "importe pagado",
+          "monto pagado",
+          "cobrado",
+          "importe cobrado"
         ]
       },
       "values": {
@@ -1456,7 +1842,16 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "woocommerce",
             "woo",
             "squarespace",
-            "wix"
+            "wix",
+            "la web",
+            "pagina web",
+            "página web",
+            "sitio web",
+            "tienda online",
+            "tienda en linea",
+            "tienda en línea",
+            "en linea",
+            "en línea"
           ],
           "etsy": [
             "etsy"
@@ -1474,7 +1869,9 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "facebook",
             "tiktok",
             "tiktok shop",
-            "social"
+            "social",
+            "redes sociales",
+            "redes"
           ],
           "in_store": [
             "shop",
@@ -1486,13 +1883,32 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "walk-in",
             "market",
             "counter",
-            "retail store"
+            "retail store",
+            "tienda",
+            "en la tienda",
+            "tienda fisica",
+            "tienda física",
+            "local",
+            "mostrador",
+            "caja",
+            "punto de venta",
+            "en persona",
+            "mercadillo",
+            "feria"
           ],
           "wholesale": [
             "wholesale",
             "trade",
             "b2b",
-            "stockist"
+            "stockist",
+            "mayorista",
+            "mayoristas",
+            "al por mayor",
+            "mayoreo",
+            "revendedor",
+            "revendedores",
+            "distribuidor",
+            "distribuidores"
           ]
         },
         "sale.status": {
@@ -1502,24 +1918,46 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "completed",
             "fulfilled",
             "closed",
-            "done"
+            "done",
+            "pagado",
+            "pagada",
+            "completado",
+            "completada",
+            "entregado",
+            "entregada",
+            "cerrado",
+            "cerrada",
+            "hecho"
           ],
           "cancelled": [
             "cancelled",
             "canceled",
             "void",
-            "voided"
+            "voided",
+            "cancelado",
+            "cancelada",
+            "anulado",
+            "anulada"
           ],
           "refunded": [
             "refunded",
             "refund",
-            "partially refunded"
+            "partially refunded",
+            "reembolsado",
+            "reembolsada",
+            "devuelto",
+            "devuelta",
+            "reembolso"
           ],
           "pending": [
             "pending",
             "unpaid",
             "authorized",
-            "open"
+            "open",
+            "pendiente",
+            "sin pagar",
+            "abierto",
+            "abierta"
           ]
         },
         "sale.payment_status": {
@@ -1530,7 +1968,14 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "✓",
             "✔",
             "true",
-            "settled"
+            "settled",
+            "si",
+            "sí",
+            "pagado",
+            "pagada",
+            "cobrado",
+            "cobrada",
+            "liquidado"
           ],
           "unpaid": [
             "n",
@@ -1539,14 +1984,22 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "outstanding",
             "false",
             "owing",
-            "due"
+            "due",
+            "sin pagar",
+            "pendiente",
+            "impagado",
+            "debe",
+            "adeudado"
           ],
           "partial": [
             "part",
             "partial",
             "partly",
             "part paid",
-            "partially paid"
+            "partially paid",
+            "parcial",
+            "pago parcial",
+            "parcialmente pagado"
           ]
         },
         "purchase.status": {
@@ -1554,18 +2007,29 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "ordered",
             "open",
             "pending",
-            "sent"
+            "sent",
+            "pedido",
+            "pendiente",
+            "enviado",
+            "abierto"
           ],
           "received": [
             "received",
             "delivered",
             "complete",
-            "completed"
+            "completed",
+            "recibido",
+            "recibida",
+            "entregado",
+            "completado"
           ],
           "cancelled": [
             "cancelled",
             "canceled",
-            "void"
+            "void",
+            "cancelado",
+            "cancelada",
+            "anulado"
           ]
         }
       },
@@ -5079,7 +5543,2114 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
         }
       ]
     },
-    "primer": "Small retailers and online sellers usually keep these files:\n- Order exports from their website or marketplaces (Shopify, Etsy, Amazon, WooCommerce). These are\n  usually one row per item sold, with the order's number, date and customer repeated on every item row\n  or written only on the first row of each order. In Shopify exports the \"Name\" column is the order\n  number (like \"#1001\"), not a person's name.\n- A till or point-of-sale export from a physical shop: one row per item, often without a customer.\n  Negative quantities usually mean refunds.\n- A hand-kept stock list: one row per product, with code (SKU), name, cost, selling price and how many\n  are in stock. Categories are often written as a heading row above each group of products. \"Cost\" on a\n  stock list is normally the cost per item. Quantities may be written like \"12 pcs\".\n- Supplier orders (purchase orders): one row per product ordered, with the supplier, dates, quantity\n  and cost each. These show when supplier prices change.\n- Wholesale invoices to other shops, often one sheet per month or quarter, with a \"Paid?\" column.\n- An expenses sheet, often with months as columns (Jan, Feb, …) and categories as rows.\nTotals, subtotals, notes and blank rows are common and are not records. The same customer or supplier is\noften spelled in slightly different ways. Dates may be written day-first or month-first in different files."
+    "primer": "Small retailers and online sellers usually keep these files:\n- Order exports from their website or marketplaces (Shopify, Etsy, Amazon, WooCommerce). These are\n  usually one row per item sold, with the order's number, date and customer repeated on every item row\n  or written only on the first row of each order. In Shopify exports the \"Name\" column is the order\n  number (like \"#1001\"), not a person's name.\n- A till or point-of-sale export from a physical shop: one row per item, often without a customer.\n  Negative quantities usually mean refunds.\n- A hand-kept stock list: one row per product, with code (SKU), name, cost, selling price and how many\n  are in stock. Categories are often written as a heading row above each group of products. \"Cost\" on a\n  stock list is normally the cost per item. Quantities may be written like \"12 pcs\".\n- Supplier orders (purchase orders): one row per product ordered, with the supplier, dates, quantity\n  and cost each. These show when supplier prices change.\n- Wholesale invoices to other shops, often one sheet per month or quarter, with a \"Paid?\" column.\n- An expenses sheet, often with months as columns (Jan, Feb, …) and categories as rows.\nTotals, subtotals, notes and blank rows are common and are not records. The same customer or supplier is\noften spelled in slightly different ways. Dates may be written day-first or month-first in different files.",
+    "translations": {
+      "es": {
+        "manifest": {
+          "name": "Tiendas y comercio electrónico",
+          "description": "Para tiendas físicas y online que venden productos físicos.",
+          "industries_label": "Tienda física, tienda online o ambas",
+          "helpful_files": [
+            {
+              "what": "Ventas o pedidos",
+              "detail": "de tu sitio web, Etsy, Amazon o tu caja registradora"
+            },
+            {
+              "what": "Una lista de inventario o de productos",
+              "detail": "con precios, costos y cuántas unidades tienes"
+            },
+            {
+              "what": "Pedidos a proveedores",
+              "detail": "qué compraste, cuándo y por cuánto"
+            },
+            {
+              "what": "Gastos",
+              "detail": "alquiler, envíos, embalaje, etc."
+            }
+          ],
+          "goal_words": {
+            "order_count": [
+              "pedido",
+              "pedidos"
+            ],
+            "gross_profit": [
+              "ganancia",
+              "ganancias",
+              "beneficio",
+              "beneficios",
+              "utilidad",
+              "utilidades"
+            ],
+            "net_sales": [
+              "venta",
+              "ventas",
+              "ingresos",
+              "facturación",
+              "recaudación"
+            ]
+          }
+        },
+        "entities": {
+          "product": {
+            "singular": "Producto",
+            "plural": "Productos",
+            "description": "Algo que vendes.",
+            "fields": {
+              "sku": "Código del producto",
+              "name": "Nombre",
+              "variant": {
+                "label": "Variante",
+                "description": "Talla, color u otra opción."
+              },
+              "category": "Categoría",
+              "brand": "Marca",
+              "unit_price": "Precio de venta",
+              "unit_cost": "Costo por unidad",
+              "supplier": "Proveedor",
+              "reorder_point": "Reponer cuando el inventario llegue a",
+              "is_active": "Se sigue vendiendo",
+              "barcode": "Código de barras"
+            }
+          },
+          "customer": {
+            "singular": "Cliente",
+            "plural": "Clientes",
+            "description": "Alguien que te compra.",
+            "fields": {
+              "name": "Nombre",
+              "email": "Correo",
+              "phone": "Teléfono",
+              "city": "Ciudad",
+              "region": "Estado o provincia",
+              "country": "País",
+              "postal_code": "Código postal",
+              "customer_type": "Tipo de cliente",
+              "payment_terms_days": "Días para pagar"
+            }
+          },
+          "supplier": {
+            "singular": "Proveedor",
+            "plural": "Proveedores",
+            "description": "Alguien a quien le compras inventario.",
+            "fields": {
+              "name": "Nombre",
+              "contact_name": "Contacto",
+              "email": "Correo",
+              "phone": "Teléfono",
+              "lead_time_days": "Días de entrega"
+            }
+          },
+          "location": {
+            "singular": "Punto de venta",
+            "plural": "Puntos de venta",
+            "description": "Donde vendes o guardas inventario, como tu sitio web, tu tienda o tu almacén.",
+            "fields": {
+              "name": "Nombre",
+              "location_type": "Tipo"
+            }
+          },
+          "sale": {
+            "singular": "Venta",
+            "plural": "Ventas",
+            "description": "Un pedido o un recibo. Una venta puede incluir varios productos.",
+            "fields": {
+              "order_number": "Número de pedido",
+              "sale_date": "Fecha",
+              "customer": "Cliente",
+              "channel": "Canal de venta",
+              "location": "Punto de venta",
+              "status": "Estado",
+              "discount_total": "Descuento",
+              "shipping_charged": "Envío cobrado",
+              "tax_total": "Impuestos",
+              "total": "Total del pedido",
+              "payment_status": "¿Pagado?",
+              "due_date": "Vencimiento del pago"
+            }
+          },
+          "sale_line": {
+            "singular": "Línea de venta",
+            "plural": "Líneas de venta",
+            "description": "Un producto de una venta, con cuántas unidades y a qué precio.",
+            "fields": {
+              "sale": "Venta",
+              "line_number": "Línea",
+              "product": "Producto",
+              "product_name_raw": "Producto tal como está escrito",
+              "quantity": "Cantidad",
+              "unit_price": "Precio por unidad",
+              "discount": "Descuento",
+              "line_total": "Total de la línea",
+              "unit_cost_at_sale": "Costo por unidad en ese momento"
+            }
+          },
+          "return": {
+            "singular": "Devolución",
+            "plural": "Devoluciones",
+            "description": "Productos que un cliente te devolvió.",
+            "fields": {
+              "sale": "Venta",
+              "product": "Producto",
+              "return_date": "Fecha",
+              "quantity": "Cantidad",
+              "refund_amount": "Reembolso",
+              "reason": "Motivo"
+            }
+          },
+          "purchase": {
+            "singular": "Pedido a proveedor",
+            "plural": "Pedidos a proveedores",
+            "description": "Inventario que le pediste a un proveedor.",
+            "fields": {
+              "po_number": "Número de pedido",
+              "supplier": "Proveedor",
+              "order_date": "Pedido el",
+              "received_date": "Recibido el",
+              "status": "Estado",
+              "total": "Total",
+              "shipping_cost": "Costo de envío"
+            }
+          },
+          "purchase_line": {
+            "singular": "Línea de pedido a proveedor",
+            "plural": "Líneas de pedido a proveedor",
+            "description": "Un producto de un pedido a proveedor.",
+            "fields": {
+              "purchase": "Pedido a proveedor",
+              "product": "Producto",
+              "quantity": "Cantidad",
+              "unit_cost": "Costo por unidad",
+              "line_total": "Total de la línea"
+            }
+          },
+          "stock_count": {
+            "singular": "Nivel de inventario",
+            "plural": "Niveles de inventario",
+            "description": "Cuántas unidades de un producto tenías en un día concreto.",
+            "fields": {
+              "product": "Producto",
+              "location": "Punto de venta",
+              "counted_at": "Contado el",
+              "quantity_on_hand": "En inventario"
+            }
+          },
+          "stock_movement": {
+            "singular": "Movimiento de inventario",
+            "plural": "Movimientos de inventario",
+            "description": "Inventario que entra o sale, como una entrega, una rotura o una corrección.",
+            "fields": {
+              "product": "Producto",
+              "moved_at": "Fecha",
+              "quantity_change": "Cambio",
+              "reason": "Motivo"
+            }
+          },
+          "expense": {
+            "singular": "Gasto",
+            "plural": "Gastos",
+            "description": "Dinero que gastaste para mantener el negocio.",
+            "fields": {
+              "expense_date": "Fecha",
+              "category": "Categoría",
+              "description": "Descripción",
+              "amount": "Importe",
+              "vendor": "Pagado a",
+              "payment_method": "Forma de pago"
+            }
+          },
+          "payment": {
+            "singular": "Pago recibido",
+            "plural": "Pagos recibidos",
+            "description": "Dinero que te pagó un cliente, normalmente por una factura mayorista.",
+            "fields": {
+              "reference": "Referencia",
+              "received_date": "Fecha",
+              "customer": "Cliente",
+              "sale": "Venta",
+              "amount": "Importe",
+              "method": "Forma de pago"
+            }
+          }
+        },
+        "metrics": {
+          "gross_sales": {
+            "label": "Ventas antes de descuentos",
+            "description": "Precio × cantidad de cada producto en las ventas completadas, antes de descuentos.",
+            "unavailable_hint": "Añade el precio de cada producto vendido para ver las ventas antes de descuentos.",
+            "assumptions": [],
+            "synonyms": [
+              "ventas brutas",
+              "ventas antes de descuentos",
+              "ventas sin descuentos",
+              "ventas a precio completo",
+              "ventas a precio lleno",
+              "facturación bruta"
+            ]
+          },
+          "discounts": {
+            "label": "Descuentos aplicados",
+            "description": "Descuentos en las ventas completadas, tanto de productos como de pedidos.",
+            "unavailable_hint": "Incluye la columna de descuentos de tu exportación de ventas para ver los descuentos.",
+            "assumptions": [],
+            "synonyms": [
+              "descuentos",
+              "descuento",
+              "rebajas",
+              "rebaja",
+              "promociones",
+              "promoción",
+              "ofertas",
+              "cupones",
+              "descontado",
+              "descontamos"
+            ]
+          },
+          "refunds": {
+            "label": "Reembolsos",
+            "description": "Dinero reembolsado por devoluciones, según la fecha de la devolución.",
+            "unavailable_hint": "Sube tus devoluciones o reembolsos para ver los reembolsos.",
+            "assumptions": [],
+            "synonyms": [
+              "reembolsos",
+              "reembolso",
+              "reembolsado",
+              "reembolsé",
+              "reembolse",
+              "dinero devuelto",
+              "devolví dinero",
+              "devolvimos dinero"
+            ]
+          },
+          "net_sales": {
+            "label": "Ventas netas",
+            "description": "Dinero de las ventas completadas después de descuentos y reembolsos. No incluye impuestos ni el envío cobrado. Los reembolsos cuentan el día de la devolución.",
+            "unavailable_hint": "Sube tus ventas con el importe de cada producto para ver las ventas netas.",
+            "assumptions": [
+              "Los descuentos de un pedido se reparten entre sus productos en proporción a su precio."
+            ],
+            "synonyms": [
+              "ventas",
+              "venta",
+              "ventas netas",
+              "ingresos",
+              "facturación",
+              "facturacion",
+              "facturé",
+              "facture",
+              "facturado",
+              "facturamos",
+              "recaudación",
+              "recaudado",
+              "volumen de ventas",
+              "vendí",
+              "vendi",
+              "vendimos",
+              "vendido",
+              "vendidos",
+              "vendió",
+              "vendio",
+              "vender",
+              "vendo",
+              "vende",
+              "venden",
+              "venderé",
+              "vendere",
+              "venderemos",
+              "se vende",
+              "se venden",
+              "se vendió",
+              "lo que más se vende",
+              "lo que mas se vende",
+              "lo que más vendo",
+              "lo más vendido",
+              "lo mas vendido",
+              "más vendido",
+              "más vendidos",
+              "mas vendido",
+              "mas vendidos",
+              "el más vendido",
+              "se vende mejor",
+              "se venden mejor",
+              "superventas",
+              "dinero que entra",
+              "dinero que entró",
+              "ganar dinero",
+              "gané",
+              "gane",
+              "ingresé",
+              "ingrese",
+              "caja",
+              "de caja",
+              "hicimos de caja",
+              "hice de caja",
+              "plata",
+              "plata entro",
+              "plata entró",
+              "dinero entro",
+              "dinero entró",
+              "entro",
+              "entró",
+              "llevamos de caja",
+              "vendemos",
+              "facturar",
+              "facturaremos",
+              "facturare",
+              "facturaré"
+            ]
+          },
+          "units_sold": {
+            "label": "Unidades vendidas",
+            "description": "Número de unidades vendidas en las ventas completadas, menos las devueltas.",
+            "assumptions": [],
+            "synonyms": [
+              "unidades vendidas",
+              "artículos vendidos",
+              "articulos vendidos",
+              "productos vendidos",
+              "piezas vendidas",
+              "unidades",
+              "piezas",
+              "cantidad vendida",
+              "cuántas unidades",
+              "cuantas unidades",
+              "cuántos artículos",
+              "cuántos vendí",
+              "cuantos vendi",
+              "cuántas vendí",
+              "cuantas vendi"
+            ]
+          },
+          "order_count": {
+            "label": "Pedidos",
+            "description": "Número de pedidos completados.",
+            "assumptions": [],
+            "synonyms": [
+              "pedidos",
+              "número de pedidos",
+              "numero de pedidos",
+              "cantidad de pedidos",
+              "cuántos pedidos",
+              "cuantos pedidos",
+              "órdenes",
+              "ordenes",
+              "transacciones",
+              "compras",
+              "tickets",
+              "movimiento",
+              "mas movimiento",
+              "más movimiento"
+            ]
+          },
+          "average_order_value": {
+            "label": "Valor promedio por pedido",
+            "description": "Ventas netas ÷ pedidos.",
+            "assumptions": [],
+            "synonyms": [
+              "valor promedio por pedido",
+              "valor promedio del pedido",
+              "valor medio del pedido",
+              "pedido promedio",
+              "pedido medio",
+              "ticket medio",
+              "ticket promedio",
+              "venta promedio",
+              "venta media",
+              "compra promedio",
+              "compra media",
+              "tamaño de la cesta",
+              "cesta media",
+              "cesta promedio",
+              "carrito medio",
+              "carrito promedio",
+              "gasto medio por pedido"
+            ]
+          },
+          "items_per_order": {
+            "label": "Unidades por pedido",
+            "description": "Unidades vendidas ÷ pedidos.",
+            "assumptions": [],
+            "synonyms": [
+              "unidades por pedido",
+              "artículos por pedido",
+              "articulos por pedido",
+              "productos por pedido",
+              "artículos en la cesta"
+            ]
+          },
+          "cogs": {
+            "label": "Costo de la mercancía vendida",
+            "description": "Unidades vendidas × su costo (el costo en el momento de la venta si se conoce; si no, el costo actual del producto), menos el costo de las unidades devueltas.",
+            "unavailable_hint": "Añade lo que te cuesta cada producto (por ejemplo, en tu lista de inventario) para ver la ganancia.",
+            "assumptions": [
+              "Cuando no sabemos cuánto costaba un producto al venderlo, usamos su costo actual."
+            ],
+            "synonyms": [
+              "costo de la mercancía vendida",
+              "coste de la mercancía vendida",
+              "costo de lo vendido",
+              "costo de ventas",
+              "coste de ventas",
+              "costo de los productos",
+              "coste de los productos",
+              "costo de mercancía",
+              "cmv"
+            ]
+          },
+          "gross_profit": {
+            "label": "Ganancia bruta",
+            "description": "Ventas netas − costo de la mercancía vendida.",
+            "unavailable_hint": "Añade lo que te cuesta cada producto (por ejemplo, en tu lista de inventario) para ver la ganancia.",
+            "assumptions": [],
+            "synonyms": [
+              "ganancia",
+              "ganancias",
+              "ganancia bruta",
+              "beneficio",
+              "beneficios",
+              "beneficio bruto",
+              "utilidad",
+              "utilidades",
+              "utilidad bruta",
+              "más ganancia",
+              "mas ganancia",
+              "más beneficio",
+              "rentable",
+              "rentables",
+              "más rentable",
+              "más rentables",
+              "me dejó",
+              "me dejaron",
+              "me dejan",
+              "ganar más",
+              "gané más"
+            ]
+          },
+          "gross_margin_pct": {
+            "label": "Margen de ganancia",
+            "description": "Ganancia bruta ÷ ventas netas.",
+            "unavailable_hint": "Añade lo que te cuesta cada producto (por ejemplo, en tu lista de inventario) para ver tu margen.",
+            "assumptions": [],
+            "synonyms": [
+              "margen",
+              "márgenes",
+              "margenes",
+              "margen de ganancia",
+              "margen de beneficio",
+              "margen bruto",
+              "margen comercial",
+              "recargo",
+              "mejor margen",
+              "mejores márgenes"
+            ]
+          },
+          "customer_count": {
+            "label": "Clientes que compraron",
+            "description": "Clientes distintos con al menos una venta completada en el periodo.",
+            "unavailable_hint": "Incluye los nombres o correos de los clientes en tus ventas para ver los clientes.",
+            "assumptions": [],
+            "synonyms": [
+              "número de clientes",
+              "numero de clientes",
+              "cantidad de clientes",
+              "cuántos clientes",
+              "cuantos clientes",
+              "cuánta gente compró",
+              "cuántas personas compraron",
+              "cuanta gente compro"
+            ]
+          },
+          "new_customers": {
+            "label": "Clientes nuevos",
+            "description": "Clientes cuyo primer pedido completado fue en el periodo.",
+            "unavailable_hint": "Incluye los nombres o correos de los clientes en tus ventas para ver los clientes nuevos.",
+            "assumptions": [],
+            "synonyms": [
+              "clientes nuevos",
+              "nuevos clientes",
+              "compradores nuevos",
+              "nuevos compradores",
+              "clientes por primera vez",
+              "primera compra",
+              "primer pedido",
+              "cuantos clientes nuevos",
+              "cuántos clientes nuevos",
+              "cuantos nuevos clientes",
+              "cuántos nuevos clientes"
+            ]
+          },
+          "repeat_customer_rate": {
+            "label": "Clientes que repiten",
+            "description": "Parte de los clientes que compraron en el periodo y ya habían comprado antes.",
+            "unavailable_hint": "Incluye los nombres o correos de los clientes en tus ventas para ver los clientes que repiten.",
+            "assumptions": [],
+            "synonyms": [
+              "clientes que repiten",
+              "clientes recurrentes",
+              "clientes que vuelven",
+              "vuelve a comprar",
+              "vuelven a comprar",
+              "volvieron a comprar",
+              "vuelven",
+              "volvieron",
+              "repiten",
+              "repitieron",
+              "tasa de repetición",
+              "tasa de recompra",
+              "recompra",
+              "clientes fieles",
+              "fieles",
+              "fidelidad",
+              "repite"
+            ]
+          },
+          "customer_revenue": {
+            "label": "Gasto por cliente",
+            "description": "Ventas netas ÷ clientes que compraron.",
+            "assumptions": [],
+            "synonyms": [
+              "gasto por cliente",
+              "gasto medio por cliente",
+              "gasto promedio por cliente",
+              "ingresos por cliente",
+              "cuánto gasta cada cliente",
+              "cuanto gasta cada cliente"
+            ]
+          },
+          "lapsed_customers": {
+            "label": "Clientes que dejaron de comprar",
+            "description": "Clientes con al menos tres pedidos anteriores cuyo tiempo desde el último pedido es más del doble de su intervalo habitual entre pedidos, y de más de treinta días.",
+            "unavailable_hint": "Incluye los nombres o correos de los clientes en tus ventas para ver quién dejó de comprar.",
+            "assumptions": [],
+            "synonyms": [
+              "dejaron de comprar",
+              "dejó de comprar",
+              "dejo de comprar",
+              "dejaron de pedir",
+              "dejó de pedir",
+              "ya no compran",
+              "ya no compra",
+              "ya no piden",
+              "ya no pide",
+              "clientes perdidos",
+              "no han vuelto",
+              "no han vuelto a pedir",
+              "no han pedido",
+              "no ha pedido",
+              "se están alejando",
+              "clientes inactivos",
+              "inactivos",
+              "dejaron de hacerme pedidos",
+              "dejado de comprarme",
+              "han dejado de comprar",
+              "han dejado de comprarme",
+              "dejaron de comprarme",
+              "dejado de aparecer",
+              "dejaron de aparecer",
+              "dejado de pedir",
+              "dejado de hacerme pedidos"
+            ]
+          },
+          "stock_on_hand": {
+            "label": "Unidades en inventario",
+            "description": "Cuántas unidades tienes, según tu último recuento de cada producto.",
+            "unavailable_hint": "Sube una lista de inventario con cuántas unidades tienes de cada producto.",
+            "assumptions": [
+              "El inventario es el de tu último recuento; las ventas posteriores todavía no se descuentan."
+            ],
+            "synonyms": [
+              "inventario",
+              "existencias",
+              "stock",
+              "en inventario",
+              "en stock",
+              "en existencia",
+              "niveles de inventario",
+              "nivel de inventario",
+              "cuántos tengo",
+              "cuantos tengo",
+              "cuántas tengo",
+              "cuántos me quedan",
+              "cuantos me quedan",
+              "cuántas me quedan",
+              "qué me queda"
+            ]
+          },
+          "stock_value": {
+            "label": "Valor del inventario (al costo)",
+            "description": "Unidades en inventario × lo que te cuesta cada una.",
+            "unavailable_hint": "Sube una lista de inventario con cuántas unidades tienes y lo que te cuesta cada producto.",
+            "assumptions": [],
+            "synonyms": [
+              "valor del inventario",
+              "valor de inventario",
+              "valor del stock",
+              "valor de las existencias",
+              "inmovilizado en inventario",
+              "dinero inmovilizado",
+              "parado en inventario",
+              "dinero en inventario",
+              "dinero en stock",
+              "cuánto vale mi inventario",
+              "cuanto vale mi inventario",
+              "cuánto vale el inventario",
+              "vale el inventario",
+              "vale mi inventario",
+              "parado en stock",
+              "tengo parado",
+              "dinero parado",
+              "valen mis existencias",
+              "valor de mis existencias",
+              "valen las existencias",
+              "vale mi stock",
+              "valor de mi stock"
+            ]
+          },
+          "daily_sales_rate": {
+            "label": "Promedio de unidades vendidas al día",
+            "description": "Unidades vendidas en los últimos 28 días ÷ 28.",
+            "assumptions": [],
+            "synonyms": [
+              "vendidas al día",
+              "vendidos al día",
+              "vendidas por día",
+              "vendidos por día",
+              "ventas al día",
+              "unidades al día",
+              "unidades por día",
+              "ritmo de ventas",
+              "ritmo de venta"
+            ]
+          },
+          "days_of_cover": {
+            "label": "Días de inventario restantes",
+            "description": "Unidades en inventario ÷ promedio de unidades vendidas al día.",
+            "unavailable_hint": "Sube una lista de inventario y tus ventas para ver cuántos días de inventario te quedan.",
+            "assumptions": [],
+            "synonyms": [
+              "agotarse",
+              "se agota",
+              "se agotan",
+              "agotar",
+              "quedarme sin",
+              "quedarse sin",
+              "me quedo sin",
+              "quedando sin",
+              "días de inventario",
+              "dias de inventario",
+              "días de cobertura",
+              "días de stock",
+              "reponer",
+              "reposición",
+              "reposicion",
+              "reabastecer",
+              "volver a pedir",
+              "se va a acabar",
+              "se van a acabar",
+              "se acaba",
+              "se acaban",
+              "a punto de agotarse",
+              "a punto de acabarse",
+              "agotando",
+              "se estan agotando",
+              "se están agotando",
+              "por acabar",
+              "esta por acabar",
+              "está por acabar",
+              "se me esta por acabar",
+              "se me está por acabar",
+              "acabando",
+              "se me acaba",
+              "deberia reponer",
+              "debería reponer"
+            ]
+          },
+          "dead_stock_value": {
+            "label": "Dinero parado en inventario sin vender",
+            "description": "Valor del inventario (al costo) de los productos que tienes en inventario pero no has vendido en 90 días.",
+            "unavailable_hint": "Sube una lista de inventario con costos y tus ventas para ver el inventario sin vender.",
+            "assumptions": [],
+            "synonyms": [
+              "no se vende",
+              "no se venden",
+              "no se está vendiendo",
+              "no se están vendiendo",
+              "no se vendió",
+              "no se vendieron",
+              "inventario muerto",
+              "stock muerto",
+              "inventario sin vender",
+              "sin vender",
+              "no vendido",
+              "no vendidos",
+              "baja rotación",
+              "poca rotación",
+              "se mueve lento",
+              "se mueven lento",
+              "acumulando polvo",
+              "parado en la estantería"
+            ]
+          },
+          "sell_through_rate": {
+            "label": "Porcentaje vendido",
+            "description": "Unidades vendidas ÷ (unidades vendidas + unidades en inventario).",
+            "assumptions": [],
+            "synonyms": [
+              "porcentaje vendido",
+              "porcentaje de venta",
+              "tasa de venta",
+              "sell through",
+              "sell-through",
+              "tasa de sell-through"
+            ]
+          },
+          "return_rate": {
+            "label": "Tasa de devolución",
+            "description": "Unidades devueltas ÷ unidades vendidas.",
+            "unavailable_hint": "Sube tus devoluciones con cuántas unidades volvieron para ver tu tasa de devolución.",
+            "assumptions": [],
+            "synonyms": [
+              "tasa de devolución",
+              "tasa de devoluciones",
+              "porcentaje de devoluciones",
+              "devoluciones",
+              "devuelto",
+              "devueltos",
+              "se devuelven",
+              "se devuelve",
+              "cuánto se devuelve",
+              "con qué frecuencia devuelven",
+              "devuelven",
+              "me devuelven",
+              "devuelven mas",
+              "devuelven más"
+            ]
+          },
+          "units_returned": {
+            "label": "Unidades devueltas",
+            "description": "Unidades que volvieron, contadas el día de la devolución.",
+            "unavailable_hint": "Sube tus devoluciones con cuántas unidades volvieron.",
+            "assumptions": [],
+            "synonyms": [
+              "unidades devueltas",
+              "artículos devueltos",
+              "articulos devueltos",
+              "productos devueltos",
+              "cuántas devolvieron",
+              "cuántos devolvieron",
+              "cuántas unidades volvieron",
+              "cuántos volvieron"
+            ]
+          },
+          "purchase_unit_cost": {
+            "label": "Costo del proveedor por unidad",
+            "description": "Lo que pagaste a los proveedores por unidad, según tus pedidos a proveedores.",
+            "unavailable_hint": "Sube tus pedidos a proveedores con cantidades y precios.",
+            "assumptions": [],
+            "synonyms": [
+              "costo del proveedor",
+              "coste del proveedor",
+              "precio del proveedor",
+              "lo que pago por",
+              "lo que me cobra el proveedor",
+              "precio de compra",
+              "costo de compra",
+              "coste de compra"
+            ]
+          },
+          "days_since_last_order": {
+            "label": "Días desde el último pedido",
+            "description": "Días desde el pedido completado más reciente hasta hoy.",
+            "unavailable_hint": "Sube tus ventas con fechas para ver cuándo pidieron los clientes por última vez.",
+            "assumptions": [],
+            "synonyms": [
+              "días desde el último pedido",
+              "dias desde el ultimo pedido",
+              "último pedido",
+              "pidió por última vez",
+              "desde su último pedido"
+            ]
+          },
+          "days_overdue": {
+            "label": "Días de retraso",
+            "description": "Cuántos días lleva vencida la venta sin pagar más antigua.",
+            "unavailable_hint": "Incluye las fechas de vencimiento y una columna “¿Pagado?” en tus facturas para ver cuánto se retrasan los pagos.",
+            "assumptions": [
+              "Las ventas sin fecha de vencimiento se consideran vencidas a los treinta días de la venta."
+            ],
+            "synonyms": [
+              "días de retraso",
+              "dias de retraso",
+              "días vencido",
+              "cuánto retraso",
+              "qué tan atrasado",
+              "cuán atrasado",
+              "vencido hace"
+            ]
+          },
+          "expenses_total": {
+            "label": "Gastos",
+            "description": "Todo lo que registraste como gasto.",
+            "unavailable_hint": "Sube tus gastos para ver lo que te cuesta mantener el negocio.",
+            "assumptions": [],
+            "synonyms": [
+              "gastos",
+              "gasto",
+              "gasté",
+              "gaste",
+              "gastado en",
+              "gasté en",
+              "gastamos en",
+              "gastos generales",
+              "gastos fijos",
+              "gastos de operación",
+              "costos de operación",
+              "recibos",
+              "servicios",
+              "anuncios",
+              "publicidad",
+              "alquiler",
+              "renta",
+              "sueldos",
+              "salarios",
+              "nóminas"
+            ]
+          },
+          "net_profit_estimate": {
+            "label": "Ganancia después de gastos (estimación)",
+            "description": "Ganancia bruta − gastos. Es una estimación, porque no incluye lo que no esté registrado.",
+            "unavailable_hint": "Añade los costos de los productos y sube tus gastos para ver la ganancia después de gastos.",
+            "assumptions": [],
+            "synonyms": [
+              "ganancia después de gastos",
+              "ganancia despues de gastos",
+              "ganancia neta",
+              "beneficio neto",
+              "utilidad neta",
+              "resultado final",
+              "ganancia real",
+              "beneficio real",
+              "después de gastos",
+              "quedo limpio",
+              "quedó limpio",
+              "me quedo limpio",
+              "me quedó limpio",
+              "lo que me queda",
+              "despues de gastos"
+            ]
+          },
+          "outstanding_receivables": {
+            "label": "Dinero que te deben",
+            "description": "Ventas marcadas como sin pagar o pagadas en parte, menos los pagos recibidos por ellas.",
+            "unavailable_hint": "Incluye una columna “¿Pagado?” en tus facturas para ver el dinero que te deben.",
+            "assumptions": [
+              "Sin registros de pagos, las facturas pagadas en parte se cuentan como debidas por completo."
+            ],
+            "synonyms": [
+              "me debe",
+              "me deben",
+              "nos debe",
+              "nos deben",
+              "debe",
+              "deben",
+              "adeudado",
+              "adeuda",
+              "sin pagar",
+              "sin cobrar",
+              "por cobrar",
+              "pendiente de cobro",
+              "pendientes de pago",
+              "dinero que me deben",
+              "cuentas por cobrar",
+              "deudores"
+            ]
+          },
+          "overdue_receivables": {
+            "label": "Dinero vencido que te deben",
+            "description": "Dinero que te deben por ventas que ya pasaron su fecha de vencimiento.",
+            "unavailable_hint": "Incluye las fechas de vencimiento y una columna “¿Pagado?” en tus facturas para ver los pagos vencidos.",
+            "assumptions": [
+              "Sin registros de pagos, las facturas pagadas en parte se cuentan como debidas por completo.",
+              "Las ventas sin fecha de vencimiento se consideran vencidas a los treinta días de la venta."
+            ],
+            "synonyms": [
+              "vencido",
+              "vencidos",
+              "vencidas",
+              "pagos vencidos",
+              "pagos atrasados",
+              "atrasado",
+              "atrasados",
+              "pagó tarde",
+              "pagaron tarde",
+              "paga tarde",
+              "pagan tarde",
+              "morosos",
+              "moroso",
+              "morosidad",
+              "pagando tarde",
+              "me estan pagando tarde",
+              "me están pagando tarde",
+              "no me han pagado a tiempo",
+              "no han pagado a tiempo",
+              "pagado a tiempo"
+            ]
+          },
+          "supplier_spend": {
+            "label": "Gastado con proveedores",
+            "description": "Total de tus pedidos a proveedores, según la fecha del pedido.",
+            "unavailable_hint": "Sube tus pedidos a proveedores para ver lo que gastas con ellos.",
+            "assumptions": [],
+            "synonyms": [
+              "gastado con proveedores",
+              "gasto con proveedores",
+              "gasté con proveedores",
+              "gastamos con proveedores",
+              "compras a proveedores",
+              "compré a proveedores",
+              "comprado a proveedores",
+              "total de pedidos a proveedores",
+              "gasto por proveedor",
+              "gasté con",
+              "gastado con",
+              "gasto con",
+              "gastado en proveedores",
+              "gasto en proveedores",
+              "gasté en proveedores",
+              "le he comprado",
+              "he comprado a",
+              "le compre a",
+              "le compré a",
+              "comprado a"
+            ]
+          }
+        },
+        "dimensions": {
+          "product.name": {
+            "label": "Producto",
+            "synonyms": [
+              "producto",
+              "productos",
+              "artículo",
+              "artículos",
+              "articulo",
+              "articulos"
+            ],
+            "noun": [
+              "producto",
+              "productos"
+            ],
+            "value_labels": {}
+          },
+          "product.category": {
+            "label": "Categoría",
+            "synonyms": [
+              "categoría",
+              "categorías",
+              "categoria",
+              "categorias",
+              "tipo de producto",
+              "departamento",
+              "sección",
+              "familia"
+            ],
+            "noun": [
+              "categoría",
+              "categorías"
+            ],
+            "value_labels": {}
+          },
+          "product.brand": {
+            "label": "Marca",
+            "synonyms": [
+              "marca",
+              "marcas"
+            ],
+            "noun": [
+              "marca",
+              "marcas"
+            ],
+            "value_labels": {}
+          },
+          "customer.name": {
+            "label": "Cliente",
+            "synonyms": [
+              "cliente",
+              "clientes",
+              "comprador",
+              "compradores",
+              "revendedor",
+              "revendedores"
+            ],
+            "noun": [
+              "cliente",
+              "clientes"
+            ],
+            "value_labels": {}
+          },
+          "customer.customer_type": {
+            "label": "Tipo de cliente",
+            "synonyms": [
+              "tipo de cliente",
+              "tipos de cliente"
+            ],
+            "noun": [
+              "tipo de cliente",
+              "tipos de cliente"
+            ],
+            "value_labels": {}
+          },
+          "customer.city": {
+            "label": "Ciudad",
+            "synonyms": [
+              "ciudad",
+              "ciudades",
+              "localidad",
+              "localidades",
+              "municipio",
+              "pueblo"
+            ],
+            "noun": [
+              "ciudad",
+              "ciudades"
+            ],
+            "value_labels": {}
+          },
+          "customer.region": {
+            "label": "Estado o provincia",
+            "synonyms": [
+              "estado",
+              "estados",
+              "provincia",
+              "provincias",
+              "región",
+              "regiones",
+              "region",
+              "zona",
+              "zonas"
+            ],
+            "noun": [
+              "zona",
+              "zonas"
+            ],
+            "value_labels": {}
+          },
+          "sale.channel": {
+            "label": "Canal de venta",
+            "synonyms": [
+              "canal",
+              "canales",
+              "canal de venta",
+              "plataforma",
+              "plataformas",
+              "marketplace",
+              "dónde vendí",
+              "donde vendi",
+              "dónde se vendió",
+              "de donde vienen",
+              "de dónde vienen"
+            ],
+            "noun": [
+              "canal",
+              "canales"
+            ],
+            "value_labels": {
+              "online_store": "Sitio web",
+              "etsy": "Etsy",
+              "amazon": "Amazon",
+              "ebay": "eBay",
+              "social": "Redes sociales",
+              "in_store": "En persona",
+              "wholesale": "Mayorista",
+              "other": "Otro"
+            }
+          },
+          "location.name": {
+            "label": "Punto de venta",
+            "synonyms": [
+              "tienda",
+              "tiendas",
+              "local",
+              "locales",
+              "punto de venta",
+              "puntos de venta",
+              "sucursal",
+              "sucursales",
+              "ubicación"
+            ],
+            "noun": [
+              "punto de venta",
+              "puntos de venta"
+            ],
+            "value_labels": {}
+          },
+          "supplier.name": {
+            "label": "Proveedor",
+            "synonyms": [
+              "proveedor",
+              "proveedores",
+              "fabricante",
+              "fabricantes"
+            ],
+            "noun": [
+              "proveedor",
+              "proveedores"
+            ],
+            "value_labels": {}
+          },
+          "expense.category": {
+            "label": "Tipo de gasto",
+            "synonyms": [
+              "tipo de gasto",
+              "tipos de gasto",
+              "categoría de gasto",
+              "tipo de costo",
+              "concepto",
+              "tipo",
+              "tipos"
+            ],
+            "noun": [
+              "tipo de gasto",
+              "tipos de gasto"
+            ],
+            "value_labels": {}
+          }
+        },
+        "dashboard": {
+          "net_sales": "Ventas netas",
+          "gross_profit": "Ganancia bruta",
+          "orders": "Pedidos",
+          "average_order_value": "Valor promedio por pedido",
+          "sales_over_time": "Ventas en el tiempo",
+          "sales_by_channel": "Ventas por canal",
+          "top_products_profit": "Productos con más ganancia",
+          "running_low": "Inventario bajo",
+          "top_customers": "Mejores clientes",
+          "margin_by_category": "Margen de ganancia por categoría",
+          "slow_stock_total": "Dinero parado en inventario de baja rotación",
+          "slow_stock": "Inventario de baja rotación",
+          "money_owed": "Dinero que te deben"
+        },
+        "insights": {
+          "stockout_risk": {
+            "label": "Inventario que se agota",
+            "description": "Productos que se agotarán pronto al ritmo al que se venden.",
+            "thresholds": {
+              "warn_days": "Avísame cuando el inventario vaya a agotarse en menos de {{value}} días",
+              "urgent_days": "Márcalo como urgente cuando falten menos de {{value}} días"
+            },
+            "template": "**{{product}}** se agotará en aproximadamente {{days}} {{days|día|días}} al ritmo de ventas actual ({{rate}} al día). Tienes {{on_hand}} en inventario.",
+            "context": "Considera pedir alrededor de {{qty}} {{qty|unidad|unidades}} a {{supplier}} para cubrir los próximos {{cover_days}} días.",
+            "action": {
+              "label": "Ver producto"
+            },
+            "fallbacks": {
+              "supplier": "tu proveedor"
+            },
+            "words": {}
+          },
+          "dead_stock": {
+            "label": "Inventario que no se vende",
+            "description": "Productos en inventario que no se han vendido en 90 días, y el dinero que inmovilizan.",
+            "thresholds": {
+              "min_value": "Avísame solo cuando el inventario sin vender valga más de {{value}}"
+            },
+            "template": "Tienes {{value}} de tu dinero parado en {{count}} {{count|producto que no se ha|productos que no se han}} vendido en {{days}} días. El que más: **{{top_product}}**.",
+            "action": {
+              "label": "Ver cuáles",
+              "ask": "¿Qué productos no se han vendido en los últimos 90 días?"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "customer_slipping": {
+            "label": "Clientes habituales que compran menos",
+            "description": "Clientes con varios pedidos anteriores cuyo gasto ha bajado mucho respecto a lo habitual.",
+            "thresholds": {
+              "drop": "Avísame cuando el gasto de un cliente habitual baje un {{value}}% o más",
+              "min_orders": "Considera habituales a los clientes a partir de {{value}} pedidos",
+              "min_spend": "Solo para clientes que suelen gastar {{value}} o más cada dos meses"
+            },
+            "template": "Los pedidos de **{{customer}}** han bajado un {{drop_pct}} respecto a lo habitual. Su último pedido fue hace {{days_since}} {{days_since|día|días}}.",
+            "context": "En los últimos dos meses gastó {{recent}}; lo habitual es {{usual}}.",
+            "action": {
+              "label": "Ver cliente"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "margin_squeeze": {
+            "label": "Costos que suben",
+            "description": "Productos cuyo último costo de proveedor subió y reduce tu margen.",
+            "thresholds": {
+              "rise": "Avísame cuando el costo de un proveedor suba un {{value}}% o más"
+            },
+            "template": "El costo de **{{product}}** subió un {{cost_change}}, de {{old_cost}} a {{new_cost}}. Con tu precio de {{price}}, tu margen bajó del {{old_margin}} al {{new_margin}}.",
+            "action": {
+              "label": "Ver producto"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "return_spike": {
+            "label": "Productos que se devuelven mucho",
+            "description": "Productos con una tasa de devolución alta en los últimos 60 días.",
+            "thresholds": {
+              "rate": "Avísame cuando se devuelva un {{value}}% o más de un producto",
+              "min_returns": "Solo cuando se hayan devuelto al menos {{value}}"
+            },
+            "template": "**{{product}}** se devuelve mucho: {{return_rate}} de las ventas en los últimos dos meses ({{returned}} {{returned|unidad|unidades}}). Motivo principal: {{top_reason}}.",
+            "action": {
+              "label": "Ver devoluciones",
+              "ask": "¿Cuál es la tasa de devolución de {{product}} por mes?"
+            },
+            "fallbacks": {
+              "top_reason": "sin registrar"
+            },
+            "words": {}
+          },
+          "rising_star": {
+            "label": "Productos en auge",
+            "description": "Productos que se venden mucho más rápido en las últimas cuatro semanas que en las cuatro anteriores.",
+            "thresholds": {
+              "growth": "Avísame cuando las ventas de un producto suban un {{value}}% o más",
+              "min_units": "Solo para productos con al menos {{value}} unidades vendidas en las últimas cuatro semanas"
+            },
+            "template": "**{{product}}** está en auge: sus ventas subieron un {{change}} en las últimas cuatro semanas.",
+            "context": "{{units}} {{units|unidad vendida|unidades vendidas}}, frente a {{before}} en las cuatro semanas anteriores.",
+            "action": {
+              "label": "Ver producto"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "sales_change": {
+            "label": "Grandes cambios en las ventas semanales",
+            "description": "Las ventas en tienda y online de esta semana comparadas con las de la semana pasada (sin contar los pedidos mayoristas).",
+            "thresholds": {
+              "change": "Avísame cuando las ventas semanales cambien un {{value}}% o más"
+            },
+            "template": "Las ventas en tienda y online de la última semana {{direction}} un {{change}} respecto a la semana anterior ({{this_week}} frente a {{last_week}}).",
+            "action": {
+              "label": "Ver por qué",
+              "ask": "Ventas netas por producto en los últimos 7 días comparadas con los 7 días anteriores"
+            },
+            "fallbacks": {},
+            "words": {
+              "direction": {
+                "up": "subieron",
+                "down": "bajaron"
+              }
+            }
+          },
+          "channel_shift": {
+            "label": "De dónde vienen tus ventas",
+            "description": "Un canal de venta cuya parte de tus ventas creció mucho en los últimos 90 días.",
+            "thresholds": {
+              "points": "Avísame cuando la parte de un canal crezca {{value}} puntos o más"
+            },
+            "template": "**{{channel}}** ya aporta el {{share}} de tus ventas, frente al {{prev_share}} de antes.",
+            "context": "En los últimos tres meses, comparado con los tres meses anteriores.",
+            "action": {
+              "label": "Ver canales",
+              "ask": "Ventas netas por canal y por mes este año"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "overdue_payments": {
+            "label": "Clientes que te deben",
+            "description": "Clientes con ventas sin pagar que ya pasaron su fecha de vencimiento.",
+            "thresholds": {
+              "min_amount": "Avísame cuando el dinero vencido que te deben supere {{value}}",
+              "urgent_days": "Márcalo como urgente cuando un pago lleve {{value}} días de retraso"
+            },
+            "template": "{{count}} {{count|cliente te debe|clientes te deben}} {{amount}} con el pago vencido. El que más debe es **{{customer}}** ({{customer_amount}}, {{days}} {{days|día|días}} de retraso).",
+            "action": {
+              "label": "Ver quién debe",
+              "ask": "¿Quién me debe dinero?"
+            },
+            "fallbacks": {},
+            "words": {}
+          }
+        },
+        "questions": [
+          {
+            "group": "Ventas",
+            "text": "¿Cuánto vendí el mes pasado?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Ventas",
+            "text": "¿Qué canal está creciendo más rápido?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Ventas",
+            "text": "Muestra las ventas por semana de este año.",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Ventas",
+            "text": "¿Cuáles fueron mis mejores días de la semana?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Productos",
+            "text": "¿Qué productos me dejaron más ganancia el mes pasado?",
+            "needs": [
+              "gross_profit"
+            ]
+          },
+          {
+            "group": "Productos",
+            "text": "¿Qué no se está vendiendo?",
+            "needs": [
+              "dead_stock_value"
+            ]
+          },
+          {
+            "group": "Productos",
+            "text": "¿Qué productos tienen mejor margen?",
+            "needs": [
+              "gross_margin_pct"
+            ]
+          },
+          {
+            "group": "Productos",
+            "text": "¿Cuál es mi producto más vendido en Etsy?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Inventario",
+            "text": "¿Qué está a punto de agotarse?",
+            "needs": [
+              "days_of_cover"
+            ]
+          },
+          {
+            "group": "Inventario",
+            "text": "¿Cuánto dinero tengo inmovilizado en inventario?",
+            "needs": [
+              "stock_value"
+            ]
+          },
+          {
+            "group": "Inventario",
+            "text": "¿Qué debería reponer esta semana?",
+            "needs": [
+              "days_of_cover"
+            ]
+          },
+          {
+            "group": "Clientes",
+            "text": "¿Quiénes son mis mejores clientes?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Clientes",
+            "text": "¿Qué clientes dejaron de comprar?",
+            "needs": [
+              "lapsed_customers"
+            ]
+          },
+          {
+            "group": "Clientes",
+            "text": "¿Cuántos clientes nuevos conseguí este mes?",
+            "needs": [
+              "new_customers"
+            ]
+          },
+          {
+            "group": "Clientes",
+            "text": "¿Qué parte de los clientes vuelve a comprar?",
+            "needs": [
+              "repeat_customer_rate"
+            ]
+          },
+          {
+            "group": "Dinero",
+            "text": "¿Cuánto gasté en publicidad este año?",
+            "needs": [
+              "expenses_total"
+            ]
+          },
+          {
+            "group": "Dinero",
+            "text": "¿Cuál es mi ganancia después de gastos este trimestre?",
+            "needs": [
+              "net_profit_estimate"
+            ]
+          },
+          {
+            "group": "Dinero",
+            "text": "¿Quién me debe dinero?",
+            "needs": [
+              "outstanding_receivables"
+            ]
+          },
+          {
+            "group": "Lo que viene",
+            "text": "¿Cuánto venderé el mes que viene?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Lo que viene",
+            "text": "¿Voy bien para llegar a mi objetivo?",
+            "needs": [
+              "net_sales"
+            ]
+          }
+        ],
+        "headers": {
+          "product.sku": [
+            "sku",
+            "código",
+            "codigo",
+            "código de producto",
+            "codigo de producto",
+            "código del producto",
+            "código de artículo",
+            "codigo de articulo",
+            "cód",
+            "cod",
+            "referencia",
+            "ref",
+            "clave",
+            "clave del producto",
+            "modelo"
+          ],
+          "product.name": [
+            "producto",
+            "nombre del producto",
+            "artículo",
+            "articulo",
+            "nombre del artículo",
+            "descripción",
+            "descripcion",
+            "descripción del producto",
+            "título",
+            "titulo",
+            "concepto",
+            "nombre"
+          ],
+          "product.variant": [
+            "variante",
+            "opción",
+            "opcion",
+            "talla",
+            "color",
+            "tamaño",
+            "tamano",
+            "medida"
+          ],
+          "product.category": [
+            "categoría",
+            "categoria",
+            "tipo",
+            "tipo de producto",
+            "departamento",
+            "familia",
+            "sección",
+            "seccion",
+            "colección",
+            "coleccion",
+            "grupo",
+            "línea",
+            "linea"
+          ],
+          "product.brand": [
+            "marca",
+            "marca del fabricante"
+          ],
+          "product.unit_price": [
+            "precio",
+            "precio de venta",
+            "precio venta",
+            "pvp",
+            "precio unitario",
+            "precio público",
+            "precio al público",
+            "precio minorista",
+            "precio de lista",
+            "precio por unidad"
+          ],
+          "product.unit_cost": [
+            "costo",
+            "coste",
+            "costo unitario",
+            "coste unitario",
+            "precio de costo",
+            "precio de coste",
+            "precio de compra",
+            "costo de compra",
+            "costo sin iva",
+            "coste sin iva",
+            "costo por unidad",
+            "costo por artículo"
+          ],
+          "product.supplier": [
+            "proveedor",
+            "fabricante",
+            "distribuidor",
+            "suministrado por",
+            "fabricado por"
+          ],
+          "product.reorder_point": [
+            "punto de pedido",
+            "punto de reorden",
+            "punto de reposición",
+            "stock mínimo",
+            "stock minimo",
+            "inventario mínimo",
+            "existencia mínima",
+            "mínimo",
+            "minimo",
+            "reponer en",
+            "nivel de reposición"
+          ],
+          "product.barcode": [
+            "código de barras",
+            "codigo de barras",
+            "cod barras",
+            "ean",
+            "upc",
+            "gtin"
+          ],
+          "customer.name": [
+            "cliente",
+            "nombre del cliente",
+            "nombre cliente",
+            "comprador",
+            "razón social",
+            "razon social",
+            "empresa",
+            "cuenta",
+            "tienda",
+            "nombre de facturación",
+            "facturar a",
+            "enviar a",
+            "revendedor",
+            "nombre"
+          ],
+          "customer.email": [
+            "correo",
+            "correo electrónico",
+            "correo electronico",
+            "email",
+            "e mail",
+            "mail",
+            "correo del cliente",
+            "email del cliente"
+          ],
+          "customer.phone": [
+            "teléfono",
+            "telefono",
+            "tel",
+            "tlf",
+            "móvil",
+            "movil",
+            "celular",
+            "número de teléfono",
+            "numero de telefono",
+            "whatsapp"
+          ],
+          "customer.city": [
+            "ciudad",
+            "localidad",
+            "población",
+            "poblacion",
+            "municipio",
+            "ciudad de envío",
+            "ciudad de facturación"
+          ],
+          "customer.region": [
+            "estado",
+            "provincia",
+            "región",
+            "region",
+            "comunidad",
+            "comunidad autónoma",
+            "provincia de envío",
+            "estado de envío"
+          ],
+          "customer.country": [
+            "país",
+            "pais",
+            "país de envío",
+            "país de facturación"
+          ],
+          "customer.postal_code": [
+            "código postal",
+            "codigo postal",
+            "cp",
+            "c p",
+            "cód postal",
+            "cod postal",
+            "zip"
+          ],
+          "supplier.name": [
+            "proveedor",
+            "nombre del proveedor",
+            "fabricante",
+            "distribuidor"
+          ],
+          "supplier.email": [
+            "correo del proveedor",
+            "email del proveedor",
+            "correo proveedor"
+          ],
+          "supplier.lead_time_days": [
+            "plazo de entrega",
+            "días de entrega",
+            "dias de entrega",
+            "tiempo de entrega"
+          ],
+          "sale.order_number": [
+            "pedido",
+            "número de pedido",
+            "numero de pedido",
+            "nº pedido",
+            "n pedido",
+            "no pedido",
+            "núm pedido",
+            "num pedido",
+            "id pedido",
+            "id del pedido",
+            "orden",
+            "número de orden",
+            "folio",
+            "ticket",
+            "nº ticket",
+            "recibo",
+            "número de recibo",
+            "factura",
+            "número de factura",
+            "numero de factura",
+            "nº factura",
+            "transacción",
+            "id de venta"
+          ],
+          "sale.sale_date": [
+            "fecha",
+            "fecha del pedido",
+            "fecha de pedido",
+            "fecha de venta",
+            "fecha venta",
+            "fecha de creación",
+            "fecha de pago",
+            "fecha de factura",
+            "fecha factura",
+            "fecha de emisión",
+            "día",
+            "dia"
+          ],
+          "sale.channel": [
+            "canal",
+            "canal de venta",
+            "origen",
+            "plataforma",
+            "tienda",
+            "marketplace",
+            "medio"
+          ],
+          "sale.status": [
+            "estado",
+            "estado del pedido",
+            "estatus",
+            "situación"
+          ],
+          "sale.discount_total": [
+            "descuento",
+            "importe del descuento",
+            "descuento del pedido",
+            "descuentos",
+            "dto",
+            "dcto"
+          ],
+          "sale.shipping_charged": [
+            "envío",
+            "envio",
+            "gastos de envío",
+            "gastos de envio",
+            "costo de envío",
+            "coste de envío",
+            "entrega",
+            "portes",
+            "flete"
+          ],
+          "sale.tax_total": [
+            "impuesto",
+            "impuestos",
+            "iva",
+            "total impuestos",
+            "igv"
+          ],
+          "sale.total": [
+            "total",
+            "total del pedido",
+            "importe",
+            "importe total",
+            "monto",
+            "monto total",
+            "valor del pedido",
+            "total a pagar"
+          ],
+          "sale.payment_status": [
+            "pagado",
+            "¿pagado?",
+            "estado del pago",
+            "estado de pago",
+            "pago",
+            "cobrado",
+            "liquidado"
+          ],
+          "sale.due_date": [
+            "fecha de vencimiento",
+            "vencimiento",
+            "vence",
+            "fecha límite de pago",
+            "vto"
+          ],
+          "sale_line.quantity": [
+            "cantidad",
+            "cant",
+            "uds",
+            "unidades",
+            "piezas",
+            "pzas",
+            "cantidad vendida",
+            "nº de artículos",
+            "número de artículos"
+          ],
+          "sale_line.unit_price": [
+            "precio",
+            "precio unitario",
+            "precio por unidad",
+            "precio unidad",
+            "p unitario",
+            "c/u",
+            "precio del artículo"
+          ],
+          "sale_line.discount": [
+            "descuento",
+            "descuento de línea",
+            "descuento del artículo",
+            "dto",
+            "dcto"
+          ],
+          "sale_line.line_total": [
+            "total de línea",
+            "total línea",
+            "total",
+            "importe",
+            "subtotal",
+            "monto",
+            "valor",
+            "importe de línea",
+            "neto",
+            "bruto"
+          ],
+          "return.return_date": [
+            "fecha de devolución",
+            "fecha devolución",
+            "fecha de devolucion",
+            "fecha",
+            "fecha del reembolso"
+          ],
+          "return.quantity": [
+            "cantidad",
+            "cant",
+            "uds",
+            "unidades devueltas",
+            "cantidad devuelta"
+          ],
+          "return.refund_amount": [
+            "reembolso",
+            "importe del reembolso",
+            "reembolsado",
+            "importe reembolsado",
+            "monto reembolsado",
+            "devolución"
+          ],
+          "return.reason": [
+            "motivo",
+            "motivo de devolución",
+            "razón",
+            "razon",
+            "causa",
+            "por qué"
+          ],
+          "purchase.po_number": [
+            "orden de compra",
+            "oc",
+            "nº oc",
+            "número de orden de compra",
+            "número de pedido",
+            "numero de pedido",
+            "nº pedido",
+            "pedido"
+          ],
+          "purchase.order_date": [
+            "fecha de pedido",
+            "fecha del pedido",
+            "pedido el",
+            "fecha",
+            "fecha oc",
+            "fecha de compra"
+          ],
+          "purchase.received_date": [
+            "recibido",
+            "recibido el",
+            "fecha de recepción",
+            "fecha recepción",
+            "fecha de recepcion",
+            "entregado",
+            "fecha de entrega"
+          ],
+          "purchase.total": [
+            "total",
+            "total del pedido",
+            "total oc",
+            "importe total"
+          ],
+          "purchase_line.quantity": [
+            "cantidad",
+            "cant",
+            "uds",
+            "unidades",
+            "cantidad pedida"
+          ],
+          "purchase_line.unit_cost": [
+            "costo unitario",
+            "coste unitario",
+            "costo",
+            "coste",
+            "costo por unidad",
+            "precio",
+            "precio unitario"
+          ],
+          "purchase_line.line_total": [
+            "total de línea",
+            "total línea",
+            "total",
+            "importe",
+            "subtotal"
+          ],
+          "stock_count.quantity_on_hand": [
+            "inventario",
+            "stock",
+            "existencias",
+            "existencia",
+            "en stock",
+            "en inventario",
+            "disponible",
+            "disponibles",
+            "cantidad disponible",
+            "stock actual",
+            "unidades en stock"
+          ],
+          "stock_count.counted_at": [
+            "fecha del recuento",
+            "fecha de recuento",
+            "fecha de inventario",
+            "contado el",
+            "a fecha de"
+          ],
+          "expense.expense_date": [
+            "fecha",
+            "mes",
+            "fecha del gasto",
+            "fecha de pago",
+            "pagado el"
+          ],
+          "expense.category": [
+            "categoría",
+            "categoria",
+            "concepto",
+            "tipo",
+            "tipo de gasto",
+            "partida",
+            "cuenta"
+          ],
+          "expense.description": [
+            "descripción",
+            "descripcion",
+            "detalle",
+            "detalles",
+            "nota",
+            "notas",
+            "observaciones"
+          ],
+          "expense.amount": [
+            "importe",
+            "monto",
+            "cantidad",
+            "valor",
+            "gasto",
+            "pagado",
+            "total",
+            "costo"
+          ],
+          "expense.vendor": [
+            "pagado a",
+            "proveedor",
+            "beneficiario",
+            "acreedor"
+          ],
+          "payment.received_date": [
+            "fecha",
+            "fecha de pago",
+            "fecha de cobro",
+            "fecha del cobro",
+            "recibido",
+            "fecha de recepción"
+          ],
+          "payment.amount": [
+            "importe",
+            "monto",
+            "pagado",
+            "pago",
+            "importe pagado",
+            "monto pagado",
+            "cobrado",
+            "importe cobrado"
+          ]
+        },
+        "values": {
+          "sale.channel": {
+            "online_store": [
+              "web",
+              "la web",
+              "pagina web",
+              "página web",
+              "sitio web",
+              "tienda online",
+              "tienda en linea",
+              "tienda en línea",
+              "online",
+              "en linea",
+              "en línea"
+            ],
+            "in_store": [
+              "tienda",
+              "en la tienda",
+              "tienda fisica",
+              "tienda física",
+              "local",
+              "mostrador",
+              "caja",
+              "punto de venta",
+              "en persona",
+              "mercadillo",
+              "feria"
+            ],
+            "wholesale": [
+              "mayorista",
+              "mayoristas",
+              "al por mayor",
+              "mayoreo",
+              "revendedor",
+              "revendedores",
+              "distribuidor",
+              "distribuidores"
+            ],
+            "social": [
+              "redes sociales",
+              "redes"
+            ]
+          },
+          "sale.status": {
+            "completed": [
+              "pagado",
+              "pagada",
+              "completado",
+              "completada",
+              "entregado",
+              "entregada",
+              "cerrado",
+              "cerrada",
+              "hecho"
+            ],
+            "cancelled": [
+              "cancelado",
+              "cancelada",
+              "anulado",
+              "anulada"
+            ],
+            "refunded": [
+              "reembolsado",
+              "reembolsada",
+              "devuelto",
+              "devuelta",
+              "reembolso"
+            ],
+            "pending": [
+              "pendiente",
+              "sin pagar",
+              "abierto",
+              "abierta"
+            ]
+          },
+          "sale.payment_status": {
+            "paid": [
+              "si",
+              "sí",
+              "pagado",
+              "pagada",
+              "cobrado",
+              "cobrada",
+              "liquidado"
+            ],
+            "unpaid": [
+              "no",
+              "sin pagar",
+              "pendiente",
+              "impagado",
+              "debe",
+              "adeudado"
+            ],
+            "partial": [
+              "parcial",
+              "pago parcial",
+              "parcialmente pagado"
+            ]
+          },
+          "purchase.status": {
+            "ordered": [
+              "pedido",
+              "pendiente",
+              "enviado",
+              "abierto"
+            ],
+            "received": [
+              "recibido",
+              "recibida",
+              "entregado",
+              "completado"
+            ],
+            "cancelled": [
+              "cancelado",
+              "cancelada",
+              "anulado"
+            ]
+          }
+        }
+      }
+    }
   },
   "wholesale": {
     "manifest": {
@@ -6173,7 +8744,20 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "variant sku",
           "item sku",
           "article no",
-          "part no"
+          "part no",
+          "código",
+          "codigo",
+          "código de producto",
+          "codigo de producto",
+          "código del producto",
+          "código de artículo",
+          "codigo de articulo",
+          "cód",
+          "cod",
+          "referencia",
+          "clave",
+          "clave del producto",
+          "modelo"
         ],
         "product.name": [
           "product",
@@ -6185,7 +8769,19 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "title",
           "lineitem name",
           "listing",
-          "product description"
+          "product description",
+          "producto",
+          "nombre del producto",
+          "artículo",
+          "articulo",
+          "nombre del artículo",
+          "descripción",
+          "descripcion",
+          "descripción del producto",
+          "título",
+          "titulo",
+          "concepto",
+          "nombre"
         ],
         "product.variant": [
           "variant",
@@ -6193,7 +8789,14 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "option",
           "size",
           "colour",
-          "color"
+          "color",
+          "variante",
+          "opción",
+          "opcion",
+          "talla",
+          "tamaño",
+          "tamano",
+          "medida"
         ],
         "product.category": [
           "category",
@@ -6203,13 +8806,28 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "dept",
           "collection",
           "section",
-          "group"
+          "group",
+          "categoría",
+          "categoria",
+          "tipo",
+          "tipo de producto",
+          "departamento",
+          "familia",
+          "sección",
+          "seccion",
+          "colección",
+          "coleccion",
+          "grupo",
+          "línea",
+          "linea"
         ],
         "product.brand": [
           "brand",
           "vendor brand",
           "make",
-          "manufacturer brand"
+          "manufacturer brand",
+          "marca",
+          "marca del fabricante"
         ],
         "product.unit_price": [
           "price",
@@ -6222,7 +8840,17 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "sale price",
           "retail",
           "price rrp",
-          "variant price"
+          "variant price",
+          "precio",
+          "precio de venta",
+          "precio venta",
+          "pvp",
+          "precio unitario",
+          "precio público",
+          "precio al público",
+          "precio minorista",
+          "precio de lista",
+          "precio por unidad"
         ],
         "product.unit_cost": [
           "cost",
@@ -6236,7 +8864,19 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "cost ex tax",
           "price cost ex tax",
           "cost per item",
-          "purchase price"
+          "purchase price",
+          "costo",
+          "coste",
+          "costo unitario",
+          "coste unitario",
+          "precio de costo",
+          "precio de coste",
+          "precio de compra",
+          "costo de compra",
+          "costo sin iva",
+          "coste sin iva",
+          "costo por unidad",
+          "costo por artículo"
         ],
         "product.supplier": [
           "supplier",
@@ -6244,7 +8884,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "maker",
           "manufacturer",
           "made by",
-          "supplied by"
+          "supplied by",
+          "proveedor",
+          "fabricante",
+          "distribuidor",
+          "suministrado por",
+          "fabricado por"
         ],
         "product.reorder_point": [
           "reorder at",
@@ -6253,13 +8898,27 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "min stock",
           "minimum stock",
           "stock reorder at",
-          "par level"
+          "par level",
+          "punto de pedido",
+          "punto de reorden",
+          "punto de reposición",
+          "stock mínimo",
+          "stock minimo",
+          "inventario mínimo",
+          "existencia mínima",
+          "mínimo",
+          "minimo",
+          "reponer en",
+          "nivel de reposición"
         ],
         "product.barcode": [
           "barcode",
           "ean",
           "upc",
-          "gtin"
+          "gtin",
+          "código de barras",
+          "codigo de barras",
+          "cod barras"
         ],
         "product.pack_size": [
           "case size",
@@ -6268,7 +8927,17 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "case qty",
           "per case",
           "outer",
-          "inner"
+          "inner",
+          "unidades por caja",
+          "uds por caja",
+          "unidades por bulto",
+          "piezas por caja",
+          "tamaño de caja",
+          "por caja",
+          "caja de",
+          "unidades por paquete",
+          "empaque",
+          "embalaje"
         ],
         "customer.name": [
           "customer",
@@ -6283,14 +8952,35 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "company",
           "stockist",
           "retailer",
-          "store name"
+          "store name",
+          "cliente",
+          "nombre del cliente",
+          "nombre cliente",
+          "comprador",
+          "razón social",
+          "razon social",
+          "empresa",
+          "cuenta",
+          "tienda",
+          "nombre de facturación",
+          "facturar a",
+          "enviar a",
+          "revendedor",
+          "minorista",
+          "nombre"
         ],
         "customer.email": [
           "email",
           "e mail",
           "customer email",
           "buyer email",
-          "email address"
+          "email address",
+          "correo",
+          "correo electrónico",
+          "correo electronico",
+          "mail",
+          "correo del cliente",
+          "email del cliente"
         ],
         "customer.phone": [
           "phone",
@@ -6298,14 +8988,30 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "tel",
           "mobile",
           "phone number",
-          "billing phone"
+          "billing phone",
+          "teléfono",
+          "telefono",
+          "tlf",
+          "móvil",
+          "movil",
+          "celular",
+          "número de teléfono",
+          "numero de telefono",
+          "whatsapp"
         ],
         "customer.city": [
           "city",
           "town",
           "billing city",
           "ship city",
-          "shipping city"
+          "shipping city",
+          "ciudad",
+          "localidad",
+          "población",
+          "poblacion",
+          "municipio",
+          "ciudad de envío",
+          "ciudad de facturación"
         ],
         "customer.region": [
           "state",
@@ -6314,19 +9020,36 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "county",
           "billing province",
           "ship state",
-          "shipping province"
+          "shipping province",
+          "estado",
+          "provincia",
+          "región",
+          "comunidad",
+          "comunidad autónoma",
+          "provincia de envío",
+          "estado de envío"
         ],
         "customer.country": [
           "country",
           "billing country",
-          "ship country"
+          "ship country",
+          "país",
+          "pais",
+          "país de envío",
+          "país de facturación"
         ],
         "customer.postal_code": [
           "zip",
           "zip code",
           "postcode",
           "postal code",
-          "billing zip"
+          "billing zip",
+          "código postal",
+          "codigo postal",
+          "cp",
+          "c p",
+          "cód postal",
+          "cod postal"
         ],
         "customer.account_number": [
           "account no",
@@ -6339,7 +9062,20 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "customer no",
           "cust no",
           "customer id",
-          "customer number"
+          "customer number",
+          "número de cuenta",
+          "numero de cuenta",
+          "nº cuenta",
+          "n cuenta",
+          "código de cliente",
+          "codigo de cliente",
+          "cód cliente",
+          "cod cliente",
+          "nº cliente",
+          "número de cliente",
+          "numero de cliente",
+          "id cliente",
+          "id de cliente"
         ],
         "customer.business_type": [
           "business type",
@@ -6347,7 +9083,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "customer type",
           "segment",
           "sector",
-          "type"
+          "type",
+          "tipo de negocio",
+          "tipo de cliente",
+          "segmento",
+          "giro",
+          "actividad",
+          "tipo"
         ],
         "customer.sales_rep": [
           "rep",
@@ -6356,7 +9098,16 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "sales person",
           "account manager",
           "agent",
-          "territory"
+          "territory",
+          "representante",
+          "representante de ventas",
+          "vendedor",
+          "comercial",
+          "agente",
+          "ejecutivo",
+          "ejecutivo de cuenta",
+          "zona",
+          "territorio"
         ],
         "customer.price_tier": [
           "price list",
@@ -6364,7 +9115,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "price level",
           "tier",
           "pricing",
-          "price band"
+          "price band",
+          "lista de precios",
+          "tarifa",
+          "nivel de precio",
+          "nivel de precios",
+          "tipo de precio",
+          "precios"
         ],
         "customer.payment_terms_days": [
           "terms",
@@ -6372,30 +9129,58 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "days to pay",
           "credit terms",
           "terms days",
-          "net days"
+          "net days",
+          "plazo",
+          "plazo de pago",
+          "condiciones de pago",
+          "días de crédito",
+          "dias de credito",
+          "días de pago",
+          "dias de pago",
+          "días para pagar",
+          "crédito días"
         ],
         "customer.credit_limit": [
           "credit limit",
           "limit",
           "credit",
           "max credit",
-          "credit line"
+          "credit line",
+          "límite de crédito",
+          "limite de credito",
+          "límite",
+          "limite",
+          "crédito",
+          "credito",
+          "crédito máximo",
+          "línea de crédito"
         ],
         "supplier.name": [
           "supplier",
           "vendor",
           "supplier name",
           "from",
-          "manufacturer"
+          "manufacturer",
+          "proveedor",
+          "nombre del proveedor",
+          "fabricante",
+          "distribuidor"
         ],
         "supplier.email": [
           "supplier email",
-          "vendor email"
+          "vendor email",
+          "correo del proveedor",
+          "email del proveedor",
+          "correo proveedor"
         ],
         "supplier.lead_time_days": [
           "lead time",
           "lead time days",
-          "days to deliver"
+          "days to deliver",
+          "plazo de entrega",
+          "días de entrega",
+          "dias de entrega",
+          "tiempo de entrega"
         ],
         "sale.order_number": [
           "order",
@@ -6412,7 +9197,29 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "invoice number",
           "invoice",
           "transaction id",
-          "sale id"
+          "sale id",
+          "factura",
+          "número de factura",
+          "numero de factura",
+          "nº factura",
+          "n factura",
+          "no factura",
+          "núm factura",
+          "num factura",
+          "folio",
+          "pedido",
+          "número de pedido",
+          "numero de pedido",
+          "nº pedido",
+          "orden",
+          "número de orden",
+          "albarán",
+          "albaran",
+          "remisión",
+          "ticket",
+          "recibo",
+          "transacción",
+          "id de venta"
         ],
         "sale.sale_date": [
           "date",
@@ -6423,7 +9230,18 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "transaction date",
           "invoice date",
           "day",
-          "date sold"
+          "date sold",
+          "fecha",
+          "fecha de factura",
+          "fecha factura",
+          "fecha de emisión",
+          "fecha del pedido",
+          "fecha de pedido",
+          "fecha de venta",
+          "fecha venta",
+          "fecha de creación",
+          "día",
+          "dia"
         ],
         "sale.customer_po": [
           "po",
@@ -6432,7 +9250,16 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "your ref",
           "customer ref",
           "order ref",
-          "their ref"
+          "their ref",
+          "su pedido",
+          "su referencia",
+          "su ref",
+          "pedido del cliente",
+          "nº pedido cliente",
+          "referencia del cliente",
+          "ref cliente",
+          "orden de compra",
+          "oc"
         ],
         "sale.channel": [
           "channel",
@@ -6440,18 +9267,35 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "ordered via",
           "ordered through",
           "order method",
-          "how ordered"
+          "how ordered",
+          "canal",
+          "origen",
+          "pedido por",
+          "pedido vía",
+          "forma de pedido",
+          "cómo pidió",
+          "vía"
         ],
         "sale.status": [
           "order status",
           "invoice status",
-          "state"
+          "state",
+          "estado del pedido",
+          "estado de la factura",
+          "estatus",
+          "situación"
         ],
         "sale.discount_total": [
           "discount amount",
           "discount",
           "order discount",
-          "discounts"
+          "discounts",
+          "descuento",
+          "importe del descuento",
+          "descuento del pedido",
+          "descuentos",
+          "dto",
+          "dcto"
         ],
         "sale.shipping_charged": [
           "shipping",
@@ -6459,14 +9303,28 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "order shipping",
           "delivery",
           "postage",
-          "shipping price"
+          "shipping price",
+          "envío",
+          "envio",
+          "gastos de envío",
+          "gastos de envio",
+          "costo de envío",
+          "coste de envío",
+          "entrega",
+          "portes",
+          "flete"
         ],
         "sale.tax_total": [
           "taxes",
           "tax",
           "sales tax",
           "vat",
-          "tax total"
+          "tax total",
+          "impuesto",
+          "impuestos",
+          "iva",
+          "total impuestos",
+          "igv"
         ],
         "sale.total": [
           "total",
@@ -6474,7 +9332,15 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "order total",
           "invoice value",
           "grand total",
-          "amount due"
+          "amount due",
+          "total de la factura",
+          "total factura",
+          "total del pedido",
+          "importe total",
+          "monto total",
+          "importe a pagar",
+          "total a pagar",
+          "importe pendiente"
         ],
         "sale.payment_status": [
           "status",
@@ -6482,14 +9348,28 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "paid?",
           "payment status",
           "payment",
-          "settled"
+          "settled",
+          "estado",
+          "pagado",
+          "¿pagado?",
+          "estado del pago",
+          "estado de pago",
+          "pago",
+          "cobrado",
+          "liquidado"
         ],
         "sale.due_date": [
           "due date",
           "payment due",
           "due",
           "due on",
-          "terms date"
+          "terms date",
+          "fecha de vencimiento",
+          "vencimiento",
+          "vence",
+          "vence el",
+          "fecha límite de pago",
+          "vto"
         ],
         "sale_line.quantity": [
           "qty",
@@ -6500,7 +9380,16 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "lineitem quantity",
           "count",
           "qty sold",
-          "number of items"
+          "number of items",
+          "cantidad",
+          "cant",
+          "uds",
+          "unidades",
+          "piezas",
+          "pzas",
+          "cantidad vendida",
+          "nº de artículos",
+          "número de artículos"
         ],
         "sale_line.unit_price": [
           "price",
@@ -6508,14 +9397,27 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "lineitem price",
           "each",
           "rate",
-          "item price"
+          "item price",
+          "precio",
+          "precio unitario",
+          "precio por unidad",
+          "precio unidad",
+          "p unitario",
+          "c/u",
+          "precio del artículo"
         ],
         "sale_line.discount": [
           "line discount",
           "discount",
           "lineitem discount",
           "item discount",
-          "trade discount"
+          "trade discount",
+          "descuento",
+          "descuento de línea",
+          "descuento del artículo",
+          "descuento comercial",
+          "dto",
+          "dcto"
         ],
         "sale_line.quantity_backordered": [
           "backordered",
@@ -6526,7 +9428,14 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "qty to follow",
           "bo",
           "short",
-          "owed qty"
+          "owed qty",
+          "pendiente",
+          "pendientes",
+          "por enviar",
+          "pendiente de enviar",
+          "cantidad pendiente",
+          "por servir",
+          "por surtir"
         ],
         "sale_line.line_total": [
           "line total",
@@ -6536,20 +9445,40 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "net",
           "value",
           "subtotal",
-          "line amount"
+          "line amount",
+          "total de línea",
+          "total línea",
+          "importe",
+          "monto",
+          "valor",
+          "importe de línea",
+          "neto",
+          "bruto"
         ],
         "return.return_date": [
           "return date",
           "date returned",
           "date",
           "credit date",
-          "credit note date"
+          "credit note date",
+          "fecha de devolución",
+          "fecha devolución",
+          "fecha de devolucion",
+          "fecha",
+          "fecha del abono",
+          "fecha de la nota de crédito",
+          "fecha nota de crédito"
         ],
         "return.quantity": [
           "qty",
           "quantity",
           "units returned",
-          "qty returned"
+          "qty returned",
+          "cantidad",
+          "cant",
+          "uds",
+          "unidades devueltas",
+          "cantidad devuelta"
         ],
         "return.refund_amount": [
           "credit",
@@ -6557,12 +9486,27 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "refund",
           "refund amount",
           "credited",
-          "amount credited"
+          "amount credited",
+          "crédito",
+          "credito",
+          "importe del crédito",
+          "abono",
+          "importe abonado",
+          "acreditado",
+          "monto acreditado",
+          "reembolso",
+          "importe del reembolso"
         ],
         "return.reason": [
           "reason",
           "return reason",
-          "why"
+          "why",
+          "motivo",
+          "motivo de devolución",
+          "razón",
+          "razon",
+          "causa",
+          "por qué"
         ],
         "purchase.po_number": [
           "po number",
@@ -6570,43 +9514,83 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "purchase order",
           "po no",
           "order number",
-          "order no"
+          "order no",
+          "orden de compra",
+          "oc",
+          "nº oc",
+          "número de orden de compra",
+          "número de pedido",
+          "numero de pedido",
+          "nº pedido",
+          "pedido"
         ],
         "purchase.order_date": [
           "order date",
           "ordered",
           "date ordered",
           "date",
-          "po date"
+          "po date",
+          "fecha de pedido",
+          "fecha del pedido",
+          "pedido el",
+          "fecha",
+          "fecha oc",
+          "fecha de compra"
         ],
         "purchase.received_date": [
           "received",
           "received date",
           "date received",
-          "delivered"
+          "delivered",
+          "recibido",
+          "recibido el",
+          "fecha de recepción",
+          "fecha recepción",
+          "fecha de recepcion",
+          "entregado",
+          "fecha de entrega"
         ],
         "purchase.total": [
           "total",
           "po total",
-          "order total"
+          "order total",
+          "total del pedido",
+          "total oc",
+          "importe total"
         ],
         "purchase_line.quantity": [
           "qty",
           "quantity",
           "units",
-          "qty ordered"
+          "qty ordered",
+          "cantidad",
+          "cant",
+          "uds",
+          "unidades",
+          "cantidad pedida"
         ],
         "purchase_line.unit_cost": [
           "unit cost",
           "cost",
           "cost each",
           "price",
-          "unit price"
+          "unit price",
+          "costo unitario",
+          "coste unitario",
+          "costo",
+          "coste",
+          "costo por unidad",
+          "precio",
+          "precio unitario"
         ],
         "purchase_line.line_total": [
           "line total",
           "total",
-          "amount"
+          "amount",
+          "total de línea",
+          "total línea",
+          "importe",
+          "subtotal"
         ],
         "stock_count.quantity_on_hand": [
           "in stock",
@@ -6618,32 +9602,66 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "inventory",
           "available",
           "stock level",
-          "variant inventory qty"
+          "variant inventory qty",
+          "inventario",
+          "existencias",
+          "existencia",
+          "en stock",
+          "en inventario",
+          "disponible",
+          "disponibles",
+          "cantidad disponible",
+          "stock actual",
+          "unidades en stock"
         ],
         "stock_count.counted_at": [
           "counted",
           "count date",
           "stock date",
-          "as of"
+          "as of",
+          "fecha del recuento",
+          "fecha de recuento",
+          "fecha de inventario",
+          "contado el",
+          "a fecha de"
         ],
         "expense.expense_date": [
           "date",
           "month",
           "expense date",
-          "paid on"
+          "paid on",
+          "fecha",
+          "mes",
+          "fecha del gasto",
+          "fecha de pago",
+          "pagado el"
         ],
         "expense.category": [
           "category",
           "expense",
           "type",
           "account",
-          "item"
+          "item",
+          "categoría",
+          "categoria",
+          "concepto",
+          "tipo",
+          "tipo de gasto",
+          "partida",
+          "cuenta"
         ],
         "expense.description": [
           "description",
           "details",
           "memo",
-          "note"
+          "note",
+          "descripción",
+          "descripcion",
+          "detalle",
+          "detalles",
+          "nota",
+          "notas",
+          "observaciones"
         ],
         "expense.amount": [
           "amount",
@@ -6651,40 +9669,78 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
           "value",
           "spend",
           "paid",
-          "total"
+          "total",
+          "importe",
+          "monto",
+          "cantidad",
+          "valor",
+          "gasto",
+          "pagado",
+          "costo"
         ],
         "expense.vendor": [
           "vendor",
           "paid to",
           "payee",
-          "supplier"
+          "supplier",
+          "pagado a",
+          "proveedor",
+          "beneficiario",
+          "acreedor"
         ],
         "payment.received_date": [
           "date",
           "received",
           "payment date",
           "date paid",
-          "date received"
+          "date received",
+          "fecha",
+          "fecha de pago",
+          "fecha de cobro",
+          "fecha del cobro",
+          "recibido",
+          "fecha de recepción"
         ],
         "payment.reference": [
           "reference",
           "ref",
           "payment ref",
           "transaction",
-          "cheque no"
+          "cheque no",
+          "referencia",
+          "referencia del pago",
+          "transacción",
+          "nº transacción",
+          "número de cheque",
+          "nº cheque",
+          "folio"
         ],
         "payment.method": [
           "method",
           "payment method",
           "paid with",
           "paid by",
-          "how paid"
+          "how paid",
+          "forma de pago",
+          "método de pago",
+          "metodo de pago",
+          "medio de pago",
+          "pagado con",
+          "tipo de pago"
         ],
         "payment.amount": [
           "amount",
           "paid",
           "payment",
-          "amount paid"
+          "amount paid",
+          "importe",
+          "monto",
+          "pagado",
+          "pago",
+          "importe pagado",
+          "monto pagado",
+          "cobrado",
+          "importe cobrado"
         ]
       },
       "values": {
@@ -6694,7 +9750,12 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "sales rep",
             "field sales",
             "agent",
-            "salesperson"
+            "salesperson",
+            "representante",
+            "comercial",
+            "vendedor",
+            "agente",
+            "visita comercial"
           ],
           "online_portal": [
             "portal",
@@ -6703,31 +9764,51 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "online",
             "b2b portal",
             "trade portal",
-            "online store"
+            "online store",
+            "la web",
+            "pagina web",
+            "página web",
+            "en linea",
+            "en línea",
+            "portal b2b"
           ],
           "phone": [
             "phone",
             "telephone",
             "call",
-            "phoned"
+            "phoned",
+            "telefono",
+            "teléfono",
+            "por telefono",
+            "por teléfono",
+            "llamada"
           ],
           "email": [
             "email",
             "e-mail",
-            "emailed"
+            "emailed",
+            "correo",
+            "por correo",
+            "correo electronico",
+            "correo electrónico"
           ],
           "trade_show": [
             "trade show",
             "show",
             "fair",
             "expo",
-            "trade fair"
+            "trade fair",
+            "feria",
+            "feria comercial",
+            "exposicion",
+            "exposición"
           ],
           "marketplace": [
             "faire",
             "ankorstore",
             "marketplace",
-            "amazon business"
+            "amazon business",
+            "mercado online"
           ]
         },
         "sale.status": {
@@ -6740,25 +9821,50 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "dispatched",
             "delivered",
             "closed",
-            "done"
+            "done",
+            "completado",
+            "completada",
+            "facturado",
+            "facturada",
+            "enviado",
+            "enviada",
+            "entregado",
+            "entregada",
+            "cerrado",
+            "cerrada"
           ],
           "cancelled": [
             "cancelled",
             "canceled",
             "void",
-            "voided"
+            "voided",
+            "cancelado",
+            "cancelada",
+            "anulado",
+            "anulada"
           ],
           "refunded": [
             "credited",
             "refunded",
-            "credit note"
+            "credit note",
+            "abonado",
+            "nota de credito",
+            "nota de crédito",
+            "reembolsado",
+            "rectificativa"
           ],
           "pending": [
             "draft",
             "quote",
             "pending",
             "awaiting approval",
-            "on hold"
+            "on hold",
+            "borrador",
+            "presupuesto",
+            "cotizacion",
+            "cotización",
+            "pendiente",
+            "en espera"
           ]
         },
         "sale.payment_status": {
@@ -6771,7 +9877,15 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "true",
             "settled",
             "paid in full",
-            "cleared"
+            "cleared",
+            "si",
+            "sí",
+            "pagado",
+            "pagada",
+            "cobrado",
+            "cobrada",
+            "liquidado",
+            "saldado"
           ],
           "unpaid": [
             "n",
@@ -6784,7 +9898,13 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "overdue",
             "open",
             "sent",
-            "awaiting payment"
+            "awaiting payment",
+            "sin pagar",
+            "pendiente",
+            "impagado",
+            "vencido",
+            "debe",
+            "adeudado"
           ],
           "partial": [
             "part",
@@ -6792,7 +9912,11 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "partly",
             "part paid",
             "partially paid",
-            "part payment"
+            "part payment",
+            "parcial",
+            "pago parcial",
+            "parcialmente pagado",
+            "a cuenta"
           ]
         },
         "purchase.status": {
@@ -6800,18 +9924,29 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
             "ordered",
             "open",
             "pending",
-            "sent"
+            "sent",
+            "pedido",
+            "pendiente",
+            "enviado",
+            "abierto"
           ],
           "received": [
             "received",
             "delivered",
             "complete",
-            "completed"
+            "completed",
+            "recibido",
+            "recibida",
+            "entregado",
+            "completado"
           ],
           "cancelled": [
             "cancelled",
             "canceled",
-            "void"
+            "void",
+            "cancelado",
+            "cancelada",
+            "anulado"
           ]
         }
       },
@@ -11045,6 +14180,2407 @@ export const BUNDLED_PACKS: Record<string, PackData> = {
         }
       ]
     },
-    "primer": "Wholesalers and distributors sell to other businesses (shops, cafés, salons, other traders) on account,\nand usually keep these files:\n- An invoice or sales-order export from their accounts software (QuickBooks, Xero, Sage) or a\n  hand-kept invoice sheet: one row per item invoiced, with the invoice number, date, customer and due\n  date repeated on every row or written only on the first row of each invoice. A \"Paid?\" or \"Status\"\n  column says whether it has been paid. \"Backordered\" or \"To follow\" means items still to be sent.\n- A customer (account) list: one row per trade customer, with an account number, contact details,\n  payment terms (like \"30 days\" or \"Net 30\"), a credit limit, the sales rep and the price list.\n- A payments received sheet: date, customer, invoice number and amount.\n- A stock list with product codes, case sizes, costs, trade prices and how many are in the warehouse.\n- Supplier (purchase) orders: one row per product ordered, with the supplier, dates, quantity and cost.\n- An expenses sheet, often with months as columns.\nTotals, subtotals, notes and blank rows are common and are not records. The same customer is often\nspelled several ways (\"Bloom & Co\", \"Bloom and Co Ltd\"). Dates may be day-first or month-first."
+    "primer": "Wholesalers and distributors sell to other businesses (shops, cafés, salons, other traders) on account,\nand usually keep these files:\n- An invoice or sales-order export from their accounts software (QuickBooks, Xero, Sage) or a\n  hand-kept invoice sheet: one row per item invoiced, with the invoice number, date, customer and due\n  date repeated on every row or written only on the first row of each invoice. A \"Paid?\" or \"Status\"\n  column says whether it has been paid. \"Backordered\" or \"To follow\" means items still to be sent.\n- A customer (account) list: one row per trade customer, with an account number, contact details,\n  payment terms (like \"30 days\" or \"Net 30\"), a credit limit, the sales rep and the price list.\n- A payments received sheet: date, customer, invoice number and amount.\n- A stock list with product codes, case sizes, costs, trade prices and how many are in the warehouse.\n- Supplier (purchase) orders: one row per product ordered, with the supplier, dates, quantity and cost.\n- An expenses sheet, often with months as columns.\nTotals, subtotals, notes and blank rows are common and are not records. The same customer is often\nspelled several ways (\"Bloom & Co\", \"Bloom and Co Ltd\"). Dates may be day-first or month-first.",
+    "translations": {
+      "es": {
+        "manifest": {
+          "name": "Venta mayorista y distribución",
+          "description": "Para negocios que venden a otros negocios, como tiendas, cafeterías y salones de belleza.",
+          "industries_label": "Vendo a otros negocios (mayorista)",
+          "helpful_files": [
+            {
+              "what": "Facturas o pedidos de venta",
+              "detail": "de QuickBooks, Xero, Sage o tu propia hoja de cálculo"
+            },
+            {
+              "what": "Tu lista de clientes",
+              "detail": "con números de cuenta, condiciones de pago y límites de crédito"
+            },
+            {
+              "what": "Pagos recibidos",
+              "detail": "a qué factura corresponde cada pago"
+            },
+            {
+              "what": "Una lista de inventario",
+              "detail": "con costos, precios mayoristas y cuántas unidades hay en el almacén"
+            },
+            {
+              "what": "Órdenes de compra",
+              "detail": "qué les compraste a los proveedores, cuándo y por cuánto"
+            }
+          ],
+          "goal_words": {
+            "order_count": [
+              "pedido",
+              "pedidos",
+              "factura",
+              "facturas"
+            ],
+            "gross_profit": [
+              "ganancia",
+              "ganancias",
+              "beneficio",
+              "beneficios",
+              "utilidad",
+              "utilidades"
+            ],
+            "net_sales": [
+              "venta",
+              "ventas",
+              "ingresos",
+              "facturación"
+            ]
+          }
+        },
+        "entities": {
+          "product": {
+            "singular": "Producto",
+            "plural": "Productos",
+            "description": "Algo que vendes.",
+            "fields": {
+              "sku": "Código del producto",
+              "name": "Nombre",
+              "variant": {
+                "label": "Variante",
+                "description": "Talla, color u otra opción."
+              },
+              "category": "Categoría",
+              "brand": "Marca",
+              "unit_price": "Precio de venta",
+              "unit_cost": "Costo por unidad",
+              "supplier": "Proveedor",
+              "reorder_point": "Reponer cuando el inventario llegue a",
+              "is_active": "Se sigue vendiendo",
+              "barcode": "Código de barras",
+              "pack_size": "Unidades por caja"
+            }
+          },
+          "customer": {
+            "singular": "Cliente",
+            "plural": "Clientes",
+            "description": "Un negocio que te compra, como una tienda, una cafetería, un salón de belleza u otro comerciante.",
+            "fields": {
+              "name": "Nombre",
+              "account_number": "Número de cuenta",
+              "email": "Correo",
+              "phone": "Teléfono",
+              "city": "Ciudad",
+              "region": "Estado o provincia",
+              "country": "País",
+              "postal_code": "Código postal",
+              "business_type": "Tipo de negocio",
+              "sales_rep": "Representante",
+              "price_tier": "Lista de precios",
+              "payment_terms_days": "Días para pagar",
+              "credit_limit": "Límite de crédito"
+            }
+          },
+          "supplier": {
+            "singular": "Proveedor",
+            "plural": "Proveedores",
+            "description": "Alguien a quien le compras inventario.",
+            "fields": {
+              "name": "Nombre",
+              "contact_name": "Contacto",
+              "email": "Correo",
+              "phone": "Teléfono",
+              "lead_time_days": "Días de entrega"
+            }
+          },
+          "location": {
+            "singular": "Almacén",
+            "plural": "Almacenes",
+            "description": "Donde guardas inventario o desde donde vendes, como un almacén, un depósito o una sala de exposición.",
+            "fields": {
+              "name": "Nombre",
+              "location_type": "Tipo"
+            }
+          },
+          "sale": {
+            "singular": "Factura",
+            "plural": "Facturas",
+            "description": "Un pedido que le facturaste a un cliente. Una factura puede incluir varios productos.",
+            "fields": {
+              "order_number": "Número de factura",
+              "customer_po": "Número de pedido del cliente",
+              "sale_date": "Fecha",
+              "customer": "Cliente",
+              "channel": "Canal de pedido",
+              "location": "Almacén",
+              "status": "Estado",
+              "discount_total": "Descuento",
+              "shipping_charged": "Envío cobrado",
+              "tax_total": "Impuestos",
+              "total": "Total de la factura",
+              "payment_status": "¿Pagado?",
+              "due_date": "Vencimiento del pago"
+            }
+          },
+          "sale_line": {
+            "singular": "Línea de factura",
+            "plural": "Líneas de factura",
+            "description": "Un producto de una factura, con cuántas unidades y a qué precio.",
+            "fields": {
+              "sale": "Factura",
+              "line_number": "Línea",
+              "product": "Producto",
+              "product_name_raw": "Producto tal como está escrito",
+              "quantity": "Cantidad",
+              "unit_price": "Precio por unidad",
+              "discount": "Descuento",
+              "line_total": "Total de la línea",
+              "unit_cost_at_sale": "Costo por unidad en ese momento",
+              "quantity_backordered": {
+                "label": "Pendiente de enviar",
+                "description": "Pedido pero aún no enviado porque no había inventario."
+              }
+            }
+          },
+          "return": {
+            "singular": "Nota de crédito",
+            "plural": "Notas de crédito",
+            "description": "Mercancía que un cliente te devolvió, o un crédito que le diste.",
+            "fields": {
+              "sale": "Factura",
+              "product": "Producto",
+              "return_date": "Fecha",
+              "quantity": "Cantidad",
+              "refund_amount": "Crédito",
+              "reason": "Motivo"
+            }
+          },
+          "purchase": {
+            "singular": "Pedido a proveedor",
+            "plural": "Pedidos a proveedores",
+            "description": "Inventario que le pediste a un proveedor.",
+            "fields": {
+              "po_number": "Número de pedido",
+              "supplier": "Proveedor",
+              "order_date": "Pedido el",
+              "received_date": "Recibido el",
+              "status": "Estado",
+              "total": "Total",
+              "shipping_cost": "Costo de envío"
+            }
+          },
+          "purchase_line": {
+            "singular": "Línea de pedido a proveedor",
+            "plural": "Líneas de pedido a proveedor",
+            "description": "Un producto de un pedido a proveedor.",
+            "fields": {
+              "purchase": "Pedido a proveedor",
+              "product": "Producto",
+              "quantity": "Cantidad",
+              "unit_cost": "Costo por unidad",
+              "line_total": "Total de la línea"
+            }
+          },
+          "stock_count": {
+            "singular": "Nivel de inventario",
+            "plural": "Niveles de inventario",
+            "description": "Cuántas unidades de un producto tenías en un día concreto.",
+            "fields": {
+              "product": "Producto",
+              "location": "Almacén",
+              "counted_at": "Contado el",
+              "quantity_on_hand": "En inventario"
+            }
+          },
+          "stock_movement": {
+            "singular": "Movimiento de inventario",
+            "plural": "Movimientos de inventario",
+            "description": "Inventario que entra o sale, como una entrega, una rotura o una corrección.",
+            "fields": {
+              "product": "Producto",
+              "moved_at": "Fecha",
+              "quantity_change": "Cambio",
+              "reason": "Motivo"
+            }
+          },
+          "expense": {
+            "singular": "Gasto",
+            "plural": "Gastos",
+            "description": "Dinero que gastaste para mantener el negocio.",
+            "fields": {
+              "expense_date": "Fecha",
+              "category": "Categoría",
+              "description": "Descripción",
+              "amount": "Importe",
+              "vendor": "Pagado a",
+              "payment_method": "Forma de pago"
+            }
+          },
+          "payment": {
+            "singular": "Pago recibido",
+            "plural": "Pagos recibidos",
+            "description": "Dinero que te pagó un cliente por una factura.",
+            "fields": {
+              "reference": "Referencia",
+              "received_date": "Fecha",
+              "customer": "Cliente",
+              "sale": "Factura",
+              "amount": "Importe",
+              "method": "Forma de pago"
+            }
+          }
+        },
+        "metrics": {
+          "gross_sales": {
+            "label": "Ventas antes de descuentos",
+            "description": "Precio × cantidad de cada producto en las ventas completadas, antes de descuentos.",
+            "unavailable_hint": "Añade el precio de cada producto vendido para ver las ventas antes de descuentos.",
+            "assumptions": [],
+            "synonyms": [
+              "ventas brutas",
+              "ventas antes de descuentos",
+              "ventas sin descuentos",
+              "ventas a precio completo",
+              "ventas a precio lleno",
+              "facturación bruta"
+            ]
+          },
+          "discounts": {
+            "label": "Descuentos aplicados",
+            "description": "Descuentos en las ventas completadas, tanto de productos como de pedidos.",
+            "unavailable_hint": "Incluye la columna de descuentos de tu exportación de ventas para ver los descuentos.",
+            "assumptions": [],
+            "synonyms": [
+              "descuentos",
+              "descuento",
+              "rebajas",
+              "rebaja",
+              "promociones",
+              "promoción",
+              "ofertas",
+              "cupones",
+              "descontado",
+              "descontamos"
+            ]
+          },
+          "refunds": {
+            "label": "Reembolsos",
+            "description": "Dinero reembolsado por devoluciones, según la fecha de la devolución.",
+            "unavailable_hint": "Sube tus devoluciones o reembolsos para ver los reembolsos.",
+            "assumptions": [],
+            "synonyms": [
+              "reembolsos",
+              "reembolso",
+              "reembolsado",
+              "reembolsé",
+              "reembolse",
+              "dinero devuelto",
+              "devolví dinero",
+              "devolvimos dinero"
+            ]
+          },
+          "net_sales": {
+            "label": "Ventas netas",
+            "description": "Dinero de las ventas completadas después de descuentos y reembolsos. No incluye impuestos ni el envío cobrado. Los reembolsos cuentan el día de la devolución.",
+            "unavailable_hint": "Sube tus ventas con el importe de cada producto para ver las ventas netas.",
+            "assumptions": [
+              "Los descuentos de un pedido se reparten entre sus productos en proporción a su precio."
+            ],
+            "synonyms": [
+              "ventas",
+              "venta",
+              "ventas netas",
+              "ingresos",
+              "facturación",
+              "facturacion",
+              "facturé",
+              "facture",
+              "facturado",
+              "facturamos",
+              "recaudación",
+              "recaudado",
+              "volumen de ventas",
+              "vendí",
+              "vendi",
+              "vendimos",
+              "vendido",
+              "vendidos",
+              "vendió",
+              "vendio",
+              "vender",
+              "vendo",
+              "vende",
+              "venden",
+              "venderé",
+              "vendere",
+              "venderemos",
+              "se vende",
+              "se venden",
+              "se vendió",
+              "lo que más se vende",
+              "lo que mas se vende",
+              "lo que más vendo",
+              "lo más vendido",
+              "lo mas vendido",
+              "más vendido",
+              "más vendidos",
+              "mas vendido",
+              "mas vendidos",
+              "el más vendido",
+              "se vende mejor",
+              "se venden mejor",
+              "superventas",
+              "dinero que entra",
+              "dinero que entró",
+              "ganar dinero",
+              "gané",
+              "gane",
+              "ingresé",
+              "ingrese"
+            ]
+          },
+          "units_sold": {
+            "label": "Unidades vendidas",
+            "description": "Número de unidades vendidas en las ventas completadas, menos las devueltas.",
+            "assumptions": [],
+            "synonyms": [
+              "unidades vendidas",
+              "artículos vendidos",
+              "articulos vendidos",
+              "productos vendidos",
+              "piezas vendidas",
+              "unidades",
+              "piezas",
+              "cantidad vendida",
+              "cuántas unidades",
+              "cuantas unidades",
+              "cuántos artículos",
+              "cuántos vendí",
+              "cuantos vendi",
+              "cuántas vendí",
+              "cuantas vendi"
+            ]
+          },
+          "order_count": {
+            "label": "Pedidos",
+            "description": "Número de facturas, sin contar las canceladas ni los borradores.",
+            "assumptions": [],
+            "synonyms": [
+              "pedidos",
+              "número de pedidos",
+              "numero de pedidos",
+              "cantidad de pedidos",
+              "cuántos pedidos",
+              "cuantos pedidos",
+              "órdenes",
+              "ordenes",
+              "facturas",
+              "número de facturas",
+              "numero de facturas",
+              "cuántas facturas",
+              "cuantas facturas"
+            ]
+          },
+          "average_order_value": {
+            "label": "Valor promedio por factura",
+            "description": "Ventas netas ÷ facturas.",
+            "assumptions": [],
+            "synonyms": [
+              "valor promedio por factura",
+              "valor medio por factura",
+              "factura promedio",
+              "factura media",
+              "valor promedio por pedido",
+              "valor promedio del pedido",
+              "valor medio del pedido",
+              "pedido promedio",
+              "pedido medio",
+              "venta promedio",
+              "venta media",
+              "tamaño del pedido",
+              "tamaño medio del pedido"
+            ]
+          },
+          "items_per_order": {
+            "label": "Unidades por pedido",
+            "description": "Unidades vendidas ÷ pedidos.",
+            "assumptions": [],
+            "synonyms": [
+              "unidades por pedido",
+              "artículos por pedido",
+              "articulos por pedido",
+              "productos por pedido",
+              "artículos en la cesta"
+            ]
+          },
+          "cogs": {
+            "label": "Costo de la mercancía vendida",
+            "description": "Unidades vendidas × su costo (el costo en el momento de la venta si se conoce; si no, el costo actual del producto), menos el costo de las unidades devueltas.",
+            "unavailable_hint": "Añade lo que te cuesta cada producto (por ejemplo, en tu lista de inventario) para ver la ganancia.",
+            "assumptions": [
+              "Cuando no sabemos cuánto costaba un producto al venderlo, usamos su costo actual."
+            ],
+            "synonyms": [
+              "costo de la mercancía vendida",
+              "coste de la mercancía vendida",
+              "costo de lo vendido",
+              "costo de ventas",
+              "coste de ventas",
+              "costo de los productos",
+              "coste de los productos",
+              "costo de mercancía",
+              "cmv"
+            ]
+          },
+          "gross_profit": {
+            "label": "Ganancia bruta",
+            "description": "Ventas netas − costo de la mercancía vendida.",
+            "unavailable_hint": "Añade lo que te cuesta cada producto (por ejemplo, en tu lista de inventario) para ver la ganancia.",
+            "assumptions": [],
+            "synonyms": [
+              "ganancia",
+              "ganancias",
+              "ganancia bruta",
+              "beneficio",
+              "beneficios",
+              "beneficio bruto",
+              "utilidad",
+              "utilidades",
+              "utilidad bruta",
+              "más ganancia",
+              "mas ganancia",
+              "más beneficio",
+              "rentable",
+              "rentables",
+              "más rentable",
+              "más rentables",
+              "me dejó",
+              "me dejaron",
+              "me dejan",
+              "ganar más",
+              "gané más"
+            ]
+          },
+          "gross_margin_pct": {
+            "label": "Margen de ganancia",
+            "description": "Ganancia bruta ÷ ventas netas.",
+            "unavailable_hint": "Añade lo que te cuesta cada producto (por ejemplo, en tu lista de inventario) para ver tu margen.",
+            "assumptions": [],
+            "synonyms": [
+              "margen",
+              "márgenes",
+              "margenes",
+              "margen de ganancia",
+              "margen de beneficio",
+              "margen bruto",
+              "margen comercial",
+              "recargo",
+              "mejor margen",
+              "mejores márgenes"
+            ]
+          },
+          "customer_count": {
+            "label": "Clientes que hicieron pedidos",
+            "description": "Clientes distintos con al menos una factura en el periodo.",
+            "unavailable_hint": "Incluye los nombres o correos de los clientes en tus ventas para ver los clientes.",
+            "assumptions": [],
+            "synonyms": [
+              "número de clientes",
+              "numero de clientes",
+              "cantidad de clientes",
+              "cuántos clientes",
+              "cuantos clientes",
+              "clientes activos",
+              "cuentas activas",
+              "cuántas cuentas",
+              "cuantas cuentas",
+              "clientes que pidieron",
+              "cuentas que pidieron"
+            ]
+          },
+          "new_customers": {
+            "label": "Clientes nuevos",
+            "description": "Clientes cuyo primer pedido completado fue en el periodo.",
+            "unavailable_hint": "Incluye los nombres o correos de los clientes en tus ventas para ver los clientes nuevos.",
+            "assumptions": [],
+            "synonyms": [
+              "clientes nuevos",
+              "nuevos clientes",
+              "compradores nuevos",
+              "nuevos compradores",
+              "clientes por primera vez",
+              "primera compra",
+              "primer pedido"
+            ]
+          },
+          "repeat_customer_rate": {
+            "label": "Clientes que repiten",
+            "description": "Parte de los clientes que compraron en el periodo y ya habían comprado antes.",
+            "unavailable_hint": "Incluye los nombres o correos de los clientes en tus ventas para ver los clientes que repiten.",
+            "assumptions": [],
+            "synonyms": [
+              "clientes que repiten",
+              "clientes recurrentes",
+              "clientes que vuelven",
+              "vuelve a comprar",
+              "vuelven a comprar",
+              "volvieron a comprar",
+              "vuelven",
+              "volvieron",
+              "repiten",
+              "repitieron",
+              "tasa de repetición",
+              "tasa de recompra",
+              "recompra",
+              "clientes fieles",
+              "fieles",
+              "fidelidad"
+            ]
+          },
+          "customer_revenue": {
+            "label": "Gasto por cliente",
+            "description": "Ventas netas ÷ clientes que compraron.",
+            "assumptions": [],
+            "synonyms": [
+              "gasto por cliente",
+              "gasto por cuenta",
+              "gasto medio por cliente",
+              "gasto promedio por cliente",
+              "cuenta promedio",
+              "ingresos por cuenta",
+              "ingresos por cliente",
+              "cuánto gasta cada cliente",
+              "cuanto gasta cada cliente"
+            ]
+          },
+          "lapsed_customers": {
+            "label": "Clientes que dejaron de pedir",
+            "description": "Clientes con al menos tres pedidos anteriores cuyo tiempo desde el último pedido es más del doble de su intervalo habitual entre pedidos, y de más de treinta días.",
+            "unavailable_hint": "Incluye los nombres o correos de los clientes en tus ventas para ver quién dejó de comprar.",
+            "assumptions": [],
+            "synonyms": [
+              "no repitieron su pedido",
+              "no repitió su pedido",
+              "no han repetido",
+              "no ha repetido",
+              "no han vuelto a pedir",
+              "no ha vuelto a pedir",
+              "no volvieron a pedir",
+              "se saltaron su pedido",
+              "pedido atrasado",
+              "dejaron de pedir",
+              "dejó de pedir",
+              "dejo de pedir",
+              "dejaron de comprar",
+              "dejó de comprar",
+              "ya no compran",
+              "ya no compra",
+              "ya no piden",
+              "ya no pide",
+              "clientes perdidos",
+              "no han vuelto",
+              "no han pedido",
+              "no ha pedido",
+              "se están alejando",
+              "clientes inactivos",
+              "inactivos"
+            ]
+          },
+          "stock_on_hand": {
+            "label": "Unidades en inventario",
+            "description": "Cuántas unidades tienes, según tu último recuento de cada producto.",
+            "unavailable_hint": "Sube una lista de inventario con cuántas unidades tienes de cada producto.",
+            "assumptions": [
+              "El inventario es el de tu último recuento; las ventas posteriores todavía no se descuentan."
+            ],
+            "synonyms": [
+              "inventario",
+              "existencias",
+              "stock",
+              "en inventario",
+              "en stock",
+              "en existencia",
+              "niveles de inventario",
+              "nivel de inventario",
+              "cuántos tengo",
+              "cuantos tengo",
+              "cuántas tengo",
+              "cuántos me quedan",
+              "cuantos me quedan",
+              "cuántas me quedan",
+              "qué me queda"
+            ]
+          },
+          "stock_value": {
+            "label": "Valor del inventario (al costo)",
+            "description": "Unidades en inventario × lo que te cuesta cada una.",
+            "unavailable_hint": "Sube una lista de inventario con cuántas unidades tienes y lo que te cuesta cada producto.",
+            "assumptions": [],
+            "synonyms": [
+              "valor del inventario",
+              "valor de inventario",
+              "valor del stock",
+              "valor de las existencias",
+              "inmovilizado en inventario",
+              "dinero inmovilizado",
+              "parado en inventario",
+              "dinero en inventario",
+              "dinero en stock",
+              "cuánto vale mi inventario",
+              "cuanto vale mi inventario",
+              "cuánto vale el inventario",
+              "vale el inventario",
+              "vale mi inventario"
+            ]
+          },
+          "daily_sales_rate": {
+            "label": "Promedio de unidades vendidas al día",
+            "description": "Unidades vendidas en los últimos 28 días ÷ 28.",
+            "assumptions": [],
+            "synonyms": [
+              "vendidas al día",
+              "vendidos al día",
+              "vendidas por día",
+              "vendidos por día",
+              "ventas al día",
+              "unidades al día",
+              "unidades por día",
+              "ritmo de ventas",
+              "ritmo de venta"
+            ]
+          },
+          "days_of_cover": {
+            "label": "Días de inventario restantes",
+            "description": "Unidades en inventario ÷ promedio de unidades vendidas al día.",
+            "unavailable_hint": "Sube una lista de inventario y tus ventas para ver cuántos días de inventario te quedan.",
+            "assumptions": [],
+            "synonyms": [
+              "agotarse",
+              "se agota",
+              "se agotan",
+              "agotar",
+              "quedarme sin",
+              "quedarse sin",
+              "me quedo sin",
+              "quedando sin",
+              "días de inventario",
+              "dias de inventario",
+              "días de cobertura",
+              "días de stock",
+              "reponer",
+              "reposición",
+              "reposicion",
+              "reabastecer",
+              "volver a pedir",
+              "se va a acabar",
+              "se van a acabar",
+              "se acaba",
+              "se acaban",
+              "a punto de agotarse",
+              "a punto de acabarse"
+            ]
+          },
+          "dead_stock_value": {
+            "label": "Dinero parado en inventario sin vender",
+            "description": "Valor del inventario (al costo) de los productos que tienes en inventario pero no has vendido en 90 días.",
+            "unavailable_hint": "Sube una lista de inventario con costos y tus ventas para ver el inventario sin vender.",
+            "assumptions": [],
+            "synonyms": [
+              "no se vende",
+              "no se venden",
+              "no se está vendiendo",
+              "no se están vendiendo",
+              "no se vendió",
+              "no se vendieron",
+              "inventario muerto",
+              "stock muerto",
+              "inventario sin vender",
+              "sin vender",
+              "no vendido",
+              "no vendidos",
+              "baja rotación",
+              "poca rotación",
+              "se mueve lento",
+              "se mueven lento",
+              "acumulando polvo",
+              "parado en la estantería"
+            ]
+          },
+          "sell_through_rate": {
+            "label": "Porcentaje vendido",
+            "description": "Unidades vendidas ÷ (unidades vendidas + unidades en inventario).",
+            "assumptions": [],
+            "synonyms": [
+              "porcentaje vendido",
+              "porcentaje de venta",
+              "tasa de venta",
+              "sell through",
+              "sell-through",
+              "tasa de sell-through"
+            ]
+          },
+          "return_rate": {
+            "label": "Tasa de devolución",
+            "description": "Unidades devueltas ÷ unidades vendidas.",
+            "unavailable_hint": "Sube tus devoluciones con cuántas unidades volvieron para ver tu tasa de devolución.",
+            "assumptions": [],
+            "synonyms": [
+              "tasa de devolución",
+              "tasa de devoluciones",
+              "porcentaje de devoluciones",
+              "devoluciones",
+              "devuelto",
+              "devueltos",
+              "se devuelven",
+              "se devuelve",
+              "cuánto se devuelve",
+              "con qué frecuencia devuelven"
+            ]
+          },
+          "units_returned": {
+            "label": "Unidades devueltas",
+            "description": "Unidades que volvieron, contadas el día de la devolución.",
+            "unavailable_hint": "Sube tus devoluciones con cuántas unidades volvieron.",
+            "assumptions": [],
+            "synonyms": [
+              "unidades devueltas",
+              "artículos devueltos",
+              "articulos devueltos",
+              "productos devueltos",
+              "cuántas devolvieron",
+              "cuántos devolvieron",
+              "cuántas unidades volvieron",
+              "cuántos volvieron"
+            ]
+          },
+          "purchase_unit_cost": {
+            "label": "Costo del proveedor por unidad",
+            "description": "Lo que pagaste a los proveedores por unidad, según tus pedidos a proveedores.",
+            "unavailable_hint": "Sube tus pedidos a proveedores con cantidades y precios.",
+            "assumptions": [],
+            "synonyms": [
+              "costo del proveedor",
+              "coste del proveedor",
+              "precio del proveedor",
+              "lo que pago por",
+              "lo que me cobra el proveedor",
+              "precio de compra",
+              "costo de compra",
+              "coste de compra"
+            ]
+          },
+          "days_since_last_order": {
+            "label": "Días desde el último pedido",
+            "description": "Días desde el pedido completado más reciente hasta hoy.",
+            "unavailable_hint": "Sube tus ventas con fechas para ver cuándo pidieron los clientes por última vez.",
+            "assumptions": [],
+            "synonyms": [
+              "días desde el último pedido",
+              "dias desde el ultimo pedido",
+              "último pedido",
+              "pidió por última vez",
+              "desde su último pedido"
+            ]
+          },
+          "days_overdue": {
+            "label": "Días de retraso",
+            "description": "Cuántos días lleva vencida la venta sin pagar más antigua.",
+            "unavailable_hint": "Incluye las fechas de vencimiento y una columna “¿Pagado?” en tus facturas para ver cuánto se retrasan los pagos.",
+            "assumptions": [
+              "Las ventas sin fecha de vencimiento se consideran vencidas a los treinta días de la venta."
+            ],
+            "synonyms": [
+              "días de retraso",
+              "dias de retraso",
+              "días vencido",
+              "cuánto retraso",
+              "qué tan atrasado",
+              "cuán atrasado",
+              "vencido hace"
+            ]
+          },
+          "expenses_total": {
+            "label": "Gastos",
+            "description": "Todo lo que registraste como gasto.",
+            "unavailable_hint": "Sube tus gastos para ver lo que te cuesta mantener el negocio.",
+            "assumptions": [],
+            "synonyms": [
+              "gastos",
+              "gasto",
+              "gasté",
+              "gaste",
+              "gastado en",
+              "gasté en",
+              "gastamos en",
+              "gastos generales",
+              "gastos fijos",
+              "gastos de operación",
+              "costos de operación",
+              "recibos",
+              "servicios",
+              "anuncios",
+              "publicidad",
+              "alquiler",
+              "renta",
+              "sueldos",
+              "salarios",
+              "nóminas"
+            ]
+          },
+          "net_profit_estimate": {
+            "label": "Ganancia después de gastos (estimación)",
+            "description": "Ganancia bruta − gastos. Es una estimación, porque no incluye lo que no esté registrado.",
+            "unavailable_hint": "Añade los costos de los productos y sube tus gastos para ver la ganancia después de gastos.",
+            "assumptions": [],
+            "synonyms": [
+              "ganancia después de gastos",
+              "ganancia despues de gastos",
+              "ganancia neta",
+              "beneficio neto",
+              "utilidad neta",
+              "resultado final",
+              "ganancia real",
+              "beneficio real",
+              "después de gastos"
+            ]
+          },
+          "outstanding_receivables": {
+            "label": "Dinero que te deben",
+            "description": "Ventas marcadas como sin pagar o pagadas en parte, menos los pagos recibidos por ellas.",
+            "unavailable_hint": "Incluye una columna “¿Pagado?” en tus facturas para ver el dinero que te deben.",
+            "assumptions": [
+              "Sin registros de pagos, las facturas pagadas en parte se cuentan como debidas por completo."
+            ],
+            "synonyms": [
+              "me debe",
+              "me deben",
+              "nos debe",
+              "nos deben",
+              "debe",
+              "deben",
+              "adeudado",
+              "adeuda",
+              "sin pagar",
+              "sin cobrar",
+              "por cobrar",
+              "pendiente de cobro",
+              "pendientes de pago",
+              "dinero que me deben",
+              "cuentas por cobrar",
+              "deudores"
+            ]
+          },
+          "overdue_receivables": {
+            "label": "Dinero vencido que te deben",
+            "description": "Dinero que te deben por ventas que ya pasaron su fecha de vencimiento.",
+            "unavailable_hint": "Incluye las fechas de vencimiento y una columna “¿Pagado?” en tus facturas para ver los pagos vencidos.",
+            "assumptions": [
+              "Sin registros de pagos, las facturas pagadas en parte se cuentan como debidas por completo.",
+              "Las ventas sin fecha de vencimiento se consideran vencidas a los treinta días de la venta."
+            ],
+            "synonyms": [
+              "vencido",
+              "vencidos",
+              "vencidas",
+              "pagos vencidos",
+              "pagos atrasados",
+              "atrasado",
+              "atrasados",
+              "pagó tarde",
+              "pagaron tarde",
+              "paga tarde",
+              "pagan tarde",
+              "morosos",
+              "moroso",
+              "morosidad"
+            ]
+          },
+          "supplier_spend": {
+            "label": "Gastado con proveedores",
+            "description": "Total de tus pedidos a proveedores, según la fecha del pedido.",
+            "unavailable_hint": "Sube tus pedidos a proveedores para ver lo que gastas con ellos.",
+            "assumptions": [],
+            "synonyms": [
+              "gastado con proveedores",
+              "gasto con proveedores",
+              "gasté con proveedores",
+              "gastamos con proveedores",
+              "compras a proveedores",
+              "compré a proveedores",
+              "comprado a proveedores",
+              "total de pedidos a proveedores",
+              "gasto por proveedor",
+              "compras por proveedor",
+              "gasté con",
+              "gastado con",
+              "gasto con"
+            ]
+          },
+          "backordered_units": {
+            "label": "Unidades pendientes de enviar",
+            "description": "Unidades pedidas pero aún no enviadas porque no había inventario, en facturas completadas.",
+            "unavailable_hint": "Incluye una columna “Pendiente” o “Por enviar” en tus facturas para ver lo que queda pendiente de enviar.",
+            "assumptions": [],
+            "synonyms": [
+              "pendiente de enviar",
+              "pendientes de enviar",
+              "queda pendiente",
+              "quedan pendientes",
+              "por enviar",
+              "falta enviar",
+              "faltan por enviar",
+              "sin enviar",
+              "no enviado",
+              "no enviados",
+              "pedidos pendientes",
+              "entregas pendientes",
+              "envío parcial",
+              "envíos parciales",
+              "backorder",
+              "backorders"
+            ]
+          },
+          "fill_rate": {
+            "label": "Pedidos cumplidos",
+            "description": "Unidades enviadas ÷ unidades pedidas (las enviadas más las pendientes de enviar).",
+            "unavailable_hint": "Incluye una columna “Pendiente” o “Por enviar” en tus facturas para ver cuánto cumples.",
+            "assumptions": [],
+            "synonyms": [
+              "tasa de cumplimiento",
+              "nivel de servicio",
+              "pedidos cumplidos",
+              "pedidos completos",
+              "enviado completo",
+              "enviados completos",
+              "enviado entero",
+              "cumplimiento de pedidos"
+            ]
+          },
+          "credit_limit_total": {
+            "label": "Límites de crédito",
+            "description": "El límite de crédito de la cuenta de cada cliente, según lo registrado.",
+            "unavailable_hint": "Sube tu lista de clientes con sus límites de crédito.",
+            "assumptions": [],
+            "synonyms": [
+              "límite de crédito",
+              "límites de crédito",
+              "limite de credito",
+              "limites de credito",
+              "límite",
+              "limite"
+            ]
+          },
+          "credit_used_pct": {
+            "label": "Crédito usado",
+            "description": "Dinero que te deben ÷ el límite de crédito del cliente.",
+            "unavailable_hint": "Sube tu lista de clientes con sus límites de crédito, y facturas con una columna “¿Pagado?”.",
+            "assumptions": [],
+            "synonyms": [
+              "crédito usado",
+              "crédito utilizado",
+              "credito usado",
+              "uso del crédito",
+              "uso de crédito",
+              "cuánto crédito",
+              "cuanto credito",
+              "de su límite"
+            ]
+          },
+          "over_credit_limit": {
+            "label": "Clientes por encima de su límite de crédito",
+            "description": "Clientes que te deben más que su límite de crédito.",
+            "unavailable_hint": "Sube tu lista de clientes con sus límites de crédito, y facturas con una columna “¿Pagado?”.",
+            "assumptions": [],
+            "synonyms": [
+              "por encima de su límite de crédito",
+              "por encima del límite",
+              "por encima de su límite",
+              "pasado del límite",
+              "pasados del límite",
+              "sobre su límite",
+              "superado su límite",
+              "superó su límite",
+              "superaron su límite",
+              "excedido",
+              "excedieron",
+              "límite superado",
+              "límite de crédito superado"
+            ]
+          },
+          "days_to_pay": {
+            "label": "Días hasta cobrar",
+            "description": "En promedio, días desde la fecha de una factura hasta su pago, para los pagos recibidos en el periodo.",
+            "unavailable_hint": "Sube los pagos que recibiste con el número de factura que pagó cada uno.",
+            "assumptions": [],
+            "synonyms": [
+              "días para pagar",
+              "dias para pagar",
+              "días hasta cobrar",
+              "días para cobrar",
+              "cuánto tardan en pagar",
+              "tardan en pagar",
+              "tardan en pagarme",
+              "tarda en pagar",
+              "tarda en pagarme",
+              "pagan a tiempo",
+              "paga a tiempo",
+              "periodo medio de cobro",
+              "plazo medio de cobro",
+              "días de cobro",
+              "dso"
+            ]
+          },
+          "lifetime_orders": {
+            "label": "Facturas en total",
+            "description": "Todas las facturas hasta el final del periodo, sin contar las canceladas ni los borradores.",
+            "assumptions": [],
+            "synonyms": [
+              "facturas en total",
+              "facturas históricas",
+              "pedidos históricos",
+              "pedidos en total",
+              "facturas de siempre"
+            ]
+          },
+          "usual_order_gap": {
+            "label": "Días habituales entre pedidos",
+            "description": "Días desde la primera factura de un cliente hasta la última ÷ los intervalos entre facturas.",
+            "unavailable_hint": "Sube tus facturas con fechas y clientes.",
+            "assumptions": [],
+            "synonyms": [
+              "cada cuánto",
+              "cada cuanto",
+              "con qué frecuencia",
+              "intervalo habitual",
+              "pide cada",
+              "piden cada",
+              "ciclo de pedidos",
+              "ciclo de reposición"
+            ]
+          }
+        },
+        "dimensions": {
+          "product.name": {
+            "label": "Producto",
+            "synonyms": [
+              "producto",
+              "productos",
+              "artículo",
+              "artículos",
+              "articulo",
+              "articulos"
+            ],
+            "noun": [
+              "producto",
+              "productos"
+            ],
+            "value_labels": {}
+          },
+          "product.category": {
+            "label": "Categoría",
+            "synonyms": [
+              "categoría",
+              "categorías",
+              "categoria",
+              "categorias",
+              "tipo de producto",
+              "departamento",
+              "sección",
+              "familia"
+            ],
+            "noun": [
+              "categoría",
+              "categorías"
+            ],
+            "value_labels": {}
+          },
+          "product.brand": {
+            "label": "Marca",
+            "synonyms": [
+              "marca",
+              "marcas"
+            ],
+            "noun": [
+              "marca",
+              "marcas"
+            ],
+            "value_labels": {}
+          },
+          "customer.name": {
+            "label": "Cliente",
+            "synonyms": [
+              "cliente",
+              "clientes",
+              "cuenta",
+              "cuentas",
+              "comprador",
+              "compradores",
+              "revendedor",
+              "revendedores",
+              "minorista",
+              "minoristas",
+              "cliente mayorista"
+            ],
+            "noun": [
+              "cliente",
+              "clientes"
+            ],
+            "value_labels": {}
+          },
+          "customer.business_type": {
+            "label": "Tipo de negocio",
+            "synonyms": [
+              "tipo de negocio",
+              "tipos de negocio",
+              "tipo de cliente",
+              "segmento",
+              "segmentos",
+              "sector",
+              "sectores",
+              "giro"
+            ],
+            "noun": [
+              "tipo de negocio",
+              "tipos de negocio"
+            ],
+            "value_labels": {}
+          },
+          "customer.sales_rep": {
+            "label": "Representante",
+            "synonyms": [
+              "representante",
+              "representantes",
+              "representante de ventas",
+              "vendedor",
+              "vendedores",
+              "comercial",
+              "comerciales",
+              "agente",
+              "agentes",
+              "ejecutivo de cuenta",
+              "ejecutivo de ventas"
+            ],
+            "noun": [
+              "representante",
+              "representantes"
+            ],
+            "value_labels": {}
+          },
+          "customer.price_tier": {
+            "label": "Lista de precios",
+            "synonyms": [
+              "lista de precios",
+              "listas de precios",
+              "tarifa",
+              "tarifas",
+              "nivel de precios",
+              "nivel de precio"
+            ],
+            "noun": [
+              "lista de precios",
+              "listas de precios"
+            ],
+            "value_labels": {}
+          },
+          "customer.city": {
+            "label": "Ciudad",
+            "synonyms": [
+              "ciudad",
+              "ciudades",
+              "localidad",
+              "localidades",
+              "municipio",
+              "pueblo"
+            ],
+            "noun": [
+              "ciudad",
+              "ciudades"
+            ],
+            "value_labels": {}
+          },
+          "customer.region": {
+            "label": "Estado o provincia",
+            "synonyms": [
+              "estado",
+              "estados",
+              "provincia",
+              "provincias",
+              "región",
+              "regiones",
+              "region",
+              "zona",
+              "zonas"
+            ],
+            "noun": [
+              "zona",
+              "zonas"
+            ],
+            "value_labels": {}
+          },
+          "sale.channel": {
+            "label": "Canal de pedido",
+            "synonyms": [
+              "canal",
+              "canales",
+              "canal de pedido",
+              "forma de pedido",
+              "cómo piden",
+              "como piden",
+              "cómo pidieron",
+              "vía de pedido"
+            ],
+            "noun": [
+              "canal",
+              "canales"
+            ],
+            "value_labels": {
+              "sales_rep": "Representante",
+              "online_portal": "Portal en línea",
+              "phone": "Teléfono",
+              "email": "Correo",
+              "trade_show": "Feria comercial",
+              "marketplace": "Marketplace",
+              "other": "Otro"
+            }
+          },
+          "location.name": {
+            "label": "Almacén",
+            "synonyms": [
+              "almacén",
+              "almacenes",
+              "almacen",
+              "bodega",
+              "bodegas",
+              "depósito",
+              "depósitos",
+              "ubicación"
+            ],
+            "noun": [
+              "almacén",
+              "almacenes"
+            ],
+            "value_labels": {}
+          },
+          "supplier.name": {
+            "label": "Proveedor",
+            "synonyms": [
+              "proveedor",
+              "proveedores",
+              "fabricante",
+              "fabricantes"
+            ],
+            "noun": [
+              "proveedor",
+              "proveedores"
+            ],
+            "value_labels": {}
+          },
+          "expense.category": {
+            "label": "Tipo de gasto",
+            "synonyms": [
+              "tipo de gasto",
+              "tipos de gasto",
+              "categoría de gasto",
+              "tipo de costo",
+              "concepto"
+            ],
+            "noun": [
+              "tipo de gasto",
+              "tipos de gasto"
+            ],
+            "value_labels": {}
+          }
+        },
+        "dashboard": {
+          "net_sales": "Ventas netas",
+          "gross_profit": "Ganancia bruta",
+          "money_owed": "Dinero que te deben",
+          "sales_over_time": "Ventas en el tiempo",
+          "days_to_pay": "Días hasta cobrar",
+          "top_customers": "Mejores clientes",
+          "who_owes": "Quién te debe",
+          "sales_by_rep": "Ventas por representante",
+          "top_products_profit": "Productos con más ganancia",
+          "running_low": "Inventario bajo",
+          "backorders": "Pendiente de enviar",
+          "slow_stock_total": "Dinero parado en inventario de baja rotación"
+        },
+        "insights": {
+          "stockout_risk": {
+            "label": "Inventario que se agota",
+            "description": "Productos que se agotarán pronto al ritmo al que se venden.",
+            "thresholds": {
+              "warn_days": "Avísame cuando el inventario vaya a agotarse en menos de {{value}} días",
+              "urgent_days": "Márcalo como urgente cuando falten menos de {{value}} días"
+            },
+            "template": "**{{product}}** se agotará en aproximadamente {{days}} {{days|día|días}} al ritmo de ventas actual ({{rate}} al día). Tienes {{on_hand}} en inventario.",
+            "context": "Considera pedir alrededor de {{qty}} {{qty|unidad|unidades}} a {{supplier}} para cubrir los próximos {{cover_days}} días.",
+            "action": {
+              "label": "Ver producto"
+            },
+            "fallbacks": {
+              "supplier": "tu proveedor"
+            },
+            "words": {}
+          },
+          "dead_stock": {
+            "label": "Inventario que no se vende",
+            "description": "Productos en inventario que no se han vendido en 90 días, y el dinero que inmovilizan.",
+            "thresholds": {
+              "min_value": "Avísame solo cuando el inventario sin vender valga más de {{value}}"
+            },
+            "template": "Tienes {{value}} de tu dinero parado en {{count}} {{count|producto que no se ha|productos que no se han}} vendido en {{days}} días. El que más: **{{top_product}}**.",
+            "action": {
+              "label": "Ver cuáles",
+              "ask": "¿Qué productos no se han vendido en los últimos 90 días?"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "customer_slipping": {
+            "label": "Clientes habituales que piden menos",
+            "description": "Clientes con varias facturas anteriores cuyo gasto ha bajado mucho respecto a lo habitual.",
+            "thresholds": {
+              "drop": "Avísame cuando el gasto de un cliente habitual baje un {{value}}% o más",
+              "min_orders": "Considera habituales a los clientes a partir de {{value}} pedidos",
+              "min_spend": "Solo para clientes que suelen gastar {{value}} o más cada dos meses"
+            },
+            "template": "Los pedidos de **{{customer}}** han bajado un {{drop_pct}} respecto a lo habitual. Su último pedido fue hace {{days_since}} {{days_since|día|días}}.",
+            "context": "En los últimos dos meses gastó {{recent}}; lo habitual es {{usual}}.",
+            "action": {
+              "label": "Ver cliente"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "margin_squeeze": {
+            "label": "Costos que suben",
+            "description": "Productos cuyo último costo de proveedor subió y reduce tu margen.",
+            "thresholds": {
+              "rise": "Avísame cuando el costo de un proveedor suba un {{value}}% o más"
+            },
+            "template": "El costo de **{{product}}** subió un {{cost_change}}, de {{old_cost}} a {{new_cost}}. Con tu precio de {{price}}, tu margen bajó del {{old_margin}} al {{new_margin}}.",
+            "action": {
+              "label": "Ver producto"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "return_spike": {
+            "label": "Productos que se devuelven mucho",
+            "description": "Productos con una tasa de devolución alta en los últimos 60 días.",
+            "thresholds": {
+              "rate": "Avísame cuando se devuelva un {{value}}% o más de un producto",
+              "min_returns": "Solo cuando se hayan devuelto al menos {{value}}"
+            },
+            "template": "**{{product}}** se devuelve mucho: {{return_rate}} de las ventas en los últimos dos meses ({{returned}} {{returned|unidad|unidades}}). Motivo principal: {{top_reason}}.",
+            "action": {
+              "label": "Ver devoluciones",
+              "ask": "¿Cuál es la tasa de devolución de {{product}} por mes?"
+            },
+            "fallbacks": {
+              "top_reason": "sin registrar"
+            },
+            "words": {}
+          },
+          "rising_star": {
+            "label": "Productos en auge",
+            "description": "Productos que se venden mucho más rápido en las últimas cuatro semanas que en las cuatro anteriores.",
+            "thresholds": {
+              "growth": "Avísame cuando las ventas de un producto suban un {{value}}% o más",
+              "min_units": "Solo para productos con al menos {{value}} unidades vendidas en las últimas cuatro semanas"
+            },
+            "template": "**{{product}}** está en auge: sus ventas subieron un {{change}} en las últimas cuatro semanas.",
+            "context": "{{units}} {{units|unidad vendida|unidades vendidas}}, frente a {{before}} en las cuatro semanas anteriores.",
+            "action": {
+              "label": "Ver producto"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "sales_change": {
+            "label": "Grandes cambios en las ventas",
+            "description": "Las ventas de las últimas cuatro semanas comparadas con las cuatro anteriores (los pedidos llegan de forma irregular, así que no se compara semana a semana).",
+            "thresholds": {
+              "change": "Avísame cuando las ventas de cuatro semanas cambien un {{value}}% o más"
+            },
+            "template": "Las ventas de las últimas cuatro semanas {{direction}} un {{change}} respecto a las cuatro semanas anteriores ({{this_week}} frente a {{last_week}}).",
+            "action": {
+              "label": "Ver por qué",
+              "ask": "Ventas netas por cliente en los últimos 28 días comparadas con los 28 días anteriores"
+            },
+            "fallbacks": {},
+            "words": {
+              "direction": {
+                "up": "subieron",
+                "down": "bajaron"
+              }
+            }
+          },
+          "channel_shift": {
+            "label": "Cómo llegan los pedidos",
+            "description": "Una forma de pedir (representante, portal, teléfono…) cuya parte de tus ventas creció mucho en los últimos 90 días.",
+            "thresholds": {
+              "points": "Avísame cuando la parte de un canal crezca {{value}} puntos o más"
+            },
+            "template": "**{{channel}}** ya aporta el {{share}} de tus ventas, frente al {{prev_share}} de antes.",
+            "context": "En los últimos tres meses, comparado con los tres meses anteriores.",
+            "action": {
+              "label": "Ver canales",
+              "ask": "Ventas netas por canal y por mes este año"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "overdue_payments": {
+            "label": "Clientes que te deben",
+            "description": "Clientes con ventas sin pagar que ya pasaron su fecha de vencimiento.",
+            "thresholds": {
+              "min_amount": "Avísame cuando el dinero vencido que te deben supere {{value}}",
+              "urgent_days": "Márcalo como urgente cuando un pago lleve {{value}} días de retraso"
+            },
+            "template": "{{count}} {{count|cliente te debe|clientes te deben}} {{amount}} con el pago vencido. El que más debe es **{{customer}}** ({{customer_amount}}, {{days}} {{days|día|días}} de retraso).",
+            "action": {
+              "label": "Ver quién debe",
+              "ask": "¿Quién me debe dinero?"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "over_credit_limit": {
+            "label": "Clientes por encima de su límite de crédito",
+            "description": "Clientes que te deben más que el límite de crédito de su cuenta.",
+            "thresholds": {
+              "used": "Avísame cuando un cliente deba un {{value}}% o más de su límite de crédito"
+            },
+            "template": "**{{customer}}** te debe {{owed}}, el {{used}} de su límite de crédito de {{limit}}.",
+            "context": "Considera retener los pedidos nuevos hasta que pague.",
+            "action": {
+              "label": "Ver cliente"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "paying_later": {
+            "label": "Clientes que pagan más tarde de lo habitual",
+            "description": "Clientes que en los últimos 90 días tardaron mucho más en pagar sus facturas que antes.",
+            "thresholds": {
+              "days": "Avísame cuando un cliente tarde {{value}} días o más de lo habitual en pagar"
+            },
+            "template": "**{{customer}}** está tardando más en pagar: {{now}} {{now|día|días}} en promedio últimamente, frente a {{before}} antes.",
+            "context": "En los últimos tres meses, comparado con los tres meses anteriores.",
+            "action": {
+              "label": "Ver cliente"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "missed_reorder": {
+            "label": "Clientes que no repitieron su pedido habitual",
+            "description": "Clientes habituales que llevan sin pedir mucho más tiempo del que suelen dejar entre pedidos.",
+            "thresholds": {
+              "times": "Avísame cuando un cliente lleve {{value}} veces su intervalo habitual sin pedir",
+              "min_orders": "Considera habituales a los clientes a partir de {{value}} pedidos"
+            },
+            "template": "**{{customer}}** suele pedir cada {{usual}} {{usual|día|días}}, pero lleva {{since}} días sin hacerlo.",
+            "context": "En el último año te compró {{year}}. Una llamada podría ayudar a que vuelva a pedir.",
+            "action": {
+              "label": "Ver cliente"
+            },
+            "fallbacks": {},
+            "words": {}
+          },
+          "backorders_building": {
+            "label": "Pedidos que no pudiste completar",
+            "description": "Productos que los clientes pidieron pero que no pudiste enviar en las últimas cuatro semanas.",
+            "thresholds": {
+              "min_units": "Avísame cuando queden {{value}} o más unidades de un producto pendientes de enviar"
+            },
+            "template": "{{units}} {{units|unidad|unidades}} de **{{product}}** de las últimas cuatro semanas {{units|está pendiente|están pendientes}} de enviar a los clientes.",
+            "context": "Enviaste {{sent}}. Considera pedir más a {{supplier}}.",
+            "action": {
+              "label": "Ver producto"
+            },
+            "fallbacks": {
+              "supplier": "tu proveedor"
+            },
+            "words": {}
+          }
+        },
+        "questions": [
+          {
+            "group": "Ventas",
+            "text": "¿Cuánto vendí el mes pasado?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Ventas",
+            "text": "Muestra las ventas por mes de este año.",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Ventas",
+            "text": "¿Qué representante vendió más este trimestre?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Clientes",
+            "text": "¿Quiénes son mis mejores clientes?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Clientes",
+            "text": "¿Qué clientes me dejan mejor margen?",
+            "needs": [
+              "gross_margin_pct"
+            ]
+          },
+          {
+            "group": "Clientes",
+            "text": "¿Qué clientes dejaron de pedir?",
+            "needs": [
+              "lapsed_customers"
+            ]
+          },
+          {
+            "group": "Clientes",
+            "text": "¿Cuántos clientes hicieron pedidos este mes?",
+            "needs": [
+              "customer_count"
+            ]
+          },
+          {
+            "group": "Dinero",
+            "text": "¿Quién me debe dinero?",
+            "needs": [
+              "outstanding_receivables"
+            ]
+          },
+          {
+            "group": "Dinero",
+            "text": "¿Quién ha superado su límite de crédito?",
+            "needs": [
+              "over_credit_limit"
+            ]
+          },
+          {
+            "group": "Dinero",
+            "text": "¿Cuánto tardan en pagarme los clientes?",
+            "needs": [
+              "days_to_pay"
+            ]
+          },
+          {
+            "group": "Productos",
+            "text": "¿Qué productos me dejaron más ganancia el mes pasado?",
+            "needs": [
+              "gross_profit"
+            ]
+          },
+          {
+            "group": "Productos",
+            "text": "¿Qué queda pendiente de enviar?",
+            "needs": [
+              "backordered_units"
+            ]
+          },
+          {
+            "group": "Inventario",
+            "text": "¿Qué está a punto de agotarse?",
+            "needs": [
+              "days_of_cover"
+            ]
+          },
+          {
+            "group": "Inventario",
+            "text": "¿Qué debería reponer?",
+            "needs": [
+              "days_of_cover"
+            ]
+          },
+          {
+            "group": "Lo que viene",
+            "text": "¿Cuánto venderé el mes que viene?",
+            "needs": [
+              "net_sales"
+            ]
+          },
+          {
+            "group": "Lo que viene",
+            "text": "¿Voy bien para llegar a mi objetivo?",
+            "needs": [
+              "net_sales"
+            ]
+          }
+        ],
+        "headers": {
+          "product.sku": [
+            "sku",
+            "código",
+            "codigo",
+            "código de producto",
+            "codigo de producto",
+            "código del producto",
+            "código de artículo",
+            "codigo de articulo",
+            "cód",
+            "cod",
+            "referencia",
+            "ref",
+            "clave",
+            "clave del producto",
+            "modelo"
+          ],
+          "product.name": [
+            "producto",
+            "nombre del producto",
+            "artículo",
+            "articulo",
+            "nombre del artículo",
+            "descripción",
+            "descripcion",
+            "descripción del producto",
+            "título",
+            "titulo",
+            "concepto",
+            "nombre"
+          ],
+          "product.variant": [
+            "variante",
+            "opción",
+            "opcion",
+            "talla",
+            "color",
+            "tamaño",
+            "tamano",
+            "medida"
+          ],
+          "product.category": [
+            "categoría",
+            "categoria",
+            "tipo",
+            "tipo de producto",
+            "departamento",
+            "familia",
+            "sección",
+            "seccion",
+            "colección",
+            "coleccion",
+            "grupo",
+            "línea",
+            "linea"
+          ],
+          "product.brand": [
+            "marca",
+            "marca del fabricante"
+          ],
+          "product.unit_price": [
+            "precio",
+            "precio de venta",
+            "precio venta",
+            "pvp",
+            "precio unitario",
+            "precio público",
+            "precio al público",
+            "precio minorista",
+            "precio de lista",
+            "precio por unidad"
+          ],
+          "product.unit_cost": [
+            "costo",
+            "coste",
+            "costo unitario",
+            "coste unitario",
+            "precio de costo",
+            "precio de coste",
+            "precio de compra",
+            "costo de compra",
+            "costo sin iva",
+            "coste sin iva",
+            "costo por unidad",
+            "costo por artículo"
+          ],
+          "product.supplier": [
+            "proveedor",
+            "fabricante",
+            "distribuidor",
+            "suministrado por",
+            "fabricado por"
+          ],
+          "product.reorder_point": [
+            "punto de pedido",
+            "punto de reorden",
+            "punto de reposición",
+            "stock mínimo",
+            "stock minimo",
+            "inventario mínimo",
+            "existencia mínima",
+            "mínimo",
+            "minimo",
+            "reponer en",
+            "nivel de reposición"
+          ],
+          "product.barcode": [
+            "código de barras",
+            "codigo de barras",
+            "cod barras",
+            "ean",
+            "upc",
+            "gtin"
+          ],
+          "product.pack_size": [
+            "unidades por caja",
+            "uds por caja",
+            "unidades por bulto",
+            "piezas por caja",
+            "tamaño de caja",
+            "por caja",
+            "caja de",
+            "unidades por paquete",
+            "empaque",
+            "embalaje"
+          ],
+          "customer.name": [
+            "cliente",
+            "nombre del cliente",
+            "nombre cliente",
+            "comprador",
+            "razón social",
+            "razon social",
+            "empresa",
+            "cuenta",
+            "tienda",
+            "nombre de facturación",
+            "facturar a",
+            "enviar a",
+            "revendedor",
+            "minorista",
+            "nombre"
+          ],
+          "customer.email": [
+            "correo",
+            "correo electrónico",
+            "correo electronico",
+            "email",
+            "e mail",
+            "mail",
+            "correo del cliente",
+            "email del cliente"
+          ],
+          "customer.phone": [
+            "teléfono",
+            "telefono",
+            "tel",
+            "tlf",
+            "móvil",
+            "movil",
+            "celular",
+            "número de teléfono",
+            "numero de telefono",
+            "whatsapp"
+          ],
+          "customer.city": [
+            "ciudad",
+            "localidad",
+            "población",
+            "poblacion",
+            "municipio",
+            "ciudad de envío",
+            "ciudad de facturación"
+          ],
+          "customer.region": [
+            "estado",
+            "provincia",
+            "región",
+            "region",
+            "comunidad",
+            "comunidad autónoma",
+            "provincia de envío",
+            "estado de envío"
+          ],
+          "customer.country": [
+            "país",
+            "pais",
+            "país de envío",
+            "país de facturación"
+          ],
+          "customer.postal_code": [
+            "código postal",
+            "codigo postal",
+            "cp",
+            "c p",
+            "cód postal",
+            "cod postal",
+            "zip"
+          ],
+          "customer.account_number": [
+            "número de cuenta",
+            "numero de cuenta",
+            "nº cuenta",
+            "n cuenta",
+            "código de cliente",
+            "codigo de cliente",
+            "cód cliente",
+            "cod cliente",
+            "nº cliente",
+            "número de cliente",
+            "numero de cliente",
+            "id cliente",
+            "id de cliente"
+          ],
+          "customer.business_type": [
+            "tipo de negocio",
+            "tipo de cliente",
+            "segmento",
+            "sector",
+            "giro",
+            "actividad",
+            "tipo"
+          ],
+          "customer.sales_rep": [
+            "representante",
+            "representante de ventas",
+            "vendedor",
+            "comercial",
+            "agente",
+            "ejecutivo",
+            "ejecutivo de cuenta",
+            "zona",
+            "territorio"
+          ],
+          "customer.price_tier": [
+            "lista de precios",
+            "tarifa",
+            "nivel de precio",
+            "nivel de precios",
+            "tipo de precio",
+            "precios"
+          ],
+          "customer.payment_terms_days": [
+            "plazo",
+            "plazo de pago",
+            "condiciones de pago",
+            "días de crédito",
+            "dias de credito",
+            "días de pago",
+            "dias de pago",
+            "días para pagar",
+            "crédito días"
+          ],
+          "customer.credit_limit": [
+            "límite de crédito",
+            "limite de credito",
+            "límite",
+            "limite",
+            "crédito",
+            "credito",
+            "crédito máximo",
+            "línea de crédito"
+          ],
+          "supplier.name": [
+            "proveedor",
+            "nombre del proveedor",
+            "fabricante",
+            "distribuidor"
+          ],
+          "supplier.email": [
+            "correo del proveedor",
+            "email del proveedor",
+            "correo proveedor"
+          ],
+          "supplier.lead_time_days": [
+            "plazo de entrega",
+            "días de entrega",
+            "dias de entrega",
+            "tiempo de entrega"
+          ],
+          "sale.order_number": [
+            "factura",
+            "número de factura",
+            "numero de factura",
+            "nº factura",
+            "n factura",
+            "no factura",
+            "núm factura",
+            "num factura",
+            "folio",
+            "pedido",
+            "número de pedido",
+            "numero de pedido",
+            "nº pedido",
+            "orden",
+            "número de orden",
+            "albarán",
+            "albaran",
+            "remisión",
+            "ticket",
+            "recibo",
+            "transacción",
+            "id de venta"
+          ],
+          "sale.sale_date": [
+            "fecha",
+            "fecha de factura",
+            "fecha factura",
+            "fecha de emisión",
+            "fecha del pedido",
+            "fecha de pedido",
+            "fecha de venta",
+            "fecha venta",
+            "fecha de creación",
+            "día",
+            "dia"
+          ],
+          "sale.customer_po": [
+            "su pedido",
+            "su referencia",
+            "su ref",
+            "pedido del cliente",
+            "nº pedido cliente",
+            "referencia del cliente",
+            "ref cliente",
+            "orden de compra",
+            "oc"
+          ],
+          "sale.channel": [
+            "canal",
+            "origen",
+            "pedido por",
+            "pedido vía",
+            "forma de pedido",
+            "cómo pidió",
+            "vía"
+          ],
+          "sale.status": [
+            "estado del pedido",
+            "estado de la factura",
+            "estatus",
+            "situación"
+          ],
+          "sale.discount_total": [
+            "descuento",
+            "importe del descuento",
+            "descuento del pedido",
+            "descuentos",
+            "dto",
+            "dcto"
+          ],
+          "sale.shipping_charged": [
+            "envío",
+            "envio",
+            "gastos de envío",
+            "gastos de envio",
+            "costo de envío",
+            "coste de envío",
+            "entrega",
+            "portes",
+            "flete"
+          ],
+          "sale.tax_total": [
+            "impuesto",
+            "impuestos",
+            "iva",
+            "total impuestos",
+            "igv"
+          ],
+          "sale.total": [
+            "total",
+            "total de la factura",
+            "total factura",
+            "total del pedido",
+            "importe total",
+            "monto total",
+            "importe a pagar",
+            "total a pagar",
+            "importe pendiente"
+          ],
+          "sale.payment_status": [
+            "estado",
+            "pagado",
+            "¿pagado?",
+            "estado del pago",
+            "estado de pago",
+            "pago",
+            "cobrado",
+            "liquidado"
+          ],
+          "sale.due_date": [
+            "fecha de vencimiento",
+            "vencimiento",
+            "vence",
+            "vence el",
+            "fecha límite de pago",
+            "vto"
+          ],
+          "sale_line.quantity": [
+            "cantidad",
+            "cant",
+            "uds",
+            "unidades",
+            "piezas",
+            "pzas",
+            "cantidad vendida",
+            "nº de artículos",
+            "número de artículos"
+          ],
+          "sale_line.unit_price": [
+            "precio",
+            "precio unitario",
+            "precio por unidad",
+            "precio unidad",
+            "p unitario",
+            "c/u",
+            "precio del artículo"
+          ],
+          "sale_line.discount": [
+            "descuento",
+            "descuento de línea",
+            "descuento del artículo",
+            "descuento comercial",
+            "dto",
+            "dcto"
+          ],
+          "sale_line.quantity_backordered": [
+            "pendiente",
+            "pendientes",
+            "por enviar",
+            "pendiente de enviar",
+            "cantidad pendiente",
+            "por servir",
+            "por surtir",
+            "backorder"
+          ],
+          "sale_line.line_total": [
+            "total de línea",
+            "total línea",
+            "total",
+            "importe",
+            "subtotal",
+            "monto",
+            "valor",
+            "importe de línea",
+            "neto",
+            "bruto"
+          ],
+          "return.return_date": [
+            "fecha de devolución",
+            "fecha devolución",
+            "fecha de devolucion",
+            "fecha",
+            "fecha del abono",
+            "fecha de la nota de crédito",
+            "fecha nota de crédito"
+          ],
+          "return.quantity": [
+            "cantidad",
+            "cant",
+            "uds",
+            "unidades devueltas",
+            "cantidad devuelta"
+          ],
+          "return.refund_amount": [
+            "crédito",
+            "credito",
+            "importe del crédito",
+            "abono",
+            "importe abonado",
+            "acreditado",
+            "monto acreditado",
+            "reembolso",
+            "importe del reembolso"
+          ],
+          "return.reason": [
+            "motivo",
+            "motivo de devolución",
+            "razón",
+            "razon",
+            "causa",
+            "por qué"
+          ],
+          "purchase.po_number": [
+            "orden de compra",
+            "oc",
+            "nº oc",
+            "número de orden de compra",
+            "número de pedido",
+            "numero de pedido",
+            "nº pedido",
+            "pedido"
+          ],
+          "purchase.order_date": [
+            "fecha de pedido",
+            "fecha del pedido",
+            "pedido el",
+            "fecha",
+            "fecha oc",
+            "fecha de compra"
+          ],
+          "purchase.received_date": [
+            "recibido",
+            "recibido el",
+            "fecha de recepción",
+            "fecha recepción",
+            "fecha de recepcion",
+            "entregado",
+            "fecha de entrega"
+          ],
+          "purchase.total": [
+            "total",
+            "total del pedido",
+            "total oc",
+            "importe total"
+          ],
+          "purchase_line.quantity": [
+            "cantidad",
+            "cant",
+            "uds",
+            "unidades",
+            "cantidad pedida"
+          ],
+          "purchase_line.unit_cost": [
+            "costo unitario",
+            "coste unitario",
+            "costo",
+            "coste",
+            "costo por unidad",
+            "precio",
+            "precio unitario"
+          ],
+          "purchase_line.line_total": [
+            "total de línea",
+            "total línea",
+            "total",
+            "importe",
+            "subtotal"
+          ],
+          "stock_count.quantity_on_hand": [
+            "inventario",
+            "stock",
+            "existencias",
+            "existencia",
+            "en stock",
+            "en inventario",
+            "disponible",
+            "disponibles",
+            "cantidad disponible",
+            "stock actual",
+            "unidades en stock"
+          ],
+          "stock_count.counted_at": [
+            "fecha del recuento",
+            "fecha de recuento",
+            "fecha de inventario",
+            "contado el",
+            "a fecha de"
+          ],
+          "expense.expense_date": [
+            "fecha",
+            "mes",
+            "fecha del gasto",
+            "fecha de pago",
+            "pagado el"
+          ],
+          "expense.category": [
+            "categoría",
+            "categoria",
+            "concepto",
+            "tipo",
+            "tipo de gasto",
+            "partida",
+            "cuenta"
+          ],
+          "expense.description": [
+            "descripción",
+            "descripcion",
+            "detalle",
+            "detalles",
+            "nota",
+            "notas",
+            "observaciones"
+          ],
+          "expense.amount": [
+            "importe",
+            "monto",
+            "cantidad",
+            "valor",
+            "gasto",
+            "pagado",
+            "total",
+            "costo"
+          ],
+          "expense.vendor": [
+            "pagado a",
+            "proveedor",
+            "beneficiario",
+            "acreedor"
+          ],
+          "payment.received_date": [
+            "fecha",
+            "fecha de pago",
+            "fecha de cobro",
+            "fecha del cobro",
+            "recibido",
+            "fecha de recepción"
+          ],
+          "payment.reference": [
+            "referencia",
+            "ref",
+            "referencia del pago",
+            "transacción",
+            "nº transacción",
+            "número de cheque",
+            "nº cheque",
+            "folio"
+          ],
+          "payment.method": [
+            "forma de pago",
+            "método de pago",
+            "metodo de pago",
+            "medio de pago",
+            "pagado con",
+            "tipo de pago"
+          ],
+          "payment.amount": [
+            "importe",
+            "monto",
+            "pagado",
+            "pago",
+            "importe pagado",
+            "monto pagado",
+            "cobrado",
+            "importe cobrado"
+          ]
+        },
+        "values": {
+          "sale.channel": {
+            "sales_rep": [
+              "representante",
+              "comercial",
+              "vendedor",
+              "agente",
+              "visita comercial"
+            ],
+            "online_portal": [
+              "portal",
+              "web",
+              "la web",
+              "pagina web",
+              "página web",
+              "online",
+              "en linea",
+              "en línea",
+              "portal b2b"
+            ],
+            "phone": [
+              "telefono",
+              "teléfono",
+              "por telefono",
+              "por teléfono",
+              "llamada"
+            ],
+            "email": [
+              "correo",
+              "por correo",
+              "correo electronico",
+              "correo electrónico"
+            ],
+            "trade_show": [
+              "feria",
+              "feria comercial",
+              "exposicion",
+              "exposición",
+              "expo"
+            ],
+            "marketplace": [
+              "marketplace",
+              "mercado online"
+            ]
+          },
+          "sale.status": {
+            "completed": [
+              "completado",
+              "completada",
+              "facturado",
+              "facturada",
+              "enviado",
+              "enviada",
+              "entregado",
+              "entregada",
+              "cerrado",
+              "cerrada"
+            ],
+            "cancelled": [
+              "cancelado",
+              "cancelada",
+              "anulado",
+              "anulada"
+            ],
+            "refunded": [
+              "abonado",
+              "nota de credito",
+              "nota de crédito",
+              "reembolsado",
+              "rectificativa"
+            ],
+            "pending": [
+              "borrador",
+              "presupuesto",
+              "cotizacion",
+              "cotización",
+              "pendiente",
+              "en espera"
+            ]
+          },
+          "sale.payment_status": {
+            "paid": [
+              "si",
+              "sí",
+              "pagado",
+              "pagada",
+              "cobrado",
+              "cobrada",
+              "liquidado",
+              "saldado"
+            ],
+            "unpaid": [
+              "no",
+              "sin pagar",
+              "pendiente",
+              "impagado",
+              "vencido",
+              "debe",
+              "adeudado"
+            ],
+            "partial": [
+              "parcial",
+              "pago parcial",
+              "parcialmente pagado",
+              "a cuenta"
+            ]
+          },
+          "purchase.status": {
+            "ordered": [
+              "pedido",
+              "pendiente",
+              "enviado",
+              "abierto"
+            ],
+            "received": [
+              "recibido",
+              "recibida",
+              "entregado",
+              "completado"
+            ],
+            "cancelled": [
+              "cancelado",
+              "cancelada",
+              "anulado"
+            ]
+          }
+        }
+      }
+    }
   }
 };

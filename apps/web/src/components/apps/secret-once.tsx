@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 
 /** A key or secret shown once, with a copy button. */
 export function SecretOnce({ label, value }: { label: string; value: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   return (
     <div className="grid gap-2 rounded-md border border-dashed p-3" data-testid="secret-once">
@@ -14,7 +16,7 @@ export function SecretOnce({ label, value }: { label: string; value: string }) {
         {value}
       </code>
       <p className="text-muted-foreground">
-        Copy it now and keep it somewhere safe. We won’t show it again.
+        {t('Copy it now and keep it somewhere safe. We won’t show it again.')}
       </p>
       <div>
         <Button
@@ -27,7 +29,7 @@ export function SecretOnce({ label, value }: { label: string; value: string }) {
             )
           }
         >
-          {copied ? 'Copied' : 'Copy'}
+          {copied ? t('Copied') : t('Copy')}
         </Button>
       </div>
     </div>

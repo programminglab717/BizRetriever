@@ -1,3 +1,4 @@
+import type { Language } from '@bizr/i18n';
 import type { LLMProvider } from '@bizr/ai';
 import { answer, conversation, dashboardTile, getAppDb, type AnswerKind } from '@bizr/db';
 import { getPack, type PackQuestion } from '@bizr/packs';
@@ -19,6 +20,7 @@ import {
   answerFacts,
   chooseChart,
   explainSpec,
+  grainWord,
   templateAnswer,
   toAnswerData,
   type AnswerColumn,
@@ -101,6 +103,8 @@ export interface AskResult {
 export interface AskOptions {
   provider?: LLMProvider | null;
   aiMode?: 'auto' | 'never';
+  /** The language the question is asked and answered in (M20). */
+  lang?: Language;
 }
 
 export class AskError extends Error {}
@@ -133,7 +137,9 @@ export async function askQuestion(
           .returning()
       )[0]!;
   const history = await loadHistory(conv.id);
-  const ctx = await loadAskContext(member);
+  const lang = options.lang ?? 'en';
+  const es = lang === 'es';
+  const ctx = await loadAskContext(member, lang);
   const provider = options.provider === undefined ? getAiProvider() : options.provider;
   const aiMode = options.aiMode ?? 'auto';
 
@@ -171,7 +177,7 @@ export async function askQuestion(
   let aiCalls = 0;
   let asked = question;
   if (input.choice) {
-    const picked = await chosenOption(conv.id, input.choice);
+    const picked = await chosenOption(conv.id, input.choice, lang);
     interpretation = picked.interpretation;
     asked = picked.label;
     origin = 'rules';
@@ -181,7 +187,9 @@ export async function askQuestion(
       kind: 'unanswerable',
       reason: 'change_request',
       missing: [],
-      message: 'That sounds like a change to your data, not a question.',
+      message: es
+        ? 'Eso parece un cambio en tus datos, no una pregunta.'
+        : 'That sounds like a change to your data, not a question.',
     };
     origin = 'rules';
   } else {
@@ -249,6 +257,7 @@ async function loadHistory(conversationId: string): Promise<Turn[]> {
 async function chosenOption(
   conversationId: string,
   choice: { answerId: string; option: number },
+  lang: Language,
 ): Promise<{ interpretation: Interpretation; label: string }> {
   const [row] = await getAppDb()
     .select()
@@ -262,10 +271,12 @@ async function chosenOption(
     interpretation: {
       kind: 'query',
       spec: opt.spec,
-      assumptions: [`I took it to mean “${opt.label.toLowerCase()}”.`, ...opt.assumptions].slice(
-        0,
-        5,
-      ),
+      assumptions: [
+        lang === 'es'
+          ? `Lo entendí como “${opt.label.toLowerCase()}”.`
+          : `I took it to mean “${opt.label.toLowerCase()}”.`,
+        ...opt.assumptions,
+      ].slice(0, 5),
     },
   };
 }
@@ -287,8 +298,9 @@ async function render(
 ): Promise<Rendered> {
   const ws = member.workspace;
   const cal = ctx.catalog.calendar;
+  const lang = ctx.catalog.lang ?? 'en';
   const fmt: FormatOptions = {
-    locale: localeFor(member.settings),
+    locale: localeFor(member.settings, lang),
     currency: member.settings.currency,
   };
   const labels = {
@@ -318,10 +330,10 @@ async function render(
       };
     case 'query': {
       const spec = i.spec;
-      const title = titleFor(spec, cal, labels);
+      const title = titleFor(spec, cal, labels, lang);
       try {
         const result = await runQuery(member, toQuerySpec(spec, cal), 'ask', ctx.model);
-        const data = cap(toAnswerData(result));
+        const data = cap(inLanguage(toAnswerData(result), ctx));
         const period = periodOf(spec.timeRange, cal);
         const snapshot = spec.metrics.every(
           (id) => ctx.catalog.metrics.find((m) => m.id === id)?.snapshot,
@@ -356,7 +368,9 @@ async function render(
             assumptions,
             details: { sql: result.sql, custom: false, rows: data.totalRows },
             fixedDates: !('preset' in spec.timeRange),
-            ...(result.previousPeriod ? { comparedWith: periodLabel(result.previousPeriod) } : {}),
+            ...(result.previousPeriod
+              ? { comparedWith: periodLabel(result.previousPeriod, lang) }
+              : {}),
           },
         };
       } catch (err) {
@@ -389,8 +403,12 @@ async function render(
           data,
           facts,
           fallback: data.rows.length
-            ? 'Here’s what I found.'
-            : 'I didn’t find any records for this.',
+            ? lang === 'es'
+              ? 'Esto es lo que encontré.'
+              : 'Here’s what I found.'
+            : lang === 'es'
+              ? 'No encontré registros para esto.'
+              : 'I didn’t find any records for this.',
           assumptions: i.assumptions,
           ...ai,
           workspaceId: ws.id,
@@ -413,6 +431,33 @@ async function render(
       };
     }
   }
+}
+
+/**
+ * Column names in the reader's language (M20): measures and details as the Ask catalog names them
+ * (the pack's Spanish, or the owner's own names), time columns by their grain.
+ */
+function inLanguage(data: AnswerData, ctx: AskContext): AnswerData {
+  const lang = ctx.catalog.lang;
+  if (!lang || lang === 'en') return data;
+  const metricLabel = (id?: string) => ctx.catalog.metrics.find((m) => m.id === id)?.label;
+  return {
+    ...data,
+    columns: data.columns.map((c) => {
+      const label =
+        c.kind === 'metric'
+          ? metricLabel(c.metric)
+          : c.kind === 'previous'
+            ? `${metricLabel(c.metric) ?? c.label} (antes)`
+            : c.time
+              ? (() => {
+                  const w = grainWord(c.time, lang);
+                  return `${w[0]!.toUpperCase()}${w.slice(1)}`;
+                })()
+              : ctx.catalog.dimensions.find((d) => d.field === c.field)?.label;
+      return label ? { ...c, label } : c;
+    }),
+  };
 }
 
 function failed(err: unknown, title: string): Rendered {
@@ -598,9 +643,16 @@ export function suggestedQuestions(
   member: MemberWorkspace,
   available: ReadonlySet<string>,
   limit = 6,
+  lang: Language = 'en',
 ): PackQuestion[] {
   const pack = getPack(member.workspace.packId);
-  const ok = pack.questions.filter((q) => q.needs.every((id) => available.has(id)));
+  // In Spanish, the pack's Spanish examples (M20).
+  const questions = (
+    lang === 'es' && pack.translations.es?.questions.length
+      ? pack.translations.es.questions
+      : pack.questions
+  ) as PackQuestion[];
+  const ok = questions.filter((q) => q.needs.every((id) => available.has(id)));
   // One from each group first, then the rest.
   const firsts = ok.filter((q, i) => ok.findIndex((x) => x.group === q.group) === i);
   const rest = ok.filter((q) => !firsts.includes(q));

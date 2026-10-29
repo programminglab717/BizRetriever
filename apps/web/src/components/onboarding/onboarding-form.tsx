@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import type { OnboardingState } from '@/app/onboarding/actions';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
@@ -27,6 +28,7 @@ export function OnboardingForm({
   industries: IndustryOption[];
   currencies: readonly { code: string; label: string }[];
 }) {
+  const t = useT();
   const [state, formAction, pending] = useActionState(action, {});
   const firstAvailable = industries.find((i) => i.available)?.id;
 
@@ -34,7 +36,7 @@ export function OnboardingForm({
     <form action={formAction} className="grid gap-6">
       {state.formError ? <Alert tone="error">{state.formError}</Alert> : null}
 
-      <Field id="name" label="What’s your business called?" error={state.fieldErrors?.name}>
+      <Field id="name" label={t('What’s your business called?')} error={state.fieldErrors?.name}>
         <Input
           id="name"
           name="name"
@@ -46,7 +48,7 @@ export function OnboardingForm({
       </Field>
 
       <fieldset className="grid gap-2">
-        <legend className="mb-2 text-sm font-medium">What do you sell, and how?</legend>
+        <legend className="mb-2 text-sm font-medium">{t('What do you sell, and how?')}</legend>
         <div className="grid gap-2">
           {industries.map((industry) => (
             <label
@@ -69,7 +71,7 @@ export function OnboardingForm({
                   {industry.title}
                   {!industry.available ? (
                     <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs font-normal">
-                      Coming soon
+                      {t('Coming soon')}
                     </span>
                   ) : null}
                 </span>
@@ -85,14 +87,16 @@ export function OnboardingForm({
 
       <BusinessSettingsFields currencies={currencies} errors={state.fieldErrors} />
 
-      <p className="text-sm text-muted-foreground">You can change any of this later in Settings.</p>
+      <p className="text-sm text-muted-foreground">
+        {t('You can change any of this later in Settings.')}
+      </p>
       <Button
         type="submit"
         size="lg"
         disabled={pending}
         className="w-full sm:w-auto sm:justify-self-start"
       >
-        {pending ? 'Setting up your business…' : 'Continue'}
+        {pending ? t('Setting up your business…') : t('Continue')}
       </Button>
     </form>
   );

@@ -1,12 +1,14 @@
 'use client';
 
 import type { RecordDetail, RecordRow } from '@bizr/core/records';
+import type { Translator } from '@bizr/i18n/translate';
 import { FileSpreadsheet, History, Link2, Loader2, RotateCcw, Trash2, X } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { openRecord } from '@/app/w/[slug]/data/[entity]/actions';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -46,6 +48,7 @@ export function RecordPanel({
   onRestore: (row: RecordRow) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const editor = useCanChange();
   const [detail, setDetail] = useState<RecordDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,17 +82,19 @@ export function RecordPanel({
     <aside
       role="dialog"
       aria-modal="false"
-      aria-label={row?.title ?? 'Record'}
+      aria-label={row?.title ?? t('Record')}
       data-testid="record-panel"
       className="fixed inset-0 z-40 flex flex-col bg-background shadow-xl md:inset-y-0 md:right-0 md:left-auto md:w-[28rem] md:border-l"
     >
       <header className="flex items-start justify-between gap-3 border-b p-4">
         <div className="grid gap-0.5">
-          <p className="text-xs text-muted-foreground">{detail?.entity.label.singular}</p>
-          <h2 className="text-lg font-semibold">{row?.title ?? 'Loading…'}</h2>
-          {deleted ? <p className="text-xs text-destructive">Deleted</p> : null}
+          <p className="text-xs text-muted-foreground">
+            {detail ? t.text(detail.entity.label.singular) : null}
+          </p>
+          <h2 className="text-lg font-semibold">{row?.title ?? t('Loading…')}</h2>
+          {deleted ? <p className="text-xs text-destructive">{t('Deleted')}</p> : null}
         </div>
-        <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}>
+        <Button variant="ghost" size="icon" aria-label={t('Close')} onClick={onClose}>
           <X />
         </Button>
       </header>
@@ -97,7 +102,7 @@ export function RecordPanel({
         {error ? <Alert tone="error">{error}</Alert> : null}
         {!detail && !error ? (
           <p className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Loading…
+            <Loader2 className="size-4 animate-spin" /> {t('Loading…')}
           </p>
         ) : null}
         {detail && row ? (
@@ -105,10 +110,10 @@ export function RecordPanel({
             <dl className="grid gap-3">
               {detail.entity.fields.map((f) => {
                 const isEditing = editing?.field === f.key;
-                const shown = formatValue(f, row.values[f.key] ?? null, currency);
+                const shown = formatValue(f, row.values[f.key] ?? null, currency, t);
                 return (
                   <div key={f.key} className="grid gap-1">
-                    <dt className="text-xs text-muted-foreground">{f.label}</dt>
+                    <dt className="text-xs text-muted-foreground">{t.text(f.label)}</dt>
                     <dd>
                       {isEditing ? (
                         <FieldEditor
@@ -125,11 +130,15 @@ export function RecordPanel({
                         <button
                           type="button"
                           disabled={deleted || !editor}
-                          aria-label={`Change ${f.label.toLowerCase()}`}
+                          aria-label={t('Change {detail}', {
+                            detail: t.text(f.label).toLowerCase(),
+                          })}
                           onClick={() => onEdit(f.key)}
                           className="w-full rounded-md px-2 py-1.5 -mx-2 text-left hover:bg-muted disabled:hover:bg-transparent"
                         >
-                          {shown || <span className="text-muted-foreground">Not recorded</span>}
+                          {shown || (
+                            <span className="text-muted-foreground">{t('Not recorded')}</span>
+                          )}
                         </button>
                       )}
                     </dd>
@@ -141,7 +150,7 @@ export function RecordPanel({
             {detail.linked.length > 0 ? (
               <section className="grid gap-2">
                 <h3 className="flex items-center gap-2 font-medium">
-                  <Link2 className="size-4" aria-hidden /> Linked records
+                  <Link2 className="size-4" aria-hidden /> {t('Linked records')}
                 </h3>
                 {detail.linked.map((l) => (
                   <div key={`${l.entity}.${l.field}`} className="grid gap-1.5">
@@ -151,7 +160,8 @@ export function RecordPanel({
                         `/w/${slug}/data/${l.entity}?f=${l.field}:${row.id}&with=${encodeURIComponent(row.title)}` as Route
                       }
                     >
-                      {l.count} {(l.count === 1 ? l.label.singular : l.label.plural).toLowerCase()}
+                      {l.count}{' '}
+                      {t.text(l.count === 1 ? l.label.singular : l.label.plural).toLowerCase()}
                     </Link>
                     <div className="flex flex-wrap gap-1.5">
                       {l.examples.map((x) => (
@@ -171,24 +181,24 @@ export function RecordPanel({
 
             <section className="grid gap-1">
               <h3 className="flex items-center gap-2 font-medium">
-                <FileSpreadsheet className="size-4" aria-hidden /> Where this came from
+                <FileSpreadsheet className="size-4" aria-hidden /> {t('Where this came from')}
               </h3>
               <p className="text-muted-foreground" data-testid="record-source">
                 {detail.source
                   ? [
                       detail.source.fileName,
                       detail.source.sheet,
-                      detail.source.row ? `row ${detail.source.row}` : null,
+                      detail.source.row ? t('row {n}', { n: String(detail.source.row) }) : null,
                     ]
                       .filter(Boolean)
                       .join(' › ')
-                  : 'Added here in BizRetriever.'}
+                  : t('Added here in BizRetriever.')}
               </p>
             </section>
 
             <section className="grid gap-2">
               <h3 className="flex items-center gap-2 font-medium">
-                <History className="size-4" aria-hidden /> History
+                <History className="size-4" aria-hidden /> {t('History')}
               </h3>
               <ol className="grid gap-2" data-testid="record-history">
                 {detail.history.map((h, i) => (
@@ -196,9 +206,9 @@ export function RecordPanel({
                     key={i}
                     className={cn('grid gap-0.5', h.undone && 'text-muted-foreground line-through')}
                   >
-                    <span>{historyText(h, detail, currency)}</span>
+                    <span>{historyText(h, detail, currency, t)}</span>
                     <span className="text-xs text-muted-foreground">
-                      {[h.by, when.format(pgTime(h.at)), h.undone ? 'undone' : null]
+                      {[h.by, when.format(pgTime(h.at)), h.undone ? t('undone') : null]
                         .filter(Boolean)
                         .join(' · ')}
                     </span>
@@ -206,7 +216,9 @@ export function RecordPanel({
                 ))}
                 <li className="grid gap-0.5">
                   <span>
-                    Brought in{detail.source?.fileName ? ` from ${detail.source.fileName}` : ''}
+                    {detail.source?.fileName
+                      ? t('Brought in from {file}', { file: detail.source.fileName })
+                      : t('Brought in')}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {when.format(pgTime(detail.createdAt))}
@@ -221,16 +233,18 @@ export function RecordPanel({
         <footer className="flex flex-wrap items-center gap-2 border-t p-4">
           {deleted ? (
             <Button onClick={() => onRestore(row)}>
-              <RotateCcw /> Restore
+              <RotateCcw /> {t('Restore')}
             </Button>
           ) : confirming ? (
             <>
               <span className="mr-auto text-sm">
-                Delete this {detail?.entity.label.singular.toLowerCase()}? You can restore it for 30
-                days.
+                {t('Delete this {thing}?', {
+                  thing: detail ? t.text(detail.entity.label.singular).toLowerCase() : '',
+                })}{' '}
+                {t('You can restore it for 30 days.')}
               </span>
               <Button variant="ghost" onClick={() => setConfirming(false)}>
-                Keep it
+                {t('Keep it')}
               </Button>
               <Button
                 variant="destructive"
@@ -239,12 +253,12 @@ export function RecordPanel({
                   onDelete(row);
                 }}
               >
-                Delete
+                {t('Delete')}
               </Button>
             </>
           ) : (
             <Button variant="outline" onClick={() => setConfirming(true)}>
-              <Trash2 /> Delete
+              <Trash2 /> {t('Delete')}
             </Button>
           )}
         </footer>
@@ -257,17 +271,25 @@ function historyText(
   h: RecordDetail['history'][number],
   detail: RecordDetail,
   currency: string,
+  t: Translator,
 ): string {
-  const how =
-    h.origin === 'reupload' ? ' from a newer file' : h.origin === 'chat' ? ' by chat' : '';
-  if (h.op === 'insert') return `Added${how}`;
-  if (h.op === 'delete') return `Deleted${how}`;
-  if (h.op === 'restore') return `Restored${how}`;
+  const how = (here: string, file: string, chat: string) =>
+    h.origin === 'reupload' ? file : h.origin === 'chat' ? chat : here;
+  if (h.op === 'insert') return how(t('Added'), t('Added from a newer file'), t('Added by chat'));
+  if (h.op === 'delete')
+    return how(t('Deleted'), t('Deleted from a newer file'), t('Deleted by chat'));
+  if (h.op === 'restore')
+    return how(t('Restored'), t('Restored from a newer file'), t('Restored by chat'));
   const parts = h.changes.map((c) => {
     const f = detail.entity.fields.find((x) => x.key === c.field);
     const fmt = (v: string | null) =>
-      (f && f.type !== 'reference' ? formatValue(f, v, currency) : v) || 'blank';
-    return `${c.label} ${fmt(c.from)} → ${fmt(c.to)}`;
+      (f && f.type !== 'reference' ? formatValue(f, v, currency, t) : v) || t('blank');
+    return `${t.text(c.label)} ${fmt(c.from)} → ${fmt(c.to)}`;
   });
-  return `Changed ${parts.join(', ') || 'details'}${how}`;
+  const changes = parts.join(', ') || t('details');
+  return how(
+    t('Changed {changes}', { changes }),
+    t('Changed {changes} from a newer file', { changes }),
+    t('Changed {changes} by chat', { changes }),
+  );
 }

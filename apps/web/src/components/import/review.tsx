@@ -12,11 +12,14 @@ import {
   reviewAction,
   type ActionResult,
 } from '@/app/w/[slug]/data/import/[runId]/actions';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ImportView } from '@/lib/imports';
 import { cn } from '@/lib/utils';
+
+import { countOf } from './merge-review';
 
 type Proposal = NonNullable<ImportView['proposal']>;
 const fmt = new Intl.NumberFormat('en-US');
@@ -41,6 +44,7 @@ export function Review({
   onAction: () => void;
   onApproved: () => void;
 }) {
+  const t = useT();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -60,10 +64,11 @@ export function Review({
   return (
     <div className="grid gap-6" aria-busy={disabled}>
       <header className="grid gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Here’s what we found</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('Here’s what we found')}</h1>
         {updating ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
-            <Loader2 className="size-4 animate-spin" aria-hidden /> Updating with your changes…
+            <Loader2 className="size-4 animate-spin" aria-hidden />{' '}
+            {t('Updating with your changes…')}
           </p>
         ) : null}
       </header>
@@ -72,18 +77,22 @@ export function Review({
         <CardContent className="grid gap-3 pt-6">
           <p className="text-lg leading-relaxed" data-testid="review-summary">
             {proposal.summary.map((s, i) =>
-              s.fact ? <strong key={i}>{s.text}</strong> : <span key={i}>{s.text}</span>,
+              s.fact ? (
+                <strong key={i}>{t.text(s.text)}</strong>
+              ) : (
+                <span key={i}>{t.text(s.text)}</span>
+              ),
             )}
           </p>
           {proposal.aiNote ? (
             <p className="text-sm text-muted-foreground">
-              {proposal.aiNote} We used our standard checks instead.
+              {t.text(proposal.aiNote)} {t('We used our standard checks instead.')}
             </p>
           ) : null}
           {proposal.spotted.length > 0 ? (
             <ul className="grid gap-1 text-sm text-muted-foreground" data-testid="review-spotted">
               {proposal.spotted.slice(0, 5).map((s) => (
-                <li key={s}>{s}</li>
+                <li key={s}>{t.text(s)}</li>
               ))}
             </ul>
           ) : null}
@@ -92,10 +101,10 @@ export function Review({
 
       {proposal.changes.length > 0 && proposal.version > 1 ? (
         <Alert tone="success">
-          <p className="font-medium">What changed</p>
+          <p className="font-medium">{t('What changed')}</p>
           <ul className="mt-1 list-disc pl-5">
             {proposal.changes.map((c) => (
-              <li key={c}>{c}</li>
+              <li key={c}>{t.text(c)}</li>
             ))}
           </ul>
         </Alert>
@@ -106,45 +115,48 @@ export function Review({
       {proposal.questions.length > 0 || proposal.warnings.length > 0 ? (
         <section className="grid gap-3" aria-labelledby="quick-look">
           <h2 id="quick-look" className="text-lg font-semibold">
-            Needs a quick look
+            {t('Needs a quick look')}
           </h2>
           {proposal.questions.map((q) => (
             <Card key={q.id} data-testid="review-question">
               <CardContent className="grid gap-3 pt-6">
-                <p>{q.text}</p>
+                <p>{t.text(q.text)}</p>
                 <div className="flex flex-wrap gap-2">
                   {q.options.map((o) => (
                     <Button
                       key={o.id}
+                      // i18n-skip (a style, not text)
                       variant={o.id === q.defaultOption ? 'default' : 'outline'}
                       disabled={disabled}
                       onClick={() => act({ kind: 'answer', questionId: q.id, optionId: o.id })}
                     >
-                      {o.label}
+                      {t.text(o.label)}
                     </Button>
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  If you skip this, we’ll go with “
-                  {q.options.find((o) => o.id === q.defaultOption)?.label}”.
+                  {t('If you skip this, we’ll go with “{option}”.', {
+                    option: t.text(q.options.find((o) => o.id === q.defaultOption)?.label ?? ''),
+                  })}
                 </p>
               </CardContent>
             </Card>
           ))}
           {proposal.warnings.map((w) => (
-            <Alert key={w}>{w}</Alert>
+            <Alert key={w}>{t.text(w)}</Alert>
           ))}
         </section>
       ) : null}
 
       <section className="grid gap-3" aria-labelledby="bring-in">
         <h2 id="bring-in" className="text-lg font-semibold">
-          What we’ll bring in
+          {t('What we’ll bring in')}
         </h2>
         {proposal.entities.length === 0 ? (
           <Alert>
-            We couldn’t match these files to a shop’s usual records yet. Tell us below what they
-            hold (for example “these are my sales”).
+            {t(
+              'We couldn’t match these files to a shop’s usual records yet. Tell us below what they hold (for example “these are my sales”).',
+            )}
           </Alert>
         ) : null}
         <div className="grid gap-3 md:grid-cols-2">
@@ -164,19 +176,23 @@ export function Review({
       {proposal.skipped.length > 0 || proposal.ignored.length > 0 ? (
         <section className="grid gap-3" aria-labelledby="skip">
           <h2 id="skip" className="text-lg font-semibold">
-            What we’ll skip
+            {t('What we’ll skip')}
           </h2>
           <Card>
             <CardContent className="grid gap-2 pt-6 text-sm">
               {proposal.skipped.map((s) => (
                 <details key={s.reason}>
                   <summary className="cursor-pointer">
-                    {s.label}: <strong>{fmt.format(s.count)}</strong>
+                    {t.text(s.label)}: <strong>{fmt.format(s.count)}</strong>
                   </summary>
                   <ul className="mt-2 grid gap-1 pl-4 text-xs text-muted-foreground">
                     {s.examples.map((x) => (
                       <li key={`${x.fileName}-${x.sheet}-${x.row}`}>
-                        {x.sheet} line {x.row}: {x.text || '(blank)'}
+                        {t('{sheet} line {line}: {text}', {
+                          sheet: x.sheet,
+                          line: String(x.row),
+                          text: x.text || t('(blank)'),
+                        })}
                       </li>
                     ))}
                   </ul>
@@ -184,7 +200,8 @@ export function Review({
               ))}
               {proposal.ignored.map((s) => (
                 <p key={s.sourceId}>
-                  “{s.sheet === s.fileName ? s.fileName : `${s.fileName} › ${s.sheet}`}”: {s.reason}
+                  “{s.sheet === s.fileName ? s.fileName : `${s.fileName} › ${s.sheet}`}”:{' '}
+                  {t.text(s.reason)}
                 </p>
               ))}
             </CardContent>
@@ -195,23 +212,23 @@ export function Review({
       {proposal.assumptions.length > 0 || proposal.corrections.length > 0 ? (
         <section className="grid gap-3" aria-labelledby="assumed">
           <h2 id="assumed" className="text-lg font-semibold">
-            Things we assumed
+            {t('Things we assumed')}
           </h2>
           <Card>
             <CardContent className="grid gap-2 pt-6 text-sm">
               {proposal.assumptions.map((a) => (
                 <p key={a.id} className={cn(a.confidence < 0.7 && 'font-medium')}>
-                  {a.text}
+                  {t.text(a.text)}
                   {a.confidence < 0.7 ? (
-                    <span className="ml-2 text-xs text-amber-700">Please check</span>
+                    <span className="ml-2 text-xs text-amber-700">{t('Please check')}</span>
                   ) : null}
                 </p>
               ))}
               {proposal.corrections.map((c) => (
                 <p key={c.index} className="flex items-center justify-between gap-3">
                   <span>
-                    <span className="text-muted-foreground">You told us: </span>
-                    {c.label}
+                    <span className="text-muted-foreground">{t('You told us:')} </span>
+                    {t.text(c.label)}
                   </span>
                   <Button
                     variant="ghost"
@@ -219,7 +236,7 @@ export function Review({
                     disabled={disabled}
                     onClick={() => act({ kind: 'undo', index: c.index })}
                   >
-                    <Undo2 /> Undo
+                    <Undo2 /> {t('Undo')}
                   </Button>
                 </p>
               ))}
@@ -230,7 +247,7 @@ export function Review({
 
       <section className="grid gap-2" aria-labelledby="chat">
         <h2 id="chat" className="text-lg font-semibold">
-          Anything look wrong?
+          {t('Anything look wrong?')}
         </h2>
         <form
           className="grid gap-2"
@@ -252,14 +269,14 @@ export function Review({
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             maxLength={2000}
-            placeholder="Tell me in your own words, e.g. “the Etsy prices include shipping”."
+            placeholder={t('Tell me in your own words, e.g. “the Etsy prices include shipping”.')}
             className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-            aria-label="Tell us what looks wrong"
+            aria-label={t('Tell us what looks wrong')}
             disabled={disabled}
           />
           <div>
             <Button type="submit" variant="outline" disabled={disabled || note.trim() === ''}>
-              <Sparkles /> Fix it
+              <Sparkles /> {t('Fix it')}
             </Button>
           </div>
         </form>
@@ -271,7 +288,7 @@ export function Review({
           disabled={disabled || proposal.entities.length === 0}
           onClick={() => perform(() => approveImport(slug, runId, proposal.id), onApproved)}
         >
-          {reupload ? 'Looks good, compare with my data' : 'Looks good, set it up'}
+          {reupload ? t('Looks good, compare with my data') : t('Looks good, set it up')}
         </Button>
         <Button
           size="lg"
@@ -284,7 +301,7 @@ export function Review({
             )
           }
         >
-          Start over with different files
+          {t('Start over with different files')}
         </Button>
       </div>
     </div>
@@ -304,7 +321,7 @@ function EntityCard({
   disabled: boolean;
   act: (a: ReviewAction) => void;
 }) {
-  const noun = (entity.count === 1 ? entity.label.singular : entity.label.plural).toLowerCase();
+  const t = useT();
   const where = [
     ...new Set(
       entity.sources.map((s) =>
@@ -312,23 +329,22 @@ function EntityCard({
       ),
     ),
   ];
+  const sources = where
+    .slice(0, 2)
+    .map((w) => `“${w}”`)
+    .join(', ');
   return (
     <Card data-testid={`entity-${entity.key}`}>
       <CardHeader>
-        <CardTitle className="text-base">
-          {fmt.format(entity.count)} {noun}
-        </CardTitle>
+        <CardTitle className="text-base">{countOf(t, entity.count, entity.label)}</CardTitle>
         <p className="text-xs text-muted-foreground">
-          From{' '}
-          {where
-            .slice(0, 2)
-            .map((w) => `“${w}”`)
-            .join(', ')}
-          {where.length > 2 ? ` and ${where.length - 2} more` : ''}
+          {where.length > 2
+            ? t('From {sources} and {n} more', { sources, n: where.length - 2 })
+            : t('From {sources}', { sources })}
         </p>
         {entity.merged > 0 ? (
           <p className="text-xs text-muted-foreground">
-            {fmt.format(entity.merged)} duplicates merged
+            {t('{n} duplicates merged', { n: entity.merged })}
           </p>
         ) : null}
       </CardHeader>
@@ -341,7 +357,7 @@ function EntityCard({
             >
               {ex.map((f) => (
                 <div key={f.label} className="contents">
-                  <dt className="text-muted-foreground">{f.label}</dt>
+                  <dt className="text-muted-foreground">{t.text(f.label)}</dt>
                   <dd className="truncate">{showValue(f, currency)}</dd>
                 </div>
               ))}
@@ -349,21 +365,21 @@ function EntityCard({
           ))}
         </div>
         <details className="text-sm">
-          <summary className="cursor-pointer text-primary">Show details</summary>
+          <summary className="cursor-pointer text-primary">{t('Show details')}</summary>
           {entity.mapping.map((m) => (
             <ul key={m.sourceId} className="mt-2 grid gap-2">
               {m.fields.map((f) => (
                 <li key={f.field} className="grid gap-1 border-b pb-2 last:border-0">
                   <p>
-                    {f.from} → <strong>{f.label}</strong>
+                    {f.from} → <strong>{t.text(f.label)}</strong>
                     {f.confidence < 0.7 ? (
-                      <span className="ml-2 text-xs text-amber-700">Please check</span>
+                      <span className="ml-2 text-xs text-amber-700">{t('Please check')}</span>
                     ) : null}
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
                     {f.column !== undefined ? (
                       <select
-                        aria-label={`What ${f.from} really is`}
+                        aria-label={t('What {heading} really is', { heading: f.from })}
                         className="h-8 rounded-md border bg-background px-2 text-xs"
                         disabled={disabled}
                         value=""
@@ -383,12 +399,12 @@ function EntityCard({
                           });
                         }}
                       >
-                        <option value="">This is actually…</option>
+                        <option value="">{t('This is actually…')}</option>
                         {fieldOptions
                           .filter((o) => o.key !== f.field)
                           .map((o) => (
                             <option key={o.key} value={o.key}>
-                              {o.label}
+                              {t.text(o.label)}
                             </option>
                           ))}
                       </select>
@@ -410,7 +426,7 @@ function EntityCard({
                         })
                       }
                     >
-                      Don’t bring this in
+                      {t('Don’t bring this in')}
                     </Button>
                   </div>
                 </li>

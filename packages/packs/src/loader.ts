@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -20,6 +20,10 @@ import { checkMetrics, packMetricsFileSchema, type PackMetrics } from './metrics
 import { checkDashboard, packDashboardFileSchema, type PackDashboard } from './dashboard';
 import { checkInsights, packInsightsFileSchema, type PackInsights } from './insights';
 import { checkQuestions, packQuestionsFileSchema, type PackQuestion } from './questions';
+import { checkTranslation, packTranslationSchema, type PackTranslation } from './i18n';
+
+/** Languages a pack can be translated into (M20). */
+const TRANSLATED = ['es'] as const;
 
 export const PACKS_DIR = fileURLToPath(new URL('../packs', import.meta.url));
 
@@ -34,6 +38,7 @@ export interface LoadedPack {
   dashboard: PackDashboard;
   insights: PackInsights;
   primer: string;
+  translations: Partial<Record<(typeof TRANSLATED)[number], PackTranslation>>;
 }
 
 export class PackValidationError extends Error {
@@ -152,6 +157,57 @@ export function loadPack(dir: string): LoadedPack {
     problems.push(...checkInsights(metrics.data, insights.data).map((p) => `insights.yaml: ${p}`));
   }
 
+  // Translations (M20): `i18n/<lang>.yaml`; when there is one, it must be complete.
+  const translations: LoadedPack['translations'] = {};
+  for (const lang of TRANSLATED) {
+    const file = `i18n/${lang}.yaml`;
+    if (!existsSync(path.join(dir, file))) continue;
+    let raw: unknown;
+    try {
+      raw = parse(readFileSync(path.join(dir, file), 'utf8'));
+    } catch (err) {
+      problems.push(`${file}: ${err instanceof Error ? err.message : String(err)}`);
+      continue;
+    }
+    const tr = packTranslationSchema.safeParse(raw);
+    if (!tr.success) {
+      problems.push(...issues(file, tr.error));
+      continue;
+    }
+    if (
+      manifest.success &&
+      entities.success &&
+      metrics.success &&
+      dashboard.success &&
+      insights.success &&
+      questions.success
+    ) {
+      problems.push(
+        ...checkTranslation(
+          tr.data,
+          {
+            manifest: manifest.data,
+            entities: entities.data.entities,
+            metrics: metrics.data,
+            dashboard: dashboard.data,
+            insights: insights.data,
+            questions: questions.data.examples,
+          },
+          true,
+        ).map((p) => `${file}: ${p}`),
+      );
+      if (synonyms.success) {
+        for (const f of Object.keys(tr.data.headers))
+          if (!(f in synonyms.data.fields)) problems.push(`${file}: headers.${f}: no such detail`);
+        for (const [f, vals] of Object.entries(tr.data.values))
+          for (const v of Object.keys(vals))
+            if (!synonyms.data.values[f]?.[v])
+              problems.push(`${file}: values.${f}.${v}: not a value synonyms.yaml knows`);
+      }
+    }
+    translations[lang] = tr.data;
+  }
+
   if (
     problems.length > 0 ||
     !insights.success ||
@@ -165,17 +221,30 @@ export function loadPack(dir: string): LoadedPack {
   ) {
     throw new PackValidationError(dir, problems);
   }
+  // Files can be in any language the pack speaks, whoever reads the app: add the translations'
+  // column headers and value words to the synonyms (M20).
+  const merged = structuredClone(synonyms.data);
+  for (const tr of Object.values(translations)) {
+    for (const [f, ws] of Object.entries(tr.headers))
+      merged.fields[f] = [...new Set([...(merged.fields[f] ?? []), ...ws])];
+    for (const [f, vals] of Object.entries(tr.values))
+      for (const [v, ws] of Object.entries(vals)) {
+        const list = (merged.values[f] ??= {});
+        list[v] = [...new Set([...(list[v] ?? []), ...ws])];
+      }
+  }
   return {
     dir,
     manifest: manifest.data,
     entities: entities.data.entities,
-    synonyms: synonyms.data,
+    synonyms: merged,
     knownFormats: patterns.data.known_formats,
     metrics: metrics.data,
     questions: questions.data.examples,
     dashboard: dashboard.data,
     insights: insights.data,
     primer,
+    translations,
   };
 }
 

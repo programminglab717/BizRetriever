@@ -15,6 +15,7 @@ export const dynamic = 'force-dynamic';
 
 /** Shopify sends the owner back here once they approve. Checked in full before anything is saved. */
 export async function GET(request: Request): Promise<Response> {
+  // i18n-skip: for Shopify, not a person
   if (!shopifyEnabled()) return Response.json({ error: 'Not found' }, { status: 404 });
   const jar = await cookies();
   const cookie = jar.get(SHOPIFY_STATE_COOKIE)?.value;

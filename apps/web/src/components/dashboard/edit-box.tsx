@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 
 import { editAction, planAction } from '@/app/w/[slug]/dashboard/actions';
 import type { NumberStyle } from '@/components/ask/answer-chart';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,6 +26,7 @@ export function EditBox({
   disabled: boolean;
   onApplied: (changes: string[]) => void;
 }) {
+  const t = useT();
   const [request, setRequest] = useState('');
   const [outcome, setOutcome] = useState<PlanOutcome | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function EditBox({
     });
 
   return (
-    <section className="grid gap-3" aria-label="Dashboard changes">
+    <section className="grid gap-3" aria-label={t('Dashboard changes')}>
       <form
         className="flex gap-2"
         onSubmit={(e) => {
@@ -55,37 +57,37 @@ export function EditBox({
         }}
       >
         <label htmlFor="dashboard-edit" className="sr-only">
-          Change this dashboard
+          {t('Change this dashboard')}
         </label>
         <Input
           id="dashboard-edit"
           value={request}
           maxLength={300}
-          placeholder="Change this dashboard, e.g. “Add a chart of sales by city”"
+          placeholder={t('Change this dashboard, e.g. “Add a chart of sales by city”')}
           onChange={(e) => setRequest(e.target.value)}
           disabled={disabled || pending}
         />
         <Button type="submit" variant="outline" disabled={disabled || pending || !request.trim()}>
-          <Sparkles /> {pending ? 'Working…' : 'Change'}
+          <Sparkles /> {pending ? t('Working…') : t.ctx('button', 'Change')}
         </Button>
       </form>
 
       {error && <Alert tone="error">{error}</Alert>}
 
-      {outcome?.kind === 'none' && <Alert>{outcome.message}</Alert>}
+      {outcome?.kind === 'none' && <Alert>{t.text(outcome.message)}</Alert>}
 
       {outcome?.kind === 'clarify' && (
         <Card data-testid="edit-clarify">
           <CardContent className="grid gap-3 pt-6">
-            <p>{outcome.question}</p>
+            <p>{t.text(outcome.question)}</p>
             <div className="flex flex-wrap gap-2">
               {outcome.options.map((o) => (
                 <Button key={o.tileId} variant="outline" onClick={() => plan(request, o.tileId)}>
-                  {o.label}
+                  {t.text(o.label)}
                 </Button>
               ))}
               <Button variant="ghost" onClick={() => setOutcome(null)}>
-                Cancel
+                {t('Cancel')}
               </Button>
             </div>
           </CardContent>
@@ -96,20 +98,20 @@ export function EditBox({
         <Card data-testid="edit-preview">
           <CardContent className="grid gap-4 pt-6">
             <div>
-              <p className="font-medium">Here’s the change:</p>
+              <p className="font-medium">{t('Here’s the change:')}</p>
               <ul className="mt-1 list-disc pl-5 text-sm">
                 {outcome.changes.map((c) => (
-                  <li key={c}>{c}</li>
+                  <li key={c}>{t.text(c)}</li>
                 ))}
               </ul>
             </div>
             {outcome.preview.length > 0 && (
               <div className="grid gap-4 md:grid-cols-12">
-                {outcome.preview.map((t) => (
+                {outcome.preview.map((tile) => (
                   <DashboardTile
-                    key={t.id}
+                    key={tile.id}
                     slug={slug}
-                    tile={t}
+                    tile={tile}
                     style={style}
                     first
                     last
@@ -121,10 +123,10 @@ export function EditBox({
             )}
             <div className="flex gap-2">
               <Button onClick={apply} disabled={pending}>
-                Apply
+                {t('Apply')}
               </Button>
               <Button variant="ghost" onClick={() => setOutcome(null)} disabled={pending}>
-                Cancel
+                {t('Cancel')}
               </Button>
             </div>
           </CardContent>

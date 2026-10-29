@@ -2,6 +2,7 @@ import { fileNameFor, toCsv, toXlsx } from '@bizr/core/export';
 import { reorderList } from '@bizr/core/planning';
 
 import { fileResponse, formatParam, notFound } from '@/lib/download';
+import { getT } from '@/lib/i18n';
 import { reorderSheet } from '@/lib/reorder-sheet';
 import { workspaceForApi } from '@/lib/session';
 
@@ -18,23 +19,30 @@ export async function GET(
   if (!member || !format) return notFound();
   const list = await reorderList(member);
   if (!list.available) return notFound();
-  const sheet = reorderSheet(list);
+  const t = await getT();
+  const sheet = reorderSheet(list, t);
   const assumed = [
     {
-      label: 'What it covers',
-      value: 'Each supplier’s lead time plus 30 days (14 days when no lead time is recorded).',
+      label: t('What it covers'),
+      value: t('Each supplier’s lead time plus 30 days (14 days when no lead time is recorded).'),
     },
     ...(list.seasonFactor !== 1
       ? [
           {
-            label: 'Season',
-            value: `Quantities allow for your usual sales over those weeks (${Math.round((list.seasonFactor - 1) * 100)}% against your last 4 weeks).`,
+            label: t('Season'),
+            value: t(
+              'Quantities allow for your usual sales over those weeks ({pct}% against your last 4 weeks).',
+              { pct: Math.round((list.seasonFactor - 1) * 100) },
+            ),
           },
         ]
       : []),
-    { label: 'Note', value: 'Estimates from your own sales: check them against what you know.' },
+    {
+      label: t('Note'),
+      value: t('Estimates from your own sales: check them against what you know.'),
+    },
   ];
-  const name = `Reorder list ${new Date().toISOString().slice(0, 10)}`;
+  const name = t('Reorder list {date}', { date: new Date().toISOString().slice(0, 10) });
   return fileResponse({
     fileName: fileNameFor(name, format),
     contentType:

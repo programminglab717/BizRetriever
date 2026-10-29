@@ -4,10 +4,12 @@ import { Loader2 } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
 import { joinBusiness } from '@/app/invite/[token]/actions';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
 export function JoinButton({ token }: { token: string }) {
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   return (
@@ -22,7 +24,7 @@ export function JoinButton({ token }: { token: string }) {
           })
         }
       >
-        {pending ? <Loader2 className="animate-spin" /> : null} Join
+        {pending ? <Loader2 className="animate-spin" /> : null} {t('Join')}
       </Button>
       {error ? <Alert tone="error">{error}</Alert> : null}
     </div>

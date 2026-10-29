@@ -64,6 +64,7 @@ export async function createWorkspace(
       currency: data.currency,
       timezone: data.timezone,
       dateOrder: data.dateOrder,
+      language: data.language ?? 'en',
     });
     await tx.insert(workspaceMember).values({ workspaceId: ws!.id, userId, role: 'owner' });
     await tx.insert(auditEvent).values({

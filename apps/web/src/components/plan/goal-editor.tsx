@@ -3,6 +3,7 @@
 import { useId, useState, useTransition } from 'react';
 
 import { removeGoalAction, setGoalAction } from '@/app/w/[slug]/plan/actions';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -20,6 +21,7 @@ export function GoalEditor({
   current: string | null;
   money: boolean;
 }) {
+  const t = useT();
   const id = useId();
   const [editing, setEditing] = useState(current === null);
   const [value, setValue] = useState(current ?? '');
@@ -41,10 +43,10 @@ export function GoalEditor({
     return (
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" onClick={() => setEditing(true)} disabled={pending}>
-          Change goal
+          {t('Change goal')}
         </Button>
         <Button size="sm" variant="ghost" onClick={remove} disabled={pending}>
-          Remove goal
+          {t('Remove goal')}
         </Button>
         {error && (
           <p role="alert" className="text-sm text-destructive">
@@ -63,8 +65,8 @@ export function GoalEditor({
     >
       <label htmlFor={id} className="text-sm font-medium">
         {current === null
-          ? `A monthly goal for ${label.toLowerCase()}`
-          : `New monthly goal for ${label.toLowerCase()}`}
+          ? t('A monthly goal for {measure}', { measure: label.toLowerCase() })
+          : t('New monthly goal for {measure}', { measure: label.toLowerCase() })}
       </label>
       <div className="flex flex-wrap gap-2">
         <Input
@@ -77,11 +79,11 @@ export function GoalEditor({
           aria-invalid={error ? true : undefined}
         />
         <Button type="submit" size="sm" disabled={pending || !value.trim()}>
-          {pending ? 'Saving…' : 'Save goal'}
+          {pending ? t('Saving…') : t('Save goal')}
         </Button>
         {current !== null && (
           <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>
-            Cancel
+            {t('Cancel')}
           </Button>
         )}
       </div>

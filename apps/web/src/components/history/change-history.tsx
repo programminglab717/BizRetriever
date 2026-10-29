@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
 import { checkUndo, undoChange } from '@/app/w/[slug]/history/actions';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,7 @@ export type HistoryItem = {
 const when = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
 export function ChangeHistory({ slug, items }: { slug: string; items: HistoryItem[] }) {
+  const t = useT();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +55,9 @@ export function ChangeHistory({ slug, items }: { slug: string; items: HistoryIte
   if (items.length === 0)
     return (
       <p className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
-        Nothing has changed yet. Changes to what you track and updates from your files will show
-        here.
+        {t(
+          'Nothing has changed yet. Changes to what you track and updates from your files will show here.',
+        )}
       </p>
     );
   return (
@@ -67,19 +70,20 @@ export function ChangeHistory({ slug, items }: { slug: string; items: HistoryIte
           className="grid gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm dark:bg-amber-950/30"
         >
           <h2 id="undo-title" className="flex items-center gap-2 font-medium">
-            <AlertTriangle className="size-4 text-amber-600" aria-hidden /> Before you undo this
+            <AlertTriangle className="size-4 text-amber-600" aria-hidden />{' '}
+            {t('Before you undo this')}
           </h2>
           <ul className="grid list-disc gap-1 pl-5">
             {confirm.warnings.map((w) => (
-              <li key={w}>{w}</li>
+              <li key={w}>{t.text(w)}</li>
             ))}
           </ul>
           <div className="flex flex-wrap gap-2">
             <Button disabled={pending} onClick={() => undo(confirm.version, true)}>
-              {pending ? <Loader2 className="animate-spin" /> : <Undo2 />} Undo anyway
+              {pending ? <Loader2 className="animate-spin" /> : <Undo2 />} {t('Undo anyway')}
             </Button>
             <Button variant="ghost" disabled={pending} onClick={() => setConfirm(null)}>
-              Keep the change
+              {t('Keep the change')}
             </Button>
           </div>
         </div>
@@ -101,11 +105,11 @@ export function ChangeHistory({ slug, items }: { slug: string; items: HistoryIte
             <div className="grid flex-1 gap-1">
               {item.lines.map((l) => (
                 <p key={l} className={cn(item.undone && 'line-through')}>
-                  {l}
+                  {t.text(l)}
                 </p>
               ))}
               <p className="text-xs text-muted-foreground">
-                {[item.by, when.format(new Date(item.at)), item.undone ? 'undone' : null]
+                {[item.by, when.format(new Date(item.at)), item.undone ? t('undone') : null]
                   .filter(Boolean)
                   .join(' · ')}
               </p>
@@ -118,12 +122,12 @@ export function ChangeHistory({ slug, items }: { slug: string; items: HistoryIte
                   disabled={pending}
                   onClick={() => start(item.version)}
                 >
-                  <Undo2 /> Undo
+                  <Undo2 /> {t('Undo')}
                 </Button>
               ) : (
                 <Button size="sm" variant="outline" asChild>
                   <Link href={`/w/${slug}/data/import/${item.runId}` as Route}>
-                    <Undo2 /> Undo
+                    <Undo2 /> {t('Undo')}
                   </Link>
                 </Button>
               )

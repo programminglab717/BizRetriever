@@ -1,3 +1,5 @@
+import type { Language } from '@bizr/i18n';
+
 /**
  * Time ranges in questions ("last month", "this quarter"). The AI picks a preset; code turns it into
  * exact dates in the workspace's calendar, so dates are never guessed. Ranges are [from, to).
@@ -49,6 +51,28 @@ const MONTHS = [
   'November',
   'December',
 ];
+
+/** Spanish month names (M20): lower case, as Spanish writes them. */
+export const MESES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
+
+/** Short month names by language: "Sep", "sep". */
+export function shortMonth(i: number, lang: Language = 'en'): string {
+  const m = ((i % 12) + 12) % 12;
+  return lang === 'es' ? MESES[m]!.slice(0, 3) : MONTHS[m]!.slice(0, 3);
+}
 
 function parts(iso: string): [number, number, number] {
   return iso.split('-').map(Number) as [number, number, number];
@@ -135,26 +159,32 @@ export function namedMonth(month: number, cal: Calendar, year?: number): Period 
 export function monthIndex(name: string): number | undefined {
   const n = name.toLowerCase().slice(0, 3);
   const i = MONTHS.findIndex((m) => m.toLowerCase().startsWith(n));
-  return i === -1 ? undefined : i + 1;
+  if (i !== -1) return i + 1;
+  // Spanish ("ene", "abr", "ago", "dic"; "setiembre" too).
+  const e = MESES.findIndex((m) => m.startsWith(n === 'set' ? 'sep' : n));
+  return e === -1 ? undefined : e + 1;
 }
 
-const fmtDay = (date: string) => {
+const fmtDay = (date: string, lang: Language = 'en') => {
   const [y, m, d] = parts(date);
-  return `${d} ${MONTHS[m - 1]!.slice(0, 3)} ${y}`;
+  return `${d} ${shortMonth(m - 1, lang)} ${y}`;
 };
 
-/** "September 2026", "2026", "1 Sep 2026 – 7 Sep 2026", "all time". */
-export function periodLabel(p: Period | undefined): string {
-  if (!p) return 'all time';
+/**
+ * "September 2026", "2026", "1 Sep 2026 – 7 Sep 2026", "all time"; in Spanish "septiembre de 2026",
+ * "1 sep 2026 – 7 sep 2026", "todo el tiempo".
+ */
+export function periodLabel(p: Period | undefined, lang: Language = 'en'): string {
+  if (!p) return lang === 'es' ? 'todo el tiempo' : 'all time';
   const [fy, fm, fd] = parts(p.from);
   const [ty, tm, td] = parts(p.to);
   if (fd === 1 && td === 1) {
     const months = (ty - fy) * 12 + (tm - fm);
-    if (months === 1) return `${MONTHS[fm - 1]} ${fy}`;
+    if (months === 1)
+      return lang === 'es' ? `${MESES[fm - 1]} de ${fy}` : `${MONTHS[fm - 1]} ${fy}`;
     if (months === 12 && fm === 1) return String(fy);
-    if (months === 3)
-      return `${MONTHS[fm - 1]!.slice(0, 3)}–${MONTHS[(fm + 1) % 12]!.slice(0, 3)} ${fy}`;
+    if (months === 3) return `${shortMonth(fm - 1, lang)}–${shortMonth(fm + 1, lang)} ${fy}`;
   }
   const last = addDays(p.to, -1);
-  return last === p.from ? fmtDay(p.from) : `${fmtDay(p.from)} – ${fmtDay(last)}`;
+  return last === p.from ? fmtDay(p.from, lang) : `${fmtDay(p.from, lang)} – ${fmtDay(last, lang)}`;
 }

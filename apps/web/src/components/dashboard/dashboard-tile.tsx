@@ -12,6 +12,7 @@ import {
   KpiCards,
   type NumberStyle,
 } from '@/components/ask/answer-chart';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -49,9 +50,12 @@ export function DashboardTile({
   /** The dashboard's dates, so a download matches what's shown ("&range=…&compare=1"). */
   rangeQuery?: string;
 }) {
+  const t = useT();
+  // The pack's tile names in the reader's language; names people typed stay as they are.
+  const title = t.text(tile.title);
   const [menu, setMenu] = useState(false);
   const [renaming, setRenaming] = useState(false);
-  const [name, setName] = useState(tile.title);
+  const [name, setName] = useState(title);
   const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!menu) return;
@@ -82,12 +86,12 @@ export function DashboardTile({
             onSubmit={(e) => {
               e.preventDefault();
               setRenaming(false);
-              if (name.trim() && name.trim() !== tile.title)
+              if (name.trim() && name.trim() !== tile.title && name.trim() !== title)
                 onEdit({ op: 'update_tile', tileId: tile.id, title: name.trim() });
             }}
           >
             <label className="sr-only" htmlFor={`name-${tile.id}`}>
-              New name for {tile.title}
+              {t('New name for {name}', { name: title })}
             </label>
             <Input
               id={`name-${tile.id}`}
@@ -97,19 +101,19 @@ export function DashboardTile({
               onChange={(e) => setName(e.target.value)}
             />
             <Button type="submit" size="sm">
-              Save
+              {t('Save')}
             </Button>
           </form>
         ) : (
           <CardTitle className="flex items-center gap-2 text-base">
-            {tile.title}
+            {title}
             {tile.fixedDates && (
               <span
                 className="flex items-center gap-1 text-xs font-normal text-muted-foreground"
-                title="Keeps its own dates"
+                title={t('Keeps its own dates')}
               >
                 <CalendarDays className="size-3.5" aria-hidden />
-                {tile.datesLabel}
+                {tile.datesLabel ? t.text(tile.datesLabel) : tile.datesLabel}
               </span>
             )}
           </CardTitle>
@@ -119,7 +123,7 @@ export function DashboardTile({
             variant="ghost"
             size="icon"
             className="size-8 text-muted-foreground"
-            aria-label={`Options for ${tile.title}`}
+            aria-label={t('Options for {name}', { name: title })}
             aria-expanded={menu}
             disabled={busy}
             onClick={() => setMenu((m) => !m)}
@@ -131,7 +135,7 @@ export function DashboardTile({
               role="menu"
               className="absolute right-0 z-20 mt-1 grid w-56 gap-0.5 rounded-md border bg-background p-1 text-sm shadow-lg"
             >
-              <MenuItem onClick={() => (setMenu(false), setRenaming(true))}>Rename</MenuItem>
+              <MenuItem onClick={() => (setMenu(false), setRenaming(true))}>{t('Rename')}</MenuItem>
               {(tile.charts ?? [])
                 .filter((c) => c !== tile.chart)
                 .map((c) => (
@@ -139,7 +143,9 @@ export function DashboardTile({
                     key={c}
                     onClick={() => act({ op: 'update_tile', tileId: tile.id, chart: c })}
                   >
-                    Show as {CHART_NAMES[c].toLowerCase()}
+                    {/* Whole phrases in the catalog ("Show as line chart"); the key is built here
+                        so the English stays exactly as it was. */}
+                    {t(`Show as ${CHART_NAMES[c].toLowerCase()}`)}
                   </MenuItem>
                 ))}
               {w < 12 && (
@@ -148,7 +154,7 @@ export function DashboardTile({
                     act({ op: 'update_tile', tileId: tile.id, size: [Math.min(12, w + 3), h] })
                   }
                 >
-                  Make wider
+                  {t('Make wider')}
                 </MenuItem>
               )}
               {w > 3 && (
@@ -157,28 +163,28 @@ export function DashboardTile({
                     act({ op: 'update_tile', tileId: tile.id, size: [Math.max(3, w - 3), h] })
                   }
                 >
-                  Make narrower
+                  {t('Make narrower')}
                 </MenuItem>
               )}
               {!first && (
                 <MenuItem
                   onClick={() => act({ op: 'move_tile', tileId: tile.id, position: 'top' })}
                 >
-                  Move to top
+                  {t('Move to top')}
                 </MenuItem>
               )}
               {!last && (
                 <MenuItem
                   onClick={() => act({ op: 'move_tile', tileId: tile.id, position: 'bottom' })}
                 >
-                  Move to bottom
+                  {t('Move to bottom')}
                 </MenuItem>
               )}
               {tile.fixedDates && (
                 <MenuItem
                   onClick={() => act({ op: 'update_tile', tileId: tile.id, fixedDates: false })}
                 >
-                  Follow dashboard dates
+                  {t('Follow dashboard dates')}
                 </MenuItem>
               )}
               {!tile.error && !empty && (
@@ -190,7 +196,7 @@ export function DashboardTile({
                     download
                     onClick={() => setMenu(false)}
                   >
-                    Download for Excel
+                    {t('Download for Excel')}
                   </a>
                   <a
                     role="menuitem"
@@ -199,7 +205,7 @@ export function DashboardTile({
                     download
                     onClick={() => setMenu(false)}
                   >
-                    Download as CSV
+                    {t('Download as CSV')}
                   </a>
                   <a
                     role="menuitem"
@@ -208,7 +214,7 @@ export function DashboardTile({
                     download
                     onClick={() => setMenu(false)}
                   >
-                    Download as PDF
+                    {t('Download as PDF')}
                   </a>
                 </>
               )}
@@ -217,10 +223,10 @@ export function DashboardTile({
                 className="rounded px-3 py-2 hover:bg-accent"
                 href={`/w/${slug}/ask?q=${encodeURIComponent(tile.title)}`}
               >
-                Ask about this
+                {t('Ask about this')}
               </Link>
               <MenuItem destructive onClick={() => act({ op: 'remove_tile', tileId: tile.id })}>
-                Remove
+                {t('Remove')}
               </MenuItem>
             </div>
           )}
@@ -228,23 +234,23 @@ export function DashboardTile({
       </CardHeader>
       <CardContent className="pt-0">
         {tile.error ? (
-          <p className="text-sm text-muted-foreground">{tile.error}</p>
+          <p className="text-sm text-muted-foreground">{t.text(tile.error)}</p>
         ) : empty ? (
-          <p className="text-sm text-muted-foreground">Nothing in this period.</p>
+          <p className="text-sm text-muted-foreground">{t('Nothing in this period.')}</p>
         ) : tile.chart === 'kpi' && tile.kpis?.length ? (
           <KpiCards
             compact
-            title={tile.title}
+            title={title}
             kpis={tile.kpis}
             {...(tile.comparedWith ? { comparedWith: tile.comparedWith } : {})}
           />
         ) : tile.chart === 'table' ? (
-          <AnswerTable table={tile.table!} caption={tile.title} />
+          <AnswerTable table={tile.table!} caption={title} />
         ) : (
-          <AnswerChart chart={tile.chart} table={tile.table!} title={tile.title} style={style} />
+          <AnswerChart chart={tile.chart} table={tile.table!} title={title} style={style} />
         )}
         {tile.note && !tile.error && (
-          <p className="mt-2 text-xs text-muted-foreground">{tile.note}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{t.text(tile.note)}</p>
         )}
       </CardContent>
     </Card>

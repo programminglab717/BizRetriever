@@ -20,5 +20,16 @@
     "clarifyRecall": 1,
     "rulesRate": 0.864,
     "p95LatencyMs": 44
+  },
+  "retail-es-rules": {
+    "cases": 211,
+    "accuracy": 0.953,
+    "executionAccuracy": 0.941,
+    "estimateAccuracy": 1,
+    "demoAccuracy": 1,
+    "clarifyPrecision": 1,
+    "clarifyRecall": 1,
+    "rulesRate": 0.877,
+    "p95LatencyMs": 126
   }
 }

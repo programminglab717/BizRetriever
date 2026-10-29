@@ -16,6 +16,8 @@ export interface InsightSegment {
 export interface RenderOptions {
   locale: string;
   currency: string;
+  /** Words around numbers ("3 days" / "3 días"), M20. */
+  lang?: 'en' | 'es';
 }
 
 /** `{{name}}` or `{{name|one|many}}`. */
@@ -44,13 +46,22 @@ export function formatInsightFact(f: FactValue, o: RenderOptions): string {
       return n(Math.round(f.value));
     case 'days': {
       const d = Math.round(f.value);
+      if (o.lang === 'es') return `${n(d)} ${d === 1 ? 'día' : 'días'}`;
       return `${n(d)} ${d === 1 ? 'day' : 'days'}`;
     }
     case 'percent':
       return n(f.value, { style: 'percent', maximumFractionDigits: 1 });
     case 'points': {
       const p = f.value * 100;
-      return `${n(p, { maximumFractionDigits: 1 })} ${Math.abs(p) === 1 ? 'point' : 'points'}`;
+      const word =
+        o.lang === 'es'
+          ? Math.abs(p) === 1
+            ? 'punto'
+            : 'puntos'
+          : Math.abs(p) === 1
+            ? 'point'
+            : 'points';
+      return `${n(p, { maximumFractionDigits: 1 })} ${word}`;
     }
   }
 }

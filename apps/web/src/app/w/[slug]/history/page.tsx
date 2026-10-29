@@ -1,8 +1,10 @@
 import { listRuns } from '@bizr/core/ingestion';
 import { listChanges } from '@bizr/core/structure';
+import { msg } from '@bizr/i18n/translate';
 
 import { ChangeHistory, type HistoryItem } from '@/components/history/change-history';
 import { PageHeader } from '@/components/shell/page-header';
+import { getT } from '@/lib/i18n';
 import { requireWorkspace } from '@/lib/session';
 
 /**
@@ -12,6 +14,7 @@ import { requireWorkspace } from '@/lib/session';
 export default async function HistoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const [changes, runs] = await Promise.all([listChanges(member), listRuns(member, 50)]);
   const items: HistoryItem[] = [
     ...changes
@@ -35,7 +38,9 @@ export default async function HistoryPage({ params }: { params: Promise<{ slug: 
         at: (r.finishedAt ?? r.createdAt).toISOString(),
         by: null,
         lines: [
-          r.kind === 'reupload' ? 'Updated your data from newer files' : 'Brought in your files',
+          r.kind === 'reupload'
+            ? msg('Updated your data from newer files')
+            : msg('Brought in your files'),
         ],
         destructive: false,
         undone: r.undoneAt !== null,
@@ -46,8 +51,10 @@ export default async function HistoryPage({ params }: { params: Promise<{ slug: 
   return (
     <div className="grid gap-6">
       <PageHeader
-        title="Change history"
-        description="Changes to what you track and updates from your files. You can undo the latest change to what you track, and any update from files."
+        title={t('Change history')}
+        description={t(
+          'Changes to what you track and updates from your files. You can undo the latest change to what you track, and any update from files.',
+        )}
       />
       <ChangeHistory slug={slug} items={items} />
     </div>

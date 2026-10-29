@@ -8,3 +8,4 @@ test-results
 *.md
 packages/db/migrations/meta
 packages/packs/src/generated
+packages/i18n/src/es/packs.ts

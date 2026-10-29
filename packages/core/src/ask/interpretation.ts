@@ -1,3 +1,4 @@
+import type { Language } from '@bizr/i18n';
 import { z } from 'zod';
 
 import type { QuerySpecInput } from '../semantic/query-spec';
@@ -146,15 +147,26 @@ export function toQuerySpec(q: QuestionSpec, cal: Calendar): QuerySpecInput {
 }
 
 /** "Gross profit by product · September 2026" — written by code from the spec. */
+const GRAIN_ES = { day: 'día', week: 'semana', month: 'mes', quarter: 'trimestre', year: 'año' };
+
 export function titleFor(
   q: QuestionSpec,
   cal: Calendar,
   labels: { metric: (id: string) => string; dimension: (ref: string) => string },
+  lang: Language = 'en',
 ): string {
-  const metrics = q.metrics.map(labels.metric).join(' and ');
+  const and = lang === 'es' ? ' y ' : ' and ';
+  const metrics = q.metrics.map(labels.metric).join(and);
   const dims = q.dimensions
-    .map((d) => ('time' in d ? `${d.time}` : labels.dimension(d.field).toLowerCase()))
-    .join(' and ');
-  const period = periodLabel(periodOf(q.timeRange, cal));
-  return `${metrics}${dims ? ` by ${dims}` : ''} · ${period[0]!.toUpperCase()}${period.slice(1)}`;
+    .map((d) =>
+      'time' in d
+        ? lang === 'es'
+          ? GRAIN_ES[d.time]
+          : `${d.time}`
+        : labels.dimension(d.field).toLowerCase(),
+    )
+    .join(and);
+  const period = periodLabel(periodOf(q.timeRange, cal), lang);
+  const by = lang === 'es' ? ' por ' : ' by ';
+  return `${metrics}${dims ? `${by}${dims}` : ''} · ${period[0]!.toUpperCase()}${period.slice(1)}`;
 }

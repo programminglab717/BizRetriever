@@ -1,5 +1,7 @@
 import { unsubscribe } from '@bizr/core/insights';
 
+import { getT } from '@/lib/i18n';
+
 export const dynamic = 'force-dynamic';
 
 const fields = (url: URL) => ({
@@ -28,7 +30,8 @@ export async function POST(request: Request): Promise<Response> {
       new URL(`/email/unsubscribe?${ok ? `done=${url.searchParams.get('k')}` : 'bad=1'}`, url),
       303,
     );
+  const t = await getT();
   return ok
-    ? new Response('You won’t get these emails any more.', { status: 200 })
-    : new Response('This link doesn’t work.', { status: 400 });
+    ? new Response(t('You won’t get these emails any more.'), { status: 200 })
+    : new Response(t('This link doesn’t work.'), { status: 400 });
 }

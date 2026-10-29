@@ -4,6 +4,7 @@ import type { ProposalReview, RunView } from '@bizr/core/ingestion';
 import type { MergePreview, MergeStats } from '@bizr/core/merge';
 import { renderTemplate, type Segment } from '@bizr/core/narration';
 import type { MemberWorkspace } from '@bizr/core/workspaces';
+import { msg } from '@bizr/i18n/translate';
 import { getPack } from '@bizr/packs';
 import { getEnv, getLogger } from '@bizr/platform';
 import { after } from 'next/server';
@@ -76,7 +77,7 @@ export function toImportView(view: RunView, member: MemberWorkspace): ImportView
         currency: member.settings.currency,
       });
     } catch {
-      summary = [{ text: 'Here’s what we found in your files.' }];
+      summary = [{ text: msg('Here’s what we found in your files.') }];
     }
     const usedEntities = new Set(p.review.entities.map((e) => e.key));
     proposal = {

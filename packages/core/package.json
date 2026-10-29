@@ -40,6 +40,7 @@
     "@bizr/ai": "workspace:*",
     "@bizr/db": "workspace:*",
     "@bizr/demo-data": "workspace:*",
+    "@bizr/i18n": "workspace:*",
     "@bizr/ingest": "workspace:*",
     "@bizr/packs": "workspace:*",
     "@bizr/platform": "workspace:*",

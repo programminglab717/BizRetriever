@@ -4,6 +4,7 @@ import type { ReportView } from '@bizr/core/reports';
 import { useState, useTransition } from 'react';
 
 import { updateReportAction } from '@/app/w/[slug]/reports-actions';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -11,6 +12,7 @@ const when = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' });
 
 /** Your scheduled reports (M15): what, how often, last sent; pause or delete. */
 export function MyReports({ slug, initial }: { slug: string; initial: ReportView[] }) {
+  const t = useT();
   const [reports, setReports] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -28,25 +30,28 @@ export function MyReports({ slug, initial }: { slug: string; initial: ReportView
   return (
     <Card id="reports">
       <CardHeader>
-        <CardTitle>Your reports</CardTitle>
+        <CardTitle>{t('Your reports')}</CardTitle>
         <CardDescription>
-          PDFs emailed to you, worked out fresh each time. Set one up with “Email me this” on the
-          dashboard or under an answer.
+          {t(
+            'PDFs emailed to you, worked out fresh each time. Set one up with “Email me this” on the dashboard or under an answer.',
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 text-sm">
         {reports.length === 0 ? (
-          <p className="text-muted-foreground">You haven’t set up any reports yet.</p>
+          <p className="text-muted-foreground">{t('You haven’t set up any reports yet.')}</p>
         ) : (
-          <ul className="grid divide-y" aria-label="Your reports">
+          <ul className="grid divide-y" aria-label={t('Your reports')}>
             {reports.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                 <span className="grid">
                   <span className="font-medium">{r.title}</span>
                   <span className="text-muted-foreground">
-                    {r.paused ? 'Paused' : r.when}
-                    {r.lastSentAt ? ` · last sent ${when.format(new Date(r.lastSentAt))}` : ''}
-                    {r.lastError ? ` · ${r.lastError}` : ''}
+                    {r.paused ? t('Paused') : t.text(r.when)}
+                    {r.lastSentAt
+                      ? ` · ${t('last sent {date}', { date: when.format(new Date(r.lastSentAt)) })}`
+                      : ''}
+                    {r.lastError ? ` · ${t.text(r.lastError)}` : ''}
                   </span>
                 </span>
                 <span className="flex gap-1">
@@ -56,7 +61,7 @@ export function MyReports({ slug, initial }: { slug: string; initial: ReportView
                     disabled={pending}
                     onClick={() => act(r.id, { paused: !r.paused })}
                   >
-                    {r.paused ? 'Resume' : 'Pause'}
+                    {r.paused ? t('Resume') : t('Pause')}
                   </Button>
                   <Button
                     size="sm"
@@ -64,7 +69,7 @@ export function MyReports({ slug, initial }: { slug: string; initial: ReportView
                     disabled={pending}
                     onClick={() => act(r.id, 'delete')}
                   >
-                    Delete
+                    {t('Delete')}
                   </Button>
                 </span>
               </li>

@@ -3,15 +3,18 @@ import type { ReactNode } from 'react';
 
 import { teammates } from '@bizr/core/team';
 import { canChange } from '@bizr/core/workspaces';
+import type { Translator } from '@bizr/i18n/translate';
 
+import { I18nProvider } from '@/components/i18n/provider';
 import { CanChangeProvider } from '@/components/shell/can-change';
 import { TeamProvider } from '@/components/team/team-context';
 import { BottomNav, SidebarNav } from '@/components/shell/nav';
 import { SignOutButton } from '@/components/shell/sign-out-button';
+import { clientI18n, getT } from '@/lib/i18n';
 import { requireWorkspace } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
-function DemoBadge({ className }: { className?: string }) {
+function DemoBadge({ className, t }: { className?: string; t: Translator }) {
   return (
     <span
       className={cn(
@@ -19,7 +22,7 @@ function DemoBadge({ className }: { className?: string }) {
         className,
       )}
     >
-      Demo
+      {t('Demo')}
     </span>
   );
 }
@@ -36,44 +39,49 @@ export default async function WorkspaceLayout({
   const { workspace, user, role } = member;
   const editor = canChange(role);
   const people = await teammates(member);
+  // Client navigation between businesses keeps the root layout: this one knows the business.
+  const i18n = await clientI18n();
+  const t = await getT();
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[15rem_1fr]">
-      <aside className="hidden border-r bg-muted/30 md:flex md:min-h-dvh md:flex-col md:gap-6 md:p-4">
-        <Link href={`/w/${slug}/home`} className="px-3 text-sm font-semibold">
-          BizRetriever
-        </Link>
-        <div className="px-3">
-          <p className="text-xs text-muted-foreground">Business</p>
-          <p className="truncate font-medium" data-testid="workspace-name">
-            {workspace.name}
-          </p>
-          {workspace.isDemo && <DemoBadge />}
-          {!editor && (
-            <p className="mt-1 text-xs text-muted-foreground" data-testid="view-only">
-              You can view this business
+    <I18nProvider {...i18n}>
+      <div className="min-h-dvh md:grid md:grid-cols-[15rem_1fr]">
+        <aside className="hidden border-r bg-muted/30 md:flex md:min-h-dvh md:flex-col md:gap-6 md:p-4">
+          <Link href={`/w/${slug}/home`} className="px-3 text-sm font-semibold">
+            BizRetriever
+          </Link>
+          <div className="px-3">
+            <p className="text-xs text-muted-foreground">{t('Business')}</p>
+            <p className="truncate font-medium" data-testid="workspace-name">
+              {workspace.name}
             </p>
-          )}
-        </div>
-        <SidebarNav slug={slug} />
-        <div className="mt-auto grid gap-1 px-3 text-sm">
-          <p className="truncate text-muted-foreground">{user.email}</p>
-          <SignOutButton className="justify-start px-0" />
-        </div>
-      </aside>
+            {workspace.isDemo && <DemoBadge t={t} />}
+            {!editor && (
+              <p className="mt-1 text-xs text-muted-foreground" data-testid="view-only">
+                {t('You can view this business')}
+              </p>
+            )}
+          </div>
+          <SidebarNav slug={slug} />
+          <div className="mt-auto grid gap-1 px-3 text-sm">
+            <p className="truncate text-muted-foreground">{user.email}</p>
+            <SignOutButton className="justify-start px-0" />
+          </div>
+        </aside>
 
-      <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center border-b bg-background/95 px-4 backdrop-blur md:hidden">
-          <span className="truncate font-semibold">{workspace.name}</span>
-          {workspace.isDemo && <DemoBadge className="ml-2" />}
-        </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 md:px-8 md:pb-10 md:pt-10">
-          <CanChangeProvider value={editor}>
-            <TeamProvider value={{ me: user.id, people }}>{children}</TeamProvider>
-          </CanChangeProvider>
-        </main>
+        <div className="flex min-w-0 flex-col">
+          <header className="sticky top-0 z-10 flex h-14 items-center border-b bg-background/95 px-4 backdrop-blur md:hidden">
+            <span className="truncate font-semibold">{workspace.name}</span>
+            {workspace.isDemo && <DemoBadge className="ml-2" t={t} />}
+          </header>
+          <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 md:px-8 md:pb-10 md:pt-10">
+            <CanChangeProvider value={editor}>
+              <TeamProvider value={{ me: user.id, people }}>{children}</TeamProvider>
+            </CanChangeProvider>
+          </main>
+        </div>
+        <BottomNav slug={slug} />
       </div>
-      <BottomNav slug={slug} />
-    </div>
+    </I18nProvider>
   );
 }

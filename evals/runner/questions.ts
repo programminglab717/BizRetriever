@@ -31,8 +31,8 @@ import { z } from 'zod';
 
 export const QUESTIONS_FILE = path.resolve(import.meta.dirname, '../questions/retail.yaml');
 /** Each pack's question set (M14): `questions/<pack>.yaml`, on that pack's demo business. */
-export const questionsFile = (pack: string) =>
-  path.resolve(import.meta.dirname, `../questions/${pack}.yaml`);
+export const questionsFile = (pack: string, lang = 'en') =>
+  path.resolve(import.meta.dirname, `../questions/${pack}${lang === 'en' ? '' : `.${lang}`}.yaml`);
 export const EVAL_TODAY = '2026-10-13';
 
 const refSchema = questionSpecSchema.partial().extend({ metrics: z.array(z.string()).min(1) });
@@ -124,8 +124,8 @@ export interface EvalEnv {
   compile: CompileContext;
 }
 
-export async function evalEnv(member: MemberWorkspace): Promise<EvalEnv> {
-  const ctx = await loadAskContext(member);
+export async function evalEnv(member: MemberWorkspace, lang: 'en' | 'es' = 'en'): Promise<EvalEnv> {
+  const ctx = await loadAskContext(member, lang);
   const s = member.settings;
   const compile: CompileContext = {
     timezone: s.timezone,

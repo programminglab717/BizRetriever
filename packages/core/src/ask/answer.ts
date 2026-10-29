@@ -1,3 +1,4 @@
+import type { Language } from '@bizr/i18n';
 import type { MetricFormat } from '@bizr/packs';
 
 import type { Fact, Facts } from '../narration';
@@ -6,7 +7,7 @@ import type { TimeGrain } from '../semantic/query-spec';
 import type { AskCatalog } from './catalog';
 import { decimalAbs, decimalCompare, decimalSub, isDecimal } from './decimal';
 import { chartTypes, type ChartType, type QuestionSpec } from './interpretation';
-import { periodLabel, type Calendar, type Period } from './time';
+import { periodLabel, shortMonth, type Calendar, type Period } from './time';
 
 /**
  * Turning a query result into an answer (AI_DESIGN Tasks E and §5): clean cells, facts for the
@@ -34,7 +35,54 @@ export interface AnswerData {
   truncated: boolean;
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** The words answers are built from, by language (M20). */
+const WORDS = {
+  en: {
+    weekOf: (day: string) => `Week of ${day}`,
+    unknown: 'Unknown',
+    notRecorded: 'Not recorded',
+    direction: { up: 'up', down: 'down', 'the same': 'the same' },
+    grain: {
+      day: ['day', 'days'],
+      week: ['week', 'weeks'],
+      month: ['month', 'months'],
+      quarter: ['quarter', 'quarters'],
+      year: ['year', 'years'],
+    },
+    result: ['result', 'results'],
+  },
+  es: {
+    weekOf: (day: string) => `Semana del ${day}`,
+    unknown: 'Sin fecha',
+    notRecorded: 'Sin registrar',
+    direction: { up: 'más', down: 'menos', 'the same': 'igual' },
+    grain: {
+      day: ['día', 'días'],
+      week: ['semana', 'semanas'],
+      month: ['mes', 'meses'],
+      quarter: ['trimestre', 'trimestres'],
+      year: ['año', 'años'],
+    },
+    result: ['resultado', 'resultados'],
+  },
+} satisfies Record<
+  Language,
+  {
+    weekOf: (day: string) => string;
+    unknown: string;
+    notRecorded: string;
+    direction: Record<'up' | 'down' | 'the same', string>;
+    grain: Record<TimeGrain, [string, string]>;
+    result: [string, string];
+  }
+>;
+
+const wordsFor = (lang: Language | undefined) => WORDS[lang ?? 'en'];
+
+/** The word for a time grain ("week", "semanas"). */
+export function grainWord(grain: TimeGrain, lang?: Language, many = false): string {
+  return wordsFor(lang).grain[grain][many ? 1 : 0];
+}
 
 /** A date cell as YYYY-MM-DD. `pg` parses dates as local midnight, so read it back locally. */
 function isoDay(v: unknown): string | null {
@@ -102,14 +150,15 @@ export function timeLabel(
   grain: TimeGrain,
   iso: string,
   cal: Pick<Calendar, 'fiscalYearStartMonth'>,
+  lang?: Language,
 ): string {
   const [y, m, d] = iso.split('-').map(Number) as [number, number, number];
-  const mon = (i: number) => MONTHS[(i + 12) % 12]!;
+  const mon = (i: number) => shortMonth(i, lang);
   switch (grain) {
     case 'day':
       return `${d} ${mon(m - 1)} ${y}`;
     case 'week':
-      return `Week of ${d} ${mon(m - 1)} ${y}`;
+      return wordsFor(lang).weekOf(`${d} ${mon(m - 1)} ${y}`);
     case 'month':
       return `${mon(m - 1)} ${y}`;
     case 'quarter': {
@@ -124,13 +173,14 @@ export function timeLabel(
 }
 
 export interface DisplayContext {
-  catalog: Pick<AskCatalog, 'dimensions' | 'calendar'>;
+  catalog: Pick<AskCatalog, 'dimensions' | 'calendar' | 'lang'>;
 }
 
 /** A breakdown value as the owner should read it. */
 export function displayValue(col: AnswerColumn, cell: Cell, ctx: DisplayContext): string {
-  if (cell === null) return col.time ? 'Unknown' : 'Not recorded';
-  if (col.time) return timeLabel(col.time, String(cell), ctx.catalog.calendar);
+  const w = wordsFor(ctx.catalog.lang);
+  if (cell === null) return col.time ? w.unknown : w.notRecorded;
+  if (col.time) return timeLabel(col.time, String(cell), ctx.catalog.calendar, ctx.catalog.lang);
   const dim = ctx.catalog.dimensions.find((d) => d.field === col.field);
   return dim?.valueLabels[String(cell)] ?? String(cell);
 }
@@ -150,7 +200,11 @@ export interface FactContext extends DisplayContext {
   previousPeriod?: Period;
 }
 
-function valueFact(format: MetricFormat | undefined, cell: Cell): Fact | undefined {
+function valueFact(
+  format: MetricFormat | undefined,
+  cell: Cell,
+  lang?: Language,
+): Fact | undefined {
   if (cell === null) return undefined;
   switch (format) {
     case 'money':
@@ -159,7 +213,8 @@ function valueFact(format: MetricFormat | undefined, cell: Cell): Fact | undefin
       return { kind: 'percent', value: Number(cell) };
     case 'days': {
       const days = Math.round(Number(cell));
-      return { kind: 'count', value: days, one: 'day', other: 'days' };
+      const [one, other] = wordsFor(lang).grain.day;
+      return { kind: 'count', value: days, one, other };
     }
     default:
       return { kind: 'number', value: Number(cell) };
@@ -180,11 +235,14 @@ export function answerFacts(data: AnswerData, ctx: FactContext): AnswerFacts {
   const dims = data.columns.filter((c) => c.kind === 'dimension');
   const primary = metrics[0];
   if (!primary) return { facts, meanings };
+  const lang = ctx.catalog.lang;
+  const w = wordsFor(lang);
+  const value = (format: MetricFormat | undefined, cell: Cell) => valueFact(format, cell, lang);
 
   if (ctx.period)
-    add('period', 'the time covered, e.g. “September 2026”', text(periodLabel(ctx.period)));
+    add('period', 'the time covered, e.g. “September 2026”', text(periodLabel(ctx.period, lang)));
   if (ctx.previousPeriod)
-    add('previous_period', 'the time compared with', text(periodLabel(ctx.previousPeriod)));
+    add('previous_period', 'the time compared with', text(periodLabel(ctx.previousPeriod, lang)));
 
   /** Value, earlier value, direction and change of one metric in one row. */
   const valueWithChange = (
@@ -194,21 +252,21 @@ export function answerFacts(data: AnswerData, ctx: FactContext): AnswerFacts {
     row: Record<string, Cell>,
   ) => {
     const cur = row[c.key] ?? null;
-    add(prefix, `${c.label.toLowerCase()} ${about}`, valueFact(c.format, cur));
+    add(prefix, `${c.label.toLowerCase()} ${about}`, value(c.format, cur));
     const p = prevOf(c);
     if (!p) return;
     const before = row[p.key] ?? null;
     add(
       `${prefix}_before`,
       `${c.label.toLowerCase()} ${about}, in the time compared with`,
-      valueFact(c.format, before),
+      value(c.format, before),
     );
     if (cur === null || before === null) return;
     const change = changeOf(c.format, cur, before);
     add(
       `${prefix}_direction`,
       `“up”, “down” or “the same” for ${c.label.toLowerCase()} ${about}`,
-      text(change.direction),
+      text(w.direction[change.direction]),
     );
     if (change.direction === 'the same') return;
     add(
@@ -262,7 +320,7 @@ export function answerFacts(data: AnswerData, ctx: FactContext): AnswerFacts {
       add(
         'highest_value',
         `${primary.label.toLowerCase()} in that ${timeDim.time}`,
-        valueFact(primary.format, high[primary.key]!),
+        value(primary.format, high[primary.key]!),
       );
     }
     if (low && points.length > 2) {
@@ -274,14 +332,14 @@ export function answerFacts(data: AnswerData, ctx: FactContext): AnswerFacts {
       add(
         'lowest_value',
         `${primary.label.toLowerCase()} in that ${timeDim.time}`,
-        valueFact(primary.format, low[primary.key]!),
+        value(primary.format, low[primary.key]!),
       );
     }
     add('point_count', `number of ${timeDim.time}s shown, with the word`, {
       kind: 'count',
       value: data.rows.length,
-      one: timeDim.time!,
-      other: `${timeDim.time}s`,
+      one: w.grain[timeDim.time!][0],
+      other: w.grain[timeDim.time!][1],
     });
     return { facts, meanings };
   }
@@ -302,7 +360,7 @@ export function answerFacts(data: AnswerData, ctx: FactContext): AnswerFacts {
       add(
         `top${n}_${c.metric}`,
         `${c.label.toLowerCase()} for the ${ordinal(n)} in the list`,
-        valueFact(c.format, row[c.key] ?? null),
+        value(c.format, row[c.key] ?? null),
       );
   });
   const last = named.at(-1);
@@ -311,7 +369,7 @@ export function answerFacts(data: AnswerData, ctx: FactContext): AnswerFacts {
     add(
       'last_value',
       `${primary.label.toLowerCase()} for the last one in the list`,
-      valueFact(primary.format, last[primary.key] ?? null),
+      value(primary.format, last[primary.key] ?? null),
     );
   }
   add('shown_count', `how many ${noun[1]} are listed (just the number)`, {
@@ -337,7 +395,10 @@ const count = (value: number, noun: [string, string]): Fact => ({
 const ordinal = (n: number) => ['first', 'second', 'third'][n - 1] ?? `number ${n}`;
 
 function nounFor(col: AnswerColumn | undefined, ctx: DisplayContext): [string, string] {
-  return ctx.catalog.dimensions.find((d) => d.field === col?.field)?.noun ?? ['result', 'results'];
+  return (
+    ctx.catalog.dimensions.find((d) => d.field === col?.field)?.noun ??
+    wordsFor(ctx.catalog.lang).result
+  );
 }
 
 function compareCells(format: MetricFormat | undefined, a: Cell, b: Cell): number {
@@ -381,6 +442,7 @@ const lit = (s: string) => s.replace(/[{}]/g, '');
  * failed the checks. Same placeholders as the AI's, so every number still comes from the facts.
  */
 export function templateAnswer(data: AnswerData, f: AnswerFacts, ctx: FactContext): string {
+  if (ctx.catalog.lang === 'es') return templateAnswerEs(data, f, ctx);
   const has = (n: string) => n in f.facts;
   const metrics = data.columns.filter((c) => c.kind === 'metric');
   const primary = metrics[0];
@@ -429,6 +491,60 @@ export function templateAnswer(data: AnswerData, f: AnswerFacts, ctx: FactContex
   return parts.join(' ');
 }
 
+const capital = (s: string) => (s ? `${s[0]!.toUpperCase()}${s.slice(1)}` : s);
+
+/** The same answer sentence in Spanish (M20): same facts, same placeholders. */
+function templateAnswerEs(data: AnswerData, f: AnswerFacts, ctx: FactContext): string {
+  const has = (n: string) => n in f.facts;
+  const metrics = data.columns.filter((c) => c.kind === 'metric');
+  const primary = metrics[0];
+  if (!primary) return 'Todavía no hay nada que mostrar.';
+  const label = lit(primary.label.toLowerCase());
+  const when = has('period') ? ' en {{period}}' : '';
+  const change = (prefix: string) => {
+    if (!has(`${prefix}_direction`)) return '';
+    const dir = f.facts[`${prefix}_direction`];
+    if (dir?.kind === 'text' && dir.value === WORDS.es.direction['the same'])
+      return ' Igual que en {{previous_period}}.';
+    return has(`${prefix}_change_pct`)
+      ? ` Es un {{${prefix}_change_pct}} {{${prefix}_direction}} que en {{previous_period}}.`
+      : ` Son {{${prefix}_change}} {{${prefix}_direction}} que en {{previous_period}}.`;
+  };
+
+  if (
+    data.rows.length === 0 ||
+    (data.columns.some((c) => c.kind === 'dimension') && !has('top1_label') && !has('latest_label'))
+  )
+    return `No encontré registros para esto${when}.`;
+
+  const dims = data.columns.filter((c) => c.kind === 'dimension');
+  if (dims.length === 0) {
+    if (!has(primary.metric!)) return `No hay ${label} que mostrar${when}.`;
+    const parts = [`${capital(label)}${when}: {{${primary.metric}}}.${change(primary.metric!)}`];
+    for (const c of metrics.slice(1))
+      if (has(c.metric!)) parts.push(`${capital(lit(c.label.toLowerCase()))}: {{${c.metric}}}.`);
+    return parts.join(' ');
+  }
+
+  if (has('latest_label')) {
+    const parts = [
+      `${capital(label)} en el periodo más reciente ({{latest_label}}): {{latest_value}}.${change('latest_value')}`,
+    ];
+    if (has('highest_label'))
+      parts.push('El punto más alto fue {{highest_label}}, con {{highest_value}}.');
+    return parts.join(' ');
+  }
+
+  const asc = ctx.spec.orderBy?.dir === 'asc';
+  const first = asc
+    ? `{{top1_label}} tiene el valor más bajo de ${label}${when}: {{top1_value}}.`
+    : `{{top1_label}} tuvo el valor más alto de ${label}${when}, con {{top1_value}}.`;
+  const parts = [`${first}${change('top1_value')}`];
+  if (has('top2_label')) parts.push('Le sigue {{top2_label}}, con {{top2_value}}.');
+  if (has('total_count')) parts.push('Se muestran {{shown_count}} de {{total_count}}.');
+  return parts.join(' ');
+}
+
 // --- How I calculated this ----------------------------------------------------------------------
 
 const OPS: Record<string, string> = {
@@ -451,6 +567,7 @@ export function explainSpec(
     assumptions: readonly string[];
   },
 ): string[] {
+  if (ctx.catalog.lang === 'es') return explainSpecEs(spec, ctx);
   const steps: string[] = [];
   for (const id of spec.metrics) {
     const m = ctx.metrics.find((x) => x.id === id);
@@ -484,6 +601,66 @@ export function explainSpec(
     steps.push(
       `Sorted by ${by}, ${spec.orderBy.dir === 'desc' ? 'highest' : 'lowest'} first${
         spec.limit ? `; the top ${spec.limit} shown` : ''
+      }.`,
+    );
+  }
+  for (const a of ctx.assumptions) if (!steps.includes(a)) steps.push(a);
+  return steps;
+}
+
+const OPS_ES: Record<string, string> = {
+  eq: 'es',
+  neq: 'no es',
+  in: 'es uno de',
+  not_in: 'no es uno de',
+  gt: 'es más de',
+  gte: 'es al menos',
+  lt: 'es menos de',
+  lte: 'es como mucho',
+  contains: 'contiene',
+};
+
+function explainSpecEs(spec: QuestionSpec, ctx: Parameters<typeof explainSpec>[1]): string[] {
+  const steps: string[] = [];
+  for (const id of spec.metrics) {
+    const m = ctx.metrics.find((x) => x.id === id);
+    if (m) steps.push(`${m.label}: ${m.description}`);
+  }
+  const snapshotOnly = spec.metrics.every((id) => ctx.metrics.find((m) => m.id === id)?.snapshot);
+  if (snapshotOnly)
+    steps.push('Así están las cosas ahora mismo, según tus registros más recientes.');
+  else if (ctx.period) {
+    const covers = periodLabel(ctx.period, 'es');
+    steps.push(
+      ctx.previousPeriod
+        ? `Abarca ${covers}, comparado con ${periodLabel(ctx.previousPeriod, 'es')}.`
+        : `Abarca ${covers}.`,
+    );
+  } else steps.push('Abarca todos tus registros.');
+  const dimLabel = (field: string) =>
+    ctx.catalog.dimensions.find((d) => d.field === field)?.label.toLowerCase() ?? field;
+  const split = spec.dimensions.map((d) =>
+    'time' in d ? grainWord(d.time, 'es') : dimLabel(d.field),
+  );
+  if (split.length) steps.push(`Separado por ${split.join(' y ')}.`);
+  for (const f of spec.filters) {
+    const dim = ctx.catalog.dimensions.find((d) => d.field === f.field);
+    const vals = f.values.map((v) => dim?.valueLabels[String(v)] ?? String(v)).join(', ');
+    steps.push(
+      `Solo donde ${dim?.label.toLowerCase() ?? f.field} ${OPS_ES[f.op] ?? f.op} ${vals}.`,
+    );
+  }
+  for (const h of spec.having) {
+    const m = ctx.metrics.find((x) => x.id === h.metric);
+    steps.push(
+      `Solo donde ${m?.label.toLowerCase() ?? h.metric} ${OPS_ES[h.op] ?? h.op} ${h.value}.`,
+    );
+  }
+  if (spec.orderBy && spec.dimensions.some((d) => 'field' in d)) {
+    const by = ctx.metrics.find((x) => x.id === spec.orderBy!.by)?.label.toLowerCase() ?? 'nombre';
+    steps.push(
+      `Ordenado por ${by}, ${spec.orderBy.dir === 'desc' ? 'de mayor a menor' : 'de menor a mayor'}${
+        spec.limit ? `; se muestran los ${spec.limit} primeros` : ''
       }.`,
     );
   }

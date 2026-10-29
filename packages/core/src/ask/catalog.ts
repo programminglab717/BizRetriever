@@ -1,4 +1,5 @@
 import { entity, field, getAppDb, metric } from '@bizr/db';
+import type { Language } from '@bizr/i18n';
 import { getPack, type MetricFormat } from '@bizr/packs';
 import { and, eq } from 'drizzle-orm';
 
@@ -40,6 +41,8 @@ export interface AskCatalog {
   }[];
   calendar: Calendar;
   currency: string;
+  /** The language questions are asked and answered in (M20); English when not set. */
+  lang?: Language;
 }
 
 export interface AskContext {
@@ -47,9 +50,15 @@ export interface AskContext {
   model: SemanticModel;
 }
 
-export async function loadAskContext(member: MemberWorkspace): Promise<AskContext> {
+export async function loadAskContext(
+  member: MemberWorkspace,
+  lang: Language = 'en',
+): Promise<AskContext> {
   const ws = member.workspace;
   const pack = getPack(ws.packId);
+  // In Spanish (M20): the pack's Spanish names, and Spanish words as well as English ones (owners
+  // mix them). A measure the owner renamed keeps their name.
+  const tr = lang === 'es' ? pack.translations.es : undefined;
   const model = await loadSemanticModel(ws);
   const db = getAppDb();
   const metrics = await db.select().from(metric).where(eq(metric.workspaceId, ws.id));
@@ -70,36 +79,66 @@ export async function loadAskContext(member: MemberWorkspace): Promise<AskContex
     catalog: {
       metrics: pack.metrics.metrics.map((m) => {
         const row = metrics.find((r) => r.key === m.id);
+        const tm = tr?.metrics[m.id];
+        const renamed = row && row.label !== m.label;
+        const label = renamed ? row.label : (tm?.label ?? m.label);
+        const reason =
+          row?.unavailableReason &&
+          tm?.unavailable_hint &&
+          row.unavailableReason === m.unavailable_hint
+            ? tm.unavailable_hint
+            : row?.unavailableReason;
         return {
           id: m.id,
-          label: row?.label ?? m.label,
-          description: m.description,
+          label,
+          description: tm?.description ?? m.description,
           format: m.format,
           snapshot: m.snapshot,
           available: row?.available ?? false,
-          ...(row?.unavailableReason ? { reason: row.unavailableReason } : {}),
-          synonyms: [...m.synonyms, (row?.label ?? m.label).toLowerCase()],
+          ...(reason ? { reason } : {}),
+          synonyms: [
+            ...m.synonyms,
+            ...(tm?.synonyms ?? []),
+            (row?.label ?? m.label).toLowerCase(),
+            label.toLowerCase(),
+          ],
           ...(m.default_time ? { defaultTime: m.default_time } : {}),
           ...(m.list ? { list: m.list } : {}),
         };
       }),
       dimensions: pack.metrics.dimensions
         .filter((d) => byRef.has(d.field))
-        .map((d) => ({
-          field: d.field,
-          label: d.label,
-          synonyms: d.synonyms,
-          values: byRef.get(d.field) ?? [],
-          valueSynonyms: pack.synonyms.values[d.field] ?? {},
-          valueLabels: d.value_labels,
-          noun: d.noun ?? ['result', 'results'],
-        })),
+        .map((d) => {
+          const td = tr?.dimensions[d.field];
+          const valueSynonyms: Record<string, string[]> = {
+            ...(pack.synonyms.values[d.field] ?? {}),
+          };
+          for (const [v, l] of Object.entries(td?.value_labels ?? {}))
+            valueSynonyms[v] = [...(valueSynonyms[v] ?? []), l.toLowerCase()];
+          return {
+            field: d.field,
+            label: td?.label ?? d.label,
+            synonyms: [
+              ...d.synonyms,
+              ...(td?.synonyms ?? []),
+              ...(td ? [d.label.toLowerCase()] : []),
+            ],
+            values: byRef.get(d.field) ?? [],
+            valueSynonyms,
+            valueLabels: { ...d.value_labels, ...(td?.value_labels ?? {}) },
+            noun:
+              td?.noun ??
+              d.noun ??
+              (lang === 'es' ? ['resultado', 'resultados'] : ['result', 'results']),
+          };
+        }),
       calendar: {
         today: ctx.today,
         weekStart: ctx.weekStart,
         fiscalYearStartMonth: ctx.fiscalYearStartMonth,
       },
       currency: member.settings.currency,
+      lang,
     },
   };
 }

@@ -5,6 +5,7 @@ import {
   type GoalProgress,
 } from '@bizr/core/planning';
 
+import { getT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 const TONE: Record<GoalProgress['status'], string> = {
@@ -16,7 +17,14 @@ const TONE: Record<GoalProgress['status'], string> = {
 };
 
 /** One goal: a bar for this month so far, the estimate for the month, and what each day needs. */
-export function GoalProgressView({ goal, style }: { goal: GoalProgress; style: EstimateStyle }) {
+export async function GoalProgressView({
+  goal,
+  style,
+}: {
+  goal: GoalProgress;
+  style: EstimateStyle;
+}) {
+  const t = await getT();
   const lines = goalLines(goal, style);
   const done = Math.min(100, Math.round(goal.share * 100));
   const heading =
@@ -26,15 +34,19 @@ export function GoalProgressView({ goal, style }: { goal: GoalProgress; style: E
   return (
     <div className="grid gap-2" data-testid="goal-progress">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-semibold">{goal.metric.label}</h3>
+        <h3 className="font-semibold">{t.text(goal.metric.label)}</h3>
         <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', TONE[goal.status])}>
-          {STATUS_LABEL[goal.status]}
+          {t.text(STATUS_LABEL[goal.status])}
         </span>
       </div>
       <div
         className="relative h-3 overflow-hidden rounded-full bg-muted"
         role="img"
-        aria-label={`${done}% of the goal so far${heading !== null ? `, heading for about ${heading}%` : ''}`}
+        aria-label={
+          heading !== null
+            ? t('{done}% of the goal so far, heading for about {heading}%', { done, heading })
+            : t('{done}% of the goal so far', { done })
+        }
       >
         {heading !== null && (
           <div
@@ -44,9 +56,9 @@ export function GoalProgressView({ goal, style }: { goal: GoalProgress; style: E
         )}
         <div className="absolute inset-y-0 left-0 bg-primary" style={{ width: `${done}%` }} />
       </div>
-      <p className="text-sm">{lines.soFar}</p>
-      {lines.heading && <p className="text-sm text-muted-foreground">{lines.heading}</p>}
-      {lines.need && <p className="text-sm text-muted-foreground">{lines.need}</p>}
+      <p className="text-sm">{t.text(lines.soFar)}</p>
+      {lines.heading && <p className="text-sm text-muted-foreground">{t.text(lines.heading)}</p>}
+      {lines.need && <p className="text-sm text-muted-foreground">{t.text(lines.need)}</p>}
     </div>
   );
 }

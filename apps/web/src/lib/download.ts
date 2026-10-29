@@ -18,4 +18,5 @@ export function fileResponse(d: Download): Response {
   });
 }
 
+// i18n-skip: an API answer, not a page
 export const notFound = () => Response.json({ error: 'Not found' }, { status: 404 });

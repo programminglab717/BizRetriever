@@ -22,6 +22,7 @@ export async function GET(
   const { source } = await params;
   const provider = oauthProvider(source);
   if (!provider || !provider.enabled())
+    // i18n-skip: for the provider, not a person
     return Response.json({ error: 'Not found' }, { status: 404 });
   const jar = await cookies();
   const cookie = jar.get(connectStateCookie(provider.kind))?.value;

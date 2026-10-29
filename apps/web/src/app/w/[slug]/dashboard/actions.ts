@@ -15,6 +15,7 @@ import {
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
+import { getT } from '@/lib/i18n';
 import { requireEditor } from '@/lib/session';
 
 /**
@@ -28,25 +29,27 @@ const log = () => getLogger('dashboard.web');
 
 export async function editAction(slug: string, ops: EditOp[]): Promise<EditActionResult> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const parsed = z.array(editOpSchema).min(1).max(6).safeParse(ops);
-  if (!parsed.success) return { ok: false, error: 'That change can’t be made.' };
+  if (!parsed.success) return { ok: false, error: t('That change can’t be made.') };
   try {
     const r = await applyDashboardEdit(member, member.user.id, parsed.data);
     return { ok: true, changes: r.changes };
   } catch (err) {
-    if (err instanceof DashboardEditError) return { ok: false, error: err.message };
+    if (err instanceof DashboardEditError) return { ok: false, error: t.text(err.message) };
     log().error({ err }, 'dashboard edit failed');
-    return { ok: false, error: 'That didn’t save. Please try again.' };
+    return { ok: false, error: t('That didn’t save. Please try again.') };
   }
 }
 
 export async function undoAction(slug: string): Promise<EditActionResult> {
   const member = await requireEditor(slug);
+  const t = await getT();
   try {
     const r = await undoDashboardEdit(member, member.user.id);
-    return { ok: true, changes: [`Undid: ${r.undone}`] };
+    return { ok: true, changes: [t('Undid: {change}', { change: t.text(r.undone) })] };
   } catch (err) {
-    if (err instanceof DashboardEditError) return { ok: false, error: err.message };
+    if (err instanceof DashboardEditError) return { ok: false, error: t.text(err.message) };
     throw err;
   }
 }
@@ -64,13 +67,15 @@ export async function planAction(
   tileId?: string,
 ): Promise<PlanOutcome> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const text = z.string().max(300).safeParse(request);
   const tile = z.string().uuid().optional().safeParse(tileId);
-  if (!text.success || !tile.success) return { kind: 'none', message: 'Please keep it shorter.' };
+  if (!text.success || !tile.success)
+    return { kind: 'none', message: t('Please keep it shorter.') };
   try {
     return await planDashboardEdit(member, text.data, tile.data ? { tileId: tile.data } : {});
   } catch (err) {
     log().error({ err }, 'dashboard plan failed');
-    return { kind: 'none', message: 'Something went wrong working that out. Please try again.' };
+    return { kind: 'none', message: t('Something went wrong working that out. Please try again.') };
   }
 }

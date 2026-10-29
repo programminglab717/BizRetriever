@@ -5,6 +5,7 @@ import { getLogger } from '@bizr/platform';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { getT } from '@/lib/i18n';
 import { requireEditor } from '@/lib/session';
 
 const key = z.string().regex(/^[a-z][a-z0-9_]{0,40}$/);
@@ -20,14 +21,15 @@ export async function renameAction(
   target: RenameTarget,
 ): Promise<{ error?: string }> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const parsed = targetSchema.safeParse(target);
-  if (!parsed.success) return { error: 'That name can’t be used.' };
+  if (!parsed.success) return { error: t('That name can’t be used.') };
   try {
     await renameLabel(member, member.user.id, parsed.data);
   } catch (err) {
-    if (err instanceof RenameError) return { error: err.message };
+    if (err instanceof RenameError) return { error: t.text(err.message) };
     getLogger('glossary').error({ err }, 'rename failed');
-    return { error: 'We couldn’t save that name. Please try again.' };
+    return { error: t('We couldn’t save that name. Please try again.') };
   }
   revalidatePath(`/w/${slug}/glossary`);
   return {};

@@ -10,6 +10,7 @@ import {
   mentionablePeople,
   removeNoteAction,
 } from '@/app/w/[slug]/team-actions';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 
 const when = new Intl.DateTimeFormat('en-GB', {
@@ -62,6 +63,7 @@ export function Notes({
   subject: { kind: 'insight' | 'answer'; id: string };
   initial?: NoteView[];
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState<NoteView[] | undefined>(initial);
   const [text, setText] = useState('');
@@ -85,7 +87,7 @@ export function Notes({
       box.current?.setSelectionRange(at, at);
     });
   };
-  const label = `Notes${notes?.length ? ` (${notes.length})` : ''}`;
+  const label = notes?.length ? t('Notes ({n})', { n: notes.length }) : t('Notes');
 
   const run = (fn: () => ReturnType<typeof loadNotesAction>, then?: () => void) =>
     start(async () => {
@@ -122,15 +124,15 @@ export function Notes({
         <div className="grid gap-2 rounded-lg bg-muted/40 p-3">
           {!notes && pending ? (
             <p className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> Loading…
+              <Loader2 className="size-4 animate-spin" /> {t('Loading…')}
             </p>
           ) : notes?.length ? (
-            <ul className="grid gap-2" aria-label="Notes">
+            <ul className="grid gap-2" aria-label={t('Notes')}>
               {notes.map((n) => (
                 <li key={n.id} className="grid gap-0.5">
                   <span className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">
-                      {n.author ?? 'Someone who left'}
+                      {n.author ?? t('Someone who left')}
                     </span>
                     {when.format(new Date(n.createdAt))}
                     {n.canRemove && (
@@ -139,7 +141,7 @@ export function Notes({
                         size="icon"
                         variant="ghost"
                         className="ml-auto size-7"
-                        aria-label="Delete this note"
+                        aria-label={t('Delete this note')}
                         disabled={pending}
                         onClick={() => run(() => removeNoteAction(slug, subject, n.id))}
                       >
@@ -154,7 +156,7 @@ export function Notes({
               ))}
             </ul>
           ) : (
-            <p className="text-muted-foreground">No notes yet.</p>
+            <p className="text-muted-foreground">{t('No notes yet.')}</p>
           )}
           <form
             className="grid gap-2"
@@ -184,14 +186,16 @@ export function Notes({
               }}
               rows={2}
               maxLength={MAX}
-              placeholder="Add a note for your team, e.g. “Ordered 50 more, arriving Friday”. Type @ to mention someone."
-              aria-label="Add a note"
+              placeholder={t(
+                'Add a note for your team, e.g. “Ordered 50 more, arriving Friday”. Type @ to mention someone.',
+              )}
+              aria-label={t('Add a note')}
               className="w-full rounded-md border bg-background px-3 py-2 shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
             {matches.length > 0 && (
               <ul
                 className="grid gap-0.5 rounded-md border bg-background p-1"
-                aria-label="Mention someone"
+                aria-label={t('Mention someone')}
               >
                 {matches.map((p) => (
                   <li key={p.id}>
@@ -208,7 +212,7 @@ export function Notes({
             )}
             <div>
               <Button type="submit" size="sm" disabled={pending || !text.trim()}>
-                Add note
+                {t('Add note')}
               </Button>
             </div>
           </form>

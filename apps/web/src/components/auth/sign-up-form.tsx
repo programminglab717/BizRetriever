@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
+import { msg, type Translator } from '@bizr/i18n/translate';
+
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
@@ -15,19 +18,22 @@ import { GoogleButton, OrDivider } from './google-button';
 import { formText } from '@/lib/forms';
 
 const MIN_PASSWORD = 10;
+const ALREADY = msg('That email already has an account. Sign in instead?');
 
 function friendlyError(
+  t: Translator,
   code: string | undefined,
   status: number,
   fallback: string | undefined,
 ): string {
-  if (status === 429) return 'Too many tries. Please wait a minute and try again.';
-  if (code?.includes('ALREADY_EXISTS'))
-    return 'That email already has an account. Sign in instead?';
+  if (status === 429) return t('Too many tries. Please wait a minute and try again.');
+  if (code?.includes('ALREADY_EXISTS')) return t(ALREADY);
   if (code === 'PASSWORD_TOO_SHORT')
-    return `Your password needs at least ${MIN_PASSWORD} characters.`;
-  if (code === 'INVALID_EMAIL') return 'That email address doesn’t look right.';
-  return fallback ?? 'Something went wrong creating your account. Please try again.';
+    return t('Your password needs at least {n} characters.', { n: MIN_PASSWORD });
+  if (code === 'INVALID_EMAIL') return t('That email address doesn’t look right.');
+  return fallback
+    ? t.text(fallback)
+    : t('Something went wrong creating your account. Please try again.');
 }
 
 export function SignUpForm({
@@ -37,6 +43,7 @@ export function SignUpForm({
   googleEnabled: boolean;
   next?: Route | undefined;
 }) {
+  const t = useT();
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -47,7 +54,7 @@ export function SignUpForm({
     const form = new FormData(event.currentTarget);
     const password = formText(form, 'password');
     if (password.length < MIN_PASSWORD) {
-      setError(`Your password needs at least ${MIN_PASSWORD} characters.`);
+      setError(t('Your password needs at least {n} characters.', { n: MIN_PASSWORD }));
       return;
     }
     setPending(true);
@@ -58,7 +65,7 @@ export function SignUpForm({
     });
     if (err) {
       setPending(false);
-      setError(friendlyError(err.code, err.status, err.message));
+      setError(friendlyError(t, err.code, err.status, err.message));
       return;
     }
     router.push(next ?? '/onboarding');
@@ -69,6 +76,7 @@ export function SignUpForm({
     <div className="grid gap-5">
       {googleEnabled ? (
         <>
+          {/* i18n-skip: a path */}
           <GoogleButton next={next ?? '/onboarding'} />
           <OrDivider />
         </>
@@ -77,20 +85,24 @@ export function SignUpForm({
         {error ? (
           <Alert tone="error">
             {error}{' '}
-            {error.startsWith('That email already') ? (
+            {error === t(ALREADY) ? (
               <Link href="/sign-in" className="font-medium underline">
-                Sign in
+                {t('Sign in')}
               </Link>
             ) : null}
           </Alert>
         ) : null}
-        <Field id="name" label="Your name">
+        <Field id="name" label={t('Your name')}>
           <Input id="name" name="name" autoComplete="name" required />
         </Field>
-        <Field id="email" label="Email">
+        <Field id="email" label={t('Email')}>
           <Input id="email" name="email" type="email" autoComplete="email" required />
         </Field>
-        <Field id="password" label="Password" hint={`At least ${MIN_PASSWORD} characters.`}>
+        <Field
+          id="password"
+          label={t('Password')}
+          hint={t('At least {n} characters.', { n: MIN_PASSWORD })}
+        >
           <Input
             id="password"
             name="password"
@@ -102,7 +114,7 @@ export function SignUpForm({
           />
         </Field>
         <Button type="submit" size="lg" disabled={pending} className="w-full">
-          {pending ? 'Creating your account…' : 'Create my account'}
+          {pending ? t('Creating your account…') : t('Create my account')}
         </Button>
       </form>
     </div>

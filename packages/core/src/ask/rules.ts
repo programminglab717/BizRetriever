@@ -1,4 +1,6 @@
 import type { TimeGrain } from '../semantic/query-spec';
+import type { Language } from '@bizr/i18n';
+
 import type { AskCatalog } from './catalog';
 import type { Interpretation, QuestionSpec, TimeRange } from './interpretation';
 import {
@@ -7,8 +9,10 @@ import {
   namedMonth,
   periodLabel,
   resolvePreset,
+  type Period,
   type TimePreset,
 } from './time';
+import { SPANISH_RULES } from './rules-es';
 
 /**
  * Rule-based question interpreter (ADR-040). Recognises the common, clear questions from the pack's
@@ -181,55 +185,164 @@ const CUSTOMER_MEASURES = new Set([
   'customer_revenue',
 ]);
 
-export function normalizeQuestion(q: string): string {
-  return ` ${q
+/** Everything language-specific in the rules (M20): English here, Spanish in `rules-es.ts`. */
+export interface RulesLanguage {
+  /** Compare text without accents. */
+  fold: boolean;
+  stopwords: Set<string>;
+  time: [string, TimePreset][];
+  grain: [string, TimeGrain][];
+  rank: [string, 'asc' | 'desc'][];
+  compare: [string, 'previous_period' | 'same_period_last_year'][];
+  dimWords: Record<string, string[]>;
+  tablePhrases: string[];
+  whoWords: string[];
+  plural: (w: string) => string;
+  /** "top 5", "best 3": the number is the first group. */
+  top: RegExp[];
+  worst: RegExp;
+  lastN: RegExp;
+  lastNUnit: (unit: string) => 'day' | 'week' | 'month';
+  month: RegExp;
+  since: RegExp;
+  weekday: RegExp;
+  year: RegExp;
+  followUp: RegExp;
+  howMany: RegExp;
+  sellVerbs: string[];
+  genericSales: Set<string>;
+  genericProfit: Set<string>;
+  splitWord: RegExp;
+  asksTotal: RegExp;
+  bestSeller: RegExp;
+  howMuch: RegExp;
+  expenseGeneric: string[];
+  expenseAliases: Record<string, string>;
+  text: {
+    clarifyCustomers: string;
+    bySpend: string;
+    byOrders: string;
+    countedCustomers: string;
+    bestMeans: (label: string) => string;
+    lookedAt: (label: string) => string;
+    cannotYet: (label: string) => string;
+    salesMeans: (phrase: string, label: string) => string;
+    profitMeans: (phrase: string, label: string) => string;
+    compared90: string;
+    coversAll: string;
+    covers: (period: Period | undefined) => string;
+  };
+}
+
+const ENGLISH: RulesLanguage = {
+  fold: false,
+  stopwords: STOPWORDS,
+  time: TIME_PHRASES,
+  grain: GRAIN_PHRASES,
+  rank: RANK_PHRASES,
+  compare: COMPARE_PHRASES,
+  dimWords: DIM_WORDS,
+  tablePhrases: ['as a table', 'in a table', 'as a list', 'list'],
+  whoWords: ['who'],
+  plural: (w) => (w.endsWith('y') ? `${w.slice(0, -1)}ies` : `${w}s`),
+  top: [/ (?:top|best|worst|bottom) (\d{1,3}) /],
+  worst: /worst|bottom/,
+  lastN: / (?:last|past) (\d{1,3}) (day|days|week|weeks|month|months) /,
+  lastNUnit: (u) => (u.startsWith('day') ? 'day' : u.startsWith('week') ? 'week' : 'month'),
+  month:
+    / (?:in |for |during |since (?:the (?:start|beginning) of )?)?(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)(?: (20\d\d))? /,
+  since: / since /,
+  weekday: / (?:days? of (?:the )?week|weekdays?|weekends?|hours?|time of day) /,
+  year: / (?:in |for |during )?(20\d\d) /,
+  followUp: /^\s*(and|what about|how about|now|only|just|also|same|but)\b/i,
+  howMany: /\bhow many\b/i,
+  sellVerbs: ['sell', 'sold', 'selling', 'sells'],
+  genericSales: GENERIC_SALES,
+  genericProfit: GENERIC_PROFIT,
+  splitWord: /\b(by|per|each|every|which|list|top|best|worst)\b/,
+  asksTotal: /^\s*(how (many|much)|total)\b/i,
+  bestSeller: /best seller|sells? best/,
+  howMuch: /^\s*how (many|much)\b/i,
+  expenseGeneric: ['expenses', 'overheads', 'running costs', 'bills', 'spend on', 'spent on'],
+  expenseAliases: EXPENSE_ALIASES,
+  text: {
+    clarifyCustomers:
+      'Do you mean your best customers by how much they spend or how often they order?',
+    bySpend: 'How much they spend',
+    byOrders: 'How often they order',
+    countedCustomers: 'I counted the customers who bought.',
+    bestMeans: () => 'I took “best” to mean highest net sales.',
+    lookedAt: () => 'I looked at your net sales.',
+    cannotYet: (label) => `I can’t work out ${label} from your data yet.`,
+    salesMeans: (phrase) =>
+      `I took “${phrase}” to mean net sales: money from completed sales after discounts and refunds.`,
+    profitMeans: () =>
+      'I took “profit” to mean gross profit: net sales minus what the items cost you.',
+    compared90: 'I compared the last 90 days with the 90 days before.',
+    coversAll: 'This covers all your records so far.',
+    covers: (period) => `This covers ${periodLabel(period)}.`,
+  },
+};
+
+const LANGUAGES: Record<Language, RulesLanguage> = { en: ENGLISH, es: SPANISH_RULES };
+
+/** Lower case without accents: "Cuánto" → "cuanto" (Spanish, M20). */
+const foldAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+export function normalizeQuestion(q: string, fold = false): string {
+  return ` ${(fold ? foldAccents(q) : q)
     .toLowerCase()
     .replace(/[’‘`]/g, "'")
-    .replace(/[?!.,;:()"“”]/g, ' ')
+    .replace(/[?!¿¡.,;:()"“”«»]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()} `;
 }
 
-const plural = (w: string) => (w.endsWith('y') ? `${w.slice(0, -1)}ies` : `${w}s`);
+const englishPlural = (w: string) => (w.endsWith('y') ? `${w.slice(0, -1)}ies` : `${w}s`);
+
+const languageOf = (catalog: Pick<AskCatalog, 'lang'>) => LANGUAGES[catalog.lang ?? 'en'];
 
 function entries(catalog: AskCatalog): Entry[] {
+  const L = languageOf(catalog);
   const out: Entry[] = [];
+  // Phrases are compared the way questions are normalised (without accents in Spanish).
+  const norm = (s: string) => (L.fold ? foldAccents(s.toLowerCase()) : s.toLowerCase());
   for (const m of catalog.metrics)
-    for (const s of new Set(m.synonyms))
-      out.push({ kind: 'metric', phrase: s.toLowerCase(), id: m.id });
+    for (const s of new Set(m.synonyms)) out.push({ kind: 'metric', phrase: norm(s), id: m.id });
   for (const d of catalog.dimensions) {
-    const words = new Set([...d.synonyms, d.label.toLowerCase(), ...(DIM_WORDS[d.field] ?? [])]);
-    for (const w of [...words]) words.add(plural(w));
-    for (const w of words) out.push({ kind: 'dim', phrase: w.toLowerCase(), field: d.field });
+    const words = new Set(
+      [...d.synonyms, d.label.toLowerCase(), ...(L.dimWords[d.field] ?? [])].map(norm),
+    );
+    for (const w of [...words]) words.add(L.plural(w));
+    for (const w of words) out.push({ kind: 'dim', phrase: w, field: d.field });
     for (const v of d.values) {
-      const phrase = normalizeQuestion(v).trim();
-      if (phrase.length < 3 || /^\d+$/.test(phrase) || STOPWORDS.has(phrase)) continue;
+      const phrase = normalizeQuestion(v, L.fold).trim();
+      if (phrase.length < 3 || /^\d+$/.test(phrase) || L.stopwords.has(phrase)) continue;
       out.push({ kind: 'value', phrase, field: d.field, value: v });
       // "How many Sage Stoneware Mugs", "candle sales": owners change the number of names.
       if (!phrase.endsWith('s'))
-        out.push({ kind: 'value', phrase: plural(phrase), field: d.field, value: v });
+        out.push({ kind: 'value', phrase: englishPlural(phrase), field: d.field, value: v });
       else if (phrase.length > 4 && !phrase.endsWith('ss'))
         out.push({ kind: 'value', phrase: phrase.slice(0, -1), field: d.field, value: v });
     }
     for (const [canonical, words] of Object.entries(d.valueSynonyms)) {
-      for (const w of [...words, canonical.replace(/_/g, ' ')])
-        if (w.length >= 3 && !STOPWORDS.has(w))
+      for (const w of [...words, canonical.replace(/_/g, ' ')].map(norm))
+        if (w.length >= 3 && !L.stopwords.has(w))
           out.push({
             kind: 'value',
-            phrase: w.toLowerCase(),
+            phrase: w,
             field: d.field,
             value: canonical,
             pack: true,
           });
     }
   }
-  for (const [phrase, preset] of TIME_PHRASES) out.push({ kind: 'time', phrase, preset });
-  for (const [phrase, grain] of GRAIN_PHRASES) out.push({ kind: 'grain', phrase, grain });
-  for (const [phrase, dir] of RANK_PHRASES) out.push({ kind: 'rank', phrase, dir });
-  for (const [phrase, to] of COMPARE_PHRASES) out.push({ kind: 'compare', phrase, to });
-  for (const phrase of ['as a table', 'in a table', 'as a list', 'list'])
-    out.push({ kind: 'table', phrase });
-  out.push({ kind: 'who', phrase: 'who' });
+  for (const [phrase, preset] of L.time) out.push({ kind: 'time', phrase: norm(phrase), preset });
+  for (const [phrase, grain] of L.grain) out.push({ kind: 'grain', phrase: norm(phrase), grain });
+  for (const [phrase, dir] of L.rank) out.push({ kind: 'rank', phrase: norm(phrase), dir });
+  for (const [phrase, to] of L.compare) out.push({ kind: 'compare', phrase: norm(phrase), to });
+  for (const phrase of L.tablePhrases) out.push({ kind: 'table', phrase: norm(phrase) });
+  for (const phrase of L.whoWords) out.push({ kind: 'who', phrase: norm(phrase) });
   // Longest phrases first ("profit after expenses" before "profit"); breakdown words before values.
   const priority: Record<Entry['kind'], number> = {
     time: 0,
@@ -270,7 +383,9 @@ interface Parsed {
 }
 
 function parse(question: string, catalog: AskCatalog): Parsed {
-  let text = normalizeQuestion(question);
+  const L = languageOf(catalog);
+  const norm = (w: string) => (L.fold ? foldAccents(w) : w);
+  let text = normalizeQuestion(question, L.fold);
   const p: Parsed = { metrics: [], dims: [], values: [], table: false, who: false, leftover: [] };
   // Matched words are blanked out with bars of the same length, so positions stay put.
   const blank = (at: number, len: number) => {
@@ -283,34 +398,34 @@ function parse(question: string, catalog: AskCatalog): Parsed {
   };
 
   // Numbers first: "top 5", "last 14 days", "in March 2026", "in 2025".
-  const top = take(/ (?:top|best|worst|bottom) (\d{1,3}) /);
-  if (top) {
+  for (const re of L.top) {
+    const top = take(re);
+    if (!top) continue;
     p.topN = Number(top[1]);
-    p.rank = /worst|bottom/.test(top[0]) ? 'asc' : 'desc';
+    p.rank = L.worst.test(top[0]) ? 'asc' : 'desc';
+    break;
   }
-  const lastN = take(/ (?:last|past) (\d{1,3}) (day|days|week|weeks|month|months) /);
+  const lastN = take(L.lastN);
   if (lastN) {
     const n = Number(lastN[1]);
-    const days = lastN[2]!.startsWith('day') ? n : lastN[2]!.startsWith('week') ? n * 7 : n * 30;
+    const unit = L.lastNUnit(lastN[2]!);
+    const days = unit === 'day' ? n : unit === 'week' ? n * 7 : n * 30;
     const to = addDays(catalog.calendar.today, 1);
     p.time = { from: addDays(to, -days), to };
     p.timePhrase = lastN[0].trim();
   }
-  const month = take(
-    / (?:in |for |during |since (?:the (?:start|beginning) of )?)?(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)(?: (20\d\d))? /,
-  );
+  const month = take(L.month);
   if (month && !p.time) {
     const mi = monthIndex(month[1]!)!;
     p.time = namedMonth(mi, catalog.calendar, month[2] ? Number(month[2]) : undefined);
     // "since September": from the start of that month until today.
-    if (/ since /.test(month[0]))
+    if (L.since.test(month[0]))
       p.time = { from: p.time.from, to: addDays(catalog.calendar.today, 1) };
     p.timePhrase = month[0].trim();
   }
   // Breakdowns we can't do yet: leave a marker so the AI gets the question.
-  if (take(/ (?:days? of (?:the )?week|weekdays?|weekends?|hours?|time of day) /))
-    p.leftover.push('weekday');
-  const year = take(/ (?:in |for |during )?(20\d\d) /);
+  if (take(L.weekday)) p.leftover.push('weekday');
+  const year = take(L.year);
   if (year && !p.time) {
     const y = Number(year[1]);
     p.time = { from: `${y}-01-01`, to: `${y + 1}-01-01` };
@@ -323,7 +438,7 @@ function parse(question: string, catalog: AskCatalog): Parsed {
       blank(at, needle.length);
       // "most profit", "best seller": the ranking word is part of the phrase.
       const rank =
-        e.kind === 'metric' && RANK_PHRASES.find(([w]) => ` ${e.phrase} `.includes(` ${w} `));
+        e.kind === 'metric' && L.rank.find(([w]) => ` ${e.phrase} `.includes(` ${norm(w)} `));
       if (rank) p.rank ??= rank[1];
       switch (e.kind) {
         case 'metric':
@@ -363,7 +478,7 @@ function parse(question: string, catalog: AskCatalog): Parsed {
   p.metrics.sort((a, b) => a.at - b.at);
   p.values.sort((a, b) => a.at - b.at);
   p.leftover.push(
-    ...text.split(/[\s|]+/).filter((w) => w.length > 2 && !STOPWORDS.has(w) && !/^\d+$/.test(w)),
+    ...text.split(/[\s|]+/).filter((w) => w.length > 2 && !L.stopwords.has(w) && !/^\d+$/.test(w)),
   );
   return p;
 }
@@ -383,6 +498,8 @@ export function interpretWithRules(
   previous?: QuestionSpec,
 ): RulesResult | null {
   const p = parse(question, catalog);
+  const L = languageOf(catalog);
+  const asked = L.fold ? foldAccents(question) : question;
   const understood =
     p.metrics.length + p.dims.length + p.values.length + (p.time ? 1 : 0) + (p.grain ? 1 : 0);
   const metric = (id: string) => catalog.metrics.find((m) => m.id === id);
@@ -391,19 +508,19 @@ export function interpretWithRules(
   // period ("by product", "last year"). "Who are my best customers?" is a new question.
   const followUp =
     Boolean(previous) &&
-    (/^\s*(and|what about|how about|now|only|just|also|same|but)\b/i.test(question) ||
+    (L.followUp.test(asked) ||
       (p.metrics.length === 0 &&
         !p.rank &&
         !p.who &&
         (p.dims.length > 0 || p.values.length > 0 || Boolean(p.time) || Boolean(p.grain))));
 
   // "How many Sage Mugs did I sell?" counts items, not money.
-  if (/\bhow many\b/i.test(question))
+  if (L.howMany.test(asked))
     for (const m of p.metrics)
-      if (m.id === 'net_sales' && ['sell', 'sold', 'selling'].includes(m.phrase))
+      if (m.id === 'net_sales' && L.sellVerbs.filter((v) => v !== 'sells').includes(m.phrase))
         m.id = 'units_sold';
   // "Which products sold the most units?": "sold" is just the verb when a measure is named.
-  const verbs = ['sell', 'sold', 'selling', 'sells'];
+  const verbs = L.sellVerbs;
   if (p.metrics.some((m) => !verbs.includes(m.phrase)))
     p.metrics = p.metrics.filter((m) => !(verbs.includes(m.phrase) && m.id === 'net_sales'));
   let metrics = [...new Set(p.metrics.map((m) => m.id))];
@@ -434,12 +551,8 @@ export function interpretWithRules(
         understood,
         interpretation: {
           kind: 'clarify',
-          question:
-            'Do you mean your best customers by how much they spend or how often they order?',
-          options: [
-            base('net_sales', 'How much they spend'),
-            base('order_count', 'How often they order'),
-          ],
+          question: L.text.clarifyCustomers,
+          options: [base('net_sales', L.text.bySpend), base('order_count', L.text.byOrders)],
         },
       };
   }
@@ -450,12 +563,11 @@ export function interpretWithRules(
     // "Customers by state" counts customers in each state.
     if (p.dims[0] === 'customer.name' && p.dims.length > 1 && metric('customer_count')) {
       metrics = ['customer_count'];
-      assumptions.push('I counted the customers who bought.');
+      assumptions.push(L.text.countedCustomers);
     } else {
       metrics = ['net_sales'];
-      assumptions.push(
-        p.rank ? 'I took “best” to mean highest net sales.' : 'I looked at your net sales.',
-      );
+      const sales = (metric('net_sales')?.label ?? 'net sales').toLowerCase();
+      assumptions.push(p.rank ? L.text.bestMeans(sales) : L.text.lookedAt(sales));
     }
   }
 
@@ -469,29 +581,22 @@ export function interpretWithRules(
         kind: 'unanswerable',
         reason: 'missing_data',
         missing: [unavailable.label],
-        message:
-          unavailable.reason ??
-          `I can’t work out ${unavailable.label.toLowerCase()} from your data yet.`,
+        message: unavailable.reason ?? L.text.cannotYet(unavailable.label.toLowerCase()),
       },
     };
 
   for (const m of p.metrics) {
-    if (GENERIC_SALES.has(m.phrase) && m.id === 'net_sales')
-      assumptions.push(
-        `I took “${m.phrase}” to mean net sales: money from completed sales after discounts and refunds.`,
-      );
-    if (GENERIC_PROFIT.has(m.phrase) && m.id === 'gross_profit')
-      assumptions.push(
-        'I took “profit” to mean gross profit: net sales minus what the items cost you.',
-      );
+    const label = (metric(m.id)?.label ?? m.id).toLowerCase();
+    if (L.genericSales.has(m.phrase) && m.id === 'net_sales')
+      assumptions.push(L.text.salesMeans(m.phrase, label));
+    if (L.genericProfit.has(m.phrase) && m.id === 'gross_profit')
+      assumptions.push(L.text.profitMeans(m.phrase, label));
   }
 
   // Breakdowns.
   // "What share of customers come back?" counts customers; it isn't a list of them.
   const customerMeasure = CUSTOMER_MEASURES.has(metrics[0] ?? '');
-  const splitWord = /\b(by|per|each|every|which|list|top|best|worst)\b/.test(
-    question.toLowerCase(),
-  );
+  const splitWord = L.splitWord.test(asked.toLowerCase());
   const entityOf = (field: string) => field.split('.')[0];
   const valueEntities = new Set(p.values.map((v) => entityOf(v.field)));
   let dimFields = p.dims
@@ -519,10 +624,10 @@ export function interpretWithRules(
   // How the pack says this measure is listed (M14): "What's about to run out?" by product, "Who
   // owes me money?" by customer, leaving out the zeros; with `totals`, "How many…" gets the total.
   const list = metric(primary)?.list;
-  const asksTotal = Boolean(list?.totals) && /^\s*(how (many|much)|total)\b/i.test(question);
+  const asksTotal = Boolean(list?.totals) && L.asksTotal.test(asked);
   if (list?.by && !asksTotal) want(list.by);
   if (list?.who && p.who) want(list.who);
-  if (p.metrics.some((m) => /best seller|sells? best/.test(m.phrase))) want('product.name');
+  if (p.metrics.some((m) => L.bestSeller.test(m.phrase))) want('product.name');
   // "What are my biggest expenses?" lists expense types.
   if (primary === 'expenses_total' && p.rank) want('expense.category');
   if (list?.nonzero && dims.length) having.push({ metric: primary, op: 'gt', value: 0 });
@@ -544,12 +649,10 @@ export function interpretWithRules(
   const expenseDim = catalog.dimensions.find((d) => d.field === 'expense.category');
   if (primary === 'expenses_total' && expenseDim) {
     for (const m of p.metrics.filter((x) => x.id === 'expenses_total')) {
-      const word = EXPENSE_ALIASES[m.phrase] ?? m.phrase;
+      const word = L.expenseAliases[m.phrase] ?? m.phrase;
       if (
         expenseDim.values.some((v) => v.toLowerCase().includes(word)) &&
-        !['expenses', 'overheads', 'running costs', 'bills', 'spend on', 'spent on'].includes(
-          m.phrase,
-        )
+        !L.expenseGeneric.includes(m.phrase)
       )
         filters.push({ field: 'expense.category', op: 'contains', values: [word] });
     }
@@ -565,15 +668,15 @@ export function interpretWithRules(
   if (compareTo && dims.some((d) => 'time' in d)) compareTo = undefined;
   if (compareTo && 'preset' in timeRange && timeRange.preset === 'all_time') {
     timeRange = { preset: 'last_90_days' };
-    assumptions.push('I compared the last 90 days with the 90 days before.');
+    assumptions.push(L.text.compared90);
   }
   if (!p.time && !(followUp && previous) && !def?.snapshot) {
     const period =
       'preset' in timeRange ? resolvePreset(timeRange.preset, catalog.calendar) : timeRange;
     assumptions.push(
       'preset' in timeRange && timeRange.preset === 'all_time'
-        ? 'This covers all your records so far.'
-        : `This covers ${periodLabel(period)}.`,
+        ? L.text.coversAll
+        : L.text.covers(period),
     );
   }
 
@@ -603,7 +706,7 @@ export function interpretWithRules(
     confident:
       p.leftover.length === 0 &&
       !(p.rank && !hasCategoryDim) &&
-      !(p.grain && !p.time && /^\s*how (many|much)\b/i.test(question)),
+      !(p.grain && !p.time && L.howMuch.test(asked)),
     leftover: p.leftover,
     understood,
     interpretation: {

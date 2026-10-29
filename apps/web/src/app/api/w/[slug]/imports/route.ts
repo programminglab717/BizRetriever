@@ -4,6 +4,7 @@ import { canChange } from '@bizr/core/workspaces';
 
 import { kickJobs } from '@/lib/imports';
 import { getJobQueue } from '@/lib/jobs';
+import { getT } from '@/lib/i18n';
 import { getSession, workspaceForApi } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -15,19 +16,20 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> },
 ): Promise<Response> {
   const { slug } = await params;
+  const t = await getT();
   const member = await workspaceForApi(slug);
   const session = await getSession();
-  if (!member || !session) return Response.json({ error: 'Not found' }, { status: 404 });
+  if (!member || !session) return Response.json({ error: t('Not found') }, { status: 404 });
   if (!canChange(member.role))
     return Response.json(
-      { error: 'You can view this business but not change it. Ask the owner.' },
+      { error: t('You can view this business but not change it. Ask the owner.') },
       { status: 403 },
     );
 
   const length = Number(request.headers.get('content-length') ?? 0);
   if (length > UPLOAD_LIMITS.maxFiles * UPLOAD_LIMITS.maxFileBytes + 1_000_000) {
     return Response.json(
-      { error: 'These files are too large to upload at once.' },
+      { error: t('These files are too large to upload at once.') },
       { status: 413 },
     );
   }
@@ -38,7 +40,7 @@ export async function POST(
       form = await request.formData();
     } catch {
       return Response.json(
-        { error: 'We couldn’t receive those files. Please try again.' },
+        { error: t('We couldn’t receive those files. Please try again.') },
         { status: 400 },
       );
     }
@@ -63,12 +65,13 @@ export async function POST(
       return Response.json({ runId }, { status: 201 });
     } catch (err) {
       if (err instanceof IngestionRequestError)
-        return Response.json({ error: err.message }, { status: 400 });
+        return Response.json({ error: t.text(err.message) }, { status: 400 });
       getLogger('imports').error({ err }, 'upload failed');
       return Response.json(
         {
-          error:
+          error: t(
             'Something went wrong while uploading. Your files weren’t changed. Please try again.',
+          ),
         },
         { status: 500 },
       );

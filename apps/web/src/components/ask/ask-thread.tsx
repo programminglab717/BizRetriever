@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { askAction } from '@/app/w/[slug]/ask/actions';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
@@ -19,15 +20,16 @@ interface Turn {
 }
 
 function Thinking() {
+  const t = useT();
   const [slow, setSlow] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setSlow(true), 4000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setSlow(true), 4000);
+    return () => clearTimeout(timer);
   }, []);
   return (
     <div role="status" className="grid gap-3 rounded-xl border p-6">
       <p className="text-muted-foreground">
-        {slow ? 'Still working: checking your records…' : 'Working it out…'}
+        {slow ? t('Still working: checking your records…') : t('Working it out…')}
       </p>
       <div className="h-40 animate-pulse rounded-lg bg-muted" aria-hidden />
     </div>
@@ -51,6 +53,7 @@ export function AskThread({
   /** Prefilled question ("Ask about this" from a dashboard tile). */
   initialQuestion?: string;
 }) {
+  const t = useT();
   const [turns, setTurns] = useState<Turn[]>(initial);
   const [conversationId, setConversationId] = useState(initialConversation);
   const [question, setQuestion] = useState(initialQuestion ?? '');
@@ -66,8 +69,8 @@ export function AskThread({
   }, [turns.length, asking]);
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 6000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(timer);
   }, [toast]);
 
   const send = (q: string, choice?: { answerId: string; option: number }, shown?: string) => {
@@ -89,7 +92,7 @@ export function AskThread({
         setConversationId(r.conversationId);
         window.history.replaceState(null, '', `/w/${slug}/ask?c=${r.conversationId}`);
       }
-      setTurns((t) => [...t, { question: r.answer.question, answer: r.answer }]);
+      setTurns((prev) => [...prev, { question: r.answer.question, answer: r.answer }]);
       setQuestion('');
     });
   };
@@ -99,42 +102,43 @@ export function AskThread({
     <div className="grid grid-cols-1 gap-6 pb-28">
       {empty && (
         <div className="grid gap-4">
-          <p className="text-xl">Ask me anything about your business.</p>
+          <p className="text-xl">{t('Ask me anything about your business.')}</p>
           {chips.length > 0 && (
-            <div className="flex flex-wrap gap-2" aria-label="Questions you can ask">
+            <div className="flex flex-wrap gap-2" aria-label={t('Questions you can ask')}>
               {chips.map((c) => (
                 <Button
                   key={c}
                   variant="outline"
                   className="h-auto max-w-full shrink whitespace-normal py-2 text-left"
-                  onClick={() => send(c)}
+                  // What's asked is what the chip says, in the reader's language.
+                  onClick={() => send(t.text(c))}
                 >
-                  {c}
+                  {t.text(c)}
                 </Button>
               ))}
             </div>
           )}
           <p className="text-sm text-muted-foreground">
             <Link className="underline" href={`/w/${slug}/glossary`}>
-              What can I ask?
+              {t('What can I ask?')}
             </Link>{' '}
-            See everything we can work out from your data.
+            {t('See everything we can work out from your data.')}
           </p>
         </div>
       )}
 
-      {turns.map((t) => (
-        <section key={t.answer.id} className="grid gap-3" aria-label={t.question}>
+      {turns.map((turn) => (
+        <section key={turn.answer.id} className="grid gap-3" aria-label={turn.question}>
           <p className="w-fit max-w-[85%] justify-self-end rounded-2xl bg-primary px-4 py-2 text-primary-foreground">
-            {t.question}
+            {turn.question}
           </p>
           <AnswerCard
             slug={slug}
-            answer={t.answer}
+            answer={turn.answer}
             style={style}
             busy={pending}
             onChoose={(answerId, option) =>
-              send('', { answerId, option }, t.answer.clarify?.options[option])
+              send('', { answerId, option }, t.text(turn.answer.clarify?.options[option] ?? ''))
             }
             onFollowUp={() => input.current?.focus()}
             onToast={setToast}
@@ -162,7 +166,7 @@ export function AskThread({
       >
         <div className="mx-auto flex max-w-3xl items-end gap-2">
           <label htmlFor="ask-input" className="sr-only">
-            Your question
+            {t('Your question')}
           </label>
           <textarea
             id="ask-input"
@@ -172,8 +176,8 @@ export function AskThread({
             maxLength={500}
             placeholder={
               turns.length
-                ? 'Ask a follow-up…'
-                : 'Ask about your sales, products, stock or customers…'
+                ? t('Ask a follow-up…')
+                : t('Ask about your sales, products, stock or customers…')
             }
             className="max-h-40 min-h-11 flex-1 resize-none rounded-md border bg-background px-3 py-2.5 text-base outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             onChange={(e) => {
@@ -188,7 +192,12 @@ export function AskThread({
               }
             }}
           />
-          <Button type="submit" size="lg" disabled={pending || !question.trim()} aria-label="Ask">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={pending || !question.trim()}
+            aria-label={t('Ask')}
+          >
             <SendHorizontal />
           </Button>
         </div>
@@ -214,7 +223,7 @@ export function AskThread({
                 setToast(null);
               }}
             >
-              Undo
+              {t('Undo')}
             </button>
           )}
         </div>

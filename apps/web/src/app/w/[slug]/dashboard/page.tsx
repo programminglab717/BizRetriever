@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { DashboardBoard } from '@/components/dashboard/dashboard-board';
 import { ComingSoon, PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
+import { getT } from '@/lib/i18n';
 import { requireWorkspace } from '@/lib/session';
 
 /** Dates from the URL (?range=last_90_days&compare=0), validated; otherwise the saved choice. */
@@ -31,17 +32,20 @@ export default async function DashboardPage({
 }) {
   const { slug } = await params;
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const view = await dashboardView(member, rangeFromParams(await searchParams));
-  const style = { locale: localeFor(member.settings), currency: member.settings.currency };
+  const style = { locale: localeFor(member.settings, t.lang), currency: member.settings.currency };
   return (
     <div className="grid gap-6">
-      <PageHeader title="Your business at a glance" />
+      <PageHeader title={t('Your business at a glance')} />
       {view.tiles.length === 0 ? (
-        <ComingSoon title="Your dashboard is waiting for your data">
-          <p>Bring in your sales and stock files and we’ll build a dashboard for your shop.</p>
+        <ComingSoon title={t('Your dashboard is waiting for your data')}>
+          <p>
+            {t('Bring in your sales and stock files and we’ll build a dashboard for your shop.')}
+          </p>
           <div className="mt-3">
             <Button asChild variant="outline">
-              <Link href={`/w/${slug}/data/import`}>Upload files</Link>
+              <Link href={`/w/${slug}/data/import`}>{t('Upload files')}</Link>
             </Button>
           </div>
         </ComingSoon>
@@ -49,7 +53,7 @@ export default async function DashboardPage({
         <DashboardBoard
           slug={slug}
           view={view}
-          presets={RANGE_PRESETS.map((p) => ({ preset: p.preset, label: p.label }))}
+          presets={RANGE_PRESETS.map((p) => ({ preset: p.preset, label: t.text(p.label) }))}
           style={style}
         />
       )}

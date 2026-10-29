@@ -14,6 +14,7 @@ const config: NextConfig = {
   // Workspace packages ship TypeScript source; Next compiles them.
   transpilePackages: [
     '@bizr/ai',
+    '@bizr/i18n',
     '@bizr/core',
     '@bizr/db',
     '@bizr/ingest',

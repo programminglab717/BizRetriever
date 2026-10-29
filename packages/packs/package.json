@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "yaml": "^2.9.1",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "@bizr/i18n": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.23.15"

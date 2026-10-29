@@ -5,6 +5,7 @@ import { Pencil } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
 import { renameAction } from '@/app/w/[slug]/glossary/actions';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCanChange } from '@/components/shell/can-change';
@@ -52,23 +53,26 @@ export function Renameable({
   target: RenameSubject;
   className?: string;
 }) {
+  const t = useT();
   const editor = useCanChange();
+  // Names from your data's setup are shown in the reader's language; your own names as they are.
+  const shown = t.text(value);
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(value);
+  const [name, setName] = useState(shown);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  if (!editor) return <span className={className}>{value}</span>;
+  if (!editor) return <span className={className}>{shown}</span>;
   if (!editing)
     return (
       <span className={className}>
-        {value}
+        {shown}
         <Button
           type="button"
           variant="ghost"
           size="icon"
           className="ml-1 size-7 align-middle text-muted-foreground"
-          aria-label={`Rename ${value}`}
+          aria-label={t('Rename {name}', { name: shown })}
           onClick={() => setEditing(true)}
         >
           <Pencil className="size-3.5" />
@@ -82,7 +86,11 @@ export function Renameable({
       onSubmit={(e) => {
         e.preventDefault();
         start(async () => {
-          const r = await renameAction(slug, toTarget(target, name));
+          // Saving the shown translation unchanged keeps the name as it is.
+          const r = await renameAction(
+            slug,
+            toTarget(target, name.trim() === shown ? value : name),
+          );
           if (r.error) setError(r.error);
           else {
             setError(null);
@@ -95,24 +103,24 @@ export function Renameable({
         value={name}
         onChange={(e) => setName(e.target.value)}
         maxLength={60}
-        aria-label={`New name for ${value}`}
+        aria-label={t('New name for {name}', { name: shown })}
         className="h-9 max-w-64"
         autoFocus
       />
       <Button type="submit" size="sm" disabled={pending}>
-        Save
+        {t('Save')}
       </Button>
       <Button
         type="button"
         size="sm"
         variant="ghost"
         onClick={() => {
-          setName(value);
+          setName(shown);
           setEditing(false);
           setError(null);
         }}
       >
-        Cancel
+        {t('Cancel')}
       </Button>
       {error ? <span className="text-xs text-destructive">{error}</span> : null}
     </form>

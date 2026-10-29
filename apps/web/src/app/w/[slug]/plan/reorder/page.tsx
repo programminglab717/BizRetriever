@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { DownloadLinks } from '@/components/ask/answer-card';
 import { ComingSoon, PageHeader } from '@/components/shell/page-header';
+import { getT } from '@/lib/i18n';
 import { requireWorkspace } from '@/lib/session';
 
 const n = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
@@ -12,52 +13,57 @@ const n = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
 export default async function ReorderPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const list = await reorderList(member);
   const back = (
     <Link href={`/w/${slug}/plan`} className="text-sm text-primary underline underline-offset-4">
-      Back to Plan ahead
+      {t('Back to Plan ahead')}
     </Link>
   );
   if (!list.available)
     return (
       <div className="grid gap-6">
-        <PageHeader title="What to reorder" description={back} />
-        <ComingSoon title="Bring in a stock list and your sales">
-          <p>With how many you have and how fast they sell, we can tell you what to order.</p>
+        <PageHeader title={t('What to reorder')} description={back} />
+        <ComingSoon title={t('Bring in a stock list and your sales')}>
+          <p>
+            {t('With how many you have and how fast they sell, we can tell you what to order.')}
+          </p>
         </ComingSoon>
       </div>
     );
   const bySupplier = new Map<string, ReorderLine[]>();
   for (const l of list.lines) {
-    const k = l.supplier ?? 'No supplier recorded';
+    const k = l.supplier ?? t('No supplier recorded');
     bySupplier.set(k, [...(bySupplier.get(k) ?? []), l]);
   }
   return (
     <div className="grid grid-cols-1 gap-6">
       <PageHeader
-        title="What to reorder"
+        title={t('What to reorder')}
         description={
           <>
-            Products whose stock won’t last the supplier’s lead time plus 30 days, at the rate
-            they’ve sold for the last 4 weeks. {back}
+            {t(
+              'Products whose stock won’t last the supplier’s lead time plus 30 days, at the rate they’ve sold for the last 4 weeks.',
+            )}{' '}
+            {back}
           </>
         }
       />
       {list.lines.length === 0 ? (
         <p className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
-          Nothing needs ordering right now.
+          {t('Nothing needs ordering right now.')}
         </p>
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
             <span>
               {list.seasonNote
-                ? `${noteText(list.seasonNote, localeFor(member.settings))} The amounts allow for it.`
-                : 'Amounts are at your recent rate.'}{' '}
+                ? `${t.text(noteText(list.seasonNote, localeFor(member.settings, t.lang)))} ${t('The amounts allow for it.')}`
+                : t('Amounts are at your recent rate.')}{' '}
               {list.perProductSeasons
-                ? 'Each product’s own season from last year is allowed for too. '
+                ? `${t('Each product’s own season from last year is allowed for too.')} `
                 : ''}
-              Lead time is 14 days where none is recorded.
+              {t('Lead time is 14 days where none is recorded.')}
             </span>
             <DownloadLinks href={`/api/w/${slug}/plan/reorder/download`} />
           </div>
@@ -69,19 +75,19 @@ export default async function ReorderPage({ params }: { params: Promise<{ slug: 
                   <thead className="bg-muted/50 text-left">
                     <tr>
                       <th scope="col" className="px-3 py-2 font-medium">
-                        Product
+                        {t('Product')}
                       </th>
                       <th scope="col" className="px-3 py-2 text-right font-medium">
-                        In stock
+                        {t('In stock')}
                       </th>
                       <th scope="col" className="px-3 py-2 text-right font-medium">
-                        Sold per day
+                        {t('Sold per day')}
                       </th>
                       <th scope="col" className="px-3 py-2 text-right font-medium">
-                        Days left
+                        {t('Days left')}
                       </th>
                       <th scope="col" className="px-3 py-2 text-right font-medium">
-                        Order about
+                        {t('Order about')}
                       </th>
                     </tr>
                   </thead>
@@ -92,12 +98,14 @@ export default async function ReorderPage({ params }: { params: Promise<{ slug: 
                           {l.product}
                           {l.soon && (
                             <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-                              May run out first
+                              {t('May run out first')}
                             </span>
                           )}
                           {l.seasonal && l.lastYear !== null && (
                             <span className="mt-0.5 block text-xs text-muted-foreground">
-                              Seasonal: sold {n.format(l.lastYear)} in these weeks last year
+                              {t('Seasonal: sold {amount} in these weeks last year', {
+                                amount: n.format(l.lastYear),
+                              })}
                             </span>
                           )}
                         </th>

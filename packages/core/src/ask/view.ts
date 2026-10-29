@@ -1,3 +1,4 @@
+import type { Language } from '@bizr/i18n';
 import type { MetricFormat, PackData } from '@bizr/packs';
 
 import type { Segment } from '../narration';
@@ -17,8 +18,15 @@ import type { AnswerContent, AskResult } from './service';
  * numbers for plotting only. Plain JSON, so it can cross from server to client components.
  */
 
-/** Number and date style for a workspace's settings. */
-export function localeFor(settings: { dateOrder: string }): string {
+/**
+ * Number and date style for a workspace's settings, in the reader's language (M20): Spanish uses
+ * Spain's style for euro businesses and Latin America's otherwise.
+ */
+export function localeFor(
+  settings: { dateOrder: string; currency?: string },
+  lang: Language = 'en',
+): string {
+  if (lang === 'es') return settings.currency === 'EUR' ? 'es-ES' : 'es-MX';
   return settings.dateOrder === 'DMY' ? 'en-GB' : settings.dateOrder === 'YMD' ? 'en-CA' : 'en-US';
 }
 

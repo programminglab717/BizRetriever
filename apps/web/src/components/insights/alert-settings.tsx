@@ -1,19 +1,22 @@
 'use client';
 
 import type { AlertSetting } from '@bizr/core/insights';
+import { msg } from '@bizr/i18n/translate';
 import { useState, useTransition } from 'react';
 
 import { saveAlert } from '@/app/w/[slug]/insights/actions';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 const CATEGORY: Record<string, string> = {
-  stock: 'Stock',
-  customers: 'Customers',
-  profit: 'Profit',
-  products: 'Products',
-  trends: 'Trends',
-  cash: 'Money owed',
+  stock: msg('Stock'),
+  customers: msg('Customers'),
+  profit: msg('Profit'),
+  products: msg('Products'),
+  trends: msg('Trends'),
+  cash: msg('Money owed'),
 };
 
 function AlertRow({
@@ -25,27 +28,28 @@ function AlertRow({
   setting: AlertSetting;
   currency: string;
 }) {
+  const t = useT();
   const [enabled, setEnabled] = useState(setting.enabled);
   const [values, setValues] = useState<Record<string, string>>(
-    Object.fromEntries(setting.thresholds.map((t) => [t.name, String(t.value)])),
+    Object.fromEntries(setting.thresholds.map((th) => [th.name, String(th.value)])),
   );
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const save = () =>
     start(async () => {
       const thresholds: Record<string, number> = {};
-      for (const t of setting.thresholds) {
-        const v = Number(values[t.name]);
-        if (!Number.isFinite(v) || values[t.name]?.trim() === '') {
-          setMessage({ ok: false, text: 'Please enter a number.' });
+      for (const th of setting.thresholds) {
+        const v = Number(values[th.name]);
+        if (!Number.isFinite(v) || values[th.name]?.trim() === '') {
+          setMessage({ ok: false, text: t('Please enter a number.') });
           return;
         }
-        thresholds[t.name] = v;
+        thresholds[th.name] = v;
       }
       const r = await saveAlert(slug, { ruleId: setting.ruleId, enabled, thresholds });
       setMessage(
         r.ok
-          ? { ok: true, text: 'Saved. We’re checking your data again with these settings.' }
+          ? { ok: true, text: t('Saved. We’re checking your data again with these settings.') }
           : { ok: false, text: r.error },
       );
     });
@@ -54,10 +58,10 @@ function AlertRow({
       <div className="flex items-start justify-between gap-3">
         <div className="grid gap-0.5">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {CATEGORY[setting.category] ?? setting.category}
+            {t.text(CATEGORY[setting.category] ?? setting.category)}
           </p>
-          <h2 className="font-semibold">{setting.label}</h2>
-          <p className="text-sm text-muted-foreground">{setting.description}</p>
+          <h2 className="font-semibold">{t.text(setting.label)}</h2>
+          <p className="text-sm text-muted-foreground">{t.text(setting.description)}</p>
         </div>
         <label className="flex shrink-0 items-center gap-2 text-sm">
           <input
@@ -65,38 +69,42 @@ function AlertRow({
             className="size-5 accent-primary"
             checked={enabled}
             onChange={(e) => setEnabled(e.target.checked)}
-            aria-label={`${setting.label}: ${enabled ? 'on' : 'off'}`}
+            aria-label={
+              enabled
+                ? t('{label}: on', { label: t.text(setting.label) })
+                : t('{label}: off', { label: t.text(setting.label) })
+            }
           />
-          {enabled ? 'On' : 'Off'}
+          {enabled ? t('On') : t('Off')}
         </label>
       </div>
-      {setting.thresholds.map((t) => (
-        <label key={t.name} className="flex flex-wrap items-center gap-2 text-sm">
-          <span>{t.before}</span>
-          {t.unit === 'money' && <span className="text-muted-foreground">{currency}</span>}
+      {setting.thresholds.map((th) => (
+        <label key={th.name} className="flex flex-wrap items-center gap-2 text-sm">
+          <span>{t.text(th.before)}</span>
+          {th.unit === 'money' && <span className="text-muted-foreground">{currency}</span>}
           <Input
             type="number"
             inputMode="decimal"
-            min={t.min}
-            max={t.max}
+            min={th.min}
+            max={th.max}
             step="any"
             className="h-9 w-24"
-            value={values[t.name] ?? ''}
+            value={values[th.name] ?? ''}
             disabled={!enabled}
-            aria-label={`${t.before} … ${t.after}`.trim()}
-            onChange={(e) => setValues((v) => ({ ...v, [t.name]: e.target.value }))}
+            aria-label={`${t.text(th.before)} … ${t.text(th.after)}`.trim()}
+            onChange={(e) => setValues((v) => ({ ...v, [th.name]: e.target.value }))}
           />
-          {t.after && <span>{t.after}</span>}
+          {th.after && <span>{t.text(th.after)}</span>}
         </label>
       ))}
       <div className="flex flex-wrap items-center gap-3">
         <Button size="sm" onClick={save} disabled={pending}>
-          {pending ? 'Saving…' : 'Save'}
+          {pending ? t('Saving…') : t('Save')}
         </Button>
         {message && (
           <p
             role="status"
-            className={message.ok ? 'text-sm text-muted-foreground' : 'text-sm text-destructive'}
+            className={cn('text-sm', message.ok ? 'text-muted-foreground' : 'text-destructive')}
           >
             {message.text}
           </p>

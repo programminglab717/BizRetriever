@@ -1,5 +1,7 @@
 import { PageSkeleton } from '@/components/shell/skeleton';
+import { getT } from '@/lib/i18n';
 
-export default function Loading() {
-  return <PageSkeleton label="Loading your insights" />;
+export default async function Loading() {
+  const t = await getT();
+  return <PageSkeleton label={t('Loading your insights')} />;
 }

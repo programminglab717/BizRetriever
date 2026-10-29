@@ -50,6 +50,7 @@ export async function requireEditor(
 ): Promise<MemberWorkspace & { user: SessionUser }> {
   const member = await requireWorkspace(slug);
   if (!canChange(member.role))
+    // i18n-skip: core's message; actions show it through t.text
     throw new NotAllowedError('You can view this business but not change it. Ask the owner.');
   return member;
 }

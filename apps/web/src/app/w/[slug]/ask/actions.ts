@@ -14,6 +14,7 @@ import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
 import { viewOptions } from '@/lib/ask';
+import { getT } from '@/lib/i18n';
 import { requireEditor, requireWorkspace } from '@/lib/session';
 
 const uuid = z.string().uuid();
@@ -33,20 +34,21 @@ export async function askAction(
   input: z.input<typeof askInput>,
 ): Promise<AskActionResult> {
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const parsed = askInput.safeParse(input);
   if (!parsed.success)
-    return { ok: false, error: 'That question couldn’t be sent. Please try again.' };
+    return { ok: false, error: t('That question couldn’t be sent. Please try again.') };
   try {
-    const r = await askQuestion(member, member.user.id, parsed.data);
+    const r = await askQuestion(member, member.user.id, parsed.data, { lang: t.lang });
     return {
       ok: true,
       conversationId: r.conversationId,
-      answer: answerView(r, viewOptions(member)),
+      answer: answerView(r, viewOptions(member, t.lang)),
     };
   } catch (err) {
-    if (err instanceof AskError) return { ok: false, error: err.message };
+    if (err instanceof AskError) return { ok: false, error: t.text(err.message) };
     log().error({ err }, 'ask failed');
-    return { ok: false, error: 'Something went wrong working that out. Please try again.' };
+    return { ok: false, error: t('Something went wrong working that out. Please try again.') };
   }
 }
 
@@ -57,15 +59,16 @@ export async function feedbackAction(
   reason?: string,
 ): Promise<{ error?: string }> {
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const id = uuid.safeParse(answerId);
   const r = z.enum(FEEDBACK_REASONS).optional().safeParse(reason);
   if (!id.success || !r.success || ![1, -1, null].includes(value))
-    return { error: 'That didn’t save.' };
+    return { error: t('That didn’t save.') };
   try {
     await setAnswerFeedback(member, id.data, value, r.data);
     return {};
   } catch (err) {
-    if (err instanceof AskError) return { error: err.message };
+    if (err instanceof AskError) return { error: t.text(err.message) };
     throw err;
   }
 }
@@ -77,21 +80,23 @@ export async function pinAction(
   answerId: string,
 ): Promise<{ tileId?: string; error?: string }> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const id = uuid.safeParse(answerId);
-  if (!id.success) return { error: 'That can’t be added.' };
+  if (!id.success) return { error: t('That can’t be added.') };
   try {
     const tileId = await pinAnswer(member, id.data);
     return { tileId };
   } catch (err) {
-    if (err instanceof AskError) return { error: err.message };
+    if (err instanceof AskError) return { error: t.text(err.message) };
     throw err;
   }
 }
 
 export async function unpinAction(slug: string, tileId: string): Promise<{ error?: string }> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const id = uuid.safeParse(tileId);
-  if (!id.success) return { error: 'That can’t be removed.' };
+  if (!id.success) return { error: t('That can’t be removed.') };
   await unpinTile(member, id.data);
   return {};
 }

@@ -12,6 +12,7 @@ import { getLogger } from '@bizr/platform';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { getT } from '@/lib/i18n';
 import { requireWorkspace } from '@/lib/session';
 
 /** Handing the business over (M19). Who may do what is checked in the core service. */
@@ -28,14 +29,18 @@ async function guard<T>(
     if (refresh(data)) revalidatePath(`/w/${slug}`, 'layout');
     return { ok: true, data };
   } catch (err) {
+    const t = await getT();
     if (err instanceof TeamError || err instanceof NotAllowedError)
-      return { ok: false, error: err.message };
+      return { ok: false, error: t.text(err.message) };
     getLogger('ownership').error({ err, slug }, 'ownership action failed');
-    return { ok: false, error: 'Something went wrong. Please try again.' };
+    return { ok: false, error: t('Something went wrong. Please try again.') };
   }
 }
 
-const stale = { ok: false as const, error: 'This page is out of date. Refresh it.' };
+async function stale(): Promise<{ ok: false; error: string }> {
+  const t = await getT();
+  return { ok: false, error: t('This page is out of date. Refresh it.') };
+}
 
 export async function offerOwnership(
   slug: string,
@@ -43,7 +48,7 @@ export async function offerOwnership(
   confirmName: string,
 ): Promise<Result<TransferView>> {
   const member = await requireWorkspace(slug);
-  if (!z.uuid().safeParse(toUserId).success) return stale;
+  if (!z.uuid().safeParse(toUserId).success) return stale();
   return guard(slug, () =>
     startTransfer(member, member.user.id, { toUserId, confirmName: String(confirmName) }),
   );
@@ -63,7 +68,7 @@ export async function answerOwnership(
   accept: boolean,
 ): Promise<Result<'accepted' | 'declined'>> {
   const member = await requireWorkspace(slug);
-  if (!z.uuid().safeParse(transferId).success || typeof accept !== 'boolean') return stale;
+  if (!z.uuid().safeParse(transferId).success || typeof accept !== 'boolean') return stale();
   // Accepting changes what the person can do: the page refreshes into the owner's Settings.
   // Declining changes nothing, so the card stays to say so.
   return guard(

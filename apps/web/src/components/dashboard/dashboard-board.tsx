@@ -9,6 +9,7 @@ import { useEffect, useState, useTransition } from 'react';
 
 import { editAction, saveRangeAction, undoAction } from '@/app/w/[slug]/dashboard/actions';
 import type { NumberStyle } from '@/components/ask/answer-chart';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useCanChange } from '@/components/shell/can-change';
@@ -39,6 +40,7 @@ export function DashboardBoard({
   presets: RangeOption[];
   style: NumberStyle;
 }) {
+  const t = useT();
   const router = useRouter();
   const editor = useCanChange();
   const [pending, start] = useTransition();
@@ -46,8 +48,8 @@ export function DashboardBoard({
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 8000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToast(null), 8000);
+    return () => clearTimeout(timer);
   }, [toast]);
 
   const preset = 'preset' in view.range.range ? view.range.range.preset : 'custom';
@@ -67,14 +69,14 @@ export function DashboardBoard({
       setError(null);
       const r = await editAction(slug, ops);
       if (!r.ok) return setError(r.error);
-      setToast({ text: `${r.changes.join('. ')}.`, undo: true });
+      setToast({ text: `${r.changes.map((c) => t.text(c)).join('. ')}.`, undo: true });
       router.refresh();
     });
   const undo = () =>
     start(async () => {
       const r = await undoAction(slug);
       if (!r.ok) return setError(r.error);
-      setToast({ text: 'Undone.' });
+      setToast({ text: t('Undone.') });
       router.refresh();
     });
 
@@ -82,20 +84,20 @@ export function DashboardBoard({
     <div className="grid gap-6">
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Dates</span>
+          <span className="text-muted-foreground">{t('Dates')}</span>
           <select
             className="h-9 rounded-md border bg-background px-2 text-sm"
             value={preset}
             disabled={pending}
             onChange={(e) => setRange({ preset: e.target.value })}
-            aria-label="Date range"
+            aria-label={t('Date range')}
           >
             {presets.map((p) => (
               <option key={p.preset} value={p.preset}>
                 {p.label}
               </option>
             ))}
-            {preset === 'custom' && <option value="custom">{view.rangeLabel}</option>}
+            {preset === 'custom' && <option value="custom">{t.text(view.rangeLabel)}</option>}
           </select>
         </label>
         <label className="flex items-center gap-2 text-sm">
@@ -106,10 +108,10 @@ export function DashboardBoard({
             disabled={pending}
             onChange={(e) => setRange({ compare: e.target.checked })}
           />
-          Compare with the period before
+          {t('Compare with the period before')}
         </label>
         <span className="text-sm text-muted-foreground" data-testid="range-label">
-          {view.rangeLabel}
+          {t.text(view.rangeLabel)}
         </span>
         <a
           className="text-sm font-medium underline-offset-4 hover:underline"
@@ -121,12 +123,12 @@ export function DashboardBoard({
           download
           data-testid="dashboard-pdf"
         >
-          Download as PDF
+          {t('Download as PDF')}
         </a>
         <EmailMe slug={slug} what={{ kind: 'dashboard' }} />
         {view.canUndo && editor && (
           <Button variant="ghost" size="sm" className="ml-auto" disabled={pending} onClick={undo}>
-            <Undo2 /> Undo last change
+            <Undo2 /> {t('Undo last change')}
           </Button>
         )}
       </div>
@@ -137,7 +139,7 @@ export function DashboardBoard({
           style={style}
           disabled={pending}
           onApplied={(changes) => {
-            setToast({ text: `${changes.join('. ')}.`, undo: true });
+            setToast({ text: `${changes.map((c) => t.text(c)).join('. ')}.`, undo: true });
             router.refresh();
           }}
         />
@@ -147,14 +149,14 @@ export function DashboardBoard({
 
       {view.unlock.length > 0 && (
         <section className="rounded-xl border border-dashed p-4 text-sm" data-testid="unlock-card">
-          <h2 className="font-medium">Unlock more</h2>
+          <h2 className="font-medium">{t('Unlock more')}</h2>
           <ul className="mt-1 grid gap-1 text-muted-foreground">
             {view.unlock.map((u) => (
-              <li key={u}>{u}</li>
+              <li key={u}>{t.text(u)}</li>
             ))}
           </ul>
           <Button asChild variant="outline" size="sm" className="mt-3">
-            <Link href={`/w/${slug}/data/import`}>Add a file</Link>
+            <Link href={`/w/${slug}/data/import`}>{t('Add a file')}</Link>
           </Button>
         </section>
       )}
@@ -163,11 +165,11 @@ export function DashboardBoard({
         className={`grid items-start gap-4 md:grid-cols-12 ${pending ? 'opacity-70' : ''}`}
         aria-busy={pending}
       >
-        {view.tiles.map((t, i) => (
+        {view.tiles.map((tile, i) => (
           <DashboardTile
-            key={t.id}
+            key={tile.id}
             slug={slug}
-            tile={t}
+            tile={tile}
             style={style}
             first={i === 0}
             last={i === view.tiles.length - 1}
@@ -197,7 +199,7 @@ export function DashboardBoard({
                 undo();
               }}
             >
-              Undo
+              {t('Undo')}
             </button>
           )}
         </div>

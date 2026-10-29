@@ -1,5 +1,7 @@
 import { stopReport } from '@bizr/core/reports';
 
+import { getT } from '@/lib/i18n';
+
 export const dynamic = 'force-dynamic';
 
 const fields = (url: URL) => ({
@@ -20,7 +22,8 @@ export async function POST(request: Request): Promise<Response> {
   const ok = await stopReport(fields(url));
   if (url.searchParams.get('from') === 'page')
     return Response.redirect(new URL(`/email/report-stop?${ok ? 'done=1' : 'bad=1'}`, url), 303);
+  const t = await getT();
   return ok
-    ? new Response('This report won’t be sent any more.', { status: 200 })
-    : new Response('This link doesn’t work.', { status: 400 });
+    ? new Response(t('This report won’t be sent any more.'), { status: 200 })
+    : new Response(t('This link doesn’t work.'), { status: 400 });
 }

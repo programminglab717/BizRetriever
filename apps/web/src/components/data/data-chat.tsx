@@ -16,6 +16,7 @@ import {
   type ChatPlan,
 } from '@/app/w/[slug]/data/chat/actions';
 import { checkUndo, undoChange } from '@/app/w/[slug]/history/actions';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,7 @@ interface Toast {
  * happens until the owner confirms.
  */
 export function DataChat({ slug, initial = '' }: { slug: string; initial?: string }) {
+  const t = useT();
   const router = useRouter();
   const [text, setText] = useState(initial);
   const [asked, setAsked] = useState('');
@@ -62,7 +64,7 @@ export function DataChat({ slug, initial = '' }: { slug: string; initial?: strin
   return (
     <section className="grid gap-3" aria-labelledby="data-chat-heading">
       <h2 id="data-chat-heading" className="font-medium">
-        Add or change something
+        {t('Add or change something')}
       </h2>
       <form
         className="flex gap-2"
@@ -75,13 +77,15 @@ export function DataChat({ slug, initial = '' }: { slug: string; initial?: strin
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={400}
-          placeholder="e.g. “Add a sale: 5 Sage mugs to Bloom & Co today” or “Track which salesperson made each sale”"
-          aria-label="What would you like to add or change?"
+          placeholder={t(
+            'e.g. “Add a sale: 5 Sage mugs to Bloom & Co today” or “Track which salesperson made each sale”',
+          )}
+          aria-label={t('What would you like to add or change?')}
           className="h-10 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           disabled={pending}
         />
         <Button type="submit" disabled={pending || !text.trim()}>
-          {pending ? <Loader2 className="animate-spin" /> : <Sparkles />} Go
+          {pending ? <Loader2 className="animate-spin" /> : <Sparkles />} {t('Go')}
         </Button>
       </form>
       {error ? <Alert tone="error">{error}</Alert> : null}
@@ -93,9 +97,9 @@ export function DataChat({ slug, initial = '' }: { slug: string; initial?: strin
           pending={pending}
           onPick={(mention, id) => ask(asked, { ...choices, [mention]: id })}
           onCancel={reset}
-          onDone={(t) => {
+          onDone={(next) => {
             reset();
-            setToast(t);
+            setToast(next);
             router.refresh();
           }}
           onError={setError}
@@ -106,9 +110,9 @@ export function DataChat({ slug, initial = '' }: { slug: string; initial?: strin
           slug={slug}
           plan={plan}
           onCancel={reset}
-          onDone={(t) => {
+          onDone={(next) => {
             reset();
-            setToast(t);
+            setToast(next);
             router.refresh();
           }}
           onError={setError}
@@ -136,7 +140,7 @@ export function DataChat({ slug, initial = '' }: { slug: string; initial?: strin
                 void u().then(() => router.refresh());
               }}
             >
-              Undo
+              {t('Undo')}
             </button>
           ) : null}
         </div>
@@ -162,13 +166,14 @@ function RecordOutcome({
   onDone: (t: Toast) => void;
   onError: (e: string) => void;
 }) {
+  const t = useT();
   const [busy, startTransition] = useTransition();
   const o = plan.outcome;
-  if (o.kind === 'none') return <Alert>{o.message}</Alert>;
+  if (o.kind === 'none') return <Alert>{t.text(o.message)}</Alert>;
   if (o.kind === 'clarify')
     return (
       <div className="grid gap-2 rounded-xl border p-4 text-sm" data-testid="chat-clarify">
-        <p className="font-medium">{o.question}</p>
+        <p className="font-medium">{t.text(o.question)}</p>
         <div className="flex flex-wrap gap-2">
           {o.options.map((opt) => (
             <Button
@@ -192,14 +197,20 @@ function RecordOutcome({
       onDone({
         text:
           p.operation === 'insert'
-            ? `Added ${o.card.title.replace(/^New /, 'the new ')}.`
-            : 'Saved.',
+            ? t('Added {what}.', {
+                // The English reads "Added the new sale."; other languages show the card's title.
+                what:
+                  t.lang === 'en'
+                    ? o.card.title.replace(/^New /, 'the new ')
+                    : t.text(o.card.title),
+              })
+            : t('Saved.'),
         undo: async () => {
           const u = await undoRecords(slug, r.data.batchId);
           if (!u.ok) onError(u.error);
         },
         ...(first
-          ? { link: { href: `/w/${slug}/data/${first.entity}?open=${first.id}`, label: 'Open' } }
+          ? { link: { href: `/w/${slug}/data/${first.entity}?open=${first.id}`, label: t('Open') } }
           : {}),
       });
     });
@@ -219,24 +230,25 @@ function RecordCard({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   return (
     <div className="grid gap-3 rounded-xl border p-4 text-sm" data-testid="record-card">
-      <p className="text-base font-semibold">{card.title}</p>
+      <p className="text-base font-semibold">{t.text(card.title)}</p>
       <dl className="grid gap-1.5">
         {card.rows.map((r) => (
           <div key={`${r.label}-${r.value}`} className="flex flex-wrap gap-x-2">
-            <dt className="text-muted-foreground">{r.label}</dt>
+            <dt className="text-muted-foreground">{t.text(r.label)}</dt>
             <dd className="font-medium">
               {r.before !== undefined ? (
                 <>
                   <span className="text-muted-foreground line-through">{r.before}</span>{' '}
-                  <ArrowRight className="inline size-3.5" aria-label="becomes" />{' '}
+                  <ArrowRight className="inline size-3.5" aria-label={t('becomes')} />{' '}
                 </>
               ) : null}
               {r.value}
               {r.isNew ? (
                 <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                  new
+                  {t('new')}
                 </span>
               ) : null}
             </dd>
@@ -253,7 +265,7 @@ function RecordCard({
           ))}
           {card.total ? (
             <li className="flex justify-between gap-3 border-t pt-1 font-semibold">
-              <span>Total</span>
+              <span>{t('Total')}</span>
               <span className="tabular-nums">{card.total}</span>
             </li>
           ) : null}
@@ -261,27 +273,28 @@ function RecordCard({
       ) : null}
       {card.creates.map((c) => (
         <p key={c} className="flex gap-2 text-primary">
-          <Plus className="mt-0.5 size-4 shrink-0" aria-hidden /> {c} will be added too.
+          <Plus className="mt-0.5 size-4 shrink-0" aria-hidden />{' '}
+          {t('{what} will be added too.', { what: t.text(c) })}
         </p>
       ))}
       {card.assumptions.length ? (
         <div className="grid gap-1 rounded-lg bg-muted/50 p-3">
           <p className="flex items-center gap-2 font-medium">
-            <Lightbulb className="size-4" aria-hidden /> What I assumed
+            <Lightbulb className="size-4" aria-hidden /> {t('What I assumed')}
           </p>
           <ul className="grid list-disc gap-0.5 pl-5 text-muted-foreground">
             {card.assumptions.map((a) => (
-              <li key={a}>{a}</li>
+              <li key={a}>{t.text(a)}</li>
             ))}
           </ul>
         </div>
       ) : null}
       <div className="flex flex-wrap gap-2">
         <Button disabled={busy} onClick={onConfirm}>
-          {busy ? <Loader2 className="animate-spin" /> : null} {card.action}
+          {busy ? <Loader2 className="animate-spin" /> : null} {t.text(card.action)}
         </Button>
         <Button variant="ghost" disabled={busy} onClick={onCancel}>
-          Cancel
+          {t('Cancel')}
         </Button>
       </div>
     </div>
@@ -301,11 +314,12 @@ function ChangeOutcome({
   onDone: (t: Toast) => void;
   onError: (e: string) => void;
 }) {
+  const t = useT();
   const [typed, setTyped] = useState('');
   const [busy, startTransition] = useTransition();
   const o = plan.outcome;
-  if (o.kind === 'none') return <Alert>{o.message}</Alert>;
-  if (o.kind === 'clarify') return <Alert>{o.question}</Alert>;
+  if (o.kind === 'none') return <Alert>{t.text(o.message)}</Alert>;
+  if (o.kind === 'clarify') return <Alert>{t.text(o.question)}</Alert>;
   const impact: ChangeImpact = o.impact;
   const ready =
     !impact.destructive || typed.trim().toLowerCase() === (impact.confirmText ?? '').toLowerCase();
@@ -315,15 +329,17 @@ function ChangeOutcome({
       if (!r.ok) return onError(r.error);
       const version = r.data.version;
       onDone({
-        text: 'Done. It’s in your change history.',
-        link: { href: `/w/${slug}/history`, label: 'History' },
+        text: t('Done. It’s in your change history.'),
+        link: { href: `/w/${slug}/history`, label: t('History') },
         undo: async () => {
           const check = await checkUndo(slug, version);
           if (!check.ok) return onError(check.error);
           // Losing data since needs the full explanation: send them to the history page.
           if (check.data.needsConfirmation)
             return onError(
-              'Undoing this would lose data entered since. Use Change history to see what and undo.',
+              t(
+                'Undoing this would lose data entered since. Use Change history to see what and undo.',
+              ),
             );
           const u = await undoChange(slug, version, false);
           if (!u.ok) onError(u.error);
@@ -338,38 +354,46 @@ function ChangeOutcome({
       )}
       data-testid="change-card"
     >
-      <p className="text-base font-semibold">What will change</p>
+      <p className="text-base font-semibold">{t('What will change')}</p>
       <ul className="grid gap-2">
         {impact.steps.map((s) => (
           <li key={s.text} className="grid gap-0.5">
-            <span className="font-medium">{s.text}</span>
+            <span className="font-medium">{t.text(s.text)}</span>
             {s.details.map((d) => (
               <span
                 key={d}
                 className={cn('text-muted-foreground', s.destructive && 'text-destructive')}
               >
-                {d}
+                {t.text(d)}
               </span>
             ))}
           </li>
         ))}
       </ul>
-      {o.explanation ? <p className="text-muted-foreground">{o.explanation}</p> : null}
-      <p data-testid="change-impact">{impact.summary}</p>
+      {o.explanation ? <p className="text-muted-foreground">{t.text(o.explanation)}</p> : null}
+      <p data-testid="change-impact">{t.text(impact.summary)}</p>
       {impact.destructive ? (
         <div className="grid gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
           <p className="flex items-center gap-2 font-medium text-destructive">
-            <AlertTriangle className="size-4" aria-hidden /> This removes data. We keep a backup for
-            30 days so you can undo.
+            <AlertTriangle className="size-4" aria-hidden />{' '}
+            {t('This removes data. We keep a backup for 30 days so you can undo.')}
           </p>
           <label className="grid gap-1">
             <span>
-              Type <strong>{impact.confirmText}</strong> to confirm
+              {/* The words to type stay as they are; only the sentence around them is translated. */}
+              {t('Type {text} to confirm')
+                .split('{text}')
+                .map((part, i) => (
+                  <span key={i}>
+                    {i > 0 ? <strong>{impact.confirmText}</strong> : null}
+                    {part}
+                  </span>
+                ))}
             </span>
             <input
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
-              aria-label={`Type ${impact.confirmText ?? ''} to confirm`}
+              aria-label={t('Type {text} to confirm', { text: impact.confirmText ?? '' })}
               className="h-9 rounded-md border bg-background px-2 text-sm"
             />
           </label>
@@ -377,14 +401,15 @@ function ChangeOutcome({
       ) : null}
       <div className="flex flex-wrap gap-2">
         <Button
+          // i18n-skip (a style, not text)
           variant={impact.destructive ? 'destructive' : 'default'}
           disabled={busy || !ready}
           onClick={apply}
         >
-          {busy ? <Loader2 className="animate-spin" /> : null} Make this change
+          {busy ? <Loader2 className="animate-spin" /> : null} {t('Make this change')}
         </Button>
         <Button variant="ghost" disabled={busy} onClick={onCancel}>
-          Cancel
+          {t('Cancel')}
         </Button>
       </div>
     </div>

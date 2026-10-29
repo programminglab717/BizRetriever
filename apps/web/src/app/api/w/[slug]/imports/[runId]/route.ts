@@ -1,6 +1,7 @@
 import { getRunView, IngestionRequestError } from '@bizr/core/ingestion';
 
 import { BUSY_STATUSES, kickJobs, toImportView } from '@/lib/imports';
+import { getT } from '@/lib/i18n';
 import { workspaceForApi } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -12,16 +13,17 @@ export async function GET(
   { params }: { params: Promise<{ slug: string; runId: string }> },
 ): Promise<Response> {
   const { slug, runId } = await params;
+  const t = await getT();
   const member = await workspaceForApi(slug);
   if (!member || !/^[0-9a-f-]{36}$/.test(runId))
-    return Response.json({ error: 'Not found' }, { status: 404 });
+    return Response.json({ error: t('Not found') }, { status: 404 });
   try {
     const view = await getRunView(member, runId);
     if (BUSY_STATUSES.has(view.run.status)) kickJobs();
     return Response.json(toImportView(view, member), { headers: { 'cache-control': 'no-store' } });
   } catch (err) {
     if (err instanceof IngestionRequestError)
-      return Response.json({ error: 'Not found' }, { status: 404 });
+      return Response.json({ error: t('Not found') }, { status: 404 });
     throw err;
   }
 }

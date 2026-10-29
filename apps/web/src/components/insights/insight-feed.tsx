@@ -2,6 +2,7 @@
 
 import type { InsightCard as Card } from '@bizr/core/insights';
 import type { NoteView } from '@bizr/core/team';
+import { msg } from '@bizr/i18n/translate';
 import {
   BadgePercent,
   MoreVertical,
@@ -19,6 +20,7 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { dismiss, markSeen } from '@/app/w/[slug]/insights/actions';
 import { assignAction, doneAction } from '@/app/w/[slug]/team-actions';
+import { useT } from '@/components/i18n/provider';
 import { Notes } from '@/components/team/notes';
 import { useTeam } from '@/components/team/team-context';
 import { Button } from '@/components/ui/button';
@@ -38,9 +40,9 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 const LEVEL: Record<string, { label: string; className: string }> = {
-  urgent: { label: 'Urgent', className: 'bg-red-100 text-red-800' },
-  warn: { label: 'Worth a look', className: 'bg-amber-100 text-amber-900' },
-  info: { label: 'Good to know', className: 'bg-muted text-muted-foreground' },
+  urgent: { label: msg('Urgent'), className: 'bg-red-100 text-red-800' },
+  warn: { label: msg('Worth a look'), className: 'bg-amber-100 text-amber-900' },
+  info: { label: msg('Good to know'), className: 'bg-muted text-muted-foreground' },
 };
 
 function actionHref(slug: string, a: NonNullable<InsightCardData['action']>): string {
@@ -48,7 +50,15 @@ function actionHref(slug: string, a: NonNullable<InsightCardData['action']>): st
   return `/w/${slug}/data/${a.entity}${a.search ? `?q=${encodeURIComponent(a.search)}` : ''}`;
 }
 
+/**
+ * An insight's sentence, with its values in bold. In another language the whole sentence is
+ * translated when the catalog has it (the bold is lost then: it can't be placed in a translation).
+ */
 function Segments({ segments }: { segments: { text: string; bold?: true }[] }) {
+  const t = useT();
+  const english = segments.map((s) => s.text).join('');
+  const translated = t.text(english);
+  if (translated !== english) return <>{translated}</>;
   return (
     <>
       {segments.map((s, i) =>
@@ -75,14 +85,19 @@ function InsightItem({
   notes: NoteView[] | undefined;
   onGone: (id: string) => void;
 }) {
+  const t = useT();
   const editor = useCanChange();
   const { me, people } = useTeam();
   const router = useRouter();
-  const holder = insight.assignedTo
-    ? insight.assignedTo === me
-      ? 'you'
-      : (people.find((p) => p.id === insight.assignedTo)?.name ?? 'someone')
-    : null;
+  const mine = Boolean(insight.assignedTo) && insight.assignedTo === me;
+  const holderName = people.find((p) => p.id === insight.assignedTo)?.name;
+  const forWhom = !insight.assignedTo
+    ? null
+    : mine
+      ? t('For you')
+      : holderName
+        ? t('For {name}', { name: holderName })
+        : t('For someone');
   const team = (fn: () => Promise<{ ok: true } | { ok: false; error: string }>) =>
     start(async () => {
       setMenu(false);
@@ -104,7 +119,7 @@ function InsightItem({
   return (
     <li
       className="grid grid-cols-[auto_1fr_auto] gap-3 rounded-xl border bg-card p-4"
-      aria-label={insight.text}
+      aria-label={t.text(insight.text)}
     >
       <span
         className={cn('mt-0.5 grid size-9 place-items-center rounded-full', level.className)}
@@ -115,19 +130,19 @@ function InsightItem({
       <div className="grid min-w-0 gap-2">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className={cn('rounded-full px-2 py-0.5 font-medium', level.className)}>
-            {level.label}
+            {t(level.label)}
           </span>
           {insight.status === 'new' && (
             <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
-              New
+              {t('New')}
             </span>
           )}
-          {holder && (
+          {forWhom && (
             <span
               className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-900"
               data-testid="assigned"
             >
-              For {holder}
+              {forWhom}
             </span>
           )}
         </div>
@@ -139,21 +154,23 @@ function InsightItem({
             <Segments segments={insight.context} />
           </p>
         )}
-        {(insight.action || holder === 'you') && (
+        {(insight.action || mine) && (
           <div className="flex flex-wrap gap-2">
             {insight.action && (
               <Button asChild size="sm" variant="outline">
-                <Link href={actionHref(slug, insight.action) as Route}>{insight.action.label}</Link>
+                <Link href={actionHref(slug, insight.action) as Route}>
+                  {t.text(insight.action.label)}
+                </Link>
               </Button>
             )}
-            {holder === 'you' && (
+            {mine && (
               <Button
                 size="sm"
                 variant="outline"
                 disabled={pending}
                 onClick={() => team(() => doneAction(slug, insight.id))}
               >
-                Mark done
+                {t('Mark done')}
               </Button>
             )}
           </div>
@@ -165,7 +182,7 @@ function InsightItem({
         <Button
           variant="ghost"
           size="icon"
-          aria-label="More options"
+          aria-label={t('More options')}
           aria-expanded={menu}
           onClick={() => setMenu((m) => !m)}
           disabled={pending}
@@ -187,7 +204,7 @@ function InsightItem({
                     className="rounded px-3 py-2 text-left hover:bg-accent"
                     onClick={() => team(() => assignAction(slug, insight.id, p.id))}
                   >
-                    {p.id === me ? 'I’ll deal with it' : `Hand to ${p.name}`}
+                    {p.id === me ? t('I’ll deal with it') : t('Hand to {name}', { name: p.name })}
                   </button>
                 ))}
             {editor && insight.assignedTo && (
@@ -196,7 +213,7 @@ function InsightItem({
                 className="rounded px-3 py-2 text-left hover:bg-accent"
                 onClick={() => team(() => assignAction(slug, insight.id, null))}
               >
-                Take it back
+                {t('Take it back')}
               </button>
             )}
             {editor && (
@@ -206,14 +223,14 @@ function InsightItem({
                   className="rounded px-3 py-2 text-left hover:bg-accent"
                   onClick={() => hide(false)}
                 >
-                  Dismiss
+                  {t('Dismiss')}
                 </button>
                 <button
                   role="menuitem"
                   className="rounded px-3 py-2 text-left hover:bg-accent"
                   onClick={() => hide(true)}
                 >
-                  Not useful
+                  {t('Not useful')}
                 </button>
               </>
             )}
@@ -222,7 +239,7 @@ function InsightItem({
               href={`/w/${slug}/insights/settings#${insight.ruleId}` as Route}
               className="rounded px-3 py-2 hover:bg-accent"
             >
-              Change alert settings
+              {t('Change alert settings')}
             </Link>
           </div>
         )}
@@ -237,7 +254,7 @@ export function InsightFeed({
   insights,
   notes = {},
   empty,
-  label = 'Insights',
+  label,
 }: {
   slug: string;
   insights: InsightCardData[];
@@ -246,6 +263,7 @@ export function InsightFeed({
   empty?: string;
   label?: string;
 }) {
+  const t = useT();
   const [gone, setGone] = useState<Set<string>>(new Set());
   const marked = useRef(false);
   useEffect(() => {
@@ -259,11 +277,11 @@ export function InsightFeed({
     return (
       <p className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
         {empty ??
-          'Nothing needs your attention right now. 🎉 We check every time your data changes.'}
+          t('Nothing needs your attention right now. 🎉 We check every time your data changes.')}
       </p>
     );
   return (
-    <ul className="grid gap-3" aria-label={label}>
+    <ul className="grid gap-3" aria-label={label ?? t('Insights')}>
       {shown.map((i) => (
         <InsightItem
           key={i.id}

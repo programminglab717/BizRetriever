@@ -53,6 +53,9 @@ importers:
       '@bizr/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@bizr/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@bizr/ingest':
         specifier: workspace:*
         version: link:../../packages/ingest
@@ -215,6 +218,9 @@ importers:
       '@bizr/demo-data':
         specifier: workspace:*
         version: link:../demo-data
+      '@bizr/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@bizr/ingest':
         specifier: workspace:*
         version: link:../ingest
@@ -255,6 +261,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@bizr/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@bizr/platform':
         specifier: workspace:*
         version: link:../platform
@@ -291,6 +300,8 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
+  packages/i18n: {}
+
   packages/ingest:
     dependencies:
       exceljs:
@@ -318,6 +329,9 @@ importers:
 
   packages/packs:
     dependencies:
+      '@bizr/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       yaml:
         specifier: ^2.9.1
         version: 2.9.1

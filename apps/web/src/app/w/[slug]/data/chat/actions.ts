@@ -21,6 +21,7 @@ import {
 import { getLogger } from '@bizr/platform';
 import { z } from 'zod';
 
+import { getT } from '@/lib/i18n';
 import { withInsights } from '@/lib/insights';
 import { requireEditor } from '@/lib/session';
 
@@ -36,10 +37,11 @@ async function guard<T>(slug: string, what: string, fn: () => Promise<T>): Promi
   try {
     return { ok: true, data: await fn() };
   } catch (err) {
+    const t = await getT();
     if (err instanceof RecordsError || err instanceof StructureError)
-      return { ok: false, error: err.message };
+      return { ok: false, error: t.text(err.message) };
     getLogger('data-chat').error({ err, slug, what }, 'data chat action failed');
-    return { ok: false, error: 'Something went wrong. Please try again.' };
+    return { ok: false, error: t('Something went wrong. Please try again.') };
   }
 }
 
@@ -52,8 +54,9 @@ const planInput = z.object({
 export async function planDataRequest(slug: string, input: unknown): Promise<Result<ChatPlan>> {
   const member = await requireEditor(slug);
   const parsed = planInput.safeParse(input);
+  const t = await getT();
   if (!parsed.success)
-    return { ok: false, error: 'Please write what you’d like to add or change.' };
+    return { ok: false, error: t('Please write what you’d like to add or change.') };
   const { text, choices } = parsed.data;
   return guard(slug, 'plan', async () => {
     const catalog = await loadCatalog(member.workspace.id);
@@ -76,7 +79,9 @@ export async function addRecords(
 ): Promise<Result<{ batchId: string; records: { entity: string; id: string; title: string }[] }>> {
   const member = await requireEditor(slug);
   const parsed = recordWritePlanSchema.safeParse(plan);
-  if (!parsed.success) return { ok: false, error: 'This card is out of date. Please ask again.' };
+  const t = await getT();
+  if (!parsed.success)
+    return { ok: false, error: t('This card is out of date. Please ask again.') };
   return guard(slug, 'write', () =>
     withInsights(member.workspace.id, 'record_edit', () =>
       applyRecordWrite({ member, userId: member.user.id, plan: parsed.data }),
@@ -89,7 +94,9 @@ export async function undoRecords(
   batchId: string,
 ): Promise<Result<{ edits: number }>> {
   const member = await requireEditor(slug);
-  if (!z.uuid().safeParse(batchId).success) return { ok: false, error: 'There’s nothing to undo.' };
+  const t = await getT();
+  if (!z.uuid().safeParse(batchId).success)
+    return { ok: false, error: t('There’s nothing to undo.') };
   return guard(slug, 'undo', () =>
     withInsights(member.workspace.id, 'record_edit', () => undoRecordEdit(member, batchId)),
   );
@@ -102,7 +109,9 @@ export async function makeChange(
 ): Promise<Result<{ version: number }>> {
   const member = await requireEditor(slug);
   const parsed = changePlanSchema.safeParse(plan);
-  if (!parsed.success) return { ok: false, error: 'This card is out of date. Please ask again.' };
+  const t = await getT();
+  if (!parsed.success)
+    return { ok: false, error: t('This card is out of date. Please ask again.') };
   return guard(slug, 'change', () =>
     withInsights(member.workspace.id, 'structure_change', () =>
       makeStructuralChange({

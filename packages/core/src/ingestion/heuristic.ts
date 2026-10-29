@@ -35,6 +35,9 @@ export interface HeuristicContext {
 
 const norm = (s: string) =>
   s
+    // Accents fold away ("Número" → "numero", M20) instead of splitting the word.
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();

@@ -3,6 +3,7 @@
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import type { Route } from 'next';
 import Link from 'next/link';
+import { msg } from '@bizr/i18n/translate';
 import { useState, useTransition } from 'react';
 
 import {
@@ -10,6 +11,7 @@ import {
   unlinkSourceAction,
   updateSourceAction,
 } from '@/app/w/[slug]/data/sources/actions';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { useCanChange } from '@/components/shell/can-change';
 
@@ -27,16 +29,17 @@ export interface LinkedSource {
 }
 
 const KIND = {
-  google_sheet: 'Google Sheet',
-  shopify: 'Shopify store',
+  google_sheet: msg('Google Sheet'),
+  shopify: msg('Shopify store'),
   quickbooks: 'QuickBooks',
   xero: 'Xero',
   square: 'Square',
-  woocommerce: 'WooCommerce store',
-} as const;
+  woocommerce: msg('WooCommerce store'),
+};
 const when = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
 function Source({ slug, source }: { slug: string; source: LinkedSource }) {
+  const t = useT();
   const editor = useCanChange();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -45,7 +48,7 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
     start(async () => {
       const r = await fn();
       setMessage(
-        r.ok ? { ok: true, text: done } : { ok: false, text: r.error ?? 'Please try again.' },
+        r.ok ? { ok: true, text: done } : { ok: false, text: r.error ?? t('Please try again.') },
       );
     });
   const paused = source.status === 'paused';
@@ -54,7 +57,7 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="grid gap-0.5">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {KIND[source.kind]}
+            {t(KIND[source.kind])}
           </p>
           <h3 className="font-semibold">{source.name}</h3>
         </div>
@@ -65,33 +68,39 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
             rel="noopener noreferrer"
             className="flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
           >
-            Open <ExternalLink className="size-3.5" aria-hidden />
-            <span className="sr-only">{source.name} (opens in a new tab)</span>
+            {t('Open')} <ExternalLink className="size-3.5" aria-hidden />
+            <span className="sr-only">
+              {t('{name} (opens in a new tab)', { name: source.name })}
+            </span>
           </a>
         )}
       </div>
       <div className="grid gap-1 text-sm">
         {source.waitingRunId ? (
           <p>
-            Has changes for you to check.{' '}
+            {t('Has changes for you to check.')}{' '}
             <Link
               href={`/w/${slug}/data/import/${source.waitingRunId}` as Route}
               className="font-medium text-primary underline underline-offset-4"
             >
-              Check the changes
+              {t('Check the changes')}
             </Link>
           </p>
         ) : source.status === 'needs_attention' && source.lastError ? (
-          <p className="text-destructive">{source.lastError}</p>
+          <p className="text-destructive">{t.text(source.lastError)}</p>
         ) : paused ? (
-          <p className="text-muted-foreground">Paused. We won’t check it until you resume.</p>
+          <p className="text-muted-foreground">
+            {t('Paused. We won’t check it until you resume.')}
+          </p>
         ) : (
           <p className="text-muted-foreground">
             {source.lastCheckedAt
-              ? `Checked ${when.format(new Date(source.lastCheckedAt))}.`
-              : 'Not checked yet.'}{' '}
+              ? t('Checked {when}.', { when: when.format(new Date(source.lastCheckedAt)) })
+              : t('Not checked yet.')}{' '}
             {source.lastChangedAt
-              ? `Last change brought in ${when.format(new Date(source.lastChangedAt))}.`
+              ? t('Last change brought in {when}.', {
+                  when: when.format(new Date(source.lastChangedAt)),
+                })
               : ''}
           </p>
         )}
@@ -108,12 +117,12 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
                 act(
                   () => updateSourceAction(slug, source.id, { autoUpdate: e.target.checked }),
                   e.target.checked
-                    ? 'Changes will come in by themselves when nothing needs you.'
-                    : 'We’ll ask you before bringing in changes.',
+                    ? t('Changes will come in by themselves when nothing needs you.')
+                    : t('We’ll ask you before bringing in changes.'),
                 )
               }
             />
-            Bring in changes by itself when nothing needs me
+            {t('Bring in changes by itself when nothing needs me')}
           </label>
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -121,10 +130,10 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
               variant="outline"
               disabled={pending || paused}
               onClick={() =>
-                act(() => syncNowAction(slug, source.id), 'Checking now. This takes a minute.')
+                act(() => syncNowAction(slug, source.id), t('Checking now. This takes a minute.'))
               }
             >
-              <RefreshCw /> Update now
+              <RefreshCw /> {t('Update now')}
             </Button>
             <Button
               size="sm"
@@ -133,25 +142,25 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
               onClick={() =>
                 act(
                   () => updateSourceAction(slug, source.id, { paused: !paused }),
-                  paused ? 'Resumed.' : 'Paused.',
+                  paused ? t('Resumed.') : t('Paused.'),
                 )
               }
             >
-              {paused ? 'Resume' : 'Pause'}
+              {paused ? t('Resume') : t('Pause')}
             </Button>
             {confirming ? (
               <span className="flex flex-wrap items-center gap-2 text-sm">
-                Stop updating from this? Your records stay.
+                {t('Stop updating from this? Your records stay.')}
                 <Button
                   size="sm"
                   variant="destructive"
                   disabled={pending}
-                  onClick={() => act(() => unlinkSourceAction(slug, source.id), 'Stopped.')}
+                  onClick={() => act(() => unlinkSourceAction(slug, source.id), t('Stopped.'))}
                 >
-                  Stop updating
+                  {t('Stop updating')}
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
-                  Keep it
+                  {t('Keep it')}
                 </Button>
               </span>
             ) : (
@@ -161,7 +170,7 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
                 disabled={pending}
                 onClick={() => setConfirming(true)}
               >
-                Stop updating from this
+                {t('Stop updating from this')}
               </Button>
             )}
           </div>
@@ -170,6 +179,7 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
       {message && (
         <p
           role="status"
+          // i18n-skip (styles, not text)
           className={message.ok ? 'text-sm text-muted-foreground' : 'text-sm text-destructive'}
         >
           {message.text}
@@ -181,11 +191,12 @@ function Source({ slug, source }: { slug: string; source: LinkedSource }) {
 
 /** My data → "Kept up to date from": each linked source, its state, and what you can do. */
 export function LinkedSources({ slug, sources }: { slug: string; sources: LinkedSource[] }) {
+  const t = useT();
   if (sources.length === 0) return null;
   return (
     <section className="grid gap-3" aria-labelledby="sources-heading">
       <h2 id="sources-heading" className="font-medium">
-        Kept up to date from
+        {t('Kept up to date from')}
       </h2>
       <ul className="grid gap-3 lg:grid-cols-2">
         {sources.map((s) => (

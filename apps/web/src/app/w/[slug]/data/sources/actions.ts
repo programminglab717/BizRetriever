@@ -13,6 +13,7 @@ import { getLogger } from '@bizr/platform';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { getT } from '@/lib/i18n';
 import { kickJobs } from '@/lib/imports';
 import { getJobQueue } from '@/lib/jobs';
 import { requireEditor } from '@/lib/session';
@@ -30,10 +31,11 @@ async function guard<T>(
     revalidatePath(`/w/${slug}/data`);
     return { ok: true, value };
   } catch (err) {
+    const t = await getT();
     if (err instanceof ConnectionError || err instanceof IngestionRequestError)
-      return { ok: false, error: err.message };
+      return { ok: false, error: t.text(err.message) };
     getLogger('connections').error({ err, slug, what }, 'source action failed');
-    return { ok: false, error: 'Something went wrong. Please try again.' };
+    return { ok: false, error: t('Something went wrong. Please try again.') };
   }
 }
 
@@ -60,7 +62,9 @@ export async function linkSheetAction(
 /** "Update now". */
 export async function syncNowAction(slug: string, connectionId: string): Promise<SourceResult> {
   const member = await requireEditor(slug);
-  if (!id.safeParse(connectionId).success) return { ok: false, error: 'This page is out of date.' };
+  const t = await getT();
+  if (!id.safeParse(connectionId).success)
+    return { ok: false, error: t('This page is out of date.') };
   return guard(slug, 'sync', async () => {
     // Only this business's sources: this refuses any other id.
     await getConnection(member, connectionId);
@@ -76,13 +80,14 @@ export async function updateSourceAction(
   change: { paused?: boolean; autoUpdate?: boolean },
 ): Promise<SourceResult> {
   const member = await requireEditor(slug);
+  const t = await getT();
   const parsed = z
     .object({ paused: z.boolean(), autoUpdate: z.boolean() })
     .partial()
     .strict()
     .safeParse(change);
   if (!id.safeParse(connectionId).success || !parsed.success)
-    return { ok: false, error: 'This page is out of date.' };
+    return { ok: false, error: t('This page is out of date.') };
   return guard(slug, 'update', async () => {
     await updateConnection(member, member.user.id, connectionId, parsed.data);
     return null;
@@ -95,7 +100,9 @@ export async function unlinkSourceAction(
   connectionId: string,
 ): Promise<SourceResult> {
   const member = await requireEditor(slug);
-  if (!id.safeParse(connectionId).success) return { ok: false, error: 'This page is out of date.' };
+  const t = await getT();
+  if (!id.safeParse(connectionId).success)
+    return { ok: false, error: t('This page is out of date.') };
   return guard(slug, 'unlink', async () => {
     await unlinkConnection(member, member.user.id, connectionId);
     return null;

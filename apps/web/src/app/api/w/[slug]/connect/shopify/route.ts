@@ -8,6 +8,7 @@ import { getEnv } from '@bizr/platform';
 import { canChange } from '@bizr/core/workspaces';
 import { cookies } from 'next/headers';
 
+import { getT } from '@/lib/i18n';
 import { getSession, workspaceForApi } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -18,13 +19,14 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ): Promise<Response> {
   const { slug } = await params;
+  const t = await getT();
   const member = await workspaceForApi(slug);
   const session = await getSession();
   if (!member || !session || !shopifyEnabled())
-    return Response.json({ error: 'Not found' }, { status: 404 });
+    return Response.json({ error: t('Not found') }, { status: 404 });
   if (!canChange(member.role))
     return Response.json(
-      { error: 'You can view this business but not change it. Ask the owner.' },
+      { error: t('You can view this business but not change it. Ask the owner.') },
       { status: 403 },
     );
   const url = new URL(request.url);

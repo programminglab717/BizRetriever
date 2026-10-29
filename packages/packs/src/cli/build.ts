@@ -5,9 +5,15 @@
  */
 import { writeFileSync } from 'node:fs';
 
-import { GENERATED_FILE, renderGeneratedPacks } from '../bundle';
+import {
+  GENERATED_FILE,
+  PACK_CATALOG_FILE,
+  renderGeneratedPacks,
+  renderPackCatalog,
+} from '../bundle';
 import { listPackDirs, loadPack } from '../loader';
 
 const packs = listPackDirs().map((dir) => loadPack(dir));
 writeFileSync(GENERATED_FILE, renderGeneratedPacks(packs));
+writeFileSync(PACK_CATALOG_FILE, renderPackCatalog(packs));
 console.log(`Wrote ${packs.length} pack(s) to src/generated/packs.ts`);

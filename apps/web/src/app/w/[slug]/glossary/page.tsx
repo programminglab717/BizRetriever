@@ -1,4 +1,5 @@
 import { getGlossary } from '@bizr/core/semantic';
+import { msg } from '@bizr/i18n/translate';
 import { CircleDashed } from 'lucide-react';
 import Link from 'next/link';
 
@@ -6,20 +7,21 @@ import { Renameable } from '@/components/glossary/rename';
 import { PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getT } from '@/lib/i18n';
 import { requireWorkspace } from '@/lib/session';
 
 const FORMAT: Record<string, string> = {
-  money: 'Money',
-  number: 'Number',
-  percent: 'Percentage',
-  days: 'Days',
+  money: msg('Money'),
+  number: msg('Number'),
+  percent: msg('Percentage'),
+  days: msg('Days'),
 };
-const fmt = new Intl.NumberFormat('en-US');
 
 /** "What we track" (PRODUCT_SPEC §3): the business glossary over the semantic catalog. */
 export default async function GlossaryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const g = await getGlossary(member);
   const available = g.measures.filter((m) => m.available);
   const unavailable = g.measures.filter((m) => !m.available);
@@ -29,13 +31,17 @@ export default async function GlossaryPage({ params }: { params: Promise<{ slug:
   if (g.measures.length === 0)
     return (
       <div className="grid gap-6">
-        <PageHeader title="What we track" />
+        <PageHeader title={t('What we track')} />
         <Card>
           <CardContent className="grid gap-4 pt-6">
-            <p>Once you bring in your files, this page lists everything we can measure for you.</p>
+            <p>
+              {t(
+                'Once you bring in your files, this page lists everything we can measure for you.',
+              )}
+            </p>
             <div>
               <Button asChild>
-                <Link href={`/w/${slug}/data/import`}>Upload files</Link>
+                <Link href={`/w/${slug}/data/import`}>{t('Upload files')}</Link>
               </Button>
             </div>
           </CardContent>
@@ -46,13 +52,15 @@ export default async function GlossaryPage({ params }: { params: Promise<{ slug:
   return (
     <div className="grid gap-8">
       <PageHeader
-        title="What we track"
-        description="The measures we work out from your data, how we calculate them, and the records they come from. Renaming something changes only what you see."
+        title={t('What we track')}
+        description={t(
+          'The measures we work out from your data, how we calculate them, and the records they come from. Renaming something changes only what you see.',
+        )}
       />
 
       <section className="grid gap-3" aria-labelledby="measures">
         <h2 id="measures" className="text-lg font-semibold">
-          Measures ({available.length})
+          {t('Measures ({n})', { n: available.length })}
         </h2>
         <ul className="grid gap-3 md:grid-cols-2">
           {available.map((m) => (
@@ -67,13 +75,13 @@ export default async function GlossaryPage({ params }: { params: Promise<{ slug:
                       target={{ kind: 'measure', key: m.key }}
                     />
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {FORMAT[m.format]}
+                      {FORMAT[m.format] ? t(FORMAT[m.format]!) : null}
                     </span>
                   </div>
-                  <p className="text-muted-foreground">{m.description}</p>
+                  <p className="text-muted-foreground">{t.text(m.description)}</p>
                   {m.assumptions.map((a) => (
                     <p key={a} className="text-xs text-muted-foreground">
-                      {a}
+                      {t.text(a)}
                     </p>
                   ))}
                 </CardContent>
@@ -86,10 +94,10 @@ export default async function GlossaryPage({ params }: { params: Promise<{ slug:
       {unavailable.length > 0 ? (
         <section className="grid gap-3" aria-labelledby="unlock">
           <h2 id="unlock" className="text-lg font-semibold">
-            Unlock more
+            {t('Unlock more')}
           </h2>
           <p className="text-sm text-muted-foreground">
-            These need information that isn’t in your files yet.
+            {t('These need information that isn’t in your files yet.')}
           </p>
           <ul className="grid gap-2">
             {unavailable.map((m) => (
@@ -103,15 +111,17 @@ export default async function GlossaryPage({ params }: { params: Promise<{ slug:
                   aria-hidden
                 />
                 <span>
-                  <span className="font-medium">{m.label}</span>
-                  <span className="block text-muted-foreground">{m.reason}</span>
+                  <span className="font-medium">{t.text(m.label)}</span>
+                  <span className="block text-muted-foreground">
+                    {m.reason ? t.text(m.reason) : m.reason}
+                  </span>
                 </span>
               </li>
             ))}
           </ul>
           <div>
             <Button asChild variant="outline">
-              <Link href={`/w/${slug}/data/import`}>Add or update files</Link>
+              <Link href={`/w/${slug}/data/import`}>{t('Add or update files')}</Link>
             </Button>
           </div>
         </section>
@@ -119,7 +129,7 @@ export default async function GlossaryPage({ params }: { params: Promise<{ slug:
 
       <section className="grid gap-3" aria-labelledby="records">
         <h2 id="records" className="text-lg font-semibold">
-          Your records
+          {t('Your records')}
         </h2>
         <div className="grid gap-3 md:grid-cols-2">
           {withRecords.map((r) => (
@@ -138,20 +148,20 @@ export default async function GlossaryPage({ params }: { params: Promise<{ slug:
                   />
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  {fmt.format(r.count)} {r.count === 1 ? 'record' : 'records'} · {r.description}
+                  {t.plural(r.count, '{n} record', '{n} records')} · {t.text(r.description)}
                 </p>
               </CardHeader>
               <CardContent className="grid gap-3 text-sm">
                 {r.links.length > 0 ? (
                   <ul className="grid gap-1 text-muted-foreground">
                     {r.links.map((l) => (
-                      <li key={l}>{l}.</li>
+                      <li key={l}>{t.text(l)}.</li>
                     ))}
                   </ul>
                 ) : null}
                 <details>
                   <summary className="cursor-pointer text-primary">
-                    Details ({r.details.filter((d) => d.hasData).length})
+                    {t('Details ({n})', { n: r.details.filter((d) => d.hasData).length })}
                   </summary>
                   <ul className="mt-2 grid gap-1">
                     {r.details
@@ -168,12 +178,12 @@ export default async function GlossaryPage({ params }: { params: Promise<{ slug:
                   </ul>
                   {r.details.some((d) => !d.hasData) ? (
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Not in your files yet:{' '}
-                      {r.details
-                        .filter((d) => !d.hasData)
-                        .map((d) => d.label.toLowerCase())
-                        .join(', ')}
-                      .
+                      {t('Not in your files yet: {list}.', {
+                        list: r.details
+                          .filter((d) => !d.hasData)
+                          .map((d) => t.text(d.label).toLowerCase())
+                          .join(', '),
+                      })}
                     </p>
                   ) : null}
                 </details>
@@ -183,7 +193,9 @@ export default async function GlossaryPage({ params }: { params: Promise<{ slug:
         </div>
         {empty.length > 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nothing yet for: {empty.map((r) => r.plural.toLowerCase()).join(', ')}.
+            {t('Nothing yet for: {list}.', {
+              list: empty.map((r) => t.text(r.plural).toLowerCase()).join(', '),
+            })}
           </p>
         ) : null}
       </section>

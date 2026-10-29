@@ -36,6 +36,7 @@ const { values } = parseArgs({
     suite: { type: 'string', default: 'all' },
     demo: { type: 'boolean', default: false },
     pack: { type: 'string', default: 'retail' },
+    lang: { type: 'string', default: 'en' },
   },
 });
 

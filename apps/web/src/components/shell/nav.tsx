@@ -11,9 +11,11 @@ import {
   Table2,
   type LucideIcon,
 } from 'lucide-react';
+import { msg } from '@bizr/i18n/translate';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { useT } from '@/components/i18n/provider';
 import { cn } from '@/lib/utils';
 
 type Segment =
@@ -26,12 +28,12 @@ interface NavItem {
 }
 
 const ITEMS: NavItem[] = [
-  { segment: 'home', label: 'Home', icon: Home },
-  { segment: 'ask', label: 'Ask', icon: MessageCircleQuestion },
-  { segment: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { segment: 'data', label: 'My data', icon: Table2 },
+  { segment: 'home', label: msg('Home'), icon: Home },
+  { segment: 'ask', label: msg('Ask'), icon: MessageCircleQuestion },
+  { segment: 'dashboard', label: msg('Dashboard'), icon: LayoutDashboard },
+  { segment: 'data', label: msg('My data'), icon: Table2 },
 ];
-const MORE: NavItem = { segment: 'more', label: 'More', icon: Menu };
+const MORE: NavItem = { segment: 'more', label: msg('More'), icon: Menu };
 
 function useActiveSegment(slug: string): string | undefined {
   const pathname = usePathname();
@@ -42,15 +44,16 @@ function useActiveSegment(slug: string): string | undefined {
 
 /** Left sidebar, shown from the `md` breakpoint up. */
 export function SidebarNav({ slug }: { slug: string }) {
+  const t = useT();
   const active = useActiveSegment(slug);
   return (
-    <nav aria-label="Main" className="grid gap-1">
+    <nav aria-label={t('Main')} className="grid gap-1">
       {[
         ...ITEMS,
-        { label: 'Insights', segment: 'insights' as const, icon: Bell },
-        { label: 'Plan ahead', segment: 'plan' as const, icon: CalendarRange },
-        { label: 'What we track', segment: 'glossary' as const, icon: BookOpen },
-        { ...MORE, label: 'Settings', segment: 'settings' as const },
+        { label: msg('Insights'), segment: 'insights' as const, icon: Bell },
+        { label: msg('Plan ahead'), segment: 'plan' as const, icon: CalendarRange },
+        { label: msg('What we track'), segment: 'glossary' as const, icon: BookOpen },
+        { ...MORE, label: msg('Settings'), segment: 'settings' as const },
       ].map((item) => {
         const isActive =
           active === item.segment || (item.segment === 'settings' && active === 'more');
@@ -58,6 +61,7 @@ export function SidebarNav({ slug }: { slug: string }) {
           <Link
             key={item.segment}
             href={`/w/${slug}/${item.segment}`}
+            // i18n-skip: an ARIA value
             aria-current={isActive ? 'page' : undefined}
             className={cn(
               'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground',
@@ -65,7 +69,7 @@ export function SidebarNav({ slug }: { slug: string }) {
             )}
           >
             <item.icon className="size-4" aria-hidden />
-            {item.label}
+            {t(item.label)}
           </Link>
         );
       })}
@@ -75,12 +79,13 @@ export function SidebarNav({ slug }: { slug: string }) {
 
 /** Bottom tab bar for phones (below `md`). */
 export function BottomNav({ slug }: { slug: string }) {
+  const t = useT();
   const segment = useActiveSegment(slug);
   const active =
     segment === 'settings' || segment === 'glossary' || segment === 'plan' ? 'more' : segment;
   return (
     <nav
-      aria-label="Main"
+      aria-label={t('Main')}
       className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <ul className="grid grid-cols-5">
@@ -90,6 +95,7 @@ export function BottomNav({ slug }: { slug: string }) {
             <li key={item.segment}>
               <Link
                 href={`/w/${slug}/${item.segment}`}
+                // i18n-skip: an ARIA value
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   'flex min-h-14 flex-col items-center justify-center gap-1 text-xs text-muted-foreground',
@@ -97,7 +103,7 @@ export function BottomNav({ slug }: { slug: string }) {
                 )}
               >
                 <item.icon className="size-5" aria-hidden />
-                {item.label}
+                {t(item.label)}
               </Link>
             </li>
           );

@@ -57,3 +57,4 @@ export {
   type EmailPreferences,
   type EmailRunSummary,
 } from './email';
+export { localizeInsights } from './localize';

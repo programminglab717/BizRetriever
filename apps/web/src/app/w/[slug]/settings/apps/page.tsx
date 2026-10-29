@@ -7,18 +7,25 @@ import { Assistants } from '@/components/apps/assistants';
 import { Webhooks } from '@/components/apps/webhooks';
 import { PageHeader } from '@/components/shell/page-header';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getT } from '@/lib/i18n';
 import { requireWorkspace } from '@/lib/session';
 
-export const metadata: Metadata = { title: 'Connect other apps · BizRetriever' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t('Connect other apps · BizRetriever') };
+}
 
 /** Connect other apps (M16, ADR-066): keys, an AI assistant, webhooks. Owner only. */
 export default async function ConnectAppsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const header = (
     <PageHeader
-      title="Connect other apps"
-      description="Let a spreadsheet, an accounting tool or an AI assistant read your numbers. They can look, never change anything."
+      title={t('Connect other apps')}
+      description={t(
+        'Let a spreadsheet, an accounting tool or an AI assistant read your numbers. They can look, never change anything.',
+      )}
     />
   );
   if (member.role !== 'owner' || member.workspace.isDemo)
@@ -28,12 +35,14 @@ export default async function ConnectAppsPage({ params }: { params: Promise<{ sl
         <Card>
           <CardHeader>
             <CardTitle>
-              {member.workspace.isDemo ? 'Not for the demo shop' : 'Only the owner can do this'}
+              {member.workspace.isDemo
+                ? t('Not for the demo shop')
+                : t('Only the owner can do this')}
             </CardTitle>
             <CardDescription>
               {member.workspace.isDemo
-                ? 'Connect other apps to your own business, once you’ve brought your files in.'
-                : 'Ask the owner of this business if another app needs to read its numbers.'}
+                ? t('Connect other apps to your own business, once you’ve brought your files in.')
+                : t('Ask the owner of this business if another app needs to read its numbers.')}
             </CardDescription>
           </CardHeader>
         </Card>

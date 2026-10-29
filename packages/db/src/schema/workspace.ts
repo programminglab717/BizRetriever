@@ -1,3 +1,4 @@
+import { languages, type Language } from '@bizr/i18n/translate';
 import { sql } from 'drizzle-orm';
 import {
   boolean,
@@ -51,9 +52,8 @@ export const workspace = app.table(
  * Owners do everything; members everything except managing people and deleting the business;
  * viewers (M13) look, ask, download and leave notes, and change nothing.
  */
-/** Languages the product speaks (M20). */
-export const languages = ['en', 'es'] as const;
-export type Language = (typeof languages)[number];
+/** Languages the product speaks (M20): the list lives with the translations. */
+export { languages, type Language };
 
 /** A person's own choices that follow them across businesses (M20: their language). */
 export const userPreference = app.table(

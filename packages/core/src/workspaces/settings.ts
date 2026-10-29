@@ -1,4 +1,4 @@
-import { dateOrders } from '@bizr/db';
+import { dateOrders, languages } from '@bizr/db';
 import { z } from 'zod';
 
 /** Currencies offered at onboarding (any ISO 4217 code is valid; these are the common ones). */
@@ -38,6 +38,8 @@ export const businessSettingsSchema = z.object({
   currency: z.string().regex(/^[A-Z]{3}$/, 'Choose a currency'),
   timezone: z.string().refine(isValidTimezone, 'Choose a time zone'),
   dateOrder: z.enum(dateOrders, { message: 'Tell us how you write dates' }),
+  /** What the business reads by default (M20); each person can choose their own. */
+  language: z.enum(languages).optional(),
 });
 
 export const newWorkspaceSchema = businessSettingsSchema.extend({

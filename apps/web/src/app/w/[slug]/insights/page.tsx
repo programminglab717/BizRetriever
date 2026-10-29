@@ -1,22 +1,24 @@
 import { getInsights } from '@bizr/core/insights';
 import { listNotes } from '@bizr/core/team';
+import { msg } from '@bizr/i18n/translate';
 import { insightCategories, type InsightCategory } from '@bizr/packs';
 import type { Route } from 'next';
 import Link from 'next/link';
 
 import { InsightFeed } from '@/components/insights/insight-feed';
 import { PageHeader } from '@/components/shell/page-header';
+import { getT } from '@/lib/i18n';
 import { queueInsights } from '@/lib/insights';
 import { requireWorkspace } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
 const LABELS: Record<InsightCategory, string> = {
-  stock: 'Stock',
-  customers: 'Customers',
-  profit: 'Profit',
-  products: 'Products',
-  trends: 'Trends',
-  cash: 'Money owed',
+  stock: msg('Stock'),
+  customers: msg('Customers'),
+  profit: msg('Profit'),
+  products: msg('Products'),
+  trends: msg('Trends'),
+  cash: msg('Money owed'),
 };
 
 export default async function InsightsPage({
@@ -29,8 +31,12 @@ export default async function InsightsPage({
   const { slug } = await params;
   const { category } = await searchParams;
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const chosen = insightCategories.find((c) => c === category);
-  const overview = await getInsights(member, chosen ? { category: chosen } : {});
+  const overview = await getInsights(member, {
+    ...(chosen ? { category: chosen } : {}),
+    lang: t.lang,
+  });
   const notes = await listNotes(
     member,
     member.user.id,
@@ -43,6 +49,7 @@ export default async function InsightsPage({
     <Link
       key={label}
       href={(c ? `/w/${slug}/insights?category=${c}` : `/w/${slug}/insights`) as Route}
+      // i18n-skip
       aria-current={chosen === c ? 'page' : undefined}
       className={cn(
         'rounded-full border px-3 py-1 text-sm',
@@ -55,24 +62,27 @@ export default async function InsightsPage({
   return (
     <div className="grid grid-cols-1 gap-6">
       <PageHeader
-        title="All insights"
+        title={t('All insights')}
         description={
           <>
-            Everything we’ve spotted in your data, most important first. Dismissed ones are hidden.{' '}
+            {t(
+              'Everything we’ve spotted in your data, most important first. Dismissed ones are hidden.',
+            )}{' '}
             <Link
               href={`/w/${slug}/insights/settings`}
               className="text-primary underline underline-offset-4"
             >
-              Alert settings
+              {t('Alert settings')}
             </Link>
           </>
         }
       />
-      <nav aria-label="Filter by topic" className="flex flex-wrap gap-2">
-        {chip(undefined, 'All')}
-        {insightCategories.map((c) => chip(c, LABELS[c]))}
+      <nav aria-label={t('Filter by topic')} className="flex flex-wrap gap-2">
+        {chip(undefined, t('All'))}
+        {insightCategories.map((c) => chip(c, t(LABELS[c])))}
       </nav>
       <InsightFeed
+        // i18n-skip
         key={chosen ?? 'all'}
         slug={slug}
         insights={overview.insights.map(({ firstSeenAt: _f, lastSeenAt: _l, ...i }) => i)}

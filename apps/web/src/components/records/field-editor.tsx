@@ -4,6 +4,7 @@ import type { FieldMeta } from '@bizr/core/records';
 import { useEffect, useRef, useState } from 'react';
 
 import { findRecords } from '@/app/w/[slug]/data/[entity]/actions';
+import { useT } from '@/components/i18n/provider';
 import { cn } from '@/lib/utils';
 
 import { editorValue, isNumeric, valueLabel } from './format';
@@ -36,7 +37,8 @@ export function FieldEditor({
   onSave: (value: string | boolean | null) => void;
   onCancel: () => void;
 }) {
-  const label = `New ${field.label.toLowerCase()}`;
+  const t = useT();
+  const label = t('New {detail}', { detail: t.text(field.label).toLowerCase() });
   const keys = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -60,10 +62,10 @@ export function FieldEditor({
     const options =
       field.type === 'boolean'
         ? [
-            { v: 'true', l: 'Yes' },
-            { v: 'false', l: 'No' },
+            { v: 'true', l: t('Yes') },
+            { v: 'false', l: t('No') },
           ]
-        : field.allowedValues!.map((v) => ({ v, l: valueLabel(field, v) }));
+        : field.allowedValues!.map((v) => ({ v, l: valueLabel(field, v, t) }));
     editor = (
       <select
         autoFocus
@@ -76,7 +78,7 @@ export function FieldEditor({
         onBlur={onCancel}
       >
         {!field.required || value === null ? (
-          <option value="">{field.required ? 'Choose…' : 'Blank'}</option>
+          <option value="">{field.required ? t('Choose…') : t('Blank')}</option>
         ) : null}
         {options.map((o) => (
           <option key={o.v} value={o.v}>
@@ -131,6 +133,7 @@ function TextEditor({
       autoFocus
       aria-label={label}
       type={type}
+      // i18n-skip
       inputMode={isNumeric(field) ? 'decimal' : undefined}
       className={cn(inputClass, isNumeric(field) && 'text-right')}
       value={text}
@@ -174,13 +177,14 @@ function LinkPicker({
   onPick: (id: string | null) => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const [q, setQ] = useState(initial);
   const [options, setOptions] = useState<{ id: string; title: string }[]>([]);
   const [active, setActive] = useState(0);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let stale = false;
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       void findRecords(slug, entity, q).then((r) => {
         if (!stale && r.ok) {
           setOptions(r.data);
@@ -190,7 +194,7 @@ function LinkPicker({
     }, 200);
     return () => {
       stale = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [slug, entity, q]);
   return (
@@ -256,7 +260,7 @@ function LinkPicker({
                 className="w-full rounded px-2 py-1.5 text-left text-muted-foreground hover:bg-muted"
                 onClick={() => onPick(null)}
               >
-                No link
+                {t('No link')}
               </button>
             </li>
           ) : null}

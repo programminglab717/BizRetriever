@@ -1,20 +1,35 @@
 'use client';
 
 import type { MergePreview } from '@bizr/core/merge';
+import type { Translator } from '@bizr/i18n/translate';
 import { FileCheck2, Info, PencilLine, Plus, Sparkles } from 'lucide-react';
 import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, type ReactNode } from 'react';
 
 import { cancelImport, mergeImport } from '@/app/w/[slug]/data/import/[runId]/actions';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 const fmt = new Intl.NumberFormat('en-US');
-const count = (n: number, label: { singular: string; plural: string }) =>
-  `${fmt.format(n)} ${(n === 1 ? label.singular : label.plural).toLowerCase()}`;
+/** "3 products": a count with the name of the kind of record (the name comes from the pack). */
+export const countOf = (t: Translator, n: number, label: { singular: string; plural: string }) =>
+  `${fmt.format(n)} ${t.text(n === 1 ? label.singular : label.plural).toLowerCase()}`;
+
+/** A translated sentence with one value in bold, where the sentence's `{placeholder}` is. */
+export function Bold({ text, children }: { text: string; children: ReactNode }) {
+  const [before = '', after = ''] = text.split(/\{[a-zA-Z]\w*\}/);
+  return (
+    <>
+      {before}
+      <strong>{children}</strong>
+      {after}
+    </>
+  );
+}
 
 /**
  * Re-upload, before anything is written: which files we recognised, what's new, what changed, what's
@@ -32,6 +47,7 @@ export function MergeReview({
   preview: MergePreview;
   onMerged: () => void;
 }) {
+  const t = useT();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -62,12 +78,14 @@ export function MergeReview({
     <div className="grid gap-6" aria-busy={pending}>
       <header className="grid gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {nothing ? 'Nothing new in these files' : 'Here’s what would change'}
+          {nothing ? t('Nothing new in these files') : t('Here’s what would change')}
         </h1>
         <p className="text-muted-foreground">
           {nothing
-            ? 'Everything in these files is already in your data.'
-            : 'Nothing is changed until you choose “Update my data”. You can undo the update afterwards.'}
+            ? t('Everything in these files is already in your data.')
+            : t(
+                'Nothing is changed until you choose “Update my data”. You can undo the update afterwards.',
+              )}
         </p>
       </header>
 
@@ -78,8 +96,8 @@ export function MergeReview({
               <p key={m.sourceId} className="flex gap-3">
                 <FileCheck2 className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
                 <span>
-                  This looks like a newer version of <strong>{m.label}</strong>. We read it the same
-                  way as last time.
+                  <Bold text={t('This looks like a newer version of {file}.')}>{m.label}</Bold>{' '}
+                  {t('We read it the same way as last time.')}
                 </span>
               </p>
             ))}
@@ -90,12 +108,12 @@ export function MergeReview({
       {entities.map((e) => (
         <Card key={e.entity} data-testid={`merge-${e.entity}`}>
           <CardHeader>
-            <CardTitle className="text-lg">{e.label.plural}</CardTitle>
+            <CardTitle className="text-lg">{t.text(e.label.plural)}</CardTitle>
             <CardDescription>
               {[
-                e.new > 0 ? `${fmt.format(e.new)} new` : null,
-                e.changed > 0 ? `${fmt.format(e.changed)} updated` : null,
-                e.unchanged > 0 ? `${fmt.format(e.unchanged)} unchanged` : null,
+                e.new > 0 ? t('{n} new', { n: e.new }) : null,
+                e.changed > 0 ? t('{n} updated', { n: e.changed }) : null,
+                e.unchanged > 0 ? t('{n} unchanged', { n: e.unchanged }) : null,
               ]
                 .filter(Boolean)
                 .join(' · ')}
@@ -106,9 +124,13 @@ export function MergeReview({
               <p className="flex gap-3">
                 <Plus className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
                 <span>
-                  <strong>{count(e.new, e.label)}</strong> will be added.
+                  <Bold text={t('{records} will be added.')}>{countOf(t, e.new, e.label)}</Bold>
                   {e.unkeyedNew > 0
-                    ? ` ${fmt.format(e.unkeyedNew)} of these have nothing that identifies them (like an order number), so we can’t tell whether they’re already in your data.`
+                    ? ` ${t.plural(
+                        e.unkeyedNew,
+                        '1 of these have nothing that identifies them (like an order number), so we can’t tell whether they’re already in your data.',
+                        '{n} of these have nothing that identifies them (like an order number), so we can’t tell whether they’re already in your data.',
+                      )}`
                     : ''}
                 </span>
               </p>
@@ -118,11 +140,13 @@ export function MergeReview({
                 <PencilLine className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
                 <div className="grid gap-1">
                   <span>
-                    <strong>{count(e.changed, e.label)}</strong> will be updated, for example:
+                    <Bold text={t('{records} will be updated, for example:')}>
+                      {countOf(t, e.changed, e.label)}
+                    </Bold>
                   </span>
                   <ul className="grid list-disc gap-0.5 pl-5 text-muted-foreground">
                     {e.changeExamples.map((x) => (
-                      <li key={x}>{x}</li>
+                      <li key={x}>{t.text(x)}</li>
                     ))}
                   </ul>
                 </div>
@@ -133,12 +157,14 @@ export function MergeReview({
                 <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
                 <div className="grid gap-1">
                   <span>
-                    <strong>{count(e.missing, e.label)}</strong> from last time aren’t in the new
-                    files. We’ll keep them, so nothing is lost.
+                    <Bold text={t('{records} from last time aren’t in the new files.')}>
+                      {countOf(t, e.missing, e.label)}
+                    </Bold>{' '}
+                    {t('We’ll keep them, so nothing is lost.')}
                   </span>
                   {e.missingExamples.length > 0 ? (
                     <span className="text-muted-foreground">
-                      For example: {e.missingExamples.join(', ')}.
+                      {t('For example: {examples}.', { examples: e.missingExamples.join(', ') })}
                     </span>
                   ) : null}
                 </div>
@@ -146,8 +172,11 @@ export function MergeReview({
             ) : null}
             {e.duplicates > 0 ? (
               <p className="text-muted-foreground">
-                {fmt.format(e.duplicates)} appear more than once in the new files; we used the first
-                one each time.
+                {t.plural(
+                  e.duplicates,
+                  '1 appear more than once in the new files; we used the first one each time.',
+                  '{n} appear more than once in the new files; we used the first one each time.',
+                )}
               </p>
             ) : null}
           </CardContent>
@@ -157,10 +186,11 @@ export function MergeReview({
       {conflicts.length > 0 ? (
         <Card data-testid="merge-conflicts">
           <CardHeader>
-            <CardTitle className="text-lg">You changed some of these here</CardTitle>
+            <CardTitle className="text-lg">{t('You changed some of these here')}</CardTitle>
             <CardDescription>
-              The new files say something different. Choose which to keep. If you don’t choose, we
-              keep yours.
+              {t(
+                'The new files say something different. Choose which to keep. If you don’t choose, we keep yours.',
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 text-sm">
@@ -169,7 +199,7 @@ export function MergeReview({
               return (
                 <fieldset key={c.key} className="grid gap-2 rounded-lg border p-3">
                   <legend className="px-1 font-medium">
-                    {c.record}: {c.fieldLabel.toLowerCase()}
+                    {c.record}: {t.text(c.fieldLabel).toLowerCase()}
                   </legend>
                   <div className="flex flex-wrap gap-2">
                     {(['mine', 'theirs'] as const).map((side) => (
@@ -188,8 +218,8 @@ export function MergeReview({
                           disabled={pending}
                         />
                         <span>
-                          {side === 'mine' ? 'Keep yours' : 'Take the file’s'}:{' '}
-                          <strong>{(side === 'mine' ? c.mine : c.theirs) ?? 'blank'}</strong>
+                          {side === 'mine' ? t('Keep yours') : t('Take the file’s')}:{' '}
+                          <strong>{(side === 'mine' ? c.mine : c.theirs) ?? t('blank')}</strong>
                         </span>
                       </label>
                     ))}
@@ -206,15 +236,15 @@ export function MergeReview({
       <div className="sticky bottom-20 z-10 flex flex-wrap gap-3 rounded-xl border bg-background/95 p-3 shadow-sm backdrop-blur md:bottom-4">
         {nothing ? (
           <Button size="lg" disabled={pending} onClick={cancel}>
-            Done
+            {t('Done')}
           </Button>
         ) : (
           <>
             <Button size="lg" disabled={pending} onClick={merge}>
-              <Sparkles /> Update my data
+              <Sparkles /> {t('Update my data')}
             </Button>
             <Button size="lg" variant="ghost" disabled={pending} onClick={cancel}>
-              Don’t update
+              {t('Don’t update')}
             </Button>
           </>
         )}

@@ -15,6 +15,7 @@ import {
   saveEdit,
   undoChange,
 } from '@/app/w/[slug]/data/[entity]/actions';
+import { useT } from '@/components/i18n/provider';
 import { Alert } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useCanChange } from '@/components/shell/can-change';
@@ -25,6 +26,7 @@ import { RecordPanel } from './record-panel';
 
 const fmt = new Intl.NumberFormat('en-US');
 const ROW_HEIGHT = 41;
+const ARIA_SORT = { asc: 'ascending', desc: 'descending', none: 'none' } as const;
 
 interface Query {
   search: string;
@@ -59,6 +61,7 @@ export function RecordsBrowser({
   initial: BrowseResult;
   query: Query;
 }) {
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -88,7 +91,7 @@ export function RecordsBrowser({
   );
   useEffect(() => {
     if (search === query.search) return;
-    const t = setTimeout(
+    const timer = setTimeout(
       () =>
         navigate((p) => {
           if (search.trim()) p.set('q', search.trim());
@@ -96,7 +99,7 @@ export function RecordsBrowser({
         }),
       300,
     );
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [search, query.search, navigate]);
 
   const sortBy = (field: string) =>
@@ -181,7 +184,10 @@ export function RecordsBrowser({
     setPanelVersion((v) => v + 1);
     if (r.data.batchId)
       setToast({
-        text: `Saved ${field.label.toLowerCase()} for ${row.title}.`,
+        text: t('Saved {detail} for {title}.', {
+          detail: t.text(field.label).toLowerCase(),
+          title: row.title,
+        }),
         undo: { batchId: r.data.batchId, ids: [row.id] },
       });
   };
@@ -191,9 +197,12 @@ export function RecordsBrowser({
     if (!r.ok) return setError(r.error);
     setOpen(null);
     setRows((prev) => prev.filter((x) => x.id !== row.id));
-    setTotal((t) => t - 1);
+    setTotal((n) => n - 1);
     if (r.data.batchId)
-      setToast({ text: `Deleted ${row.title}.`, undo: { batchId: r.data.batchId, ids: [row.id] } });
+      setToast({
+        text: t('Deleted {title}.', { title: row.title }),
+        undo: { batchId: r.data.batchId, ids: [row.id] },
+      });
   };
 
   const restore = async (row: RecordRow) => {
@@ -201,10 +210,10 @@ export function RecordsBrowser({
     if (!r.ok) return setError(r.error);
     setOpen(null);
     setRows((prev) => prev.filter((x) => x.id !== row.id));
-    setTotal((t) => t - 1);
+    setTotal((n) => n - 1);
     if (r.data.batchId)
       setToast({
-        text: `Restored ${row.title}.`,
+        text: t('Restored {title}.', { title: row.title }),
         undo: { batchId: r.data.batchId, ids: [row.id] },
       });
   };
@@ -221,15 +230,15 @@ export function RecordsBrowser({
     setRows(
       [...back, ...rows.map((x) => r.data.find((u2) => u2.id === x.id) ?? x)].filter(belongs),
     );
-    setTotal((t) => t + back.length - gone);
+    setTotal((n) => n + back.length - gone);
     setPanelVersion((v) => v + 1);
-    setToast({ text: 'Undone.' });
+    setToast({ text: t('Undone.') });
   };
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 8_000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToast(null), 8_000);
+    return () => clearTimeout(timer);
   }, [toast]);
 
   // --- Rendering --------------------------------------------------------------------------------
@@ -244,6 +253,8 @@ export function RecordsBrowser({
   const cardFields = columns.slice(0, 3);
   const padTop = items[0]?.start ?? 0;
   const padBottom = virtual.getTotalSize() - (items.at(-1)?.end ?? 0);
+  const things = t.text(entity.label.plural).toLowerCase();
+  const counted = t.text(total === 1 ? entity.label.singular : entity.label.plural).toLowerCase();
 
   const cell = (row: RecordRow, f: FieldMeta) => {
     const isEditing =
@@ -262,7 +273,7 @@ export function RecordsBrowser({
           onCancel={() => setEditing(null)}
         />
       );
-    const shown = formatValue(f, value, currency);
+    const shown = formatValue(f, value, currency, t);
     return (
       <button
         type="button"
@@ -270,7 +281,10 @@ export function RecordsBrowser({
         onClick={() =>
           setEditing({ rowId: row.id, field: f.key, error: null, busy: false, inPanel: false })
         }
-        aria-label={`Change ${f.label.toLowerCase()} of ${row.title}`}
+        aria-label={t('Change {detail} of {title}', {
+          detail: t.text(f.label).toLowerCase(),
+          title: row.title,
+        })}
         className={cn(
           'block w-full truncate rounded px-1 py-1 text-left hover:bg-muted disabled:hover:bg-transparent',
           isNumeric(f) && 'text-right tabular-nums',
@@ -289,17 +303,18 @@ export function RecordsBrowser({
           href={`/w/${slug}/data`}
           className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="size-4" /> My data
+          <ArrowLeft className="size-4" /> {t('My data')}
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {query.deleted
-            ? `Recently deleted ${entity.label.plural.toLowerCase()}`
-            : entity.label.plural}
+          {query.deleted ? t('Recently deleted {things}', { things }) : t.text(entity.label.plural)}
         </h1>
         <p className="text-sm text-muted-foreground" data-testid="records-count">
-          {fmt.format(total)}{' '}
-          {(total === 1 ? entity.label.singular : entity.label.plural).toLowerCase()}
-          {query.deleted ? ' deleted in the last 30 days. Restore any of them.' : ''}
+          {query.deleted
+            ? t('{count} {things} deleted in the last 30 days. Restore any of them.', {
+                count: fmt.format(total),
+                things: counted,
+              })
+            : `${fmt.format(total)} ${counted}`}
         </p>
       </header>
 
@@ -313,8 +328,8 @@ export function RecordsBrowser({
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${entity.label.plural.toLowerCase()}`}
-            aria-label={`Search ${entity.label.plural.toLowerCase()}`}
+            placeholder={t('Search {things}', { things })}
+            aria-label={t('Search {things}', { things })}
             className="h-9 w-full rounded-md border bg-background pr-2 pl-8 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
         </label>
@@ -324,7 +339,7 @@ export function RecordsBrowser({
           return (
             <select
               key={f.key}
-              aria-label={`Filter by ${f.label.toLowerCase()}`}
+              aria-label={t('Filter by {detail}', { detail: t.text(f.label).toLowerCase() })}
               value={active ? (active.value ?? '') : '*'}
               onChange={(e) =>
                 setFilter(f.key, e.target.value === '*' ? undefined : e.target.value)
@@ -334,11 +349,11 @@ export function RecordsBrowser({
                 active && 'border-primary bg-primary/5 text-primary',
               )}
             >
-              <option value="*">{f.label}: any</option>
+              <option value="*">{t('{detail}: any', { detail: t.text(f.label) })}</option>
               {options.map((v) => (
                 <option key={v} value={v}>
-                  {f.label}:{' '}
-                  {f.type === 'boolean' ? (v === 'true' ? 'Yes' : 'No') : valueLabel(f, v)}
+                  {t.text(f.label)}:{' '}
+                  {f.type === 'boolean' ? (v === 'true' ? t('Yes') : t('No')) : valueLabel(f, v, t)}
                 </option>
               ))}
             </select>
@@ -346,11 +361,11 @@ export function RecordsBrowser({
         })}
         {linkFilter ? (
           <span className="flex h-9 items-center gap-1 rounded-full border border-primary bg-primary/5 px-3 text-sm text-primary">
-            {entity.fields.find((x) => x.key === linkFilter.field)?.label}:{' '}
+            {t.text(entity.fields.find((x) => x.key === linkFilter.field)?.label ?? '')}:{' '}
             {params.get('with') ?? `#${linkFilter.value ?? ''}`}
             <button
               type="button"
-              aria-label="Remove this filter"
+              aria-label={t('Remove this filter')}
               onClick={() => setFilter(linkFilter.field, undefined)}
             >
               <X className="size-3.5" />
@@ -367,11 +382,11 @@ export function RecordsBrowser({
         >
           {query.deleted ? (
             <>
-              <ArrowLeft className="size-4" /> Back to {entity.label.plural.toLowerCase()}
+              <ArrowLeft className="size-4" /> {t('Back to {things}', { things })}
             </>
           ) : (
             <>
-              <Trash2 className="size-4" /> Recently deleted
+              <Trash2 className="size-4" /> {t('Recently deleted')}
             </>
           )}
         </Link>
@@ -382,10 +397,10 @@ export function RecordsBrowser({
       {rows.length === 0 ? (
         <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
           {query.deleted
-            ? 'Nothing was deleted in the last 30 days.'
+            ? t('Nothing was deleted in the last 30 days.')
             : query.search || query.filters.length
-              ? 'Nothing matches. Try a different search or remove a filter.'
-              : `No ${entity.label.plural.toLowerCase()} yet.`}
+              ? t('Nothing matches. Try a different search or remove a filter.')
+              : t('No {things} yet.', { things })}
         </p>
       ) : (
         <>
@@ -403,13 +418,7 @@ export function RecordsBrowser({
                       <th
                         key={f.key}
                         scope="col"
-                        aria-sort={
-                          initial.sort === f.key
-                            ? initial.dir === 'asc'
-                              ? 'ascending'
-                              : 'descending'
-                            : 'none'
-                        }
+                        aria-sort={ARIA_SORT[initial.sort === f.key ? initial.dir : 'none']}
                         className={cn(
                           'border-b px-2 py-2 text-left font-medium whitespace-nowrap',
                           i === 0 && 'sticky left-0 z-10 bg-muted',
@@ -419,10 +428,12 @@ export function RecordsBrowser({
                         <button
                           type="button"
                           onClick={() => sortBy(f.key)}
-                          aria-label={`Sort by ${f.label.toLowerCase()}`}
+                          aria-label={t('Sort by {detail}', {
+                            detail: t.text(f.label).toLowerCase(),
+                          })}
                           className="inline-flex items-center gap-1 hover:underline"
                         >
-                          {f.label}
+                          {t.text(f.label)}
                           {initial.sort === f.key ? (
                             initial.dir === 'asc' ? (
                               <ArrowUp className="size-3.5" aria-hidden />
@@ -437,7 +448,7 @@ export function RecordsBrowser({
                         key="_title"
                         className="sticky left-0 z-10 border-b bg-muted px-2 py-2 text-left font-medium"
                       >
-                        {entity.label.singular}
+                        {t.text(entity.label.singular)}
                       </th>
                     ),
                   )}
@@ -488,7 +499,7 @@ export function RecordsBrowser({
             </table>
             {loading ? (
               <p className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" /> Loading more…
+                <Loader2 className="size-4 animate-spin" /> {t('Loading more…')}
               </p>
             ) : null}
           </div>
@@ -504,10 +515,10 @@ export function RecordsBrowser({
                 >
                   <span className="font-medium">{row.title}</span>
                   {cardFields.map((f) => {
-                    const shown = formatValue(f, row.values[f.key] ?? null, currency);
+                    const shown = formatValue(f, row.values[f.key] ?? null, currency, t);
                     return shown ? (
                       <span key={f.key} className="text-muted-foreground">
-                        {f.label}: {shown}
+                        {t.text(f.label)}: {shown}
                       </span>
                     ) : null;
                   })}
@@ -522,7 +533,9 @@ export function RecordsBrowser({
                   onClick={() => void loadMore()}
                   className="w-full rounded-xl border p-3 text-sm text-primary"
                 >
-                  {loading ? 'Loading…' : `Show more (${fmt.format(total - rows.length)} left)`}
+                  {loading
+                    ? t('Loading…')
+                    : t('Show more ({n} left)', { n: fmt.format(total - rows.length) })}
                 </button>
               </li>
             ) : null}
@@ -568,7 +581,7 @@ export function RecordsBrowser({
               className="font-medium underline"
               onClick={() => void undo(toast.undo!)}
             >
-              Undo
+              {t('Undo')}
             </button>
           ) : null}
         </div>

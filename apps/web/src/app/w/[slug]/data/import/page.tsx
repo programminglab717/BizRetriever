@@ -8,6 +8,7 @@ import { LinkSheetForm } from '@/components/import/link-sheet-form';
 import { UploadForm } from '@/components/import/upload-form';
 import { PageHeader } from '@/components/shell/page-header';
 import { ViewOnlyNote } from '@/components/shell/view-only';
+import { getT } from '@/lib/i18n';
 import { requireWorkspace } from '@/lib/session';
 
 export default async function ImportPage({
@@ -19,20 +20,23 @@ export default async function ImportPage({
 }) {
   const { slug } = await params;
   const { role, workspace } = await requireWorkspace(slug);
+  const t = await getT();
   const helpful = getPack(workspace.packId).manifest.helpful_files;
   const { shopify, woocommerce } = await searchParams;
   if (!canChange(role))
     return (
       <div className="grid gap-6">
-        <PageHeader title="Bring in your files" />
-        <ViewOnlyNote>Bringing in files is for the owner and members.</ViewOnlyNote>
+        <PageHeader title={t('Bring in your files')} />
+        <ViewOnlyNote>{t('Bringing in files is for the owner and members.')}</ViewOnlyNote>
       </div>
     );
   return (
     <div className="grid gap-6">
       <PageHeader
-        title="Bring in your files"
-        description="Upload the spreadsheets you already have. We’ll work out what’s in them and check anything we’re unsure about with you. Newer versions of files you brought in before are recognised, and you’ll see what changes before anything is updated."
+        title={t('Bring in your files')}
+        description={t(
+          'Upload the spreadsheets you already have. We’ll work out what’s in them and check anything we’re unsure about with you. Newer versions of files you brought in before are recognised, and you’ll see what changes before anything is updated.',
+        )}
       />
       <UploadForm slug={slug} />
       <LinkSheetForm slug={slug} />
@@ -46,11 +50,11 @@ export default async function ImportPage({
         badStore={woocommerce === 'bad_store'}
       />
       <section className="grid gap-2 text-sm">
-        <h2 className="font-medium">Helpful files to include</h2>
+        <h2 className="font-medium">{t('Helpful files to include')}</h2>
         <ul className="grid gap-1 text-muted-foreground">
           {helpful.map(({ what, detail }) => (
             <li key={what}>
-              <span className="text-foreground">{what}</span>, {detail}
+              <span className="text-foreground">{t.text(what)}</span>, {t.text(detail)}
             </li>
           ))}
         </ul>

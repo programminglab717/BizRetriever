@@ -7,12 +7,14 @@ import {
   type Insight,
   type InsightRunRule,
 } from '@bizr/db';
+import type { Language } from '@bizr/i18n';
 import { getPack, type InsightCategory, type PackInsightRule } from '@bizr/packs';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { compileContext } from '../semantic/service';
 import { requireEditor, type MemberWorkspace } from '../workspaces/service';
 import { effectiveThresholds } from './evaluate';
+import { localizeInsights } from './localize';
 
 /** What Home, All insights and alert settings read and change. */
 
@@ -93,11 +95,13 @@ export async function getInsights(
     now?: Date;
     /** Only those handed to this person (Home's "For you", M13). */
     assignedTo?: string;
+    /** The reader's language (M20). */
+    lang?: Language;
   } = {},
 ): Promise<InsightOverview> {
   const db = getAppDb();
-  const insights = await db
-    .select(cardColumns)
+  const rows = await db
+    .select({ ...cardColumns, facts: insight.facts })
     .from(insight)
     .where(
       and(
@@ -109,6 +113,9 @@ export async function getInsights(
     )
     .orderBy(desc(insight.score), desc(insight.lastSeenAt))
     .limit(options.limit ?? 100);
+  const insights: InsightCard[] = localizeInsights(member, rows, options.lang ?? 'en').map(
+    ({ facts: _, ...card }) => card,
+  );
   const run = await lastInsightRun(member);
   const today = compileContext(member, options.now).today;
   const stale = !run || run.dataVersion < member.workspace.dataVersion || run.today < today;
@@ -192,7 +199,11 @@ const toShown = (unit: AlertThreshold['unit'], v: number) =>
   shownAsPercent(unit) ? Math.round(v * 1000) / 10 : v;
 const fromShown = (unit: AlertThreshold['unit'], v: number) => (shownAsPercent(unit) ? v / 100 : v);
 
-export async function getAlertSettings(member: MemberWorkspace): Promise<AlertSetting[]> {
+export async function getAlertSettings(
+  member: MemberWorkspace,
+  lang: Language = 'en',
+): Promise<AlertSetting[]> {
+  const tr = lang === 'es' ? getPack(member.workspace.packId).translations.es : undefined;
   const saved = new Map(
     (
       await getAppDb()
@@ -204,16 +215,18 @@ export async function getAlertSettings(member: MemberWorkspace): Promise<AlertSe
   return getPack(member.workspace.packId).insights.rules.map((rule) => {
     const s = saved.get(rule.id);
     const values = effectiveThresholds(rule, s?.thresholds);
+    const tri = tr?.insights[rule.id];
     return {
       ruleId: rule.id,
-      label: rule.label,
-      description: rule.description,
+      label: tri?.label ?? rule.label,
+      description: tri?.description ?? rule.description,
       category: rule.category,
       enabled: s?.enabled ?? rule.enabled,
       thresholds: Object.entries(rule.thresholds)
         .filter(([, t]) => t.editable)
         .map(([name, t]) => {
-          const [before = '', after = ''] = t.label.split('{{value}}');
+          const label = tri?.thresholds[name] ?? t.label;
+          const [before = '', after = ''] = label.split('{{value}}');
           return {
             name,
             before: before.trimEnd(),

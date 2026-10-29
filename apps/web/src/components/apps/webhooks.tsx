@@ -8,6 +8,7 @@ import {
   testWebhookAction,
   updateWebhookAction,
 } from '@/app/w/[slug]/settings/apps/actions';
+import { useT } from '@/components/i18n/provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
@@ -28,6 +29,7 @@ export function Webhooks({
   initial: WebhookView[] | null;
   events: Record<string, string>;
 }) {
+  const t = useT();
   const [hooks, setHooks] = useState(initial ?? []);
   const [url, setUrl] = useState('');
   const [picked, setPicked] = useState<string[]>(Object.keys(events));
@@ -66,8 +68,8 @@ export function Webhooks({
       if (!r.ok) return setError(r.error);
       setNote(
         r.data.ok
-          ? 'Test sent: the address answered OK.'
-          : `Test not delivered. ${r.data.error ?? ''}`,
+          ? t('Test sent: the address answered OK.')
+          : `${t('Test not delivered.')} ${r.data.error ? t.text(r.data.error) : ''}`,
       );
       setHooks((h) =>
         h.map((x) =>
@@ -85,35 +87,46 @@ export function Webhooks({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Webhooks</CardTitle>
+        <CardTitle>{t('Webhooks')}</CardTitle>
         <CardDescription>
-          Tell another app straight away when something happens here. Each message is signed, so the
-          app can check it came from us.
+          {t(
+            'Tell another app straight away when something happens here. Each message is signed, so the app can check it came from us.',
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 text-sm">
         {initial === null ? (
-          <p className="text-muted-foreground">Webhooks aren’t switched on here yet.</p>
+          <p className="text-muted-foreground">{t('Webhooks aren’t switched on here yet.')}</p>
         ) : (
           <>
             {hooks.length === 0 ? (
-              <p className="text-muted-foreground">No webhooks yet.</p>
+              <p className="text-muted-foreground">{t('No webhooks yet.')}</p>
             ) : (
-              <ul className="grid divide-y" aria-label="Webhooks">
+              <ul className="grid divide-y" aria-label={t('Webhooks')}>
                 {hooks.map((h) => (
                   <li key={h.id} className="grid gap-1 py-2">
                     <span className="break-all font-medium">{h.url}</span>
                     <span className="text-muted-foreground">
-                      {h.events.map((e) => events[e] ?? e).join(' · ')}
+                      {h.events.map((e) => (events[e] ? t.text(events[e]) : e)).join(' · ')}
                     </span>
                     <span className="text-muted-foreground" data-testid="webhook-status">
                       {h.disabled
-                        ? `Turned off: it kept failing${h.lastError ? ` (${h.lastError})` : ''}.`
+                        ? h.lastError
+                          ? t('Turned off: it kept failing ({error}).', {
+                              error: t.text(h.lastError),
+                            })
+                          : t('Turned off: it kept failing.')
                         : h.lastDeliveryAt
-                          ? `Last sent ${when.format(new Date(h.lastDeliveryAt))}: ${
-                              h.lastError ?? `answered ${h.lastStatus ?? 'OK'}`
-                            }`
-                          : 'Nothing sent yet.'}
+                          ? h.lastError
+                            ? t('Last sent {when}: {error}', {
+                                when: when.format(new Date(h.lastDeliveryAt)),
+                                error: t.text(h.lastError),
+                              })
+                            : t('Last sent {when}: answered {status}', {
+                                when: when.format(new Date(h.lastDeliveryAt)),
+                                status: String(h.lastStatus ?? 'OK'),
+                              })
+                          : t('Nothing sent yet.')}
                     </span>
                     <span className="flex flex-wrap gap-1">
                       <Button
@@ -122,7 +135,7 @@ export function Webhooks({
                         disabled={pending}
                         onClick={() => test(h.id)}
                       >
-                        Send a test
+                        {t('Send a test')}
                       </Button>
                       {h.disabled ? (
                         <Button
@@ -131,7 +144,7 @@ export function Webhooks({
                           disabled={pending}
                           onClick={() => change(h.id, 'enable')}
                         >
-                          Turn back on
+                          {t('Turn back on')}
                         </Button>
                       ) : null}
                       <Button
@@ -140,14 +153,14 @@ export function Webhooks({
                         disabled={pending}
                         onClick={() => change(h.id, 'delete')}
                       >
-                        Delete
+                        {t('Delete')}
                       </Button>
                     </span>
                   </li>
                 ))}
               </ul>
             )}
-            {fresh ? <SecretOnce label="Its signing secret" value={fresh} /> : null}
+            {fresh ? <SecretOnce label={t('Its signing secret')} value={fresh} /> : null}
             <form
               className="grid gap-3"
               onSubmit={(e) => {
@@ -155,18 +168,23 @@ export function Webhooks({
                 add();
               }}
             >
-              <Field id="webhook-url" label="Address to send to" hint="It must start with https://">
+              <Field
+                id="webhook-url"
+                label={t('Address to send to')}
+                hint={t('It must start with https://')}
+              >
                 <Input
                   id="webhook-url"
                   type="url"
                   inputMode="url"
                   value={url}
+                  // i18n-skip
                   placeholder="https://"
                   onChange={(e) => setUrl(e.target.value)}
                 />
               </Field>
               <fieldset className="grid gap-1">
-                <legend className="mb-1 font-medium">Tell it when</legend>
+                <legend className="mb-1 font-medium">{t('Tell it when')}</legend>
                 {Object.entries(events).map(([key, label]) => (
                   <label key={key} className="flex items-center gap-2">
                     <input
@@ -178,13 +196,13 @@ export function Webhooks({
                         )
                       }
                     />
-                    {label}
+                    {t.text(label)}
                   </label>
                 ))}
               </fieldset>
               <div>
                 <Button type="submit" disabled={pending || !url.trim() || picked.length === 0}>
-                  Add webhook
+                  {t('Add webhook')}
                 </Button>
               </div>
             </form>

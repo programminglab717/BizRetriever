@@ -16,12 +16,14 @@ import { PageHeader } from '@/components/shell/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { getT } from '@/lib/i18n';
 import { queueInsights } from '@/lib/insights';
 import { requireWorkspace } from '@/lib/session';
 
 export default async function HomePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const member = await requireWorkspace(slug);
+  const t = await getT();
   const [[latest], sources, transfer] = await Promise.all([
     listRuns(member, 1),
     listConnections(member),
@@ -41,7 +43,7 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
   const hasData = member.workspace.dataVersion > 0;
   const header = (
     <PageHeader
-      title={`Welcome, ${member.user.name.split(' ')[0]}`}
+      title={t('Welcome, {name}', { name: member.user.name.split(' ')[0] ?? '' })}
       description={member.workspace.name}
     />
   );
@@ -50,12 +52,15 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
     <Card data-testid="takeover-home">
       <CardHeader>
         <CardTitle>
-          {transfer.fromName} wants to make you the owner of {member.workspace.name}
+          {t('{from} wants to make you the owner of {business}', {
+            from: transfer.fromName,
+            business: member.workspace.name,
+          })}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Button asChild>
-          <Link href={`/w/${slug}/settings`}>Answer in Settings</Link>
+          <Link href={`/w/${slug}/settings`}>{t('Answer in Settings')}</Link>
         </Button>
       </CardContent>
     </Card>
@@ -63,12 +68,12 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
   const sourceCards = troubled.map((c) => (
     <Card key={c.id} data-testid="source-problem">
       <CardHeader>
-        <CardTitle>We couldn’t update from “{c.name}”</CardTitle>
-        <CardDescription>{c.lastError}</CardDescription>
+        <CardTitle>{t('We couldn’t update from “{name}”', { name: c.name })}</CardTitle>
+        <CardDescription>{c.lastError && t.text(c.lastError)}</CardDescription>
       </CardHeader>
       <CardContent>
         <Button asChild variant="outline">
-          <Link href={`/w/${slug}/data`}>See my data</Link>
+          <Link href={`/w/${slug}/data`}>{t('See my data')}</Link>
         </Button>
       </CardContent>
     </Card>
@@ -78,15 +83,15 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       <CardHeader>
         <CardTitle>
           {inProgress.connectionId && waiting
-            ? 'Your linked data has changes to check'
+            ? t('Your linked data has changes to check')
             : waiting
-              ? 'Your files are ready to check'
-              : 'We’re working on your files'}
+              ? t('Your files are ready to check')
+              : t('We’re working on your files')}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Button asChild size="lg">
-          <Link href={`/w/${slug}/data/import/${inProgress.id}` as Route}>Continue</Link>
+          <Link href={`/w/${slug}/data/import/${inProgress.id}` as Route}>{t('Continue')}</Link>
         </Button>
       </CardContent>
     </Card>
@@ -100,22 +105,26 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
         {progressCard || (
           <Card>
             <CardHeader>
-              <CardTitle>Let’s bring in your data</CardTitle>
+              <CardTitle>{t('Let’s bring in your data')}</CardTitle>
               <CardDescription>
-                Your sales, stock lists, supplier orders and expenses. Excel or CSV, messy is fine.
+                {t(
+                  'Your sales, stock lists, supplier orders and expenses. Excel or CSV, messy is fine.',
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <ol className="grid gap-2 text-sm text-muted-foreground">
-                <li>1. Upload the spreadsheets you already have.</li>
+                <li>{t('1. Upload the spreadsheets you already have.')}</li>
                 <li>
-                  2. We work out what’s in them and check anything we’re unsure about with you.
+                  {t(
+                    '2. We work out what’s in them and check anything we’re unsure about with you.',
+                  )}
                 </li>
-                <li>3. You get answers, a dashboard and alerts about your business.</li>
+                <li>{t('3. You get answers, a dashboard and alerts about your business.')}</li>
               </ol>
               <div>
                 <Button asChild size="lg">
-                  <Link href={`/w/${slug}/data/import`}>Upload files</Link>
+                  <Link href={`/w/${slug}/data/import`}>{t('Upload files')}</Link>
                 </Button>
               </div>
             </CardContent>
@@ -125,8 +134,8 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
     );
 
   const [overview, forYou, mentions] = await Promise.all([
-    getInsights(member, { limit: 5 }),
-    getInsights(member, { assignedTo: member.user.id, limit: 20 }),
+    getInsights(member, { limit: 5, lang: t.lang }),
+    getInsights(member, { assignedTo: member.user.id, limit: 20, lang: t.lang }),
     myMentions(member, member.user.id),
   ]);
   const notes = await listNotes(member, member.user.id, 'insight', [
@@ -141,9 +150,15 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
     currentDigest(member),
     goalProgress(member),
   ]);
-  const locale = localeFor(member.settings);
+  const locale = localeFor(member.settings, t.lang);
   const weekLabel = digest
-    ? `Week of ${new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${digest.content.period.from}T00:00:00Z`))}`
+    ? t('Week of {date}', {
+        date: new Intl.DateTimeFormat(locale, {
+          day: 'numeric',
+          month: 'short',
+          timeZone: 'UTC',
+        }).format(new Date(`${digest.content.period.from}T00:00:00Z`)),
+      })
     : '';
 
   return (
@@ -152,8 +167,8 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       {progressCard}
       {sourceCards}
       {kpis.kpis.length > 0 && (
-        <section aria-label="Key numbers" className="grid gap-2">
-          <h2 className="text-sm font-medium text-muted-foreground">Last 30 days</h2>
+        <section aria-label={t('Key numbers')} className="grid gap-2">
+          <h2 className="text-sm font-medium text-muted-foreground">{t('Last 30 days')}</h2>
           <KpiCards
             kpis={kpis.kpis}
             compact
@@ -165,13 +180,13 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
         <section aria-labelledby="goals-heading" className="grid gap-4 rounded-xl border p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="goals-heading" className="font-semibold">
-              This month’s goals
+              {t('This month’s goals')}
             </h2>
             <Link
               href={`/w/${slug}/plan` as Route}
               className="text-sm text-primary hover:underline"
             >
-              Plan ahead
+              {t('Plan ahead')}
             </Link>
           </div>
           {goals.map((g) => (
@@ -186,13 +201,13 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       <form action={`/w/${slug}/ask`} className="flex gap-2" role="search">
         <Input
           name="q"
-          placeholder="Ask anything about your business"
-          aria-label="Ask anything about your business"
+          placeholder={t('Ask anything about your business')}
+          aria-label={t('Ask anything about your business')}
           maxLength={500}
           className="h-11"
         />
         <Button type="submit" size="lg">
-          Ask
+          {t('Ask')}
         </Button>
       </form>
       {digest && (
@@ -202,7 +217,7 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       {(forYou.insights.length > 0 || mentions.length > 0) && (
         <section className="grid gap-3" aria-labelledby="for-you" data-testid="for-you">
           <h2 id="for-you" className="text-lg font-semibold">
-            For you
+            {t('For you')}
           </h2>
           <Mentions slug={slug} initial={mentions} />
           {forYou.insights.length > 0 && (
@@ -210,7 +225,7 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
               slug={slug}
               insights={forYou.insights.map(card)}
               notes={notes}
-              label="For you"
+              label={t('For you')}
             />
           )}
         </section>
@@ -218,16 +233,17 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
       <section className="grid gap-3" aria-labelledby="attention">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="attention" className="text-lg font-semibold">
-            Needs your attention
+            {t('Needs your attention')}
           </h2>
           <Link href={`/w/${slug}/insights`} className="text-sm text-primary hover:underline">
-            See all insights
+            {t('See all insights')}
           </Link>
         </div>
         {!overview.lastRun ? (
           <p className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
-            We’re looking through your data for anything that needs your attention. This takes a
-            moment.
+            {t(
+              'We’re looking through your data for anything that needs your attention. This takes a moment.',
+            )}
           </p>
         ) : (
           <InsightFeed
@@ -238,7 +254,7 @@ export default async function HomePage({ params }: { params: Promise<{ slug: str
         )}
         {overview.waitingForHistory && (
           <p className="text-sm text-muted-foreground">
-            We need about 4 weeks of sales to spot trends. We’ll start as soon as we can.
+            {t('We need about 4 weeks of sales to spot trends. We’ll start as soon as we can.')}
           </p>
         )}
       </section>
